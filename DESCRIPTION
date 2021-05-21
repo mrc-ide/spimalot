@@ -1,0 +1,54 @@
+Package: spimalot
+Title: Support for 'sircovid'
+Version: 0.1.0
+Authors@R:
+    c(person(given = "Marc",
+           family = "Baguelin",
+           role = c("aut", "cre"),
+           email = "m.baguelin@imperial.ac.uk"),
+      person(given = "Edward",
+           family = "Knock",
+           role = c("aut"),
+           email = "e.knock@imperial.ac.uk"),
+      person(given = "Lilith",
+           family = "Whittles",
+           role = c("aut"),
+           email = "l.whittles@imperial.ac.uk"),
+      person(given = "Rich",
+           family = "FitzJohn",
+           role = c("aut"),
+           email = "r.fitzjohn@imperial.ac.uk"),
+      person(given = "Anne",
+           family = "Cori",
+           role = c("aut"),
+           email = "a.cori@imperial.ac.uk"),
+      person(given = "Pablo",
+           family = "Perez-Guzman",
+           role = c("aut"),
+           email = "p.perez-guzman@imperial.ac.uk"),
+      person(given = "Raphael",
+           family = "Sonabend",
+           role = c("aut"),
+           email = "r.sonabend@imperial.ac.uk"))
+Description: Code that supports that use of sircovid for our regular
+    workflows (weekly SPI-M analayses, medium term projections) and
+    forward simulation. Unlike 'sircovid', this package is intended to
+    be more rapidly iterated, contains no compiled code, and will be
+    significantly less tested because it must bend around
+    ever-changing data and requirements for plotting/analysis.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+URL: https://github.com/mrc-ide/spimalot
+BugReports: https://github.com/mrc-ide/spimalot/issues
+Imports:
+    dust,
+    mcstate (>= 0.5.14),
+    sircovid (>= 0.11.3)
+Suggests:
+    testthat
+Remotes:
+   mrc-ide/dust,
+   mrc-ide/mcstate,
+   mrc-ide/sircovid
