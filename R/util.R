@@ -9,12 +9,17 @@ data_frame <- function(...) {
 
 
 read_csv <- function(...) {
-  read.csv(..., stringsAsFactors = FALSE)
+  read.csv(..., stringsAsFactors = FALSE, check.names = FALSE)
 }
 
 
 last <- function(x) {
   x[[length(x)]]
+}
+
+
+squote <- function(x) {
+  sprintf("'%s'", x)
 }
 
 
