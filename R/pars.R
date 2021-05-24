@@ -18,48 +18,84 @@
 ##' @param multistrain Logical, indicating if the model is a
 ##'   "multistrain" model allowing for mulitiple competing strains.
 ##'
-##' @param vaccination Vacination data (TODO: DESCRIBE FORMAT, TODO:
-##'   DESCRIBE ORIGIN)
+##' @param beta_date A vector of date (strings) for the beta
+##'   parameters. Must align with parameters
 ##'
-##' @param info Parameter information, describing the parameters that
-##'   will be varied and their ranges. TODO: DESCRIBE FORMAT
+##' @param vaccination Vacination data, from
+##'   [spimalot::spim_vaccination_data]
 ##'
-##' @param proposal Parameter proposal information, used to create the
-##'   variance covariance matrix for the mcmc sampler. TODO: DESCRIBE
-##'   FORMAT
-##'
-##' @param prior Parameter prior information TODO: DESCRIBE FORMAT
+##' @param parameters Parameter information, from
+##'   [spimalot::spim_pars_pmcmc]
 ##'
 ##' @return An [mcstate::pmcmc_parameters] object which can be used
 ##'   with [mcstate::pmcmc]
 ##'
 ##' @export
 spim_pars <- function(date, region, model_type, multistrain,
-                      vaccination, info, prior, proposal) {
-  severity <- read_csv(spimalot_file("extdata/support_severity.csv"))
-  progression <- read_csv(spimalot_file("extdata/support_progression.csv"))
-  beta <- spim_pars_beta(date)
+                      beta_date, vaccination, parameters) {
+  assert_is(parameters, "spim_pars_pmcmc")
 
   if (length(region) == 1) {
-    spim_pars_single(date, region, model_type, multistrain,
-                     beta, severity, progression, vaccination,
-                     info, prior, proposal)
+    ret <- spim_pars_single(date, region, model_type, multistrain,
+                            beta_date, vaccination, parameters)
   } else {
     stop("writeme")
   }
+
+  ## This will allow us to recreate things later in the restart
+  inputs <- list(date = date,
+                 region = region,
+                 model_type = model_type,
+                 multistrain = multistrain,
+                 vaccination = vaccination,
+                 parameters = parameters)
+
+  attr(ret, "inputs") <- inputs
+
+  ret
+}
+
+
+##' Load the pmcmc parameters from disk. We expect three files; one
+##' for the overal parameters (`info`), one with details of the priors
+##' (`prior`) and one describing the proposal kernel (`proposal`).
+##'
+##' @title Load a set of parameters for the pmcmc
+##'
+##' @param path Directory where the csv files are found.
+##'
+##' @param info Filename for the parameter info, relative to `path`
+##'
+##' @param proposal Filename for the parameter priors, relative to `path`
+##'
+##' @param proposal Filename for the parameter proposal, relative to `path`
+##'
+##' @return
+##' @author Richard Fitzjohn
+spim_pars_pmcmc_load <- function(path, info = "info.csv", prior = "prior.csv",
+                                 proposal = "proposal.csv") {
+  assert_file_exists(path)
+  assert_file_exists(info, path)
+  assert_file_exists(prior, path)
+  assert_file_exists(proposal, path)
+  ret <- list(info = read_csv(file.path(path, info)),
+              prior = read_csv(file.path(path, prior)),
+              proposal = read_csv(file.path(path, proposal)))
+  ## TODO: at this point we might split into regions and verify
+  ## everything, rather than the fiddle done in spim_pars_single. Easy
+  ## to tweak later though.
+  class(ret) <- "spim_pars_pmcmc"
+  ret
 }
 
 
 spim_pars_single <- function(date, region, model_type, multistrain,
-                             beta, severity, progression, vaccination,
-                             info, prior, proposal) {
+                             beta_date, vaccination, parameters) {
   ## We take 'info' as the canonical source of names, then check that
   ## prior and proposal align correctly.
-  info <- spim_pars_info(region, info)
-  prior <- spim_pars_prior(region, info, prior)
-  proposal <- spim_pars_prior(region, info, proposal)
-
-  browser()
+  info <- spim_pars_info(region, parameters$info)
+  prior <- spim_pars_prior(region, info, parameters$prior)
+  proposal <- spim_pars_proposal(region, info, parameters$proposal)
 
   pars <- Map(
     mcstate::pmcmc_parameter,
@@ -70,16 +106,11 @@ spim_pars_single <- function(date, region, model_type, multistrain,
     discrete = info$discrete,
     prior = lapply(split(prior, prior$name), make_prior))
 
-  transform <- spim_transform(region, model_type, beta_date,
-                              severity, progression,
-                              vaccination, multistrain)
+  transform <- spim_transform(region, model_type, multistrain, beta_date,
+                              vaccination)
 
   mcstate::pmcmc_parameters$new(pars, proposal, transform)
-
-
-  browser()
 }
-
 
 
 ## TODO: a version of this which allows tweaking around recent dates
@@ -111,34 +142,6 @@ spim_pars_beta <- function(date) {
     "2020-12-02", "2020-12-18", "2021-01-05",
     "2021-03-08", as.character(as.Date(date) - 21))
 }
-
-
-
-## spim_pars_single <- function(region, ...) {
-##   stopifnot(
-##     identical(parameters$info$name, parameters$prior$name),
-##     identical(parameters$info$name, rownames(parameters$proposal)))
-
-##   prior <- lapply(split(parameters$prior, parameters$prior$name),
-##                   make_prior)
-
-##   pars <- Map(
-##     mcstate::pmcmc_parameter,
-##     name = parameters$info$name,
-##     initial = parameters$info$initial,
-##     min = parameters$info$min,
-##     max = parameters$info$max,
-##     discrete = parameters$info$discrete,
-##     prior = prior)
-
-##   transform <- carehomes_spim_transform(type, beta_date, region,
-##                                         severity,
-##                                         progression,
-##                                         support_vaccine,
-##                                         multistrain)
-
-##   mcstate::pmcmc_parameters$new(pars, parameters$proposal, transform)
-## }
 
 
 spim_pars_pmcmc <- function(region, info, prior, proposal) {
@@ -185,4 +188,27 @@ spim_pars_proposal <- function(region, info, proposal) {
   proposal <- as.matrix(proposal[match(info$name, proposal$name), info$name])
   rownames(proposal) <- info$name
   proposal
+}
+
+
+make_prior <- function(d) {
+  if (d$type == "gamma") {
+    ## TODO: as_duration was droppd from here as never used, but if it
+    ## is, then we'd transform p to 1/p
+    shape <- d$gamma_shape
+    scale <- d$gamma_scale
+    function(p) {
+      dgamma(p, shape = shape, scale = scale, log = TRUE)
+    }
+  } else if (d$type == "beta") {
+    shape1 <- d$beta_shape1
+    shape2 <- d$beta_shape2
+    function(p) {
+      dbeta(p, shape1 = shape1, shape2 = shape2, log = TRUE)
+    }
+  } else if (d$type == "null") {
+    NULL
+  } else {
+    stop("Unknown prior type")
+  }
 }

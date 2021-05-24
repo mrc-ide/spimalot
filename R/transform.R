@@ -1,6 +1,11 @@
-spim_transform <- function(region, ...) {
+spim_transform <- function(region, model_type, multistrain, beta_date,
+                           vaccination) {
+  beta_date <- sircovid::sircovid_date(beta_date)
+  assert_is(vaccination, "spim_vaccination_data")
+
   if (length(region) == 1L) {
-    spim_transform_single(region, ...)
+    spim_transform_single(region, model_type, multistrain, beta_date,
+                          vaccination)
   } else {
     stop("writeme")
   }
@@ -8,8 +13,9 @@ spim_transform <- function(region, ...) {
 
 
 spim_transform_single <- function(region, model_type, multistrain, beta_date,
-                                  severity, progression, vaccination) {
-  beta_date <- sircovid::sircovid_date(beta_date)
+                                  vaccination) {
+  severity <- read_csv(spimalot_file("extdata/support_severity.csv"))
+  progression <- read_csv(spimalot_file("extdata/support_progression.csv"))
 
   function(pars) {
     start_date <- pars[["start_date"]]

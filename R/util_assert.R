@@ -29,3 +29,26 @@ assert_unique <- function(x, name = deparse(substitute(x))) {
     stop(sprintf("'%s' contains duplicate elements", name))
   }
 }
+
+
+assert_is <- function(x, what, name = deparse(substitute(x))) {
+  if (!inherits(x, what)) {
+    stop(sprintf("'%s' must be a %s", name, paste(what, collapse = " / ")),
+         call. = FALSE)
+  }
+  invisible(x)
+}
+
+
+assert_file_exists <- function(path, dir = NULL, name = "File") {
+  if (is.null(dir)) {
+    if (!file.exists(path)) {
+      stop(sprintf("%s '%s' does not exist", name, path))
+    }
+  } else {
+    if (!file.exists(file.path(dir, path))) {
+      stop(sprintf("%s '%s' does not exist (relative to '%s')",
+                   name, path, dir))
+    }
+  }
+}

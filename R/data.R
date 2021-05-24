@@ -24,18 +24,13 @@
 ##' @param trim_deaths The number of days of deaths to trim to avoid
 ##'   back-fill issues. We typically use a value of 4 days.
 ##'
-##' @param steps_per_day The number of model steps per day (`1 / dt`
-##'   or `steps_per_day` in [sircovid::carehomes_parameters()].
-##'
 ##' @param full_data Not sure yet, we'll find out
 ##'
-##' @return A [mcstate::particle_filter_data()] augmented
-##'   [data.frame()] which can be passed into
-##'   [mcstate::particle_filter] TODO: describe columns
+##' @return A [data.frame()] TODO: describe columns
 ##'
 ##' @export
 spim_data <- function(date, region, model_type, rtm, serology,
-                      steps_per_day, trim_deaths, full_data = FALSE) {
+                      trim_deaths, full_data = FALSE) {
   check_region(region)
   check_model_type(model_type)
 
@@ -43,18 +38,17 @@ spim_data <- function(date, region, model_type, rtm, serology,
     ## See the original task
     stop("Not yet supported")
   } else {
-    data <- spim_data_single(date, region, model_type, rtm, serology,
-                             trim_deaths, full_data)
-    mcstate::particle_filter_data(data, "date", steps_per_day, 1)
+    spim_data_single(date, region, model_type, rtm, serology,
+                     trim_deaths, full_data)
   }
 }
 
 
-spim_data_single <- function(date, model_type, rtm, serology, region,
+spim_data_single <- function(date, region, model_type, rtm, serology,
                              trim_deaths, full_data) {
   ## TODO: verify that rtm has consecutive days
-  rtm <- spim_data_rtm(rtm, region, date, model_type, full_data)
-  serology <- spim_data_serology(serology, region, date)
+  rtm <- spim_data_rtm(date, region, model_type, rtm, full_data)
+  serology <- spim_data_serology(date, region, serology)
 
   ## Merge the two datasets on date
   stopifnot(all(serology$date %in% rtm$date))
@@ -86,7 +80,7 @@ spim_data_single <- function(date, model_type, rtm, serology, region,
 }
 
 
-spim_data_rtm <- function(data, region, date, model_type, full_data) {
+spim_data_rtm <- function(date, region, model_type, data, full_data) {
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
             "death2", "death3", "death_chr", "death_comm",
@@ -316,7 +310,7 @@ spim_data_rtm <- function(data, region, date, model_type, full_data) {
 }
 
 
-spim_data_serology <- function(data, region, date) {
+spim_data_serology <- function(date, region, data) {
   ## We might have serology data that is too recent; subset it here:
   ## data <- data[as.Date(data$date) <= as.Date(date), ]
 
@@ -352,4 +346,48 @@ spim_data_serology <- function(data, region, date) {
              sero_tot_15_64_1 = data$total_samples_euro_immun,
              sero_pos_15_64_2 = data$n_positive_roche_n,
              sero_tot_15_64_2 = data$total_samples_roche_n)
+}
+
+
+spim_data_admissions <- function(admissions, region) {
+  nations <- c("scotland", "wales", "northern_ireland")
+
+  if (region %in% nations) {
+    admissions <- data.frame(
+      date = unique(admissions$date),
+      region = region,
+      adm_0 = NA_integer_,
+      adm_25 = NA_integer_,
+      adm_55 = NA_integer_,
+      adm_65 = NA_integer_,
+      adm_75 = NA_integer_)
+  } else {
+    vector_age_bands <- unique(admissions$age_from)
+    age_bands <- c("date", "region", "adm_0", "adm_25", "adm_55", "adm_65",
+                   "adm_75")
+
+    admissions$region <- gsub(" ", "_", admissions$region)
+    admissions <- admissions[admissions$region == region, ]
+
+    admissions <- admissions %>%
+      dplyr::group_by(date, age_from) %>%
+      dplyr::mutate(age_from = paste0("adm_", age_from)) %>%
+      dplyr::mutate(value = sum(admissions)) %>%
+      dplyr::slice(1) %>%
+      dplyr::select(date, region, age_from, value)
+
+    stopifnot(nrow(admissions) == length(unique(admissions$date)) *
+              length(vector_age_bands))
+
+    admissions <- admissions %>%
+      tidyr::pivot_wider(id_cols = c(date, region), names_from = age_from)
+
+    admissions$adm_0 <- rowSums(admissions[, 3:4])
+    admissions$adm_25 <- rowSums(admissions[, 5:7])
+    admissions$adm_75 <- rowSums(admissions[, 11:12])
+
+    admissions <- admissions %>% dplyr::select(all_of(age_bands))
+  }
+
+  admissions
 }

@@ -123,11 +123,13 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
   schedule_real <- schedule
   schedule_real$doses <- schedule$doses[, , i, drop = FALSE]
 
-  list(
+  ret <- list(
     data = data,
     mean_days_between_doses = mean_days_between_doses,
     priority_population = priority_population,
     schedule = schedule,
     schedule_real = schedule_real,
     efficacy = efficacy)
+  class(ret) <- "spim_vaccination_data" # soon
+  ret
 }
