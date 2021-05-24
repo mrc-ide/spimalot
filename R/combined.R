@@ -4,25 +4,29 @@
 spim_combined_load <- function(path) {
   regions <- sircovid::regions("all")
 
-  read1 <- function(filename) {
-    message(sprintf("Reading '%s'", filename))
-    ret <- lapply(file.path(path, regions, filename), readRDS)
-    names(ret) <- regions
-    ret
+  files <- file.path(path, regions, "fit.rds")
+  ## TODO: better error message if not found
+  stopifnot(all(file.exists(files)))
+
+## -  types <- c(samples = "sample_pmcmc_results.rds",
+## -             pmcmc = "pmcmc_results.rds",
+## -             # restart = "sample_pmcmc_restart.rds",
+## -             simulate = "sample_pmcmc_simulate.rds",
+## -             data = "data.rds",
+## -             vaccine = "vaccine.rds",
+## -             rt = "Rt.rds",
+## -             ifr_t = "ifr_t.rds",
+## -             deaths = "deaths_by_age.rds",
+## -             admissions = "admissions_by_age.rds")
+
+
+  read_rds <- function(filename, region) {
+    message(sprintf("Reading fit for %s", region))
+    readRDS(filename)
   }
-
-  types <- c(samples = "sample_pmcmc_results.rds",
-             pmcmc = "pmcmc_results.rds",
-             # restart = "sample_pmcmc_restart.rds",
-             simulate = "sample_pmcmc_simulate.rds",
-             data = "data.rds",
-             vaccine = "vaccine.rds",
-             rt = "Rt.rds",
-             ifr_t = "ifr_t.rds",
-             deaths = "deaths_by_age.rds",
-             admissions = "admissions_by_age.rds")
-
-  ret <- lapply(types, read1)
+  dat <- Map(read_rds, files, regions)
+  names(dat) <- regions
+  ret <- list_transpose(dat)
 
   message("Reordering trajectories")
   ## reorder by increasing cumulative incidence:
@@ -41,30 +45,9 @@ spim_combined_load <- function(path) {
   ret$rt <- combined_aggregate_rt(ret$rt, ret$samples)
   ret$ifr_t <- combined_aggregate_rt(ret$ifr_t, ret$samples)
 
-  ret$rt_by_region <- combined_switch_levels(ret$rt)
-
   ## Copy over some core bits of data; we should check here that these
   ## all match though.
   ret$info <- ret$samples[[1]]$info[c("date", "multistrain", "model_type")]
-
-  ## We need our region information in here. We'll tidy this up and
-  ## pop it in sircovid later.
-  regions <- rbind(
-    c("London", "london", "LON"),
-    c("East of England", "east_of_england", "EE"),
-    c("Midlands", "midlands", "MID"),
-    c("North East and Yorkshire", "north_east_and_yorkshire", "NE"),
-    c("North West", "north_west", "NW"),
-    c("South East", "south_east", "SE"),
-    c("South West", "south_west", "SW"),
-    c("Scotland", "scotland", "SCO"),
-    c("Wales", "wales", "WAL"),
-    c("Northern Ireland", "northern_ireland", "NI"))
-  colnames(regions) <- c("name", "key", "label")
-  regions <- as.data.frame(regions, stringsAsFactors = FALSE)
-  stopifnot(setequal(regions$key, sircovid::regions("all")))
-
-  ret$regions <- regions
 
   ret
 }

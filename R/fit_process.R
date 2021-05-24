@@ -23,7 +23,7 @@ spim_fit_process <- function(samples, control, admissions, rtm) {
   message("Summarising deaths")
   deaths <- extract_outputs_by_age(forecast, "D_hosp") # slow
   i_deaths_data <- colnames(deaths$output_t)
-  deaths[["data"]] <- rtm[rtm$region == region, ]
+  deaths$data <- rtm[rtm$region == region, ]
   deaths$data <- deaths$data[c("date", "region", i_deaths_data)]
 
   ## TODO: someone needs to document what this date is for (appears to
@@ -41,17 +41,21 @@ spim_fit_process <- function(samples, control, admissions, rtm) {
   message("Computing outputs by age class")
   age_class_outputs <- extract_age_class_outputs(samples)
 
+  message("Computing parameter covariance")
+  covariance <- spim_fit_covariance(samples)
+
   ## Drop the big objects from the output
   samples[c("state", "trajectories", "predict")] <- list(NULL)
 
-  list(samples = samples,
-       forecast = forecast,
+  list(samples = forecast, # note complicated naming change here
+       pmcmc = samples,
        rt = rt,
        ifr_t = ifr_t,
        admissions = admissions,
        deaths = deaths,
        simulate = simulate,
-       age_class_outputs = age_class_outputs)
+       age_class_outputs = age_class_outputs,
+       covariance = covariance)
 }
 
 

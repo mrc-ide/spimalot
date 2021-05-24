@@ -39,3 +39,12 @@ abind1 <- function(a, b) {
   rownames(ret) <- c(rownames(a), rownames(b))
   ret
 }
+
+
+list_transpose <- function(x) {
+  nms <- lapply(x, names)
+  stopifnot(length(unique(nms)) == 1L)
+  ret <- lapply(nms[[1]], function(el) lapply(x, "[[", el))
+  names(ret) <- nms[[1]]
+  ret
+}
