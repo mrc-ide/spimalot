@@ -84,6 +84,18 @@ png("figs/serology_roche_n.png", width = 2400, height = 1200, res = 200)
 spimalot::spim_plot_serology(dat, 2, 40)
 dev.off()
 
+png("figs/pillar2.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_pillar2_positivity(dat, date_min = as.Date("2020-05-15"),
+                                       ymax = 40)
+dev.off()
+
+png("figs/pillar2_cases.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_pillar2_cases(dat, date_min = as.Date("2020-05-15"))
+dev.off()
+
+png("figs/react.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_react(dat, date_min = as.Date("2020-05-15"), ymax = 3)
+dev.off()
 
 
 ## add (zoomed in) plots of SPI-M-relevant trajectories
@@ -102,4 +114,20 @@ spimalot::spim_plot_trajectories(
   c("deaths_hosp", "deaths_carehomes", "deaths", "icu", "general",
     "hosp", "all_admission"),
   with_forecast = FALSE, add_betas = FALSE)
+dev.off()
+
+png("spim_view/pillar2_positivity.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_pillar2_positivity(dat,
+                                       date_min = as.Date(dat$info$date) - 45,
+                                       ymax = 10, add_betas = TRUE)
+dev.off()
+
+png("spim_view/pillar2_cases.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_pillar2_cases(dat, date_min = as.Date(dat$info$date) - 45,
+                                  add_betas = TRUE)
+dev.off()
+
+png("spim_view/prevalence.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_react(dat, date_min = as.Date(dat$info$date) - 45,
+                          ymax = 3, add_betas = TRUE)
 dev.off()
