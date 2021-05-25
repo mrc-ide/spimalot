@@ -48,3 +48,8 @@ list_transpose <- function(x) {
   names(ret) <- nms[[1]]
   ret
 }
+
+
+vnapply <- function(X, FUN, ...) {
+  vapply(X, FUN, numeric(1), ...)
+}

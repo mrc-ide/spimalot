@@ -8,25 +8,21 @@ spim_combined_load <- function(path) {
   ## TODO: better error message if not found
   stopifnot(all(file.exists(files)))
 
-## -  types <- c(samples = "sample_pmcmc_results.rds",
-## -             pmcmc = "pmcmc_results.rds",
-## -             # restart = "sample_pmcmc_restart.rds",
-## -             simulate = "sample_pmcmc_simulate.rds",
-## -             data = "data.rds",
-## -             vaccine = "vaccine.rds",
-## -             rt = "Rt.rds",
-## -             ifr_t = "ifr_t.rds",
-## -             deaths = "deaths_by_age.rds",
-## -             admissions = "admissions_by_age.rds")
-
-
   read_rds <- function(filename, region) {
     message(sprintf("Reading fit for %s", region))
     readRDS(filename)
   }
   dat <- Map(read_rds, files, regions)
   names(dat) <- regions
+
+  info <- lapply(dat, function(x)
+    x$samples$info[c("date", "multistrain", "model_type")])
+  if (length(unique(info)) != 1L) {
+    stop("Incompatible regional fits")
+  }
+
   ret <- list_transpose(dat)
+  ret$info <- info[[1]]
 
   message("Reordering trajectories")
   ## reorder by increasing cumulative incidence:
@@ -45,38 +41,53 @@ spim_combined_load <- function(path) {
   ret$rt <- combined_aggregate_rt(ret$rt, ret$samples)
   ret$ifr_t <- combined_aggregate_rt(ret$ifr_t, ret$samples)
 
-  ## Copy over some core bits of data; we should check here that these
-  ## all match though.
-  ret$info <- ret$samples[[1]]$info[c("date", "multistrain", "model_type")]
+  message("Creating data for onward use")
+  ret$onward <- spim_combined_onward(ret)
 
   ret
 }
 
 
-combine_simulate <- function(simulate, samples, Rt_outputs, date) {
+spim_combined_onward <- function(dat) {
+  date <- dat$info$date
+  steps_per_day <- dat$samples[[1]]$info$data$steps_per_day
+  ret <- list(date = date,
+              step = sircovid::sircovid_date(date) * steps_per_day,
+              dt = 1 / steps_per_day,
+              pars = lapply(dat$samples, "[[", "pars"),
+              state = lapply(dat$samples, "[[", "state"),
+              data = lapply(dat$samples, function(x) x$predict$filter$data),
+              transform = lapply(dat$samples, function(x) x$predict$transform),
+              info = lapply(dat$samples, "[[", "info"),
+              vaccine = lapply(dat$samples, "[[", "vaccine"),
+              simulate = spim_combined_data_simulate(dat))
+}
 
-  x <- switch_levels(simulate)
-  rt <- switch_levels(Rt_outputs)[c("Rt_general", "eff_Rt_general")]
 
-  dates <- simulate[[1]]$date
-  idx_dates <- samples[[1]]$trajectories$date %in% dates
+spim_combined_onward_simulate <- function(dat) {
+  simulate <- list_transpose(dat$simulate)
 
-  rt_combined <- lapply(rt, function(x) {
-    ret <- aperm(abind::abind(x, along = 3), c(2, 3, 1))
-    ret[, , idx_dates]
-  })
+  dates <- dat$simulate[[1]]$date
+  idx_dates <- dat$samples[[1]]$trajectories$date %in% dates
 
-  state <- lapply(samples, function(x) {
-    x$trajectories$state[rownames(simulate[[1]]$state), , idx_dates]
-  })
+  state <- lapply(dat$samples, function(x)
+    x$trajectories$state[rownames(simulate[[1]]$state), , idx_dates])
+  state <- aperm(abind::abind(state, along = 4), c(1, 2, 4, 3))
 
-  state_by_age <-  switch_levels(x$state_by_age)
+  state_by_age <- lapply(
+    list_transpose(simulate$state_by_age),
+    abind::abind, along = 3)
 
   ret <- list(date = dates,
-              state = aperm(abind::abind(state, along = 4), c(1, 2, 4, 3)),
-              state_by_age = lapply(state_by_age, abind::abind, along = 3),
-              n_protected = abind::abind(x$n_protected, along = 2),
-              n_doses = abind::abind(x$n_doses, along = 3))
+              state = state,
+              state_by_age = state_by_age,
+              n_protected = abind::abind(simulate$n_protected, along = 2),
+              n_doses = abind::abind(simulate$n_doses, along = 3))
+
+  ## This is not terrible:
+  rt <- list_transpose(dat$rt)[c("Rt_general", "eff_Rt_general")]
+  rt_combined <- lapply(rt, function(x)
+    aperm(abind::abind(x, along = 3), c(2, 3, 1))[, , idx_dates])
 
   c(ret, rt_combined)
 }
