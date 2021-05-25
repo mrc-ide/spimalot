@@ -706,7 +706,7 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
   ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = cols,
            horiz = FALSE, leg = FALSE)
   lines(x, qs["50.0%", ], col = col, lty = 1, lwd = 1.5, lend = 1)
-  if (rt_type) {
+  if (rt_type != "beta") {
     abline(h = 1, lty = 2)
   }
 }
