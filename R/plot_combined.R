@@ -278,7 +278,9 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
     }
   }
 
-  par(mgp = c(1.7, 0.5, 0), bty = "n")
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
   plot(date_min, 0, type = "n",
        xlim = c(date_min, dat$info$date),
        ylim = c(0, ymax),
@@ -379,7 +381,9 @@ spim_plot_pillar2_cases_region <- function(region, dat, date_min,
   pos_cols <- add_alpha(rep(pos_col, 2), alpha)
 
 
-  par(mgp = c(1.7, 0.5, 0), bty = "n")
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
   plot(xlim[1], 0, type = "n",
        xlim = xlim,
        ylim = ylim,
@@ -478,7 +482,9 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   pos_cols <- add_alpha(rep(pos_col, 2), alpha)
 
 
-  par(mgp = c(1.7, 0.5, 0), bty = "n")
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
   plot(date_min, 0, type = "n",
        xlim = c(date_min, dat$info$date),
        ylim = c(0, ymax),
@@ -581,10 +587,13 @@ spim_plot_serology_region <- function(region, dat, sero_flow, ymax,
   inf_cols <- add_alpha(rep(cols$cyan, 2), alpha)
 
   ylim <- c(0, ymax)
-  par(mgp = c(1.7, 0.5, 0), bty = "n")
   x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
   x <- x[x <= date]
   xlim <- c(min(x[-1L]), max(x[-1L]))
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
   plot(xlim[1], 0, type = "n",
        xlim = xlim,
        ylim = ylim, las = 1,
@@ -655,7 +664,9 @@ spim_plot_trajectories_region <- function(region, dat, what = NULL,
 spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
   sample_Rt <- dat$rt[[region]][[rt_type]][-1L, ]
 
-  if (grepl("^eff_", rt_type)) {
+  if (rt_type == "beta") {
+    ylab <- expression(beta[t])
+  } else if (grepl("^eff_", rt_type)) {
     ## TODO: this is printing oddly on the graph
     ylab <- paste("eff", expression(R[t]))
   } else {
@@ -695,7 +706,9 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
   ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = cols,
            horiz = FALSE, leg = FALSE)
   lines(x, qs["50.0%", ], col = col, lty = 1, lwd = 1.5, lend = 1)
-  abline(h = 1, lty = 2)
+  if (rt_type) {
+    abline(h = 1, lty = 2)
+  }
 }
 
 
@@ -766,7 +779,9 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
   dy_extra <- data$full[, what]
   dy_extra[!is.na(dy)] <- NA_integer_
 
-  par(mgp = c(1.7, 0.5, 0), bty = "n")
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
   xlim <- c(date_min %||% as.Date("2020-03-16"),
             if (with_forecast) max(x_forecast) else date)
 

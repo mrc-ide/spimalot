@@ -76,6 +76,10 @@ png("figs/Rt_general.png", width = 2400, height = 1200, res = 200)
 spimalot::spim_plot_Rt(dat, "Rt_general")
 dev.off()
 
+png("figs/beta.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_Rt(dat, "beta")
+dev.off()
+
 png("figs/serology_euroimmun.png", width = 2400, height = 1200, res = 200)
 spimalot::spim_plot_serology(dat, 1, 40)
 dev.off()
