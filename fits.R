@@ -10,6 +10,8 @@ fit1 <- function(region, path) {
   trim_deaths <- 4
   forecast_days <- 57
 
+  read_csv <- spimalot:::read_csv
+
   control <- spimalot::spim_control(short_run, n_chains)
 
   ## TODO: this is still not quite what we will need for the restart
@@ -24,7 +26,7 @@ fit1 <- function(region, path) {
   ## This is new, and used only in sorting out the final outputs. Some
   ## explanation would be useful.
   data_admissions <- read_csv("example/admissions_age_sitrep.csv")
-  data_admissions <- spim_data_admissions(data_admissions, region)
+  data_admissions <- spimalot::spim_data_admissions(data_admissions, region)
 
   beta_date <- spimalot::spim_pars_beta(date)
 
@@ -59,14 +61,14 @@ fit1 <- function(region, path) {
   ## > filter$run(pars$model(pars$initial()))
 
   dat <- spimalot::spim_fit_process(samples, control$forecast,
-                                    data_admissions, data_rtm)
+                                    data_admissions, data_rtm,
+                                    parameters)
 
   ## One more thing; added here rather than in the processing because
   ## otherwise the arg list is a bit weird with all the odd bits of
   ## data being passed in. But this gives us the data set we fitted to
   ## along with a full version.
-  dat$data <- list(fitted = data,
-                   full = data_full)
+  dat$data <- list(fitted = data, full = data_full)
   dat$vacination <- vaccination
 
   dest <- file.path(path, region)
@@ -75,7 +77,8 @@ fit1 <- function(region, path) {
   saveRDS(dat, file.path(dest, "fit.rds"))
 }
 
-pkgload::load_all()
+devtools::document()
+pkgload::load_all(export_all = FALSE)
 for (region in sircovid::regions("all")) {
   fit1(region, "example/fits")
 }
