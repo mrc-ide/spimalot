@@ -134,7 +134,13 @@ spim_pars_single <- function(date, region, model_type, multistrain,
 }
 
 
-## TODO: a version of this which allows tweaking around recent dates
+##' Create vector of beta dates
+##'
+##' @title Create vector of beta dates
+##'
+##' @param date Todays dates (last date is set two weeks ago)
+##'
+##' @export
 spim_pars_beta <- function(date) {
   ## Dates are as follows
   ##  1. 2020-03-16 - PM advises WFH, against non-essential travel etc

@@ -1,3 +1,19 @@
+##' Process fit data
+##'
+##' @title Process a fit
+##' @param samples The pmcmc_samples object from [mcstate::pmcmc]
+##'
+##' @param control The forecast control from [spimalot::spim_control]
+##'
+##' @param admissions The admissions data set from
+##'   [spimalot::spim_data_admissions]
+##'
+##' @param rtm The rtm data set
+##'
+##' @param parameters The parameter specification
+##'   ([spimalot::spim_pars_pmcmc_load])
+##'
+##' @export
 spim_fit_process <- function(samples, control, admissions, rtm, parameters) {
   region <- samples$info$region
 

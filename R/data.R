@@ -349,6 +349,13 @@ spim_data_serology <- function(date, region, data) {
 }
 
 
+##' Load admissions data
+##'
+##' @title Load admissions data
+##' @param admissions A data.frame from the admissions by age sitrep
+##'
+##' @param region Name of the region
+##' @export
 spim_data_admissions <- function(admissions, region) {
   nations <- c("scotland", "wales", "northern_ireland")
 
