@@ -13,6 +13,11 @@ read_csv <- function(...) {
 }
 
 
+write_csv <- function(...) {
+  write.csv(..., row.names = FALSE)
+}
+
+
 last <- function(x) {
   x[[length(x)]]
 }

@@ -66,7 +66,7 @@ spim_pars <- function(date, region, model_type, multistrain,
 ##'
 ##' @param info Filename for the parameter info, relative to `path`
 ##'
-##' @param proposal Filename for the parameter priors, relative to `path`
+##' @param prior Filename for the parameter priors, relative to `path`
 ##'
 ##' @param proposal Filename for the parameter proposal, relative to `path`
 ##'
@@ -86,6 +86,13 @@ spim_pars_pmcmc_load <- function(path, info = "info.csv", prior = "prior.csv",
   ## to tweak later though.
   class(ret) <- "spim_pars_pmcmc"
   ret
+}
+
+
+spim_pars_pmcmc_save <- function(p, path) {
+  dir.create(path, FALSE, TRUE)
+  write_csv(p$info, file.path(path, "info.csv"))
+  write_csv(p$proposal, file.path(path, "proposal.csv"))
 }
 
 

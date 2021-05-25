@@ -48,6 +48,14 @@ spim_combined_load <- function(path) {
 }
 
 
+spim_combined_parameters <- function(dat) {
+  ## Create the 2 updated parameters (info and proposal)
+
+
+  browser()
+}
+
+
 spim_combined_onward <- function(dat) {
   date <- dat$info$date
   steps_per_day <- dat$samples[[1]]$info$data$steps_per_day
@@ -60,7 +68,7 @@ spim_combined_onward <- function(dat) {
               transform = lapply(dat$samples, function(x) x$predict$transform),
               info = lapply(dat$samples, "[[", "info"),
               vaccine = lapply(dat$samples, "[[", "vaccine"),
-              simulate = spim_combined_data_simulate(dat))
+              simulate = spim_combined_onward_simulate(dat))
 }
 
 
