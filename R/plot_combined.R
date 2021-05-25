@@ -59,6 +59,165 @@ spim_plot_Rt <- function(dat, rt_type, forecast_until = NULL) {
 }
 
 
+##' Plot serology
+##'
+##' @title Plot serology
+##'
+##' @param dat Combined data set
+##'
+##' @param sero_flow Number identifying which serology flow to use (1 or 2)
+##'
+##' @param ymax Maximum percentage on y-axis
+##'
+##' @export
+spim_plot_serology <- function(dat, sero_flow, ymax) {
+  region_names <- sircovid::regions("all")
+
+  oo <- par(mfrow = c(2, 5), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in region_names) {
+    if (r == region_names[length(region_names)]) {
+      spim_plot_serology_region(r, dat, sero_flow, ymax, TRUE)
+    } else {
+      spim_plot_serology_region(r, dat, sero_flow, ymax)
+    }
+  }
+}
+
+
+spim_plot_serology_region <- function(region, dat, sero_flow, ymax,
+                                      plot_legend = FALSE) {
+
+  sample <- dat$samples[[region]]
+  data <- dat$data[[region]]
+  date <- dat$info$date
+  cols <- spim_colours()
+  alpha <- 0.35
+
+  extract_serodates <- function(data, cap = 150) {
+    sero <- data$full[[paste0("sero_tot_15_64_", sero_flow)]] > cap
+    sero[is.na(sero)] <- FALSE
+    n <- length(sero)
+
+    lag <- seq(4, n)
+
+    start <- sero[lag] & !sero[lag - 1] & !sero[lag - 2] & !sero[lag - 3]
+    end <- sero[lag - 3] & !sero[lag - 2] & !sero[lag - 1] & !sero[lag]
+
+
+    dates <- data$full$date_string
+    res <- data.frame(start = dates[lag][start])
+
+    end_dates <- dates[lag - 3][end]
+    if (length(end_dates) < length(res$start)) {
+      end_dates <- c(end_dates, date)
+    }
+    res$end <- end_dates
+    res
+  }
+
+  sero_dates <- extract_serodates(data)
+  if (nrow(sero_dates) > 0) {
+    tol <- 2
+
+    sero_dates$start <- sero_dates$start - tol
+    sero_dates$end <- sero_dates$end + tol
+
+    rownames(data$fitted) <- data$fitted$date_string
+
+    sero_data <-
+      data$fitted[, paste0(c('sero_tot_15_64_', 'sero_pos_15_64_'), sero_flow)]
+    colnames(sero_data) <- c('ntot', 'npos')
+    sero_data[is.na(sero_data)] <- 0
+
+    summ_serodata <- sapply(X = seq_len(nrow(sero_dates)), function(i) {
+      w <- seq(from = as.Date(sero_dates[i, "start"]),
+               to = as.Date(sero_dates[i, "end"]), 1)
+      w <- as.character(as.Date(w))
+      colSums(sero_data[w,  ], na.rm = TRUE)
+    })
+
+    summ_serodata <- data.frame(sero_dates,
+                                t(summ_serodata),
+                                stringsAsFactors = FALSE)
+
+    summ_serodata <- cbind(summ_serodata,
+                           with(summ_serodata,
+                                Hmisc::binconf(x = npos, n = ntot) * 100))
+    summ_serodata$mid <- (as.numeric(as.Date(summ_serodata$start)) +
+                            as.numeric(as.Date(summ_serodata$end))) / 2
+  }
+
+  p <- sample$predict$transform(sample$pars[1,])
+  sero_sensitivity <- p[[paste0("sero_sensitivity_", sero_flow)]]
+  sero_specificity <- p[[paste0("sero_specificity_", sero_flow)]]
+  sero_pos <- sample$trajectories$state[paste0("sero_pos_", sero_flow), , ]
+
+  res <- (sero_sensitivity * sero_pos +
+            (1 - sero_specificity) * (p$N_tot_15_64 - sero_pos)) /
+    p$N_tot_15_64 * 100
+  res_infs <- sample$trajectories$state["infections", , ] / p$N_tot_all * 100
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+  qs_infs <- apply(res_infs,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+
+  pos_cols <- add_alpha(rep(cols$purple, 2), alpha)
+  inf_cols <- add_alpha(rep(cols$cyan, 2), alpha)
+
+  ylim <- c(0, ymax)
+  par(mgp = c(1.7, 0.5, 0), bty = "n")
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+  x <- x[x <= date]
+  xlim <- c(min(x[-1L]), max(x[-1L]))
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = ylim, las = 1,
+       main = "",
+       font.main = 1,
+       xlab = "", ylab = "Cumulative proportion (%)")
+  title(main = toupper(spim_region_name(region)), adj = 0, font.main = 1,
+        line = 0.5, cex.main = 1)
+
+  if (nrow(sero_dates) > 0) {
+    lapply(X = seq_len(nrow(summ_serodata)), FUN = function(i) {
+
+      xx <- rep(unlist(summ_serodata[i, c("start", "end")]), each= 2)
+      yy <- c(ylim, rev(ylim))
+
+      polygon(x = xx, y = yy, col = grey(0.9), border = NA)
+    })
+  }
+
+  p_labels <- c("2.5%", "25.0%", "75.0%", "97.5%")
+
+  ci_bands(qs[p_labels, seq_along(x)], x, cols = pos_cols,
+           horiz = FALSE, leg = FALSE)
+  ci_bands(qs_infs[p_labels, seq_along(x)], x, cols = inf_cols,
+           horiz = FALSE, leg = FALSE)
+  lines(x, qs_infs["50.0%", seq_along(x)], col = cols$cyan,
+        lty = 1, lwd = 1.5, lend = 1)
+  lines(x, qs["50.0%", seq_along(x)], col = cols$purple,
+        lty = 1, lwd = 1.5, lend = 1)
+  if (nrow(sero_dates) > 0) {
+    with(summ_serodata, {
+      segments(x0 = mid, y0 = Lower, y1 = Upper, lty = 1, lend = 1)
+      points(x = mid, y = PointEst, pch = 18)
+      points(x = rep(mid, 2), y = c(Lower, Upper), pch = '-')
+    })
+  }
+
+  if(plot_legend) {
+    leg_cols <- c(cols$cyan, cols$purple)
+    legend("top", legend = c("Infected", "Seropositive"),
+           cex = 1, x.intersp = 2, ncol = 2,
+           fill = add_alpha(leg_cols, alpha * 2),
+           border = leg_cols,
+           box.col = "white")
+  }
+
+}
 
 
 spim_plot_trajectories_region <- function(region, dat, what = NULL,

@@ -12,7 +12,9 @@ spim_colours <- function() {
     blue = "#278B9AFF",
     orange = "#E48C2AFF",
     brown = "#724615FF",
-    puce = "#AF9699FF")
+    puce = "#AF9699FF",
+    purple = "#5C5992FF",
+    cyan = "#699196FF")
   cols$now <- cols$blue
   cols$forecast <- cols$green
   cols
