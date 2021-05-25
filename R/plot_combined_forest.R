@@ -8,7 +8,7 @@
 ##'
 ##' @return Nothing, called for side effects
 ##' @export
-spim_combined_plot_forest <- function(dat, plot_betas) {
+spim_plot_forest <- function(dat, plot_betas) {
   samples <- dat$samples[sircovid::regions("all")]
   date <- dat$info$date
   model_type <- dat$info$model_type
@@ -132,14 +132,7 @@ spim_combined_plot_forest <- function(dat, plot_betas) {
     mapply(FUN = plot_ci_bar, res = numeric_start_date, at = at, width = 0.1)
   }
 
-  ## TODO: this will be easier (potentially) if we arrange the final 3
-  ## parameters objects before running the plots.
-  ##
-  ## TODO: need new fits, which will then have the priors in
-  ## dat$parameters[region]$prior
-  browser()
   hps <- dat$parameters$prior
-  hps <- read.csv("parameters_prior.csv", stringsAsFactors = FALSE)
 
   op <- par(bty = "n", mar = c(3, 0, 1, 0), mgp = c(2, 0.75, 0),
             oma = c(2, 0, 3, 3))

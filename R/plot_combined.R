@@ -1,24 +1,68 @@
-##' Plot trajectories for a region
+##' Plot trajectories
 ##'
 ##' @title Plot trajectories
 ##'
-##' @param region Name of the region
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param what Vector of traces to add
+##'
+##' @param date_min Starting date for plot. If not given, defaults to
+##'   the beginning of the data.
+##'
+##' @param with_forecast Logical, indicating if we should add the forecast
+##'
+##' @param add_betas Logical, indicating if we should add betas
+##'
+##' @export
+spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
+                                   with_forecast = TRUE, add_betas = FALSE) {
+  n_regions <- length(regions)
+  op <- par(mfcol = c(length(what), length(regions)),
+            oma = c(1, 1, 4, 1),
+            mar = c(3, 3, 0.5, 0.5))
+  on.exit(par(op))
+
+  for (r in regions) {
+    spim_plot_trajectories_region(r, dat, what, date_min,
+                                  with_forecast = with_forecast,
+                                  add_betas = add_betas)
+  }
+
+  mtext(side = 3, text = toupper(spim_region_name(regions)),
+        line = 0.5, outer = TRUE, cex = 0.8,
+        at = c(0.08, 0.225, 0.365, 0.515, 0.65, 0.795, 0.94))
+}
+
+
+##' Plot Rt
+##'
+##' @title Plot Rt
 ##'
 ##' @param dat Combined data set
 ##'
-##' @param xlim X-limits (must be dates)
+##' @param rt_type One of the valid Rt types (e.g., eff_Rt_all)
 ##'
-##' @param what Vector of names of traces to plot
-##'
-##' @param with_forecast Logical, add forecast?
-##'
-##' @param add_betas Logical, add betas?
-##'
-##' @return Nothing, called for side effects
+##' @param forecast_until Optional date to forecast till
 ##'
 ##' @export
-spim_plot_trajectories_region <- function(region, dat, xlim, what = NULL,
-                                          with_forecast = TRUE,
+spim_plot_Rt <- function(dat, rt_type, forecast_until = NULL) {
+  oo <- par(mfrow = c(2, 6), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+  if (is.null(forecast_until)) {
+    forecast_until <- dat$info$date
+  }
+  for (r in names(dat$rt)) {
+    spim_plot_Rt_region(r, dat, rt_type, forecast_until)
+  }
+}
+
+
+
+
+spim_plot_trajectories_region <- function(region, dat, what = NULL,
+                                          date_min = NULL, with_forecast = TRUE,
                                           add_betas = FALSE) {
   if (is.null(what)) {
     what <- c("deaths_hosp", "deaths_comm", "deaths_carehomes",
@@ -26,25 +70,16 @@ spim_plot_trajectories_region <- function(region, dat, xlim, what = NULL,
   }
   for (w in what) {
     spim_plot_trajectories_region1(
-      w, region, dat, xlim,
+      w, region, dat, date_min,
       with_forecast = with_forecast, add_betas = add_betas)
   }
 }
 
 
-plot_Rt <- function(dat, rt_type, forecast_until = NULL) {
-  oo <- par(mfrow = c(2, 6), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
-  on.exit(par(oo))
-  if (is.null(forecast_until)) {
-    forecast_until <- dat$info$date
-  }
-  for (r in names(dat$rt)) {
-    plot_Rt_region(r, dat, rt_type, forecast_until)
-  }
-}
 
 
-plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
+
+spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
   sample_Rt <- dat$rt[[region]][[rt_type]][-1L, ]
 
   if (grepl("^eff_", rt_type)) {
@@ -91,11 +126,11 @@ plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
 }
 
 
-spim_plot_trajectories_region1 <- function(what, region, dat, xlim,
+spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
                                            with_forecast = TRUE,
                                            add_betas = FALSE) {
   trajectories <- dat$samples[[region]]$trajectories
-  date <- as.Date(dat$info$date)
+  date <- dat$info$date
   cols <- spim_colours()
   beta_date <- dat$info[[region]]$beta_date
   alpha <- 0.3
@@ -159,9 +194,8 @@ spim_plot_trajectories_region1 <- function(what, region, dat, xlim,
   dy_extra[!is.na(dy)] <- NA_integer_
 
   par(mgp = c(1.7, 0.5, 0), bty = "n")
-  if (with_forecast) {
-    xlim[2] <- max(x_forecast)
-  }
+  xlim <- c(date_min %||% as.Date("2020-03-16"),
+            if (with_forecast) max(x_forecast) else date)
 
   rn_res <- as.Date(colnames(res))
   ylim <- c(0, max(dy[which(dx >= xlim[1] & dx <= xlim[2])],
