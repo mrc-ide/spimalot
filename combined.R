@@ -101,6 +101,33 @@ png("figs/react.png", width = 2400, height = 1200, res = 200)
 spimalot::spim_plot_react(dat, date_min = as.Date("2020-05-15"), ymax = 3)
 dev.off()
 
+png("figs/IFR_t_all.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_ifr_t(dat, "IFR_t_all")
+dev.off()
+
+png("figs/IFR_t_all_no_vacc.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_ifr_t(dat, "IFR_t_all_no_vacc")
+dev.off()
+
+png("figs/IFR_t_general.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_ifr_t(dat, "IFR_t_general")
+dev.off()
+
+png("figs/IFR_t_general_no_vacc.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_ifr_t(dat, "IFR_t_general_no_vacc")
+dev.off()
+
+png("figs/incidence.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_incidence(dat)
+dev.off()
+
+png("figs/incidence_per_1000.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_incidence(dat, per_1000 = TRUE)
+dev.off()
+
+png("figs/susceptible.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_prop_susceptible(dat, 40)
+dev.off()
 
 ## add (zoomed in) plots of SPI-M-relevant trajectories
 dir.create("spim_view", FALSE, TRUE)

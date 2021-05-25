@@ -59,6 +59,31 @@ spim_plot_Rt <- function(dat, rt_type, forecast_until = NULL) {
   }
 }
 
+##' Plot IFR over time
+##'
+##' @title Plot IFR over time
+##'
+##' @param dat Combined data set
+##'
+##' @param ifr_t_type One of the valid IFR_t types (e.g., IFR_t_all)
+##'
+##' @param ymax Maximum percentage on y-axis
+##'
+##' @param forecast_until Optional date to forecast till
+##'
+##' @export
+spim_plot_ifr_t <- function(dat, ifr_t_type, ymax = 2.5,
+                            forecast_until = NULL) {
+  oo <- par(mfrow = c(2, 6), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+  if (is.null(forecast_until)) {
+    forecast_until <- dat$info$date
+  }
+  for (r in names(dat$ifr_t)) {
+    spim_plot_ifr_t_region(r, dat, ifr_t_type, ymax, forecast_until)
+  }
+}
+
 
 ##' Plot serology
 ##'
@@ -158,6 +183,154 @@ spim_plot_react <- function(dat, date_min, ymax, add_betas = FALSE) {
   for (r in region_names) {
     spim_plot_react_region(r, dat, date_min, ymax, add_betas)
   }
+}
+
+
+##' Plot incidence
+##'
+##' @title Plot incidence
+##'
+##' @param dat Combined data set
+##'
+##' @param per_100 Logical, indicating if we plot incidence per 1000 people
+##'
+##' @export
+spim_plot_incidence <- function(dat, per_1000 = FALSE) {
+  region_names <- sircovid::regions("all")
+
+  oo <- par(mfrow = c(2, 6), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in region_names) {
+    spim_plot_incidence_region(r, dat, per_1000)
+  }
+}
+
+
+##' Plot proportion susceptible
+##'
+##' @title Plot proportion susceptible
+##'
+##' @param dat Combined data set
+##'
+##' @param forecast_until Optional date to forecast till
+##'
+##' @export
+spim_plot_prop_susceptible <- function(dat, ymin) {
+  region_names <- sircovid::regions("all")
+
+  oo <- par(mfrow = c(2, 6), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in region_names) {
+    if (r == region_names[length(region_names)]) {
+      spim_plot_prop_susceptible_region(r, dat, ymin, TRUE)
+    } else {
+      spim_plot_prop_susceptible_region(r, dat, ymin)
+    }
+  }
+
+}
+
+
+spim_plot_prop_susceptible_region <- function(region, dat, ymin,
+                                          plot_legend = FALSE) {
+
+  sample <- dat$samples[[region]]
+  cols <- spim_colours()
+  S_col <- cols$purple
+  eff_S_col = cols$blue
+  alpha <- 0.3
+
+  N0 <- sum(sircovid::carehomes_parameters(1, region)$population)
+
+  trajectories <- sample$trajectories$state
+
+  index_S <- grep("^S_", rownames(sample$trajectories$state))
+  S <- apply(trajectories[index_S, , ], c(2, 3), sum)
+  prop_S <- S / N0 * 100
+
+  prop_eff_S <- trajectories["eff_S", , ] / N0 * 100
+
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(prop_S,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+  qs_eff <- apply(prop_eff_S,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+
+  S_cols <- add_alpha(rep(S_col, 2), alpha)
+  eff_S_cols <- add_alpha(rep(eff_S_col, 2), alpha)
+
+
+  par(mgp =c (1.7, 0.5, 0), bty = "n")
+  ## remove 1st one currently as this is time period is typically much more than one day
+  xlim <- c(min(x[-1L]), max(x[-1L]))
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = c(ymin, 100),
+       main = toupper(spim_region_name(region)),
+       font.main = 1,
+       xlab = "Date", ylab = "Proportion susceptible (%)")
+
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = S_cols,
+           horiz = FALSE, leg = FALSE)
+  ci_bands(qs_eff[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = eff_S_cols,
+           horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = S_col, lty = 1, lwd = 1.5, lend = 1)
+  lines(x, qs_eff["50.0%", ], col = eff_S_col, lty = 1, lwd = 1.5, lend = 1)
+
+  if(plot_legend) {
+    plot.new()
+    leg_cols <- c(S_col, eff_S_col)
+    legend("left", legend = c("Susceptible", "Effective susceptible"),
+           cex = 1.5, y.intersp = 2, fill = add_alpha(leg_cols, alpha * 2),
+           border = leg_cols, bty = "n")
+  }
+
+}
+
+
+spim_plot_incidence_region <- function(region, dat, per_1000 = FALSE) {
+
+  sample <- dat$samples[[region]]
+  title <- spim_region_name(region)
+  cols <- spim_colours()
+  traj_cols <- c(cols$sky_blue1, cols$sky_blue2)
+  line_col <- cols$cyan2
+  alpha <- 0.3
+
+  res <- sample$trajectories$state["infections_inc", , -1L]
+  if (per_1000) {
+    res <- res / sum(sircovid::carehomes_parameters(1, region)$N_tot)
+  }
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date[-1L])
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  xlim <- c(min(x), max(x))
+  if (per_1000) {
+    ylim <- c(0, 12)
+    ylab <- "Incidence per day per 1000"
+  } else {
+    ylim <- c(0, max(res * 1.1,  na.rm = TRUE))
+    ylab <- "Incidence per day"
+  }
+
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = ylim,
+       main = toupper(title),
+       font.main = 1,
+       xlab = "Date", ylab = ylab)
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x,
+           cols = traj_cols, horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = line_col, lty = 1, lwd = 1.5)
+
 }
 
 
@@ -659,6 +832,54 @@ spim_plot_trajectories_region <- function(region, dat, what = NULL,
 
 
 
+
+spim_plot_ifr_t_region <- function(region, dat, ifr_t_type, ymax,
+                                   forecast_until, include_forecast = TRUE,
+                                   add = FALSE) {
+
+  ifr_t <- dat$ifr_t[[region]][[ifr_t_type]][-1L, ]
+  alpha <- 0.3
+  col <- spim_colours()$blue
+
+  x <- sircovid::sircovid_date_as_date(dat$ifr_t[[region]]$date[-1L, 1])
+
+  if (!include_forecast) {
+    ifr_t <- ifr_t[x <= forecast_until, ]
+    x <- x[x <= forecast_until]
+  }
+
+  rownames(ifr_t) <- as.character(x)
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(ifr_t,  MARGIN = 1, FUN = quantile, ps, na.rm = TRUE)
+
+  ## remove NAs for plotting purposes
+  idx_not_na <- which(!is.na(colSums(qs)))
+  x <- x[idx_not_na]
+  qs <- qs[, idx_not_na]
+
+  if (!add) {
+    oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+    on.exit(oo)
+    xlim <- c(x[1], as.Date(forecast_until))
+    plot(xlim[1], 0, type = "n",
+         xlim = xlim,
+         ylim = c(0, ymax),
+         main = toupper(spim_region_name(region)),
+         font.main = 1,
+         xlab = "", ylab = "IFR",
+         xaxt = "n")
+    segments(x0 = xlim[1], x1 = xlim[2], y0 = seq(0, 4, 0.5), col = grey(0.9))
+    axis.Date(1, at = seq(as.Date("2020-04-01"), as.Date(forecast_until),
+                          by = "2 month"), format = "%b")
+  }
+  cols <- add_alpha(rep(col, 2), alpha)
+
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = cols,
+           horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = col, lty = 1, lwd = 1.5, lend = 1)
+
+}
 
 
 spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
