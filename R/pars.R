@@ -13,7 +13,7 @@
 ##'
 ##' @title Create parameters object
 ##'
-##' @inheritParameters spim_data
+##' @inheritParams spim_data
 ##'
 ##' @param multistrain Logical, indicating if the model is a
 ##'   "multistrain" model allowing for mulitiple competing strains.

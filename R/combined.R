@@ -1,6 +1,11 @@
-## All the stuff here will disappear once we move entirely to the
-## multi-region method.
-
+##' Load combined fits from a directory of regional fits
+##'
+##' @title Load combined fits @param path Directory name. Within here
+##'   we expect to see `<region>/fits.rds` for each region in
+##'   `sircovid::regions("all")`
+##'
+##' @return A combined fit object
+##' @export
 spim_combined_load <- function(path) {
   regions <- sircovid::regions("all")
 

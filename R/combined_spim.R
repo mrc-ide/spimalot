@@ -49,6 +49,28 @@ spim_summary_time_series <- function(dat, time_series_date) {
 }
 
 
+##' @export
+##' @rdname spim_summary
+##'
+##' @param result Result of `spim_summary_nowcast` or
+##'   `spim_summary_time_series`
+##'
+##' @param path_template Path to the template file
+##'
+##' @param path_save Path to save the result at
+spim_summary_write <- function(result, path_template, path_save) {
+  sheets <- readxl::excel_sheets(path_template)
+  template <- setNames(
+    lapply(sheets, readxl::read_xlsx, path = path_template,
+           .name_repair = "minimal"),
+    sheets)
+
+  stopifnot(identical(names(template[[2]]), names(result)))
+  template[[2]] <- result
+  writexl::write_xlsx(template, path_save)
+}
+
+
 spim_summary_region_rt <-  function(region, dat, time_series_date) {
   date <- dat$info$date
   model_type <- dat$info$model_type
