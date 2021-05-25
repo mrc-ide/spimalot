@@ -18,8 +18,7 @@ write_csv <- function(...) {
 }
 
 
-last <- function(x) {
-  x[[length(x)]]
+last <- function(x) {[[length(x)]]
 }
 
 
