@@ -49,16 +49,9 @@ spim_combined_load <- function(path) {
 
   message("Creating data for onward use")
   ret$onward <- spim_combined_onward(ret)
+  ret$parameters <- lapply(list_transpose(ret$parameters), dplyr::bind_rows)
 
   ret
-}
-
-
-spim_combined_parameters <- function(dat) {
-  ## Create the 2 updated parameters (info and proposal)
-
-
-  browser()
 }
 
 

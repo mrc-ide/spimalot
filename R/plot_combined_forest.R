@@ -137,6 +137,8 @@ spim_combined_plot_forest <- function(dat, plot_betas) {
   ##
   ## TODO: need new fits, which will then have the priors in
   ## dat$parameters[region]$prior
+  browser()
+  hps <- dat$parameters$prior
   hps <- read.csv("parameters_prior.csv", stringsAsFactors = FALSE)
 
   op <- par(bty = "n", mar = c(3, 0, 1, 0), mgp = c(2, 0.75, 0),

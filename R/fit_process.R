@@ -1,4 +1,4 @@
-spim_fit_process <- function(samples, control, admissions, rtm) {
+spim_fit_process <- function(samples, control, admissions, rtm, parameters) {
   region <- samples$info$region
 
   message("Running forecasts")
@@ -41,8 +41,8 @@ spim_fit_process <- function(samples, control, admissions, rtm) {
   message("Computing outputs by age class")
   age_class_outputs <- extract_age_class_outputs(samples)
 
-  message("Computing parameter covariance")
-  covariance <- spim_fit_covariance(samples)
+  message("Computing parameter MLE and covariance matrix")
+  parameters <- spim_fit_parameters(samples, parameters)
 
   ## Drop the big objects from the output
   samples[c("state", "trajectories", "predict")] <- list(NULL)
@@ -55,7 +55,7 @@ spim_fit_process <- function(samples, control, admissions, rtm) {
        deaths = deaths,
        simulate = simulate,
        age_class_outputs = age_class_outputs,
-       covariance = covariance)
+       parameters = parameters)
 }
 
 
@@ -408,10 +408,23 @@ extract_age_class_outputs <- function(samples) {
 }
 
 
-spim_fit_covariance <- function(samples) {
-  m <- cov(samples$pars)
-  rownames(m) <- NULL
-  data_frame(region = samples$info$region,
-             name = colnames(m),
-             m)
+spim_fit_parameters <- function(samples, parameters) {
+  info <- parameters$info[parameters$info$region == samples$info$region, ]
+  rownames(info) <- NULL
+  i <- which.max(samples$probabilities[, "log_posterior"])
+  initial <- samples$pars[i, ]
+  info$initial[match(names(initial), info$name)] <- unname(initial)
+
+  prior <- parameters$prior[parameters$prior$region == samples$info$region, ]
+  rownames(prior) <- NULL
+
+  covariance <- cov(samples$pars)
+  rownames(covariance) <- NULL
+  proposal <- data_frame(region = samples$info$region,
+                           name = colnames(covariance),
+                           covariance)
+
+  list(info = info,
+       prior = prior,
+       proposal = proposal)
 }

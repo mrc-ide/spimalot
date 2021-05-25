@@ -71,8 +71,8 @@ spim_pars <- function(date, region, model_type, multistrain,
 ##'
 ##' @param proposal Filename for the parameter proposal, relative to `path`
 ##'
-##' @return
-##' @author Richard Fitzjohn
+##' @return A spim_pars_pmcmc object
+##' @export
 spim_pars_pmcmc_load <- function(path, info = "info.csv", prior = "prior.csv",
                                  proposal = "proposal.csv") {
   assert_file_exists(path)
@@ -90,9 +90,22 @@ spim_pars_pmcmc_load <- function(path, info = "info.csv", prior = "prior.csv",
 }
 
 
+##' Write pmcmc paramters out after fitting and aggregation (inverse
+##' of [spimalot::spim_pars_pmcmc_load])
+##'
+##' @title Write out parameters
+##'
+##' @param p A list with elements `info`, `prior` and `proposal`
+##'
+##' @param path Directory to write to
+##'
+##' @return Nothing, called for side effects
+##' @export
 spim_pars_pmcmc_save <- function(p, path) {
+  stopifnot(setequal(names(p), c("info", "prior", "proposal")))
   dir.create(path, FALSE, TRUE)
   write_csv(p$info, file.path(path, "info.csv"))
+  write_csv(p$prior, file.path(path, "prior.csv"))
   write_csv(p$proposal, file.path(path, "proposal.csv"))
 }
 
