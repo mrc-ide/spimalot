@@ -256,7 +256,7 @@ spim_template <- function(date, model_type, scenario, value_type, region,
                     "Month of Value" = lubridate::month(sample_date),
                     "Year of Value" = lubridate::year(sample_date),
                     AgeBand = "All",
-                    Geography = spim_summary_geography(region),
+                    Geography = spim_region_name(region),
                     ValueType = value_type,
                     data)
   rownames(ret) <- NULL
@@ -268,26 +268,4 @@ spim_summary_quantiles <- function() {
   qs <- seq(from = 0.05, to = 0.95, by = 0.05)
   names(qs) <- sprintf("Quantile %s", qs)
   c(c(Value = 0.5), qs)
-}
-
-
-spim_summary_geography <- function(region) {
-  map <- c(
-    london = "London",
-    east_of_england = "East of England",
-    midlands = "Midlands",
-    north_east_and_yorkshire = "North East and Yorkshire",
-    north_west = "North West",
-    south_east = "South East",
-    south_west = "South West",
-    scotland = "Scotland",
-    wales = "Wales",
-    northern_ireland = "Northern Ireland",
-    england = "England",
-    uk = "United Kingdom")
-  res <- map[region]
-  if (any(is.na(res))) {
-    stop("Invalid region")
-  }
-  unname(res)
 }

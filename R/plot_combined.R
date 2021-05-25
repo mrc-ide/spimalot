@@ -1,3 +1,22 @@
+##' Plot trajectories for a region
+##'
+##' @title Plot trajectories
+##'
+##' @param region Name of the region
+##'
+##' @param dat Combined data set
+##'
+##' @param xlim X-limits (must be dates)
+##'
+##' @param what Vector of names of traces to plot
+##'
+##' @param with_forecast Logical, add forecast?
+##'
+##' @param add_betas Logical, add betas?
+##'
+##' @return Nothing, called for side effects
+##'
+##' @export
 spim_plot_trajectories_region <- function(region, dat, xlim, what = NULL,
                                           with_forecast = TRUE,
                                           add_betas = FALSE) {
@@ -10,6 +29,65 @@ spim_plot_trajectories_region <- function(region, dat, xlim, what = NULL,
       w, region, dat, xlim,
       with_forecast = with_forecast, add_betas = add_betas)
   }
+}
+
+
+plot_Rt <- function(dat, rt_type, forecast_until = NULL) {
+  oo <- par(mfrow = c(2, 6), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+  if (is.null(forecast_until)) {
+    forecast_until <- dat$info$date
+  }
+  for (r in names(dat$rt)) {
+    plot_Rt_region(r, dat, rt_type, forecast_until)
+  }
+}
+
+
+plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
+  sample_Rt <- dat$rt[[region]][[rt_type]][-1L, ]
+
+  if (grepl("^eff_", rt_type)) {
+    ## TODO: this is printing oddly on the graph
+    ylab <- paste("eff", expression(R[t]))
+  } else {
+    ylab <- expression(R[t])
+  }
+
+  ## sample_Rt,
+  ## Rt_date,
+  col <- spim_colours()$blue
+  alpha <- 0.3
+
+  x <- sircovid::sircovid_date_as_date(dat$rt[[region]]$date[-1L, 1])
+  rownames(sample_Rt) <- as.character(x)
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(sample_Rt,  MARGIN = 1, FUN = quantile, ps, na.rm = TRUE)
+
+  ## remove NAs for plotting purposes
+  idx_not_na <- which(!is.na(colSums(qs)))
+  x <- x[idx_not_na]
+  qs <- qs[,idx_not_na]
+
+  oo <- par(mgp = c (1.7, 0.5, 0), bty = "n")
+  on.exit(par(oo))
+
+  xlim <- c(x[1], as.Date(forecast_until))
+  ylim <- c(0, 4)
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = ylim,
+       main = toupper(spim_region_name(region)),
+       font.main = 1,
+       xlab = "Date", ylab = ylab)
+
+  cols <- add_alpha(rep(col, 2), alpha)
+
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = cols,
+           horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = col, lty = 1, lwd = 1.5, lend = 1)
+  abline(h = 1, lty = 2)
 }
 
 
@@ -160,25 +238,4 @@ ci_bands <- function(quantiles, y, palette = NULL, cols = NULL, leg = TRUE,
            border = NA,
            btx = "n", ... )
   }
-}
-
-
-add_alpha <- function(col, alpha = 1) {
-  apply(sapply(col, col2rgb) / 255, 2,
-        function(x)
-          rgb(x[1], x[2], x[3], alpha = alpha))
-}
-
-
-spim_colours <- function() {
-  cols <- list(
-    green = "#58A449FF",
-    green2 = "#228B22FF",
-    blue = "#278B9AFF",
-    orange = "#E48C2AFF",
-    brown = "#724615FF",
-    puce = "#AF9699FF")
-  cols$now <- cols$blue
-  cols$forecast <- cols$green
-  cols
 }

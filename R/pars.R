@@ -47,6 +47,7 @@ spim_pars <- function(date, region, model_type, multistrain,
                  region = region,
                  model_type = model_type,
                  multistrain = multistrain,
+                 beta_date = beta_date,
                  vaccination = vaccination,
                  parameters = parameters)
 

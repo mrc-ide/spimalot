@@ -23,6 +23,7 @@ spim_combined_load <- function(path) {
 
   ret <- list_transpose(dat)
   ret$info <- info[[1]]
+  ret$info$date <- as.Date(ret$info$date)
 
   message("Reordering trajectories")
   ## reorder by increasing cumulative incidence:
