@@ -83,3 +83,23 @@ dev.off()
 png("figs/serology_roche_n.png", width = 2400, height = 1200, res = 200)
 spimalot::spim_plot_serology(dat, 2, 40)
 dev.off()
+
+
+
+## add (zoomed in) plots of SPI-M-relevant trajectories
+dir.create("spim_view", FALSE, TRUE)
+
+png("spim_view/regions.png", width = 2400 / 5 * 7, height = 1800, res = 200)
+spimalot::spim_plot_trajectories(
+  dat, sircovid::regions("england"),
+  c("deaths", "hosp", "all_admission"), date_min = as.Date(dat$info$date) - 45,
+  with_forecast = FALSE, add_betas = TRUE)
+dev.off()
+
+png("spim_view/nations.png", width = 2400, height = 1800, res = 200)
+spimalot::spim_plot_trajectories(
+  dat, c(sircovid::regions("nations"), "uk"),
+  c("deaths_hosp", "deaths_carehomes", "deaths", "icu", "general",
+    "hosp", "all_admission"),
+  with_forecast = FALSE, add_betas = FALSE)
+dev.off()

@@ -18,6 +18,7 @@
 ##' @export
 spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
                                    with_forecast = TRUE, add_betas = FALSE) {
+
   n_regions <- length(regions)
   op <- par(mfcol = c(length(what), length(regions)),
             oma = c(1, 1, 4, 1),
@@ -32,7 +33,7 @@ spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
 
   mtext(side = 3, text = toupper(spim_region_name(regions)),
         line = 0.5, outer = TRUE, cex = 0.8,
-        at = c(0.08, 0.225, 0.365, 0.515, 0.65, 0.795, 0.94))
+        at = seq(1 / n_regions / 2, by = 1 / n_regions, length.out = n_regions))
 }
 
 
