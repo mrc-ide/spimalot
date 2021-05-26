@@ -1,3 +1,48 @@
+##' Plot admissions by age
+##'
+##' @title Plot admissions by age
+##'
+##' @param dat Combined data set
+##'
+##' @param region Region to plot
+##'
+##' @export
+spim_plot_admissions_by_age <- function(dat, region) {
+
+  sample <- dat$samples[[region]]
+  date <- dat$info$date
+
+  palette <- colorRampPalette(c("#213148FF", "#A1B1C8FF"))
+
+  res <- spim_extract_admissions_by_age_region(sample)
+
+  oo <- par(mfrow = c(1, 2), mar = c(3, 3, 1, 1),
+            mgp = c(1.7, 0.7, 0),  bty = "n")
+  on.exit(oo)
+
+  boxplot(as.data.frame(res$prop_total_admissions), pch = ".", col = grey(0.8),
+          xaxt = "n", ylab = "% of admissions", las = 1, ylim = c(0, 15))
+  ages <- seq(0, 75, 5)
+  labels <- c(sprintf("[%s-%s)", ages, ages + 5), "80+", "CHW", "CHR")
+  axis(side = 1, at = seq_len(19), labels = labels, mgp = c(1.7, 0.5, 0))
+
+  # plot over time
+  y <- t(apply(res$mean_admissions_t, 1, cumsum))
+  y <- y / y[, ncol(y)] * 100
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date[-1])
+  xx <- c(x, rev(x))
+  y0 <- rep(0, length(x))
+  plot(x, y0, ylim = c(0, 100), type = "n", xlab = "",
+       ylab = "mean % non-carehome admissions ; older ->")
+  col <- rev(palette(ncol(y)))
+
+  for (i in rev(seq_len(ncol(y)))) {
+    polygon(x = xx, y = c(y0, rev(y[, i])), border = grey(0.9), col = col[i])
+  }
+  abline(v = as.Date(date), col = grey(0.9), lty = 2)
+}
+
+
 ##' Plot trajectories
 ##'
 ##' @title Plot trajectories
@@ -333,7 +378,6 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, what) {
   data <- samples$data %>%
     dplyr::select(date_res = "date", count = get("what")) %>%
     dplyr::mutate(date_res = as.Date(date_res))
-  data <- dplyr::left_join(as.data.frame(date_res), as.data.frame(data))
 
   # Vectors for plotting
   x_nowcast <- res$date_res
@@ -347,18 +391,17 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, what) {
   xlim <- c(min(date_res), date)
   ylim <- c(1, max(res$ub, na.rm = TRUE))
 
-  oo <- par(mgp = c (1.7, 0.5, 0), bty = "n")
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
   on.exit(oo)
 
-  plot(xlim[1], 0, type = "n",
+  plot(xlim[1], 1, type = "n",
        xlim = xlim,
        ylim = ylim,
-       log="y",
+       log = "y",
        xlab = "", ylab = "log scale", cex.lab = 0.8)
   now_cols <- add_alpha(rep(now_col, 2), alpha)
 
-  polygon(c(x_nowcast, rev(x_nowcast)), c(lb, rev(ub)),
-          density = 200, col = now_cols)
+  polygon(c(x_nowcast, rev(x_nowcast)), c(lb, rev(ub)), col = now_cols)
   lines(x_nowcast, y_nowcast, col = now_col, lty = 1, lwd = 1.5, lend = 1)
   points(dx, dy, pch = 23, bg = dcols[1], col = dcols[2], cex = 0.7, lwd = 0.6)
 
