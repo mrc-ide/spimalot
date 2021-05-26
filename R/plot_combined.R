@@ -239,7 +239,7 @@ spim_plot_prop_susceptible_region <- function(region, dat, ymin,
   sample <- dat$samples[[region]]
   cols <- spim_colours()
   S_col <- cols$purple
-  eff_S_col = cols$blue
+  eff_S_col <- cols$blue
   alpha <- 0.3
 
   N0 <- sum(sircovid::carehomes_parameters(1, region)$population)
@@ -262,8 +262,9 @@ spim_plot_prop_susceptible_region <- function(region, dat, ymin,
   eff_S_cols <- add_alpha(rep(eff_S_col, 2), alpha)
 
 
-  par(mgp =c (1.7, 0.5, 0), bty = "n")
-  ## remove 1st one currently as this is time period is typically much more than one day
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
   xlim <- c(min(x[-1L]), max(x[-1L]))
   plot(xlim[1], 0, type = "n",
        xlim = xlim,
@@ -279,7 +280,7 @@ spim_plot_prop_susceptible_region <- function(region, dat, ymin,
   lines(x, qs["50.0%", ], col = S_col, lty = 1, lwd = 1.5, lend = 1)
   lines(x, qs_eff["50.0%", ], col = eff_S_col, lty = 1, lwd = 1.5, lend = 1)
 
-  if(plot_legend) {
+  if (plot_legend) {
     plot.new()
     leg_cols <- c(S_col, eff_S_col)
     legend("left", legend = c("Susceptible", "Effective susceptible"),
