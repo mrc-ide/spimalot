@@ -4,10 +4,12 @@
 \alias{spim_plot_react}
 \title{Plot REACT}
 \usage{
-spim_plot_react(dat, date_min, ymax, add_betas = FALSE)
+spim_plot_react(dat, regions, date_min, ymax, add_betas = FALSE)
 }
 \arguments{
 \item{dat}{Combined data set}
+
+\item{regions}{Vector of regions to plot}
 
 \item{date_min}{Starting date for plot}
 

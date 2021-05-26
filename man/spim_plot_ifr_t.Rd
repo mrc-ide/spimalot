@@ -4,10 +4,12 @@
 \alias{spim_plot_ifr_t}
 \title{Plot IFR over time}
 \usage{
-spim_plot_ifr_t(dat, ifr_t_type, ymax = 2.5, forecast_until = NULL)
+spim_plot_ifr_t(dat, regions, ifr_t_type, ymax = 2.5, forecast_until = NULL)
 }
 \arguments{
 \item{dat}{Combined data set}
+
+\item{regions}{Vector of regions to plot}
 
 \item{ifr_t_type}{One of the valid IFR_t types (e.g., IFR_t_all)}
 

@@ -4,10 +4,12 @@
 \alias{spim_plot_pillar2_cases}
 \title{Plot Pillar 2 cases}
 \usage{
-spim_plot_pillar2_cases(dat, date_min, add_betas = FALSE)
+spim_plot_pillar2_cases(dat, regions, date_min, add_betas = FALSE)
 }
 \arguments{
 \item{dat}{Combined data set}
+
+\item{regions}{Vector of regions to plot}
 
 \item{date_min}{Starting date for plot}
 

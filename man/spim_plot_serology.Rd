@@ -4,10 +4,12 @@
 \alias{spim_plot_serology}
 \title{Plot serology}
 \usage{
-spim_plot_serology(dat, sero_flow, ymax)
+spim_plot_serology(dat, regions, sero_flow, ymax)
 }
 \arguments{
 \item{dat}{Combined data set}
+
+\item{regions}{Vector of regions to plot}
 
 \item{sero_flow}{Number identifying which serology flow to use (1 or 2)}
 

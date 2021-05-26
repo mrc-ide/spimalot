@@ -4,10 +4,12 @@
 \alias{spim_plot_incidence}
 \title{Plot incidence}
 \usage{
-spim_plot_incidence(dat, per_1000 = FALSE)
+spim_plot_incidence(dat, regions, per_1000 = FALSE)
 }
 \arguments{
 \item{dat}{Combined data set}
+
+\item{regions}{Vector of regions to plot}
 
 \item{per_100}{Logical, indicating if we plot incidence per 1000 people}
 }

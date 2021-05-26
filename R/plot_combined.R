@@ -20,7 +20,7 @@ spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
                                    with_forecast = TRUE, add_betas = FALSE) {
 
   n_regions <- length(regions)
-  op <- par(mfcol = c(length(what), length(regions)),
+  op <- par(mfcol = c(length(what), n_regions),
             oma = c(1, 1, 4, 1),
             mar = c(3, 3, 0.5, 0.5))
   on.exit(par(op))
@@ -43,18 +43,22 @@ spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
 ##'
 ##' @param dat Combined data set
 ##'
+##' @param regions Vector of regions to plot
+##'
 ##' @param rt_type One of the valid Rt types (e.g., eff_Rt_all)
 ##'
 ##' @param forecast_until Optional date to forecast till
 ##'
 ##' @export
-spim_plot_Rt <- function(dat, rt_type, forecast_until = NULL) {
-  oo <- par(mfrow = c(2, 6), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+spim_plot_Rt <- function(dat, regions, rt_type, forecast_until = NULL) {
+
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
   on.exit(par(oo))
   if (is.null(forecast_until)) {
     forecast_until <- dat$info$date
   }
-  for (r in names(dat$rt)) {
+  for (r in regions) {
     spim_plot_Rt_region(r, dat, rt_type, forecast_until)
   }
 }
@@ -65,6 +69,8 @@ spim_plot_Rt <- function(dat, rt_type, forecast_until = NULL) {
 ##'
 ##' @param dat Combined data set
 ##'
+##' @param regions Vector of regions to plot
+##'
 ##' @param ifr_t_type One of the valid IFR_t types (e.g., IFR_t_all)
 ##'
 ##' @param ymax Maximum percentage on y-axis
@@ -72,14 +78,15 @@ spim_plot_Rt <- function(dat, rt_type, forecast_until = NULL) {
 ##' @param forecast_until Optional date to forecast till
 ##'
 ##' @export
-spim_plot_ifr_t <- function(dat, ifr_t_type, ymax = 2.5,
+spim_plot_ifr_t <- function(dat, regions, ifr_t_type, ymax = 2.5,
                             forecast_until = NULL) {
-  oo <- par(mfrow = c(2, 6), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
   on.exit(par(oo))
   if (is.null(forecast_until)) {
     forecast_until <- dat$info$date
   }
-  for (r in names(dat$ifr_t)) {
+  for (r in regions) {
     spim_plot_ifr_t_region(r, dat, ifr_t_type, ymax, forecast_until)
   }
 }
@@ -91,19 +98,21 @@ spim_plot_ifr_t <- function(dat, ifr_t_type, ymax = 2.5,
 ##'
 ##' @param dat Combined data set
 ##'
+##' @param regions Vector of regions to plot
+##'
 ##' @param sero_flow Number identifying which serology flow to use (1 or 2)
 ##'
 ##' @param ymax Maximum percentage on y-axis
 ##'
 ##' @export
-spim_plot_serology <- function(dat, sero_flow, ymax) {
-  region_names <- sircovid::regions("all")
+spim_plot_serology <- function(dat, regions, sero_flow, ymax) {
 
-  oo <- par(mfrow = c(2, 5), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
-  for (r in region_names) {
-    if (r == region_names[length(region_names)]) {
+  for (r in regions) {
+    if (r == regions[length(regions)]) {
       spim_plot_serology_region(r, dat, sero_flow, ymax, TRUE)
     } else {
       spim_plot_serology_region(r, dat, sero_flow, ymax)
@@ -118,6 +127,8 @@ spim_plot_serology <- function(dat, sero_flow, ymax) {
 ##'
 ##' @param dat Combined data set
 ##'
+##' @param regions Vector of regions to plot
+##'
 ##' @param date_min Starting date for plot
 ##'
 ##' @param ymax Maximum percentage on y-axis
@@ -125,14 +136,14 @@ spim_plot_serology <- function(dat, sero_flow, ymax) {
 ##' @param add_betas Logical, indicating if we should add betas
 ##'
 ##' @export
-spim_plot_pillar2_positivity <- function(dat, date_min, ymax,
+spim_plot_pillar2_positivity <- function(dat, regions, date_min, ymax,
                                          add_betas = FALSE) {
-  region_names <- sircovid::regions("all")
 
-  oo <- par(mfrow = c(2, 5), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
-  for (r in region_names) {
+  for (r in regions) {
     spim_plot_pillar2_positivity_region(r, dat, date_min, ymax, add_betas)
   }
 }
@@ -144,18 +155,20 @@ spim_plot_pillar2_positivity <- function(dat, date_min, ymax,
 ##'
 ##' @param dat Combined data set
 ##'
+##' @param regions Vector of regions to plot
+##'
 ##' @param date_min Starting date for plot
 ##'
 ##' @param add_betas Logical, indicating if we should add betas
 ##'
 ##' @export
-spim_plot_pillar2_cases <- function(dat, date_min, add_betas = FALSE) {
-  region_names <- sircovid::regions("all")
+spim_plot_pillar2_cases <- function(dat, regions, date_min, add_betas = FALSE) {
 
-  oo <- par(mfrow = c(2, 5), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
-  for (r in region_names) {
+  for (r in regions) {
     spim_plot_pillar2_cases_region(r, dat, date_min, add_betas)
   }
 }
@@ -167,6 +180,8 @@ spim_plot_pillar2_cases <- function(dat, date_min, add_betas = FALSE) {
 ##'
 ##' @param dat Combined data set
 ##'
+##' @param regions Vector of regions to plot
+##'
 ##' @param date_min Starting date for plot
 ##'
 ##' @param ymax Maximum percentage on y-axis
@@ -174,13 +189,13 @@ spim_plot_pillar2_cases <- function(dat, date_min, add_betas = FALSE) {
 ##' @param add_betas Logical, indicating if we should add betas
 ##'
 ##' @export
-spim_plot_react <- function(dat, date_min, ymax, add_betas = FALSE) {
-  region_names <- sircovid::regions("all")
+spim_plot_react <- function(dat, regions, date_min, ymax, add_betas = FALSE) {
 
-  oo <- par(mfrow = c(2, 5), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
-  for (r in region_names) {
+  for (r in regions) {
     spim_plot_react_region(r, dat, date_min, ymax, add_betas)
   }
 }
@@ -192,16 +207,18 @@ spim_plot_react <- function(dat, date_min, ymax, add_betas = FALSE) {
 ##'
 ##' @param dat Combined data set
 ##'
+##' @param regions Vector of regions to plot
+##'
 ##' @param per_100 Logical, indicating if we plot incidence per 1000 people
 ##'
 ##' @export
-spim_plot_incidence <- function(dat, per_1000 = FALSE) {
-  region_names <- sircovid::regions("all")
+spim_plot_incidence <- function(dat, regions, per_1000 = FALSE) {
 
-  oo <- par(mfrow = c(2, 6), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  oo <- par(mfrow = c(2, length(regions) / 2), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
-  for (r in region_names) {
+  for (r in regions) {
     spim_plot_incidence_region(r, dat, per_1000)
   }
 }
@@ -213,17 +230,18 @@ spim_plot_incidence <- function(dat, per_1000 = FALSE) {
 ##'
 ##' @param dat Combined data set
 ##'
+##' @param regions Vector of regions to plot
+##'
 ##' @param forecast_until Optional date to forecast till
 ##'
 ##' @export
-spim_plot_prop_susceptible <- function(dat, ymin) {
-  region_names <- sircovid::regions("all")
+spim_plot_prop_susceptible <- function(dat, regions, ymin) {
 
   oo <- par(mfrow = c(2, 6), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
-  for (r in region_names) {
-    if (r == region_names[length(region_names)]) {
+  for (r in regions) {
+    if (r == regions[length(regions)]) {
       spim_plot_prop_susceptible_region(r, dat, ymin, TRUE)
     } else {
       spim_plot_prop_susceptible_region(r, dat, ymin)
@@ -232,23 +250,22 @@ spim_plot_prop_susceptible <- function(dat, ymin) {
 
 }
 
-
-
 ##' Plot log trajectories by age
 ##'
 ##' @title Plot log trajectories by age
 ##'
 ##' @param dat Combined data set
 ##'
+##' @param regions Vector of regions to plot
+##'
 ##' @param yield Which kind of age-specific trajectories to add, can be
 ##'   "admissions" or "deaths"
 ##'
 ##' @export
-spim_plot_log_traj_by_age <- function(dat, yield) {
+spim_plot_log_traj_by_age <- function(dat, regions, yield) {
 
-  region_names <- sircovid::regions("england")
-
-  oo <- par(mfrow = c(7, 5), oma = c(1, 1, 4, 1), mar = c(3, 3, 0.5, 0.5))
+  oo <- par(mfrow = c(length(regions), 5), oma = c(1, 1, 4, 1),
+            mar = c(3, 3, 0.5, 0.5))
   on.exit(oo)
 
   if (yield == "admissions") {
@@ -264,13 +281,13 @@ spim_plot_log_traj_by_age <- function(dat, yield) {
                     "Admissions 75+")
   }
 
-  for (r in region_names) {
+  for (r in regions) {
     spim_plot_log_traj_by_age_region(r, dat, what)
   }
 
   mtext(side = 3, text = what_names,
         line = 0.5, outer = TRUE, cex = 0.9, at = c(0.1, 0.32, 0.5, 0.7, 0.9))
-  mtext(side = 2, text = spim_region_name(region_names),
+  mtext(side = 2, text = spim_region_name(regions),
         line = -0.5, outer = TRUE, cex = 0.7,
         at = c(0.1, 0.24, 0.38, 0.53, 0.67, 0.81, 0.96))
 
@@ -396,11 +413,15 @@ spim_plot_prop_susceptible_region <- function(region, dat, ymin,
   lines(x, qs_eff["50.0%", ], col = eff_S_col, lty = 1, lwd = 1.5, lend = 1)
 
   if (plot_legend) {
-    plot.new()
     leg_cols <- c(S_col, eff_S_col)
-    legend("left", legend = c("Susceptible", "Effective susceptible"),
-           cex = 1.5, y.intersp = 2, fill = add_alpha(leg_cols, alpha * 2),
-           border = leg_cols, bty = "n")
+    if (plot_legend) {
+      leg_cols <- c(cols$cyan, cols$purple)
+      legend("topright", legend = c("All", "Effective"),
+             cex = 1, x.intersp = 2, ncol = 1,
+             fill = add_alpha(leg_cols, alpha * 2),
+             border = leg_cols,
+             bty = "n")
+    }
   }
 
 }
@@ -417,7 +438,7 @@ spim_plot_incidence_region <- function(region, dat, per_1000 = FALSE) {
 
   res <- sample$trajectories$state["infections_inc", , -1L]
   if (per_1000) {
-    res <- res / sum(sircovid::carehomes_parameters(1, region)$N_tot)
+    res <- res / sum(sircovid::carehomes_parameters(1, region)$N_tot) * 1000
   }
   x <- sircovid::sircovid_date_as_date(sample$trajectories$date[-1L])
 
@@ -922,11 +943,11 @@ spim_plot_serology_region <- function(region, dat, sero_flow, ymax,
 
   if (plot_legend) {
     leg_cols <- c(cols$cyan, cols$purple)
-    legend("top", legend = c("Infected", "Seropositive"),
-           cex = 1, x.intersp = 2, ncol = 2,
+    legend("topleft", legend = c("Infected", "Seropositive"),
+           cex = 1, x.intersp = 2, ncol = 1,
            fill = add_alpha(leg_cols, alpha * 2),
            border = leg_cols,
-           box.col = "white")
+           bty = "n")
   }
 
 }
@@ -1030,7 +1051,11 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
   on.exit(par(oo))
 
   xlim <- c(x[1], as.Date(forecast_until))
-  ylim <- c(0, 4)
+  if (rt_type == "beta") {
+    ylim <- c(0, 0.15)
+  } else {
+    ylim <- c(0, 4)
+  }
   plot(xlim[1], 0, type = "n",
        xlim = xlim,
        ylim = ylim,

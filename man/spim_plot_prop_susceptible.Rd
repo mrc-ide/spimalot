@@ -4,10 +4,12 @@
 \alias{spim_plot_prop_susceptible}
 \title{Plot proportion susceptible}
 \usage{
-spim_plot_prop_susceptible(dat, ymin)
+spim_plot_prop_susceptible(dat, regions, ymin)
 }
 \arguments{
 \item{dat}{Combined data set}
+
+\item{regions}{Vector of regions to plot}
 
 \item{forecast_until}{Optional date to forecast till}
 }

@@ -4,10 +4,12 @@
 \alias{spim_plot_Rt}
 \title{Plot Rt}
 \usage{
-spim_plot_Rt(dat, rt_type, forecast_until = NULL)
+spim_plot_Rt(dat, regions, rt_type, forecast_until = NULL)
 }
 \arguments{
 \item{dat}{Combined data set}
+
+\item{regions}{Vector of regions to plot}
 
 \item{rt_type}{One of the valid Rt types (e.g., eff_Rt_all)}
 
