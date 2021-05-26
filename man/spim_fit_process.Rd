@@ -4,14 +4,14 @@
 \alias{spim_fit_process}
 \title{Process a fit}
 \usage{
-spim_fit_process(samples, control, admissions, rtm, parameters)
+spim_fit_process(samples, control, data_admissions, rtm, parameters)
 }
 \arguments{
 \item{samples}{The pmcmc_samples object from \link[mcstate:pmcmc]{mcstate::pmcmc}}
 
 \item{control}{The forecast control from \link{spim_control}}
 
-\item{admissions}{The admissions data set from
+\item{data_admissions}{The admissions data set from
 \link{spim_data_admissions}}
 
 \item{rtm}{The rtm data set}

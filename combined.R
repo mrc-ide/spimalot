@@ -1,3 +1,4 @@
+devtools::document()
 pkgload::load_all(export_all = FALSE)
 
 dat <- spimalot::spim_combined_load("example/fits")
@@ -25,7 +26,6 @@ png("figs/forest_plot_betas.png", width = 2400, height = 1600, res = 200)
 spim_plot_forest(dat, TRUE)
 dev.off()
 
-pkgload::load_all(export_all = FALSE)
 png("figs/data_fits_regional.png", width = 2400 / 5 * 7, height = 1800,
     res = 200)
 spimalot::spim_plot_trajectories(
@@ -128,6 +128,17 @@ dev.off()
 png("figs/susceptible.png", width = 2400, height = 1200, res = 200)
 spimalot::spim_plot_prop_susceptible(dat, 40)
 dev.off()
+
+
+## Plot outputs by age
+png("figs/deaths_by_age.png", width = 2400, height = 1800, res = 200)
+spim_plot_log_traj_by_age(dat, "deaths")
+dev.off()
+
+png("figs/admissions_by_age.png", width = 2400, height = 1800, res = 200)
+spim_plot_log_traj_by_age(dat, "admissions")
+dev.off()
+
 
 ## add (zoomed in) plots of SPI-M-relevant trajectories
 dir.create("spim_view", FALSE, TRUE)

@@ -233,6 +233,121 @@ spim_plot_prop_susceptible <- function(dat, ymin) {
 }
 
 
+
+##' Plot log trajectories by age
+##'
+##' @title Plot log trajectories by age
+##'
+##' @param dat Combined data set
+##'
+##' @param yield Which kind of age-specific trajectories to add, can be
+##'   "admissions" or "deaths"
+##'
+##' @export
+spim_plot_log_traj_by_age <- function(dat, yield) {
+
+  region_names <- sircovid::regions("england")
+
+  oo <- par(mfrow = c(7, 5), oma = c(1, 1, 4, 1), mar = c(3, 3, 0.5, 0.5))
+  on.exit(oo)
+
+  if (yield == "admissions") {
+    what <- c("adm_0", "adm_25", "adm_55", "adm_65", "adm_75")
+    what_names <- c("Admissions under 25s", "Admissions 25 to 54",
+                    "Admissions 55 to 64", "Admissions 65 to 74",
+                    "Admissions 75+")
+  }
+  if (yield == "deaths") {
+    what <- c("death_0", "death_55", "death_65", "death_75", "death_chr")
+    what_names <- c("Admissions under 25s", "Admissions 25 to 54",
+                    "Admissions 55 to 64", "Admissions 65 to 74",
+                    "Admissions 75+")
+  }
+
+  for (r in region_names) {
+    spim_plot_log_traj_by_age_region(r, dat, what)
+  }
+
+  mtext(side = 3, text = what_names,
+        line = 0.5, outer = TRUE, cex = 0.9, at = c(0.1, 0.32, 0.5, 0.7, 0.9))
+  mtext(side = 2, text = spim_region_name(region_names),
+        line = -0.5, outer = TRUE, cex = 0.7,
+        at = c(0.1, 0.24, 0.38, 0.53, 0.67, 0.81, 0.96))
+
+}
+
+
+spim_plot_log_traj_by_age_region <- function(region, dat, what) {
+
+  for (w in what) {
+    spim_plot_log_traj_by_age_region1(region, dat, w)
+  }
+
+}
+
+
+spim_plot_log_traj_by_age_region1 <- function(region, dat, what) {
+
+  if (grepl("^death_", what)) {
+    samples <- dat$deaths[[region]]
+  }
+  if (grepl("^adm_", what)) {
+    samples <- dat$admissions[[region]]
+  }
+
+  date <- dat$info$date
+
+  cols <- spim_colours()
+  now_col <- cols$blue
+  dcols <- c(cols$orange, cols$green2)
+  alpha <- 0.3
+
+  # Get model results
+  res <- data.frame(count = samples$output_t[-1L, what],
+                    lb = samples$lower_bound[-1L, what],
+                    ub = samples$upper_bound[-1L, what])
+
+  date_res <- dat$samples[[region]]$trajectories$date[-c(1, 2)]
+  date_res <- sircovid::sircovid_date_as_date(date_res)
+  res$date_res <- date_res
+  res <- res %>% dplyr::filter(date_res <= date)
+
+  # Get data
+  data <- samples$data %>%
+    dplyr::select(date_res = "date", count = get("what")) %>%
+    dplyr::mutate(date_res = as.Date(date_res))
+  data <- dplyr::left_join(as.data.frame(date_res), as.data.frame(data))
+
+  # Vectors for plotting
+  x_nowcast <- res$date_res
+  y_nowcast <- res$count + 1
+  lb <- res$lb + 1
+  ub <- res$ub + 1
+
+  dx <- data$date
+  dy <- data$count + 1
+
+  xlim <- c(min(date_res), date)
+  ylim <- c(1, max(res$ub, na.rm = TRUE))
+
+  oo <- par(mgp = c (1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = ylim,
+       log="y",
+       xlab = "", ylab = "log scale", cex.lab = 0.8)
+  now_cols <- add_alpha(rep(now_col, 2), alpha)
+
+  polygon(c(x_nowcast, rev(x_nowcast)), c(lb, rev(ub)),
+          density = 200, col = now_cols)
+  lines(x_nowcast, y_nowcast, col = now_col, lty = 1, lwd = 1.5, lend = 1)
+  points(dx, dy, pch = 23, bg = dcols[1], col = dcols[2], cex = 0.7, lwd = 0.6)
+
+}
+
+
 spim_plot_prop_susceptible_region <- function(region, dat, ymin,
                                           plot_legend = FALSE) {
 

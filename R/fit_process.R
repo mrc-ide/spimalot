@@ -5,7 +5,7 @@
 ##'
 ##' @param control The forecast control from [spimalot::spim_control]
 ##'
-##' @param admissions The admissions data set from
+##' @param data_admissions The admissions data set from
 ##'   [spimalot::spim_data_admissions]
 ##'
 ##' @param rtm The rtm data set
@@ -14,7 +14,8 @@
 ##'   ([spimalot::spim_pars_pmcmc_load])
 ##'
 ##' @export
-spim_fit_process <- function(samples, control, admissions, rtm, parameters) {
+spim_fit_process <- function(samples, control, data_admissions, rtm,
+                             parameters) {
   region <- samples$info$region
 
   message("Running forecasts")
@@ -34,13 +35,14 @@ spim_fit_process <- function(samples, control, admissions, rtm, parameters) {
 
   message("Summarising admissions")
   admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
-  admissions[["data"]] <- admissions
+  admissions[["data"]] <- data_admissions
 
   message("Summarising deaths")
   deaths <- extract_outputs_by_age(forecast, "D_hosp") # slow
   i_deaths_data <- colnames(deaths$output_t)
   deaths$data <- rtm[rtm$region == region, ]
   deaths$data <- deaths$data[c("date", "region", i_deaths_data)]
+  deaths$data[is.na(deaths$data)] <- 0
 
   ## TODO: someone needs to document what this date is for (appears to
   ## filter trajectories to start at this date) and when we might
@@ -421,6 +423,53 @@ extract_age_class_outputs <- function(samples) {
   } else {
     samples$trajectories$state[index, , ]
   }
+}
+
+
+sort_data_admissions <- function(df, r){
+
+  nations <- c("scotland", "wales", "northern_ireland")
+
+  if (r %in% nations){
+
+    df <- data.frame(
+      date = unique(df$date),
+      region = r,
+      adm_0 = NA_integer_,
+      adm_25 = NA_integer_,
+      adm_55 = NA_integer_,
+      adm_65 = NA_integer_,
+      adm_75 = NA_integer_)
+
+  } else {
+
+    vector_age_bands <- unique(df$age_from)
+    age_bands <- c("date", "region", "adm_0", "adm_25", "adm_55", "adm_65",
+                   "adm_75")
+
+    df$region <- gsub(" ", "_", df$region)
+    df <- df[df$region == r, ]
+
+    df <- df %>%
+      dplyr::group_by(date, age_from) %>%
+      dplyr::mutate(age_from = paste0("adm_", age_from)) %>%
+      dplyr::mutate(value = sum(admissions)) %>%
+      dplyr::slice(1) %>%
+      dplyr::select(date, region, age_from, value)
+
+    stopifnot(nrow(df) == length(unique(df$date)) * length(vector_age_bands))
+
+    df <- df %>%
+      tidyr::pivot_wider(id_cols = c(date, region), names_from = age_from)
+
+    df$adm_0 <- rowSums(df[, 3:4])
+    df$adm_25 <- rowSums(df[, 5:7])
+    df$adm_75 <- rowSums(df[, 11:12])
+
+    df <- df %>% dplyr::select(all_of(age_bands))
+  }
+
+  df
 }
 
 
