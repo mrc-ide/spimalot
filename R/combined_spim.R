@@ -70,9 +70,14 @@ spim_summary_write <- function(result, path_template, path_save) {
   writexl::write_xlsx(template, path_save)
 }
 
-##' @export
-##' @rdname spim_extract_admissions_by_age
+
+##' Extract admissions by age
 ##'
+##' @title Extract admissions by age
+##'
+##' @param dat Combined data set
+##'
+##' @export
 spim_extract_admissions_by_age <- function(dat) {
 
   admissions_demo <- lapply(dat$samples, spim_extract_admissions_by_age_region)

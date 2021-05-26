@@ -378,6 +378,9 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, what) {
   data <- samples$data %>%
     dplyr::select(date_res = "date", count = get("what")) %>%
     dplyr::mutate(date_res = as.Date(date_res))
+  suppressMessages(
+    data <- dplyr::left_join(as.data.frame(date_res), as.data.frame(data))
+  )
 
   # Vectors for plotting
   x_nowcast <- res$date_res
