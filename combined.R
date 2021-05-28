@@ -18,6 +18,8 @@ spimalot::spim_pars_pmcmc_save(dat$parameters, "outputs/parameters")
 saveRDS(dat$onward, "outputs/combined.rds")
 saveRDS(dat$ifr_t, "outputs/ifr_t.rds")
 
+saveRDS(dat$rt$uk, "outputs/rt_uk.rds")
+
 png("figs/forest_plot.png", width = 2400, height = 1600, res = 200)
 spim_plot_forest(dat, FALSE)
 dev.off()

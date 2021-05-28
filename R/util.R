@@ -58,3 +58,14 @@ list_transpose <- function(x) {
 vnapply <- function(X, FUN, ...) {
   vapply(X, FUN, numeric(1), ...)
 }
+
+
+abind_quiet <- function(...) {
+  suppressWarnings(abind::abind(...))
+}
+
+
+set_names <- function(x, nms) {
+  names(x) <- nms
+  x
+}

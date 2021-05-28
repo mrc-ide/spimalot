@@ -70,9 +70,7 @@ spim_control <- function(short_run, n_chains, date_restart = NULL,
 
 
 spim_control_parallel <- function(n_chains, workers) {
-  nt <- as.integer(Sys.getenv("CONTEXT_CORES",
-                              Sys.getenv("MC_CORES",
-                                         getOption("mc.cores", 1))))
+  nt <- spim_control_cores()
   if (workers) {
     pos <- 1:4
     nw <- max(pos[nt %% pos == 0 & pos <= n_chains])
@@ -81,4 +79,11 @@ spim_control_parallel <- function(n_chains, workers) {
   }
   message(sprintf("Running on %d workers with %d threads", nw, nt))
   list(n_threads_total = nt, n_workers = nw)
+}
+
+
+spim_control_cores <- function() {
+  as.integer(Sys.getenv("CONTEXT_CORES",
+                        Sys.getenv("MC_CORES",
+                                   getOption("mc.cores", 1))))
 }

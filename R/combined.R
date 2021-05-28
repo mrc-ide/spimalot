@@ -39,6 +39,11 @@ spim_combined_load <- function(path) {
 
   ## NOTE: have not ported the "randomise trajectory order" bit over,
   ## but I do not think that we need to.
+  message("Creating data for onward use")
+  ## Do this step *before* aggregation because otherwise we end up
+  ## with the onward data including england/uk
+  ret$onward <- spim_combined_onward(ret)
+  ret$parameters <- lapply(list_transpose(ret$parameters), dplyr::bind_rows)
 
   message("Aggregating England/UK")
   ## Aggregate some of these to get england/uk entries
@@ -47,10 +52,6 @@ spim_combined_load <- function(path) {
   ret$rt <- combined_aggregate_rt(ret$rt, ret$samples)
   ret$ifr_t <- combined_aggregate_rt(ret$ifr_t, ret$samples)
 
-  message("Creating data for onward use")
-  ret$onward <- spim_combined_onward(ret)
-  ret$parameters <- lapply(list_transpose(ret$parameters), dplyr::bind_rows)
-
   ret
 }
 
@@ -58,16 +59,17 @@ spim_combined_load <- function(path) {
 spim_combined_onward <- function(dat) {
   date <- dat$info$date
   steps_per_day <- dat$samples[[1]]$info$data$steps_per_day
-  ret <- list(date = date,
-              step = sircovid::sircovid_date(date) * steps_per_day,
-              dt = 1 / steps_per_day,
-              pars = lapply(dat$samples, "[[", "pars"),
-              state = lapply(dat$samples, "[[", "state"),
-              data = lapply(dat$samples, function(x) x$predict$filter$data),
-              transform = lapply(dat$samples, function(x) x$predict$transform),
-              info = lapply(dat$samples, "[[", "info"),
-              vaccine = lapply(dat$samples, "[[", "vaccine"),
-              simulate = spim_combined_onward_simulate(dat))
+  list(date = date,
+       step = sircovid::sircovid_date(date) * steps_per_day,
+       steps_per_day = steps_per_day,
+       dt = 1 / steps_per_day,
+       pars = lapply(dat$samples, "[[", "pars"),
+       state = lapply(dat$samples, "[[", "state"),
+       data = lapply(dat$samples, function(x) x$predict$filter$data),
+       transform = lapply(dat$samples, function(x) x$predict$transform),
+       info = lapply(dat$samples, "[[", "info"),
+       vaccine = lapply(dat$samples, "[[", "vaccine"),
+       simulate = spim_combined_onward_simulate(dat))
 }
 
 

@@ -50,6 +50,7 @@ Imports:
 Suggests:
     testthat
 Remotes:
-   mrc-ide/dust,
-   mrc-ide/mcstate,
-   mrc-ide/sircovid
+    mrc-ide/dust,
+    mrc-ide/mcstate,
+    mrc-ide/sircovid
+Config/testthat/edition: 3
