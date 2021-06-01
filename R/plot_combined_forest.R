@@ -172,7 +172,7 @@ spim_plot_forest <- function(dat, plot_betas) {
 
     ## 4th row
     plot_axis()
-    mapply(FUN = plot_par, par_name = beta_names[16:17], xmax = 0.15)
+    mapply(FUN = plot_par, par_name = beta_names[16:18], xmax = 0.15)
 
   } else {
     ## 1st row

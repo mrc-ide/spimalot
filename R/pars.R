@@ -158,16 +158,17 @@ spim_pars_beta <- function(date) {
   ## 13. 2020-12-02 - lockdown 2 ends
   ## 14. 2020-12-18 - school Christmas holidays
   ## 15. 2021-01-05 - Lockdown 3 starts
-  ## 16. 2021-03-08 - Step 1 of lockdown end roadmap: schools reopen
-  ## 17. Two weeks ago
-  ## TODO: recent dates to consider: easter hols (2021-04-01), step 2 roadmap
-  ## (2021-04-12) and schools return (2021-04-19)
+  ## 16. 2021-03-08 - Step 1 of roadmap: schools reopen
+  ## 17. 2021-04-12 - Step 2 of roadmap: outdoors hospitality
+  ## 18. Two weeks ago
+  ## TODO: recent dates to consider: schools return (2021-04-19)
   c("2020-03-16", "2020-03-23", "2020-03-25",
     "2020-05-11", "2020-06-15", "2020-07-04",
     "2020-08-01", "2020-09-01", "2020-09-14",
     "2020-10-14", "2020-10-31", "2020-11-05",
     "2020-12-02", "2020-12-18", "2021-01-05",
-    "2021-03-08", as.character(as.Date(date) - 21))
+    "2021-03-08", "2021-04-12",
+    as.character(as.Date(date) - 21))
 }
 
 

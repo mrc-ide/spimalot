@@ -41,12 +41,12 @@ spim_transform_single <- function(region, model_type, multistrain, beta_date,
     beta_value <- unname(pars[c("beta1", "beta2", "beta3", "beta4", "beta5",
                                 "beta6", "beta7", "beta8", "beta9", "beta10",
                                 "beta11", "beta12", "beta13", "beta14",
-                                "beta15", "beta16", "beta17")])
+                                "beta15", "beta16", "beta17", "beta18")])
 
     if (model_type == "BB") {
       p_NC <- pars[["p_NC"]]
       rho_pillar2_tests <- pars[["rho_pillar2_tests"]]
-      ## Total: 38 fitted parameters
+      ## Total: 39 fitted parameters
 
       ## Unused in BB fits so these are dummy values
       phi_pillar2_cases <- 0.5
@@ -55,7 +55,7 @@ spim_transform_single <- function(region, model_type, multistrain, beta_date,
     if (model_type == "NB") {
       phi_pillar2_cases <- pars[["phi_pillar2_cases"]]
       kappa_pillar2_cases <- 1 / pars[["alpha_pillar2_cases"]]
-      ## Total: 38 fitted parameters
+      ## Total: 39 fitted parameters
 
       ## Unused in NB fits so these are dummy values
       p_NC <- 0.002
