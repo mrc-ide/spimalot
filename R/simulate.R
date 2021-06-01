@@ -17,8 +17,6 @@ spim_simulate_schedule <- function(combined, n_par, end_date, n_threads, keep,
                                    rel_strain_modifier = NULL,
                                    prop_voc = NULL,
                                    mean_vacc_delay_multiplier = 1,
-                                   path = NULL,
-                                   scenario_id = NULL,
                                    seed = NULL) {
   regions <- names(combined$pars)
   transform <- combined$transform[regions]
@@ -92,12 +90,6 @@ spim_simulate_schedule <- function(combined, n_par, end_date, n_threads, keep,
                  c(nrow(state[[1]]), n_par, n_regions))
 
   steps_per_day <- combined$steps_per_day
-
-  ## ## Our final object that we will use in the simulations
-  ## ret <- combined[c("step", "date", "dt", "steps_per_day")]
-  ## ret$state <- state
-  ## ret$info <- info
-  ## ret$end_date <- end_date
 
   date_start <- combined$step / steps_per_day
   end_date <- sircovid::sircovid_date(end_date)
@@ -173,14 +165,7 @@ spim_simulate_schedule <- function(combined, n_par, end_date, n_threads, keep,
                                           n_strain))
   }
 
-  if (is.null(path)) {
-    ret
-  } else {
-    fmt <- "sim_%d.rds"
-    dest <- file.path(path, sprintf(fmt, scenario_id))
-    saveRDS(ret, dest)
-    dest
-  }
+  ret
 }
 
 
@@ -209,7 +194,8 @@ simulate_prepare <- function(combined, n_par, end_date,
 
 simulate_prepare_parameters_future <- function(pars, vaccine,
                                                future_daily_doses, end_date,
-                                               vaccine_efficacy, priority_population,
+                                               vaccine_efficacy,
+                                               priority_population,
                                                n_strain = NULL,
                                                vaccine_efficacy_strain_2 = NULL,
                                                strain_seed_rate = NULL,
@@ -222,7 +208,7 @@ simulate_prepare_parameters_future <- function(pars, vaccine,
                                                mean_vacc_delay_multiplier = 1) {
 
   if (is.null(vaccine_efficacy)) {
-    stop("Rewrite setup_vaccine_strain_parameters to allow not changing efficacy")
+    stop("FIXME: Rewriteto allow not changing efficacy")
   }
 
   p <- pars ## just a rename for historical reasons, could use pars throughout
@@ -252,8 +238,8 @@ simulate_prepare_parameters_future <- function(pars, vaccine,
   ## these are required for sircovid:::carehomes_parameters_vaccination
   dim <- c(n_groups, n_strain, n_vacc_strata)
   rel_list <- rep(list(array(rep(NA_integer_), dim = dim)), 4)
-  names(rel_list) <- c("rel_p_sympt", "rel_p_hosp_if_sympt", "rel_susceptibility",
-                       "rel_infectivity")
+  names(rel_list) <- c("rel_p_sympt", "rel_p_hosp_if_sympt",
+                       "rel_susceptibility", "rel_infectivity")
 
   if (!is.null(vaccine_efficacy_strain_2) && n_strain != 4) {
     stop("'n_strain' should be '4' iff 'vaccine_efficacy_strain_2' is non-NULL")
@@ -398,40 +384,6 @@ simulate_model_init <- function(pars, step, state, n_threads, seed = NULL) {
 }
 
 
-simulate_summary_overall <- function(state, keep, dates) {
-  summary_state <- state[keep , , , ]
-  # aggregate over regions to get England peak hosp
-  summary_state_england <-
-    apply(summary_state[, , sircovid::regions("england"), ], c(1, 2, 4), sum)
-  summary_state <- abind_quiet(list(summary_state,
-                                    england = summary_state_england),
-                               along = 3)
-
-  # calculate number and date of peak hospital bed occupancy
-  peak_hosp <-
-    list(peak_hosp = apply(summary_state["hosp", , , ], c(1, 2), max),
-         peak_hosp_date = apply(summary_state["hosp", , , ], c(1, 2), which.max))
-  peak_hosp$peak_hosp_date[] <- dates[peak_hosp$peak_hosp_date]
-  peak_hosp <- aperm(abind_quiet(peak_hosp, along = 3), c(3, 1, 2))
-
-  ## reset trajectories to zero
-  summary_state <- summary_state[setdiff(keep, c("hosp", "icu")), , , ]
-  summary_state <- summary_state[, , , dim(state)[4]] - summary_state[, , , 1]
-
-  # add diagnoses admitted
-  diagnoses_admitted <- summary_state["diagnoses", , , drop = FALSE] +
-    summary_state["admitted", , , drop = FALSE]
-  rownames(diagnoses_admitted) <- "diagnoses_admitted"
-
-  # bind results together
-  summary_state <- abind_quiet(summary_state, diagnoses_admitted, peak_hosp,
-                               along = 1)
-
-  # reshape to add empty time dimension - this will make summarising easier
-  abind_quiet(summary_state, along = 4)
-}
-
-
 simulate_summary_by_age <- function(state, index) {
   n_groups <- sircovid:::carehomes_n_groups()
 
@@ -450,7 +402,7 @@ simulate_summary_by_age <- function(state, index) {
     x <- mcstate::array_reshape(array, 1L, c(n_groups, strata))
 
     ## aggregate partially immunised strata
-    x[ , 2L, , , ] <- x[ , 2L, , , ] + x[ , 3L, , , ]
+    x[, 2L, , , ] <- x[, 2L, , , ] + x[, 3L, , , ]
     x <- x[, -3L, , , ]
     colnames(x) <- c("unvaccinated", "partial_protection", "full_protection")
 
@@ -534,7 +486,7 @@ simulate_index <- function(info, keep, calculate_vaccination, multistrain) {
 
 
 simulate_summary_state <- function(state, keep, dates) {
-  summary_state <- state[keep , , , ]
+  summary_state <- state[keep, , , ]
   # aggregate over regions to get England peak hosp
   summary_state_england <-
     apply(summary_state[, , sircovid::regions("england"), ], c(1, 2, 4), sum)
@@ -543,9 +495,9 @@ simulate_summary_state <- function(state, keep, dates) {
                                along = 3)
 
   # calculate number and date of peak hospital bed occupancy
-  peak_hosp <-
-    list(peak_hosp = apply(summary_state["hosp", , , ], c(1, 2), max),
-         peak_hosp_date = apply(summary_state["hosp", , , ], c(1, 2), which.max))
+  peak_hosp <- list(
+    peak_hosp = apply(summary_state["hosp", , , ], c(1, 2), max),
+    peak_hosp_date = apply(summary_state["hosp", , , ], c(1, 2), which.max))
   peak_hosp$peak_hosp_date[] <- dates[peak_hosp$peak_hosp_date]
   peak_hosp <- aperm(abind_quiet(peak_hosp, along = 3), c(3, 1, 2))
 
@@ -563,10 +515,7 @@ simulate_summary_state <- function(state, keep, dates) {
   summary_state <- abind_quiet(summary_state, diagnoses_admitted, peak_hosp,
                                along = 1)
 
-  # reshape to add empty time dimension - this will make summarising easier
-  summary_state <- abind_quiet(summary_state, along = 4)
-
-  summary_state
+  abind_quiet(summary_state, along = 4)
 }
 
 
@@ -585,9 +534,10 @@ simulate_summary_vaccination <- function(state, index, vaccine_efficacy,
 
   ## output the number recovered in each vaccine stratum / region / over time
   R_raw <- mcstate::array_reshape(
-    state[names(index$R), , , , drop = FALSE], 1L, c(n_groups, n_strain, n_strata))
-  ## the mean is taken here over age and particle
-  ## but we want the number for each age group so you multiply back by n_groups = 19
+    state[names(index$R), , , , drop = FALSE], 1L,
+    c(n_groups, n_strain, n_strata))
+  ## the mean is taken here over age and particle but we want the
+  ## number for each age group so you multiply back by n_groups = 19
   ## only extract strain 1
   R_strain_1 <- R_raw[, 1, , , , ]
   R <- apply(R_strain_1, c(2, 4, 5), mean) * n_groups
@@ -661,10 +611,10 @@ simulate_rt <- function(steps, S, pars, critical_dates, R = NULL,
 
 
 ## TODO: almost the same as fit_process.R:calculate_vaccination and
-## needs merge.
+## needs merge; differences are input args slightly different and
+## output format appears different
 simulate_summary_protected <- function(n_vaccinated, R, vaccine_efficacy) {
   vp <- get_vaccine_protection(vaccine_efficacy)
-
 
   # Methodology: calculate incidence of first / second doses,
   # number in each strata in total,
@@ -675,15 +625,16 @@ simulate_summary_protected <- function(n_vaccinated, R, vaccine_efficacy) {
   # let V be number in each vaccination stage V[a, s, r, t]
   # ler R be number recovered R[s, r, t]
   # from top to bottom of figure 1B
+  #
   # - number vaccinated sum_sr(V[s, r, t])
   # - number protected after vaccination against severe disease:
-  #   sum_asr(V[a, s, r, t] * eff_severe[a, s])
+  #   i.e., sum_asr(V[a, s, r, t] * eff_severe[a, s])
   # - number protected after vaccination against infection
-  #   sum_asr(V[a, s, r, t] * eff_inf[a, s])
+  #   i.e., sum_asr(V[a, s, r, t] * eff_inf[a, s])
   # - number protected after infection (this is added to all of the above):
-  #   sum_sr(R[s, r, t])
+  #   i.e., sum_sr(R[s, r, t])
   # - number protected after infection only:
-  #   sum_r(R[1, r, t]
+  #   i.e., sum_r(R[1, r, t]
 
 
   ## create array of number in each vaccine stratum

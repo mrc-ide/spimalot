@@ -183,28 +183,28 @@ aggregate_outputs_by_age <- function(object, what) {
   out <- NULL
   if (what == "cum_admit") {
     for (df in which_df) {
-      adm_0 <- rowSums(object[[df]][,1:5], na.rm = TRUE)
-      adm_25 <- rowSums(object[[df]][,6:12], na.rm = TRUE) +
-        (object[[df]][,18] * 0.75)
-      adm_55 <- rowSums(object[[df]][,12:13], na.rm = TRUE) +
-        (object[[df]][,18] * 0.25)
-      adm_65 <- rowSums(object[[df]][,14:15], na.rm = TRUE) +
-        (object[[df]][,19] * 0.1)
-      adm_75 <- rowSums(object[[df]][,16:17], na.rm = TRUE) +
-        (object[[df]][,19] * 0.9)
+      adm_0 <- rowSums(object[[df]][, 1:5], na.rm = TRUE)
+      adm_25 <- rowSums(object[[df]][, 6:12], na.rm = TRUE) +
+        (object[[df]][, 18] * 0.75)
+      adm_55 <- rowSums(object[[df]][, 12:13], na.rm = TRUE) +
+        (object[[df]][, 18] * 0.25)
+      adm_65 <- rowSums(object[[df]][, 14:15], na.rm = TRUE) +
+        (object[[df]][, 19] * 0.1)
+      adm_75 <- rowSums(object[[df]][, 16:17], na.rm = TRUE) +
+        (object[[df]][, 19] * 0.9)
 
       out[[df]] <- cbind(adm_0, adm_25, adm_55, adm_65, adm_75)
     }
   } else if (what == "D_hosp") {
     for (df in which_df) {
 
-      death_0 <- rowSums(object[[df]][,1:11], na.rm = TRUE) +
-        (object[[df]][,18] * 0.75)
-      death_55 <- rowSums(object[[df]][,12:13], na.rm = TRUE) +
-        (object[[df]][,18] * 0.25)
-      death_65 <- rowSums(object[[df]][,14:15], na.rm = TRUE)
-      death_75 <- rowSums(object[[df]][,16:17], na.rm = TRUE)
-      death_chr <- object[[df]][,19]
+      death_0 <- rowSums(object[[df]][, 1:11], na.rm = TRUE) +
+        (object[[df]][, 18] * 0.75)
+      death_55 <- rowSums(object[[df]][, 12:13], na.rm = TRUE) +
+        (object[[df]][, 18] * 0.25)
+      death_65 <- rowSums(object[[df]][, 14:15], na.rm = TRUE)
+      death_75 <- rowSums(object[[df]][, 16:17], na.rm = TRUE)
+      death_chr <- object[[df]][, 19]
 
       out[[df]] <- cbind(death_0, death_55, death_65, death_75, death_chr)
 
@@ -230,7 +230,7 @@ extract_age_class_state <- function(state) {
     x <- mcstate::array_reshape(array, 1L, c(n_groups, strata))
 
     ## aggregate partially immunised strata
-    x[ , 2L, , ] <- x[ , 2L, , ] + x[ , 3L, , ]
+    x[, 2L, , ] <- x[, 2L, , ] + x[, 3L, , ]
     x <- x[, -3L, , ]
     colnames(x) <- c("unvaccinated", "partial_protection", "full_protection")
 
@@ -270,7 +270,7 @@ extract_age_class_state <- function(state) {
 
 reduce_trajectories <- function(samples) {
   ## Remove unused trajectories for predict function in combined
-  remove_strings <- c("prob_strain", "^R_","I_weighted_", "D_hosp_", "D_all_",
+  remove_strings <- c("prob_strain", "^R_", "I_weighted_", "D_hosp_", "D_all_",
                       "diagnoses_admitted_", "cum_infections_disag_",
                       "cum_n_vaccinated")
 
@@ -281,7 +281,7 @@ reduce_trajectories <- function(samples) {
   state <- samples$trajectories$state
 
   index_remove <- lapply(remove_strings, function(s) {
-    grep(paste0("^",s), rownames(state))
+    grep(paste0("^", s), rownames(state))
   })
   state <- state[-unlist(index_remove), , ]
 
@@ -304,7 +304,7 @@ reduce_trajectories <- function(samples) {
 
   samples$trajectories$state <- abind1(samples$trajectories$state, eff_S)
   ## sum across vaccine stages for S
-  if(n_groups != length(nms_S)) {
+  if (n_groups != length(nms_S)) {
     ## sum across vacc classes
     S <- mcstate::array_reshape(S, i = 1, d = c(n_groups, n_vacc_classes))
     S <- apply(S, c(1, 3, 4), sum)
@@ -322,7 +322,7 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
 
 
   n_groups <- nrow(vaccine_efficacy[[1]])
-  n_vacc_classes <-  ncol(vaccine_efficacy[[1]])
+  n_vacc_classes <- ncol(vaccine_efficacy[[1]])
 
   # extract array of  mean by age / vaccine class / region == 1 / time
   get_mean_avt <- function(nm, state) {
@@ -353,13 +353,13 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
   # from top to bottom of figure 1B
   # - number vaccinated sum_sr(V[s, r, t])
   # - number protected after vaccination against severe disease:
-  #   sum_asr(V[a, s, r, t] * eff_severe[a, s])
+  #   i.e., sum_asr(V[a, s, r, t] * eff_severe[a, s])
   # - number protected after vaccination against infection
-  #   sum_asr(V[a, s, r, t] * eff_inf[a, s])
+  #   i.e., sum_asr(V[a, s, r, t] * eff_inf[a, s])
   # - number protected after infection (this is added to all of the above):
-  #   sum_sr(R[s, r, t])
+  #   i.e., sum_sr(R[s, r, t])
   # - number protected after infection only:
-  #   sum_r(R[1, r, t]
+  #   i.e. sum_r(R[1, r, t]
 
 
   ## create array of number in each vaccine stratum
@@ -377,7 +377,7 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
     protected_against_infection = sum_asr(c(vp$infection) * V),
     protected_against_severe_disease = sum_asr(c(vp$severe_disease) * V),
     ever_infected = sum_sr(R),
-    ever_infected_unvaccinated = R[1, , ,drop = FALSE]
+    ever_infected_unvaccinated = R[1, , , drop = FALSE]
   )
 
   ## calculate n_doses
@@ -426,11 +426,11 @@ extract_age_class_outputs <- function(samples) {
 }
 
 
-sort_data_admissions <- function(df, r){
+sort_data_admissions <- function(df, r) {
 
   nations <- c("scotland", "wales", "northern_ireland")
 
-  if (r %in% nations){
+  if (r %in% nations) {
 
     df <- data.frame(
       date = unique(df$date),

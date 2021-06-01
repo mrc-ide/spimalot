@@ -41,9 +41,6 @@ spim_mtp_prepare <- function(mtp_commission, npi_key, n_par, end_date,
   rt_future <- split(rt_future, f = rt_future$scenario)
   rt_future <- rt_future[run_grid$scenario]
 
-  ## TODO: might want to consider a list column here for simplicity
-  ## run_grid$rt_future <- I(unname(rt_future))
-
   ## Things that we want to keep:
   inc_states <- c("deaths", "admitted", "diagnoses", "infections")
   prev_states <- c("icu", "general", "hosp", "react_pos")

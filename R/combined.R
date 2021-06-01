@@ -123,8 +123,8 @@ combined_aggregate_data <- function(data) {
     data_names <- setdiff(names(x), date_names)
     dim_t <- min(sapply(d, nrow)) # TODO
     d <- lapply(d, function(x) x[seq_len(dim_t), data_names])
-    ret <- Reduce( '+', d)
-    death_nms <- c("deaths_hosp", "deaths_carehomes","deaths_comm")
+    ret <- Reduce("+", d)
+    death_nms <- c("deaths_hosp", "deaths_carehomes", "deaths_comm")
     ret$deaths <- pmax(ret$deaths,
                        rowSums(ret[, death_nms], na.rm = TRUE),
                        na.rm = TRUE)
@@ -190,18 +190,26 @@ region_to_template <- function(samples, name, date, type, what, ts_date) {
   }
   if (what == "nowcast_forecast") {
     ret <- rbind(
-      region_to_template_rt(samples, name, date, type, "nowcast", ts_date),
-      region_to_template_growth_rate(samples, name, date, type, "nowcast", ts_date),
-      region_to_template_incidence(samples, name, date, type, "nowcast", ts_date),
-      region_to_template_prevalence(samples, name, date, type, "nowcast", ts_date),
+      region_to_template_rt(samples, name, date, type, "nowcast",
+                            ts_date),
+      region_to_template_growth_rate(samples, name, date, type, "nowcast",
+                                     ts_date),
+      region_to_template_incidence(samples, name, date, type, "nowcast",
+                                   ts_date),
+      region_to_template_prevalence(samples, name, date, type, "nowcast",
+                                    ts_date),
       region_to_template_forecast(samples, name, date, type))
   }
   if (what == "time-series") {
     ret <- rbind(
-      region_to_template_rt(samples, name, date, type, "time-series", ts_date),
-      region_to_template_growth_rate(samples, name, date, type, "time-series", ts_date),
-      region_to_template_incidence(samples, name, date, type, "time-series", ts_date),
-      region_to_template_prevalence(samples, name, date, type, "time-series", ts_date))
+      region_to_template_rt(samples, name, date, type, "time-series",
+                            ts_date),
+      region_to_template_growth_rate(samples, name, date, type, "time-series",
+                                     ts_date),
+      region_to_template_incidence(samples, name, date, type, "time-series",
+                                   ts_date),
+      region_to_template_prevalence(samples, name, date, type, "time-series",
+                                    ts_date))
   }
 
   ret

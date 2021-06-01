@@ -190,7 +190,13 @@ spim_transform_single <- function(region, model_type, multistrain, beta_date,
     ## We're adding a dimension for strain to all vaccine efficacy
     ## parameters this is in the format required for
     ## sircovid:::carehomes_parameters_vaccination
-    f <- function(x){dim(x) <- c(19, 1, 4); x}
+    f <- function(x) {
+      ## TODO check this, and see if we can instead use mcstate's
+      ## array functions.
+      browser()
+      dim(x) <- c(19, 1, 4)
+      x
+    }
     rel_efficacy <- lapply(vaccination$efficacy, f)
 
     ## TODO: whilst we give the right dimensions for rel_efficacy, it is not

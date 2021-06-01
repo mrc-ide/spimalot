@@ -31,7 +31,7 @@ spim_plot_forest <- function(dat, plot_betas) {
   ch_names <- c("eps", "m_CHW", "m_CHR")
   mu_names <- par_names[substr(par_names, 1, 3) == "mu_"]
   alpha_names <- par_names[substr(par_names, 1, 6) == "alpha_"]
-  beta_names <- par_names[substr(par_names, 1,4) == "beta"]
+  beta_names <- par_names[substr(par_names, 1, 4) == "beta"]
   beta_names <- beta_names[order(as.numeric(gsub("beta", "", beta_names)))]
   p_names <- par_names[substr(par_names, 1, 2) == "p_"]
 
@@ -52,7 +52,7 @@ spim_plot_forest <- function(dat, plot_betas) {
 
   plot_axis <- function() {
     yax_pos <- 0.9
-    plot(0,0, type = "n",
+    plot(0, 0, type = "n",
          ylab = "",
          xlab = "",
          xlim = c(0, 0),
@@ -67,7 +67,7 @@ spim_plot_forest <- function(dat, plot_betas) {
   plot_par <- function(par_name, xmin = 0, xmax = 0.1) {
     par <- extract_sample(par_name)
 
-    plot(0,0, type = "n",
+    plot(0, 0, type = "n",
          ylab = "",
          xlab = par_name,
          xlim = c(xmin, xmax),
@@ -92,10 +92,10 @@ spim_plot_forest <- function(dat, plot_betas) {
 
 
         segments(x0 = prior[1, ],
-                 y0 = at- jitter, y1 = at + jitter,
+                 y0 = at - jitter, y1 = at + jitter,
                  col = col_line, lty = 2, lwd = 1, lend = 2)
         segments(x0 = prior[2, ],
-                 y0 = at- jitter, y1 = at + jitter,
+                 y0 = at - jitter, y1 = at + jitter,
                  col = col_line, lty = 2, lwd = 1, lend = 2)
       }
     }
@@ -110,10 +110,10 @@ spim_plot_forest <- function(dat, plot_betas) {
 
 
       segments(x0 = prior[1, ],
-               y0 = at- jitter, y1 = at + jitter,
+               y0 = at - jitter, y1 = at + jitter,
                col = col_line, lty = 2, lwd = 1, lend = 2)
       segments(x0 = prior[2, ],
-               y0 = at- jitter, y1 = at + jitter,
+               y0 = at - jitter, y1 = at + jitter,
                col = col_line, lty = 2, lwd = 1, lend = 2)
     }
 
@@ -159,7 +159,7 @@ spim_plot_forest <- function(dat, plot_betas) {
   if (plot_betas) {
     ## 1st row
     plot_axis()
-    par(mar = c(3,0,1,0.5))
+    par(mar = c(3, 0, 1, 0.5))
     mapply(FUN = plot_par, par_name = beta_names[1:5], xmax = 0.15)
 
     ## 2nd row
@@ -177,7 +177,7 @@ spim_plot_forest <- function(dat, plot_betas) {
   } else {
     ## 1st row
     plot_axis()
-    par(mar = c(3,0,1,0.5))
+    par(mar = c(3, 0, 1, 0.5))
     plot_start_date()
     mapply(FUN = plot_par, par_name = p_names[1:5], xmax = p_max[1:5])
 
@@ -224,7 +224,7 @@ plot_ci_bar <- function(res, at, width = 1,
                  na.rm = TRUE)
 
   palette <- colorRampPalette(cols)
-  if(segments) {
+  if (segments) {
     segments(y0 = at, x0 = min(res), x1 = max(res), col = cols[2])
     points(y = rep(at, 2), x = range(res), col = cols[2], pch = "-")
   }

@@ -91,7 +91,7 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
             "pillar2_positives_over25", "pillar2_negatives_over25",
             "positives_over25", "pillar2_negatives_non_lft",
             "pillar2_negatives_non_lft_over25",
-            "pillar2_positives_lft_over25","pillar2_positives_lft")
+            "pillar2_positives_lft_over25", "pillar2_positives_lft")
   data <- data[c("region", "date", vars)]
 
   ## Remove any data after the date parameter
@@ -112,7 +112,7 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
                                       data[data$date == d, "region"]]
 
       tmp <-  data %>% filter(date == d)
-      tmp_add <- tmp[1:length(missing_regions),]
+      tmp_add <- tmp[seq_along(missing_regions), ]
       tmp_add[3:ncol(tmp_add)] <- NA
       tmp_add$region <- missing_regions
       tmp_add$date <- d
@@ -204,9 +204,9 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
   if (neg_non_lfts_available & pos_lfts_available) {
     data$pillar2_negatives <- data$pillar2_negatives_total_pcr
     data$pillar2_positives <-
-      ifelse(is.na(data$pillar2_positives),0,
+      ifelse(is.na(data$pillar2_positives), 0,
              data$pillar2_positives) -
-      ifelse(is.na(data$pillar2_positives_lft),0,
+      ifelse(is.na(data$pillar2_positives_lft), 0,
              data$pillar2_positives_lft)
   }
   if (neg_over25_non_lfts_available & pos_over25_lfts_available) {
@@ -312,7 +312,6 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
 
 spim_data_serology <- function(date, region, data) {
   ## We might have serology data that is too recent; subset it here:
-  ## data <- data[as.Date(data$date) <= as.Date(date), ]
 
   if (region == "scotland") {
     data <- data %>%

@@ -125,9 +125,9 @@ spim_plot_fit_posteriors <- function(samples, region = NULL) {
   } else {
     ## We assume this below
     n_chains <- length(unique(samples$chain))
-    stopifnot(
-      identical(samples$chain,
-                rep(seq_len(n_chains), each = length(samples$chain) / n_chains)))
+    stopifnot(identical(
+      samples$chain,
+      rep(seq_len(n_chains), each = length(samples$chain) / n_chains)))
   }
   cols <- rev(viridisLite::viridis(n_chains))
 
@@ -148,13 +148,13 @@ spim_plot_fit_posteriors <- function(samples, region = NULL) {
 
 
     if (is.null(region)) {
+      ess <- coda::effectiveSize(coda::as.mcmc(traces))
       main <- ifelse(name == "log_likelihood", "",
-                   paste("ess =", round(sum(coda::effectiveSize(coda::as.mcmc(traces))))))
+                   paste("ess =", round(sum(ess))))
     } else {
+      ess <- coda::effectiveSize(coda::as.mcmc(traces))
       main <- ifelse(name == "log_likelihood", sprintf("Region %s", region),
-                    sprintf("%s; ess = %d",
-                            region,
-                            round(sum(coda::effectiveSize(coda::as.mcmc(traces))))))
+                     sprintf("%s; ess = %d", region, round(sum(ess))))
     }
 
     matplot(breaks, y, type = "s", lty = 1,
@@ -195,8 +195,9 @@ gelman_diagnostic <- function(samples, region = NULL) {
     chains <- lapply(unname(split(data.frame(samples$pars), samples$chain)),
                     coda::as.mcmc)
   } else {
-    chains <- lapply(unname(split(data.frame(t(samples$pars[, region,])), samples$chain)),
-                    coda::as.mcmc)
+    chains <- lapply(unname(split(data.frame(t(samples$pars[, region, ])),
+                                  samples$chain)),
+                     coda::as.mcmc)
   }
 
   tryCatch(
