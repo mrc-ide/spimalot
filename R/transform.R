@@ -193,7 +193,6 @@ spim_transform_single <- function(region, model_type, multistrain, beta_date,
     f <- function(x) {
       ## TODO check this, and see if we can instead use mcstate's
       ## array functions.
-      browser()
       dim(x) <- c(19, 1, 4)
       x
     }

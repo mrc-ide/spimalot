@@ -1,6 +1,19 @@
 ## NOTE: throughout this file the use of region is quite peciular,
 ## designed to work only(?!) with the multi-region fits, and if you
 ## give it for single region fits bad things will happen.
+
+##' Plots for fits
+##'
+##' @title Plots for fit
+##'
+##' @param samples The eamples
+##'
+##' @param region The region. Leave this `NULL` except for
+##'   multi-region fits
+##'
+##' @return Nothing, called for side effect
+##' @rdname spim_plot_fit
+##' @export
 spim_plot_fit_forecasts <- function(samples, region = NULL) {
   data_date <- samples$info$date
   ## NOTE: The first date will include the whole pre-data counts, so
@@ -59,6 +72,8 @@ spim_plot_fit_forecasts <- function(samples, region = NULL) {
 }
 
 
+##' @rdname spim_plot_fit
+##' @export
 spim_plot_fit_traces <- function(samples, region = NULL) {
   if (is.null(samples$chain)) {
     n_chains <- 1L
@@ -119,6 +134,8 @@ spim_plot_fit_traces <- function(samples, region = NULL) {
 }
 
 
+##' @rdname spim_plot_fit
+##' @export
 spim_plot_fit_posteriors <- function(samples, region = NULL) {
   if (is.null(samples$chain)) {
     n_chains <- 1L

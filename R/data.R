@@ -32,7 +32,7 @@
 spim_data <- function(date, region, model_type, rtm, serology,
                       trim_deaths, full_data = FALSE) {
   check_region(region)
-  spimalot_check_model_type(model_type)
+  spim_check_model_type(model_type)
 
   if (length(region) > 1) {
     ## See the original task
@@ -80,6 +80,7 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 }
 
 
+##' @importFrom dplyr %>%
 spim_data_rtm <- function(date, region, model_type, data, full_data) {
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
