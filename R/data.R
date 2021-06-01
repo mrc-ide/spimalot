@@ -32,7 +32,7 @@
 spim_data <- function(date, region, model_type, rtm, serology,
                       trim_deaths, full_data = FALSE) {
   check_region(region)
-  check_model_type(model_type)
+  spimalot_check_model_type(model_type)
 
   if (length(region) > 1) {
     ## See the original task
