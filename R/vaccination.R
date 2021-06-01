@@ -58,8 +58,8 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
 
     ## add in missing values - name only for now so that we can check each case
     ## individually
-    missing_date <- "2020-12-06"
-    if (!(missing_date %in% data$date)) {
+    missing_date <- as.Date("2020-12-06")
+    if (!(missing_date %in% data$date) && ((missing_date + 1) %in% data$date)) {
       missing_data <- data[1, ]
       missing_data$date <- missing_date
       data <- rbind(data, missing_data)
