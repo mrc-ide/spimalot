@@ -18,6 +18,10 @@ spim_fit_process <- function(samples, control, data_admissions, rtm,
                              parameters) {
   region <- samples$info$region
 
+  message("Computing restart information")
+  restart <- fit_process_restart(samples, parameters, control)
+  samples$restart <- NULL
+
   message("Running forecasts")
   incidence_states <- c("deaths", "deaths_hosp", "deaths_comm",
                         "deaths_carehomes", "admitted", "diagnoses",
@@ -73,7 +77,8 @@ spim_fit_process <- function(samples, control, data_admissions, rtm,
        deaths = deaths,
        simulate = simulate,
        age_class_outputs = age_class_outputs,
-       parameters = parameters)
+       parameters = parameters,
+       restart = restart)
 }
 
 

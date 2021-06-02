@@ -59,13 +59,15 @@ spim_control <- function(short_run, n_chains, date_restart = NULL,
                           seed = NULL,
                           compiled_compare = FALSE)
 
+  thin <- ceiling(n_chains * (n_mcmc - burnin) / n_sample)
+
   forecast <- list(n_sample = n_sample, burnin = burnin,
-                   forecast_days = forecast_days)
+                   forecast_days = forecast_days,
+                   thin = thin)
 
   list(pmcmc = pmcmc,
        particle_filter = particle_filter,
-       forecast = forecast,
-       sample = sample)
+       forecast = forecast)
 }
 
 

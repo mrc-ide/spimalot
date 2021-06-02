@@ -240,3 +240,9 @@ make_prior <- function(d) {
     stop("Unknown prior type")
   }
 }
+
+
+parameter_subset_region <- function(pars, region) {
+  assert_is(pars, "spim_pars_pmcmc")
+  lapply(pars, function(x) x[x$region == region, ])
+}
