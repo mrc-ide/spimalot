@@ -1,4 +1,5 @@
-fit_process_restart <- function(samples, parameters, control) {
+fit_process_restart <- function(samples, parameters, data, vaccination,
+                                control) {
   samples <- mcstate::pmcmc_thin(samples, control$burnin, control$thin)
 
   pars <- spim_fit_parameters(samples, parameters)
@@ -6,8 +7,10 @@ fit_process_restart <- function(samples, parameters, control) {
   pars$sample <- samples$pars
 
   list(state = samples$restart,
-       model_info = samples$info,
-       pars = pars)
+       info = samples$info,
+       pars = pars,
+       data = data,
+       vaccination = vaccination)
 }
 
 

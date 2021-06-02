@@ -4,7 +4,16 @@
 \alias{spim_fit_process}
 \title{Process a fit}
 \usage{
-spim_fit_process(samples, control, data_admissions, rtm, parameters)
+spim_fit_process(
+  samples,
+  control,
+  data_admissions,
+  rtm,
+  parameters,
+  data,
+  data_full,
+  data_vaccination
+)
 }
 \arguments{
 \item{samples}{The pmcmc_samples object from \link[mcstate:pmcmc]{mcstate::pmcmc}}
@@ -18,6 +27,14 @@ spim_fit_process(samples, control, data_admissions, rtm, parameters)
 
 \item{parameters}{The parameter specification
 (\link{spim_pars_pmcmc_load})}
+
+\item{data}{The data set as passed to
+\link{spim_particle_filter}}
+
+\item{data_full}{Full data set, before any right-censoring}
+
+\item{data_vaccination}{The vaccination data set as passed to
+\link{spim_pars}}
 }
 \description{
 Process fit data

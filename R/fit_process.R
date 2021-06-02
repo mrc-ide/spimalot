@@ -13,13 +13,22 @@
 ##' @param parameters The parameter specification
 ##'   ([spimalot::spim_pars_pmcmc_load])
 ##'
+##' @param data The data set as passed to
+##'   [spimalot::spim_particle_filter]
+##'
+##' @param data_full Full data set, before any right-censoring
+##'
+##' @param data_vaccination The vaccination data set as passed to
+##'   [spimalot::spim_pars]
+##'
 ##' @export
 spim_fit_process <- function(samples, control, data_admissions, rtm,
-                             parameters) {
+                             parameters, data, data_full, data_vaccination) {
   region <- samples$info$region
 
   message("Computing restart information")
-  restart <- fit_process_restart(samples, parameters, control)
+  restart <- fit_process_restart(samples, parameters, data, data_vaccination,
+                                 control)
   samples$restart <- NULL
 
   message("Running forecasts")
@@ -78,7 +87,9 @@ spim_fit_process <- function(samples, control, data_admissions, rtm,
        simulate = simulate,
        age_class_outputs = age_class_outputs,
        parameters = parameters,
-       restart = restart)
+       restart = restart,
+       vaccination = data_vaccination,
+       data = list(fitted = data, full = data_full))
 }
 
 
