@@ -117,7 +117,7 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
       tmp_add[3:ncol(tmp_add)] <- NA
       tmp_add$region <- missing_regions
       tmp_add$date <- d
-      data <- data %>% bind_rows(tmp_add)
+      data <- data %>% dplyr::bind_rows(tmp_add)
     }
   }
 
@@ -311,24 +311,27 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
 }
 
 
+##' @importFrom dplyr .data
 spim_data_serology <- function(date, region, data) {
   ## We might have serology data that is too recent; subset it here:
 
   if (region == "scotland") {
     data <- data %>%
-      dplyr::mutate(age_group = ifelse(age_group %in% c("0_39", "40_59"),
-                                       "15_64", age_group)) %>%
-      dplyr::mutate(assay = ifelse(assay == "abbott", "euro_immun", assay)) %>%
-      dplyr::group_by(region, date, age_group, assay) %>%
-      dplyr::summarise(n_positive = sum(n_positive),
-                       total_samples = sum(total_samples))
+      dplyr::mutate(age_group = ifelse(.data$age_group %in% c("0_39", "40_59"),
+                                       "15_64", .data$age_group)) %>%
+      dplyr::mutate(assay = ifelse(.data$assay == "abbott",
+                                   "euro_immun", assay)) %>%
+      dplyr::group_by(region, date, .data$age_group, assay) %>%
+      dplyr::summarise(n_positive = sum(.data$n_positive),
+                       total_samples = sum(.data$total_samples))
 
   }
 
+  ## TODO: needs effort to fix
   data <- data %>%
-    dplyr::filter(assay %in% c("euro_immun", "roche_n")) %>%
+    dplyr::filter(.data$assay %in% c("euro_immun", "roche_n")) %>%
     tidyr::pivot_wider(names_from = assay,
-                       values_from  = c(n_positive, total_samples),
+                       values_from = c(n_positive, total_samples),
                        values_fill = NA_integer_)
 
   data <- data[data$region == region & data$age_group == "15_64", ]
@@ -356,6 +359,7 @@ spim_data_serology <- function(date, region, data) {
 ##'
 ##' @param region Name of the region
 ##' @export
+##' @importFrom dplyr .data
 spim_data_admissions <- function(admissions, region) {
   nations <- c("scotland", "wales", "northern_ireland")
 
@@ -377,23 +381,24 @@ spim_data_admissions <- function(admissions, region) {
     admissions <- admissions[admissions$region == region, ]
 
     admissions <- admissions %>%
-      dplyr::group_by(date, age_from) %>%
-      dplyr::mutate(age_from = paste0("adm_", age_from)) %>%
+      dplyr::group_by(date, .data$age_from) %>%
+      dplyr::mutate(age_from = paste0("adm_", .data$age_from)) %>%
       dplyr::mutate(value = sum(admissions)) %>%
       dplyr::slice(1) %>%
-      dplyr::select(date, region, age_from, value)
+      dplyr::select(date, region, .data$age_from, value)
 
     stopifnot(nrow(admissions) == length(unique(admissions$date)) *
               length(vector_age_bands))
 
     admissions <- admissions %>%
-      tidyr::pivot_wider(id_cols = c(date, region), names_from = age_from)
+      tidyr::pivot_wider(id_cols = c(date, region),
+                         names_from = .data$age_from)
 
     admissions$adm_0 <- rowSums(admissions[, 3:4])
     admissions$adm_25 <- rowSums(admissions[, 5:7])
     admissions$adm_75 <- rowSums(admissions[, 11:12])
 
-    admissions <- admissions %>% dplyr::select(all_of(age_bands))
+    admissions <- admissions %>% dplyr::select(dplyr::all_of(age_bands))
   }
 
   admissions

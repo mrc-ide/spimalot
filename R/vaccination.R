@@ -85,7 +85,7 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
     # A number of vaccines have unexpectedly been allocoated to an NA age-group
     # in Scotland, let's filter them out for the time being
     if (region == "scotland") {
-      data <- data %>% dplyr::filter(!is.na(age_band_min))
+      data <- data %>% dplyr::filter(!is.na(.data$age_band_min))
     }
     i <- is.na(data$age_band_min)
     f <- function(x) {
@@ -100,16 +100,16 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
     data <- data[data$date <= as.Date(date) & !is.na(data$age_band_min), ]
 
     data <- data %>%
-      dplyr::group_by(date, age_band_min, age_band_max) %>%
+      dplyr::group_by(.data$date, .data$age_band_min, .data$age_band_max) %>%
       dplyr::summarise(
-        dose1 = sum(first_dose, na.rm = TRUE),
-        dose2 = sum(second_dose, na.rm = TRUE))
+        dose1 = sum(.data$first_dose, na.rm = TRUE),
+        dose2 = sum(.data$second_dose, na.rm = TRUE))
 
     last_day <- (data %>%
-                 dplyr::group_by(date) %>%
+                 dplyr::group_by(.data$date) %>%
                  dplyr::summarise(
-                   doses = sum(dose1 + dose2, na.rm = TRUE)) %>%
-                 dplyr::filter(doses > 0) %>%
+                   doses = sum(.data$dose1 + .data$dose2, na.rm = TRUE)) %>%
+                 dplyr::filter(.data$doses > 0) %>%
                  tail(1))$date
 
     data <- data[data$date <= last_day, ]

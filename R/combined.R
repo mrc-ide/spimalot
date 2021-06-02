@@ -1,7 +1,9 @@
 ##' Load combined fits from a directory of regional fits
 ##'
-##' @title Load combined fits @param path Directory name. Within here
-##'   we expect to see `<region>/fits.rds` for each region in
+##' @title Load combined fits
+##'
+##' @param path Directory name. Within here we expect to see
+##'   `<region>/fits.rds` for each region in
 ##'   `sircovid::regions("all")`
 ##'
 ##' @return A combined fit object
@@ -11,7 +13,13 @@ spim_combined_load <- function(path) {
 
   files <- file.path(path, regions, "fit.rds")
   ## TODO: better error message if not found
-  stopifnot(all(file.exists(files)))
+  msg <- !file.exists(files)
+  if (any(msg)) {
+    msg <- sprintf("  - %s", file.path(regions[msg], "fit.rds"))
+    stop(sprintf("Missing files at '%s':\n%s",
+                 path, paste(msg, collapse = "\n")),
+         call. = FALSE)
+  }
 
   read_rds <- function(filename, region) {
     message(sprintf("Reading fit for %s", region))
@@ -150,10 +158,10 @@ combined_aggregate_data <- function(data) {
 combined_aggregate_rt <- function(rt, samples) {
   england <- sircovid::regions("england")
   nations <- sircovid::regions("nations")
-  rt$england <- sircovid:::combine_rt(rt[england], samples[england],
-                                      rank = FALSE)
-  rt$uk <- sircovid:::combine_rt(rt[nations], samples[nations],
-                                 rank = FALSE)
+  rt$england <- sircovid::combine_rt(rt[england], samples[england],
+                                     rank = FALSE)
+  rt$uk <- sircovid::combine_rt(rt[nations], samples[nations],
+                                rank = FALSE)
   rt
 }
 
@@ -164,68 +172,4 @@ combined_switch_levels <- function(x) {
   y <- lapply(nms, function(z) lapply(x, "[[", z))
   names(y) <- nms
   y
-}
-
-
-combined_spim_summary <- function(dat, type, what, ts_date = "2020-10-01") {
-  ## date we can get
-  res <- Map(region_to_template,
-             Map(c, dat$samples, dat$rt),
-             c(regions$name, "England", "United Kingdom"),
-             MoreArgs = list(date = date,
-                             type = type,
-                             what = what,
-                             ts_date = ts_date))
-  res <- do.call(rbind, res)
-  rownames(res) <- NULL
-
-  res
-}
-
-
-region_to_template <- function(samples, name, date, type, what, ts_date) {
-  if (what == "forecast_only") {
-    ret <- rbind(
-      region_to_template_forecast(samples, name, date, type))
-  }
-  if (what == "nowcast_forecast") {
-    ret <- rbind(
-      region_to_template_rt(samples, name, date, type, "nowcast",
-                            ts_date),
-      region_to_template_growth_rate(samples, name, date, type, "nowcast",
-                                     ts_date),
-      region_to_template_incidence(samples, name, date, type, "nowcast",
-                                   ts_date),
-      region_to_template_prevalence(samples, name, date, type, "nowcast",
-                                    ts_date),
-      region_to_template_forecast(samples, name, date, type))
-  }
-  if (what == "time-series") {
-    ret <- rbind(
-      region_to_template_rt(samples, name, date, type, "time-series",
-                            ts_date),
-      region_to_template_growth_rate(samples, name, date, type, "time-series",
-                                     ts_date),
-      region_to_template_incidence(samples, name, date, type, "time-series",
-                                   ts_date),
-      region_to_template_prevalence(samples, name, date, type, "time-series",
-                                    ts_date))
-  }
-
-  ret
-}
-
-
-region_to_template_forecast <- function(samples, name, date, type) {
-  rbind(
-    region_to_template1(samples, name, "deaths_inc",
-                        "type28_death_inc_line", date, type),
-    region_to_template1(samples, name, "infections_inc",
-                        "infections_inc", date, type),
-    region_to_template1(samples, name, "react_pos",
-                        "prevalence_mtp", date, type),
-    region_to_template1(samples, name, "all_admission_inc",
-                        "hospital_inc", date, type),
-    region_to_template1(samples, name, "hosp",
-                        "hospital_prev", date, type))
 }

@@ -117,9 +117,11 @@ spim_simulate_schedule <- function(combined, n_par, end_date, n_threads, keep,
     seasonality, R, prob_strain)
 
   if (!is.null(prop_voc)) {
+    ## NOTE: not 100% sure that this is correct, was 'dat$info' and
+    ## I've renamed to combined$info
     state <- move_strain_compartments(
       state, info, c("E", "I_A", "I_P", "I_C_1"),
-      1, 2, prop_voc, names(dat$info)
+      1, 2, prop_voc, names(combined$info)
     )
   }
 
@@ -657,4 +659,71 @@ simulate_summary_protected <- function(n_vaccinated, R, vaccine_efficacy) {
   )
 
   aperm(abind_quiet(ret, along = 3), c(3, 1, 2))
+}
+
+
+prepare_inflate_strain <- function(pars, state, info) {
+  ## First inflate the parameters, because we need these in order to
+  ## inflate the state.
+
+  ## Easy updates:
+  update <- list(cross_immunity = c(1, 1),
+                 n_strains = 4,
+                 strain_transmission = rep(1, 4))
+
+  inflate_pars <- function(p_i) {
+    p_i[names(update)] <- update
+    for (rel in grep("^rel_", names(p_i), value = TRUE)) {
+      rel_old <- p_i[[rel]]
+      ## rel_gamma_X
+      if (is.null(dim(rel_old))) {
+        p_i[[rel]] <- rep(rel_old, 4)
+      } else {
+        rel_new <- array(0, c(nrow(rel_old), 4, nlayers(rel_old)))
+        rel_new[, , ] <- rel_old[, 1, , drop = FALSE]
+        p_i[[rel]] <- rel_new
+      }
+    }
+    p_i
+  }
+
+  pars_new <- lapply(pars, lapply, inflate_pars)
+
+  ## Then update the states given that:
+  info_old <- info[[1]]$info
+  info_new <- sircovid::carehomes$new(pars_new[[1]][[1]], 0, 1)$info()
+  state_new <- lapply(state, sircovid::inflate_state_strains,
+                      info_old, info_new)
+
+  info_new <- lapply(info, function(x) {
+    x$info <- info_new
+    x
+  })
+
+  list(pars = pars_new, state = state_new, info = info_new)
+}
+
+
+move_strain_compartments <- function(state, info, compartment,
+                                     original_strain_idx, new_strain_idx,
+                                     prop, regions) {
+  for (i in seq_along(compartment)) {
+    dim <- info$dim[[compartment[[i]]]]
+    for (r in seq_along(prop)) {
+      new_state <- state[info$index[[compartment[[i]]]], , r]
+      tmp_dim <- dim(new_state)
+      new_state <- array(new_state, c(dim, ncol(new_state)))
+
+      if (length(dim) == 4) {
+        new_state[, 2, , , ] <-
+          round(prop[[regions[[r]]]] * new_state[, 1, , , ])
+        new_state[, 1, , , ] <- new_state[, 1, , , ] - new_state[, 2, , , ]
+      } else {
+        stop(sprintf("Unexpected dimensions (%d) in move_strain_compartment",
+                     length(dim)))
+      }
+      state[info$index[[compartment[[i]]]], , r] <- array(new_state, tmp_dim)
+    }
+  }
+  state
 }

@@ -12,7 +12,7 @@ spim_plot_admissions_by_age <- function(dat, region) {
   sample <- dat$samples[[region]]
   date <- dat$info$date
 
-  palette <- colorRampPalette(c("#213148FF", "#A1B1C8FF"))
+  palette <- grDevices::colorRampPalette(c("#213148FF", "#A1B1C8FF"))
 
   res <- spim_extract_admissions_by_age_region(sample)
 
@@ -20,11 +20,13 @@ spim_plot_admissions_by_age <- function(dat, region) {
             mgp = c(1.7, 0.7, 0),  bty = "n")
   on.exit(oo)
 
-  boxplot(as.data.frame(res$prop_total_admissions), pch = ".", col = grey(0.8),
-          xaxt = "n", ylab = "% of admissions", las = 1, ylim = c(0, 15))
+  boxplot(as.data.frame(res$prop_total_admissions), pch = ".",
+          col = grDevices::grey(0.8), xaxt = "n", ylab = "% of admissions",
+          las = 1, ylim = c(0, 15))
   ages <- seq(0, 75, 5)
   labels <- c(sprintf("[%s-%s)", ages, ages + 5), "80+", "CHW", "CHR")
-  axis(side = 1, at = seq_len(19), labels = labels, mgp = c(1.7, 0.5, 0))
+  axis(side = 1, at = seq_len(19), labels = labels,
+                 mgp = c(1.7, 0.5, 0))
 
   # plot over time
   y <- t(apply(res$mean_admissions_t, 1, cumsum))
@@ -37,9 +39,10 @@ spim_plot_admissions_by_age <- function(dat, region) {
   col <- rev(palette(ncol(y)))
 
   for (i in rev(seq_len(ncol(y)))) {
-    polygon(x = xx, y = c(y0, rev(y[, i])), border = grey(0.9), col = col[i])
+    polygon(x = xx, y = c(y0, rev(y[, i])),
+            border = grDevices::grey(0.9), col = col[i])
   }
-  abline(v = as.Date(date), col = grey(0.9), lty = 2)
+  abline(v = as.Date(date), col = grDevices::grey(0.9), lty = 2)
 }
 
 
@@ -254,7 +257,7 @@ spim_plot_react <- function(dat, regions, date_min, ymax, add_betas = FALSE) {
 ##'
 ##' @param regions Vector of regions to plot
 ##'
-##' @param per_100 Logical, indicating if we plot incidence per 1000 people
+##' @param per_1000 Logical, indicating if we plot incidence per 1000 people
 ##'
 ##' @export
 spim_plot_incidence <- function(dat, regions, per_1000 = FALSE) {
@@ -277,7 +280,7 @@ spim_plot_incidence <- function(dat, regions, per_1000 = FALSE) {
 ##'
 ##' @param regions Vector of regions to plot
 ##'
-##' @param forecast_until Optional date to forecast till
+##' @param ymin Minimum y axis value
 ##'
 ##' @export
 spim_plot_prop_susceptible <- function(dat, regions, ymin) {
@@ -649,9 +652,9 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
            horiz = FALSE, leg = FALSE)
   lines(x, qs["50.0%", ], col = pos_col, lty = 1, lwd = 1.5, lend = 1)
   if (data_by == "rolling week") {
-    lines(dx, dy, col = grey(0.2))
+    lines(dx, dy, col = grDevices::grey(0.2))
   } else {
-    lines(dx, dy, col = grey(0.2), lend = 1)
+    lines(dx, dy, col = grDevices::grey(0.2), lend = 1)
 
   }
 
@@ -965,7 +968,7 @@ spim_plot_serology_region <- function(region, dat, sero_flow, ymax,
       xx <- rep(unlist(summ_serodata[i, c("start", "end")]), each = 2)
       yy <- c(ylim, rev(ylim))
 
-      polygon(x = xx, y = yy, col = grey(0.9), border = NA)
+      polygon(x = xx, y = yy, col = grDevices::grey(0.9), border = NA)
     })
   }
 
@@ -1052,7 +1055,8 @@ spim_plot_ifr_t_region <- function(region, dat, ifr_t_type, ymax,
          font.main = 1,
          xlab = "", ylab = "IFR",
          xaxt = "n")
-    segments(x0 = xlim[1], x1 = xlim[2], y0 = seq(0, 4, 0.5), col = grey(0.9))
+    segments(x0 = xlim[1], x1 = xlim[2], y0 = seq(0, 4, 0.5),
+             col = grDevices::grey(0.9))
     axis.Date(1, at = seq(as.Date("2020-04-01"), as.Date(forecast_until),
                           by = "2 month"), format = "%b")
   }
@@ -1266,6 +1270,6 @@ ci_bands <- function(quantiles, y, palette = NULL, cols = NULL, leg = TRUE,
            col = cols[leg_cols],
            legend = leg,
            border = NA,
-           btx = "n", ...)
+           bty = "n", ...)
   }
 }

@@ -250,7 +250,7 @@ spim_summary_region_forecast <- function(region, dat) {
 }
 
 
-spim_summary_region_forecast_trajectory <- function(region, date, name, as) {
+spim_summary_region_forecast_trajectory <- function(region, dat, name, as) {
   date <- dat$info$date
   model_type <- dat$info$model_type
   qs <- spim_summary_quantiles()

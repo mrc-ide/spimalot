@@ -77,7 +77,7 @@ spim_plot_forest <- function(dat, plot_betas) {
 
     jitter <- 0.5
     regions <- names(par)
-    hp <- subset(hps, name == par_name)
+    hp <- subset(hps, hps$name == par_name)
     rownames(hp) <- hp$region
     hp <- hp[regions, ] # sort in correct order
     if (hp$type[1] == "beta") {
@@ -223,7 +223,7 @@ plot_ci_bar <- function(res, at, width = 1,
                  probs = seq(min, max, by = 0.005),
                  na.rm = TRUE)
 
-  palette <- colorRampPalette(cols)
+  palette <- grDevices::colorRampPalette(cols)
   if (segments) {
     segments(y0 = at, x0 = min(res), x1 = max(res), col = cols[2])
     points(y = rep(at, 2), x = range(res), col = cols[2], pch = "-")

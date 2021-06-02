@@ -25,7 +25,7 @@
 ##'   [spimalot::spim_vaccination_data]
 ##'
 ##' @param parameters Parameter information, from
-##'   [spimalot::spim_pars_pmcmc]
+##'   [spimalot::spim_pars_pmcmc_load]
 ##'
 ##' @return An [mcstate::pmcmc_parameters] object which can be used
 ##'   with [mcstate::pmcmc]

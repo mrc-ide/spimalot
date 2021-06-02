@@ -2,11 +2,14 @@
 % Please edit documentation in R/combined.R
 \name{spim_combined_load}
 \alias{spim_combined_load}
-\title{Load combined fits @param path Directory name. Within here
-we expect to see \verb{<region>/fits.rds} for each region in
-\code{sircovid::regions("all")}}
+\title{Load combined fits}
 \usage{
 spim_combined_load(path)
+}
+\arguments{
+\item{path}{Directory name. Within here we expect to see
+\verb{<region>/fits.rds} for each region in
+\code{sircovid::regions("all")}}
 }
 \value{
 A combined fit object

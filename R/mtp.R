@@ -26,12 +26,14 @@ spim_mtp_prepare <- function(mtp_commission, npi_key, n_par, end_date,
     dplyr::bind_rows()
 
   run_grid <- ret %>%
-    dplyr::select(scenario, daily_doses, spim_name, type_rt) %>%
+    dplyr::select(.data$scenario, .data$daily_doses, .data$spim_name,
+                  .data$type_rt) %>%
     dplyr::distinct()
 
   rt_future <- ret %>%
-    dplyr::select(-c(daily_doses, spim_name)) %>%
-    tidyr::pivot_longer(c(starts_with("npi"), starts_with("date")),
+    dplyr::select(-c(.data$daily_doses, .data$spim_name)) %>%
+    tidyr::pivot_longer(c(tidyr::starts_with("npi"),
+                          tidyr::starts_with("date")),
                         names_to = c(".value", "changepoint"),
                         names_pattern = "(.+)_(.+)") %>%
     dplyr::mutate(Rt_sd = npi_key[npi, "Rt_sd"],

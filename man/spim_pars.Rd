@@ -36,7 +36,7 @@ parameters. Must align with parameters}
 \link{spim_vaccination_data}}
 
 \item{parameters}{Parameter information, from
-\link{spim_pars_pmcmc}}
+\link{spim_pars_pmcmc_load}}
 }
 \value{
 An \link[mcstate:pmcmc_parameters]{mcstate::pmcmc_parameters} object which can be used

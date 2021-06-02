@@ -69,3 +69,8 @@ set_names <- function(x, nms) {
   names(x) <- nms
   x
 }
+
+
+nlayers <- function(x) {
+  dim(x)[[3L]]
+}

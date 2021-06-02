@@ -11,7 +11,7 @@ spim_plot_incidence(dat, regions, per_1000 = FALSE)
 
 \item{regions}{Vector of regions to plot}
 
-\item{per_100}{Logical, indicating if we plot incidence per 1000 people}
+\item{per_1000}{Logical, indicating if we plot incidence per 1000 people}
 }
 \description{
 Plot incidence

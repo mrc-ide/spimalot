@@ -426,53 +426,6 @@ extract_age_class_outputs <- function(samples) {
 }
 
 
-sort_data_admissions <- function(df, r) {
-
-  nations <- c("scotland", "wales", "northern_ireland")
-
-  if (r %in% nations) {
-
-    df <- data.frame(
-      date = unique(df$date),
-      region = r,
-      adm_0 = NA_integer_,
-      adm_25 = NA_integer_,
-      adm_55 = NA_integer_,
-      adm_65 = NA_integer_,
-      adm_75 = NA_integer_)
-
-  } else {
-
-    vector_age_bands <- unique(df$age_from)
-    age_bands <- c("date", "region", "adm_0", "adm_25", "adm_55", "adm_65",
-                   "adm_75")
-
-    df$region <- gsub(" ", "_", df$region)
-    df <- df[df$region == r, ]
-
-    df <- df %>%
-      dplyr::group_by(date, age_from) %>%
-      dplyr::mutate(age_from = paste0("adm_", age_from)) %>%
-      dplyr::mutate(value = sum(admissions)) %>%
-      dplyr::slice(1) %>%
-      dplyr::select(date, region, age_from, value)
-
-    stopifnot(nrow(df) == length(unique(df$date)) * length(vector_age_bands))
-
-    df <- df %>%
-      tidyr::pivot_wider(id_cols = c(date, region), names_from = age_from)
-
-    df$adm_0 <- rowSums(df[, 3:4])
-    df$adm_25 <- rowSums(df[, 5:7])
-    df$adm_75 <- rowSums(df[, 11:12])
-
-    df <- df %>% dplyr::select(all_of(age_bands))
-  }
-
-  df
-}
-
-
 spim_fit_parameters <- function(samples, parameters) {
   info <- parameters$info[parameters$info$region == samples$info$region, ]
   rownames(info) <- NULL

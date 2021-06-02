@@ -11,7 +11,7 @@ spim_plot_prop_susceptible(dat, regions, ymin)
 
 \item{regions}{Vector of regions to plot}
 
-\item{forecast_until}{Optional date to forecast till}
+\item{ymin}{Minimum y axis value}
 }
 \description{
 Plot proportion susceptible
