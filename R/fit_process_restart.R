@@ -1,4 +1,8 @@
 fit_process_restart <- function(samples, parameters, data, control) {
+  if (is.null(samples$restart)) {
+    return(NULL)
+  }
+
   samples <- mcstate::pmcmc_thin(samples, control$burnin, control$thin)
 
   pars <- spim_fit_parameters(samples, parameters)

@@ -104,7 +104,7 @@ spim_fit_process_data <- function(admissions, rtm, fitted, full, vaccination) {
   list(admissions = admissions,
        rtm = rtm,
        full = full,
-       fitted = data,
+       fitted = fitted,
        vaccination = vaccination)
 }
 
@@ -121,7 +121,7 @@ create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
               state = samples$trajectories$state[, , idx_dates])
   # add state_by_age
   ret$state_by_age <- extract_age_class_state(ret$state)
-  # add n_protected and n_doses
+  # add n_protected and n_doses2
   ret <- c(ret, calculate_vaccination(ret$state, vaccine_efficacy))
 
   # thin trajectories
@@ -351,26 +351,35 @@ reduce_trajectories <- function(samples) {
 
 
 calculate_vaccination <- function(state, vaccine_efficacy) {
-
-
-  n_groups <- nrow(vaccine_efficacy[[1]])
-  n_vacc_classes <- ncol(vaccine_efficacy[[1]])
+  de <- dim(vaccine_efficacy[[1]])
+  if (length(de) == 2L) {
+    n_groups <- de[[1]]
+    n_strain <- 1
+    n_vacc_classes <- de[[2]]
+    multistrain <- FALSE
+  } else {
+    n_groups <- de[[1]]
+    n_strain <- de[[2]]
+    n_vacc_classes <- de[[3]]
+    multistrain <- TRUE
+  }
 
   # extract array of  mean by age / vaccine class / region == 1 / time
-  get_mean_avt <- function(nm, state) {
+  get_mean_avt <- function(nm, state, strain = TRUE) {
     idx <- grep(nm, rownames(state))
-    x <- mcstate::array_reshape(state[idx, , ], i = 1,
-                                d = c(n_groups, n_vacc_classes))
-    out <- apply(x, c(1, 2, 4), mean)
-    mcstate::array_reshape(out, i = 2, d = c(n_vacc_classes, 1))
+    d <- c(n_groups, if (strain) n_strain else 1, n_vacc_classes)
+    x <- mcstate::array_reshape(state[idx, , ], i = 1, d = d)
+    out <- apply(x, c(1, 2, 3, 5), mean)
+    ## TODO: this aperm should be removed, and code below here updated
+    aperm(out, c(1, 3, 2, 4))
   }
 
   ## mean R by vaccine class / region == 1, time
-  R <- get_mean_avt("^R_", state)
+  R <- get_mean_avt("^R_", state, TRUE)
   R <- apply(R, c(2, 3, 4), sum)
 
   ## mean cumulative vaccinations by age / vaccine class / region == 1 / time
-  n_vaccinated <- get_mean_avt("^cum_n_vaccinated_", state)
+  n_vaccinated <- get_mean_avt("^cum_n_vaccinated_", state, FALSE)
 
   vp <- get_vaccine_protection(vaccine_efficacy)
 
@@ -404,10 +413,20 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
   sum_sr <- function(x) c(apply(x, c(2, 3), sum))
   sum_asr <- function(x) c(apply(x, c(3, 4), sum))
 
+  if (multistrain) {
+    ## TODO: this needs fixing, but we might need a n_vaccinated
+    ## against strain
+    protected_against_infection <- protected_against_severe_disease <-
+      rep(NA_real_, dim(V)[[4]])
+  } else {
+    protected_against_infection <- sum_asr(c(vp$infection) * V)
+    protected_against_severe_disease <- sum_asr(c(vp$severe_disease) * V)
+  }
+
   n_protected <- rbind(
     ever_vaccinated = colSums(n_vaccinated[, 1, , ]),
-    protected_against_infection = sum_asr(c(vp$infection) * V),
-    protected_against_severe_disease = sum_asr(c(vp$severe_disease) * V),
+    protected_against_infection = protected_against_infection,
+    protected_against_severe_disease = protected_against_severe_disease,
     ever_infected = sum_sr(R),
     ever_infected_unvaccinated = R[1, , , drop = FALSE]
   )

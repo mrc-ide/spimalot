@@ -56,6 +56,7 @@ spim_combined_load <- function(path) {
   message("Aggregating England/UK")
   ## Aggregate some of these to get england/uk entries
   ret$samples <- combined_aggregate_samples(ret$samples)
+
   ret$data <- combined_aggregate_data(ret$data)
   ret$rt <- combined_aggregate_rt(ret$rt, ret$samples)
   ret$ifr_t <- combined_aggregate_rt(ret$ifr_t, ret$samples)
