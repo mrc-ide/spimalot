@@ -242,6 +242,31 @@ parameter_subset_region <- function(pars, region) {
 }
 
 
+
+##' Add a parameter to a `spim_pars_mcmc` object
+##'
+##' @title Add parameter
+##'
+##' @param pars Original `spim_pars_pmcmc` object
+##'
+##' @param name Name of the new parameter
+##'
+##' @param initial Initial value for the new parameter
+##'
+##' @param min Minimum value
+##'
+##' @param max Maximum value
+##'
+##' @param proposal_variance Variance for the proposal VCV
+##'
+##' @param prior List of values for the prior (must include "type",
+##'   then other values for the prior data.frame)
+##'
+##' @param discrete Logical, indicates if discrete
+##'
+##' @param include Logical, indicates if fitted
+##'
+##' @export
 spim_add_par <- function(pars, name, initial, min, max, proposal_variance,
                          prior, discrete = FALSE, include = TRUE) {
   assert_is(pars, "spim_pars_pmcmc")
@@ -288,6 +313,8 @@ spim_add_par <- function(pars, name, initial, min, max, proposal_variance,
 }
 
 
+##' @export
+##' @rdname spim_add_par
 spim_add_par_beta <- function(pars) {
   re <- "^beta([0-9]+)$"
   n <- max(as.integer(
