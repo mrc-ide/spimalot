@@ -3,32 +3,21 @@
 ##' @title Process a fit
 ##' @param samples The pmcmc_samples object from [mcstate::pmcmc]
 ##'
-##' @param control The forecast control from [spimalot::spim_control]
-##'
-##' @param data_admissions The admissions data set from
-##'   [spimalot::spim_data_admissions]
-##'
-##' @param rtm The rtm data set
-##'
 ##' @param parameters The parameter specification
 ##'   ([spimalot::spim_pars_pmcmc_load])
 ##'
-##' @param data The data set as passed to
-##'   [spimalot::spim_particle_filter]
+##' @param data Data sets used in fitting, via
+##'   [spimalot::spim_fit_process_data]
 ##'
-##' @param data_full Full data set, before any right-censoring
+##' @param control The forecast control from [spimalot::spim_control]
 ##'
-##' @param data_vaccination The vaccination data set as passed to
-##'   [spimalot::spim_pars]
 ##'
 ##' @export
-spim_fit_process <- function(samples, control, data_admissions, rtm,
-                             parameters, data, data_full, data_vaccination) {
+spim_fit_process <- function(samples, parameters, data, control) {
   region <- samples$info$region
 
   message("Computing restart information")
-  restart <- fit_process_restart(samples, parameters, data, data_vaccination,
-                                 control)
+  restart <- fit_process_restart(samples, parameters, data, control)
   samples$restart <- NULL
 
   message("Running forecasts")
@@ -48,13 +37,13 @@ spim_fit_process <- function(samples, control, data_admissions, rtm,
 
   message("Summarising admissions")
   admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
-  admissions[["data"]] <- data_admissions
+  admissions[["data"]] <- data$admissions
 
   message("Summarising deaths")
   deaths <- extract_outputs_by_age(forecast, "D_hosp") # slow
   i_deaths_data <- colnames(deaths$output_t)
-  deaths$data <- rtm[rtm$region == region, ]
-  deaths$data <- deaths$data[c("date", "region", i_deaths_data)]
+  deaths$data <- data$rtm[data$rtm$region == region,
+                          c("date", "region", i_deaths_data)]
   deaths$data[is.na(deaths$data)] <- 0
 
   ## TODO: someone needs to document what this date is for (appears to
@@ -88,8 +77,35 @@ spim_fit_process <- function(samples, control, data_admissions, rtm,
        age_class_outputs = age_class_outputs,
        parameters = parameters,
        restart = restart,
-       vaccination = data_vaccination,
-       data = list(fitted = data, full = data_full))
+       vaccination = data$vaccination,
+       data = list(fitted = data$fitted, full = data$full))
+}
+
+
+##' Collect data sets for use with [spimalot::spim_fit_process]
+##'
+##' @title Collect data sets
+##' @param data_admissions The admissions data set from
+##'   [spimalot::spim_data_admissions]
+##'
+##' @param rtm The rtm data set
+##'
+##'
+##' @param data The data set as passed to
+##'   [spimalot::spim_particle_filter]
+##'
+##' @param data_full Full data set, before any right-censoring
+##'
+##' @param data_vaccination The vaccination data set as passed to
+##'   [spimalot::spim_pars]
+##'
+##' @export
+spim_fit_process_data <- function(admissions, rtm, fitted, full, vaccination) {
+  list(admissions = admissions,
+       rtm = rtm,
+       full = full,
+       fitted = data,
+       vaccination = vaccination)
 }
 
 

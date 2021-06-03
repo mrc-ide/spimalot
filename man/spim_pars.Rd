@@ -11,7 +11,8 @@ spim_pars(
   multistrain,
   beta_date,
   vaccination,
-  parameters
+  parameters,
+  cross_immunity = NULL
 )
 }
 \arguments{
@@ -37,6 +38,10 @@ parameters. Must align with parameters}
 
 \item{parameters}{Parameter information, from
 \link{spim_pars_pmcmc_load}}
+
+\item{cross_immunity}{Optional vector of cross immunity
+values. Only has an effect if \code{multistrain} is \code{TRUE} and then
+must have a length of 2 if given.}
 }
 \value{
 An \link[mcstate:pmcmc_parameters]{mcstate::pmcmc_parameters} object which can be used

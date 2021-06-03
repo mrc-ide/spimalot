@@ -27,20 +27,38 @@
 ##' @param parameters Parameter information, from
 ##'   [spimalot::spim_pars_pmcmc_load]
 ##'
+##' @param cross_immunity Optional vector of cross immunity
+##'   values. Only has an effect if `multistrain` is `TRUE` and then
+##'   must have a length of 2 if given.
+##'
 ##' @return An [mcstate::pmcmc_parameters] object which can be used
 ##'   with [mcstate::pmcmc]
 ##'
 ##' @export
 spim_pars <- function(date, region, model_type, multistrain,
-                      beta_date, vaccination, parameters) {
+                      beta_date, vaccination, parameters,
+                      cross_immunity = NULL) {
   assert_is(parameters, "spim_pars_pmcmc")
 
-  if (length(region) == 1) {
-    ret <- spim_pars_single(date, region, model_type, multistrain,
-                            beta_date, vaccination, parameters)
-  } else {
-    stop("writeme")
-  }
+  ## We take 'info' as the canonical source of names, then check that
+  ## prior and proposal align correctly.
+  info <- spim_pars_info(region, parameters$info)
+  prior <- spim_pars_prior(region, info, parameters$prior)
+  proposal <- spim_pars_proposal(region, info, parameters$proposal)
+
+  pars <- Map(
+    mcstate::pmcmc_parameter,
+    name = info$name,
+    initial = info$initial,
+    min = info$min,
+    max = info$max,
+    discrete = info$discrete,
+    prior = lapply(split(prior, prior$name), make_prior))
+
+  transform <- spim_transform(region, model_type, multistrain, beta_date,
+                              vaccination, cross_immunity)
+
+  ret <- mcstate::pmcmc_parameters$new(pars, proposal, transform)
 
   ## This will allow us to recreate things later in the restart
   inputs <- list(date = date,
@@ -107,30 +125,6 @@ spim_pars_pmcmc_save <- function(p, path) {
   write_csv(p$info, file.path(path, "info.csv"))
   write_csv(p$prior, file.path(path, "prior.csv"))
   write_csv(p$proposal, file.path(path, "proposal.csv"))
-}
-
-
-spim_pars_single <- function(date, region, model_type, multistrain,
-                             beta_date, vaccination, parameters) {
-  ## We take 'info' as the canonical source of names, then check that
-  ## prior and proposal align correctly.
-  info <- spim_pars_info(region, parameters$info)
-  prior <- spim_pars_prior(region, info, parameters$prior)
-  proposal <- spim_pars_proposal(region, info, parameters$proposal)
-
-  pars <- Map(
-    mcstate::pmcmc_parameter,
-    name = info$name,
-    initial = info$initial,
-    min = info$min,
-    max = info$max,
-    discrete = info$discrete,
-    prior = lapply(split(prior, prior$name), make_prior))
-
-  transform <- spim_transform(region, model_type, multistrain, beta_date,
-                              vaccination)
-
-  mcstate::pmcmc_parameters$new(pars, proposal, transform)
 }
 
 
@@ -245,4 +239,65 @@ make_prior <- function(d) {
 parameter_subset_region <- function(pars, region) {
   assert_is(pars, "spim_pars_pmcmc")
   lapply(pars, function(x) x[x$region == region, ])
+}
+
+
+spim_add_par <- function(pars, name, initial, min, max, proposal_variance,
+                         prior, discrete = FALSE, include = TRUE) {
+  assert_is(pars, "spim_pars_pmcmc")
+
+  new_par <- data_frame(
+    region = unique(pars$info$region),
+    name = name,
+    initial = initial,
+    min = min,
+    max = max,
+    discrete = discrete,
+    include = include)
+  pars$info <- rbind(pars$info, new_par)
+  pars$info <- pars$info[order(pars$info$region, pars$info$name), ]
+
+  proposal <- pars$proposal
+  proposal[[name]] <- 0
+  ## next line expands regions
+  new_prop <- proposal[proposal$name == proposal$name[1], ]
+  new_prop$name <- name
+  new_prop[, -c(1, 2)] <- 0
+  new_prop[[name]] <- proposal_variance
+
+  proposal <- rbind(proposal, new_prop)
+  proposal <- proposal[order(proposal$region, proposal$name), ]
+
+  nms <- c(names(proposal)[1:2], sort(names(proposal)[-c(1, 2)]))
+  pars$proposal <- proposal[nms]
+
+  new_prior <- pars$prior[pars$prior$name == pars$prior$name[1], ]
+  new_prior[setdiff(names(new_prior), c("region", "name"))] <- NA
+  stopifnot(all(names(prior) %in% names(new_prior)))
+  new_prior$name <- name
+  for (i in names(prior)) {
+    new_prior[[i]] <- prior[[i]]
+  }
+
+  pars$prior <- rbind(pars$prior, new_prior)
+  pars$prior <- pars$prior[order(pars$prior$region, pars$prior$name), ]
+
+  class(pars) <- "spim_pars_pmcmc"
+
+  pars
+}
+
+
+spim_add_par_beta <- function(pars) {
+  re <- "^beta([0-9]+)$"
+  n <- max(as.integer(
+    sub(re, "\\1", grep(re, pars$info$name, value = TRUE))))
+  last <- paste0("beta", n)
+  name <- paste0("beta", n + 1)
+  info <- pars$info[match(last, pars$info$name), ]
+  proposal_variance <- pars$proposal[[last]][match(last, pars$proposal$name)]
+  prior <- as.list(pars$prior[match(last, pars$prior$name), ])
+  prior <- prior[setdiff(names(prior), c("region", "name"))]
+  spim_add_par(pars, name, info$initial, info$min, info$max,
+               proposal_variance, prior)
 }

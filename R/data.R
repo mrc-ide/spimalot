@@ -82,6 +82,7 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 
 ##' @importFrom dplyr %>%
 spim_data_rtm <- function(date, region, model_type, data, full_data) {
+
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
             "death2", "death3", "death_chr", "death_comm",
@@ -92,7 +93,9 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
             "pillar2_positives_over25", "pillar2_negatives_over25",
             "positives_over25", "pillar2_negatives_non_lft",
             "pillar2_negatives_non_lft_over25",
-            "pillar2_positives_lft_over25", "pillar2_positives_lft")
+            "pillar2_positives_lft_over25", "pillar2_positives_lft",
+            "s_positive_adj1", "s_negative_adj1",
+            "s_positive_adj1_over25", "s_negative_adj1_over25")
   data <- data[c("region", "date", vars)]
 
   ## Remove any data after the date parameter
@@ -274,10 +277,19 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
     pillar2_over25_cases = data$pillar2_positives_over25,
     react_pos = data$react_positive,
     react_tot = data$react_samples,
-    strain_non_variant = NA_integer_,
-    strain_tot = NA_integer_)
+    strain_non_variant = data$s_negative_adj1,
+    strain_tot = data$s_negative_adj1 + data$s_positive_adj1,
+    strain_over25_non_variant = data$s_negative_adj1_over25,
+    strain_over25_tot = data$s_negative_adj1_over25 +
+      data$s_positive_adj1_over25)
 
   if (!full_data) {
+    ## Typically we do not fit to this
+    ret$strain_non_variant <- NA_integer_
+    ret$strain_tot <- NA_integer_
+    ret$strain_over25_non_variant <- NA_integer_
+    ret$strain_over25_tot <- NA_integer_
+
     if (model_type == "BB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
                 "pillar2_cases", "pillar2_over25_cases")

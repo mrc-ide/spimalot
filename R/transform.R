@@ -1,21 +1,17 @@
 spim_transform <- function(region, model_type, multistrain, beta_date,
-                           vaccination) {
+                           vaccination, cross_immunity = NULL) {
   beta_date <- sircovid::sircovid_date(beta_date)
   assert_is(vaccination, "spim_vaccination_data")
 
-  if (length(region) == 1L) {
-    spim_transform_single(region, model_type, multistrain, beta_date,
-                          vaccination)
-  } else {
-    stop("writeme")
-  }
-}
-
-
-spim_transform_single <- function(region, model_type, multistrain, beta_date,
-                                  vaccination) {
   severity <- read_csv(spimalot_file("extdata/support_severity.csv"))
   progression <- read_csv(spimalot_file("extdata/support_progression.csv"))
+
+  n_strain <- if (multistrain) 2 else 1
+  if (is.null(cross_immunity)) {
+    cross_immunity <- rep(1, n_strain)
+  } else {
+    stopifnot(length(cross_immunity) == n_strain)
+  }
 
   function(pars) {
     start_date <- pars[["start_date"]]
@@ -37,11 +33,14 @@ spim_transform_single <- function(region, model_type, multistrain, beta_date,
     p_H_2 <- pars[["p_H_2"]]
     alpha_D <- pars[["alpha_D"]]
     alpha_H <- pars[["alpha_H"]]
-    ## TODO: obvious tidyup
-    beta_value <- unname(pars[c("beta1", "beta2", "beta3", "beta4", "beta5",
-                                "beta6", "beta7", "beta8", "beta9", "beta10",
-                                "beta11", "beta12", "beta13", "beta14",
-                                "beta15", "beta16", "beta17", "beta18")])
+
+    if ("strain_transmission_2" %in% names(pars)) {
+      strain_transmission_2 <- pars[["strain_transmission_2"]]
+    } else {
+      strain_transmission_2 <- NULL
+    }
+
+    beta_value <- unname(pars[paste0("beta", seq_along(beta_date))])
 
     if (model_type == "BB") {
       p_NC <- pars[["p_NC"]]
@@ -187,25 +186,23 @@ spim_transform_single <- function(region, model_type, multistrain, beta_date,
                                                    react_sensitivity = 1,
                                                    react_specificity = 1)
 
-    ## We're adding a dimension for strain to all vaccine efficacy
-    ## parameters this is in the format required for
-    ## sircovid:::carehomes_parameters_vaccination
-    f <- function(x) {
-      ## TODO check this, and see if we can instead use mcstate's
-      ## array functions.
-      dim(x) <- c(19, 1, 4)
-      x
-    }
-    rel_efficacy <- lapply(vaccination$efficacy, f)
-
-    ## TODO: whilst we give the right dimensions for rel_efficacy, it is not
-    ## being accepted by sircovid:::carehomes_parameters_vaccination if
-    ## multistrain is TRUE
+    ## TODO: this breaks the current "fake" multistrain fitting and
+    ## that needs working out. Previous version was fragile and
+    ## confusing.
     if (multistrain) {
-      strain_transmission <- c(1, 0)
-      rel_efficacy <- lapply(
-        rel_efficacy, function(x) abind::abind(x, x, x, x, along = 2))
+      rel_efficacy <- vaccination$efficacy
+      strain_transmission <- c(1, strain_transmission_2)
     } else {
+      ## We're adding a dimension for strain to all vaccine efficacy
+      ## parameters this is in the format required for
+      ## sircovid:::carehomes_parameters_vaccination
+      f <- function(x) {
+        ## TODO check this, and see if we can instead use mcstate's
+        ## array functions.
+        dim(x) <- c(19, 1, 4)
+        x
+      }
+      rel_efficacy <- lapply(vaccination$efficacy, f)
       strain_transmission <- 1
     }
 
@@ -240,7 +237,8 @@ spim_transform_single <- function(region, model_type, multistrain, beta_date,
       vaccine_schedule = vaccination$schedule,
       vaccine_index_dose2 = 3L,
       ## Strains
-      strain_transmission = strain_transmission)
+      strain_transmission = strain_transmission,
+      cross_immunity = cross_immunity)
 
     ## Could be moved to sircovid as a default
     ret$I_A_transmission <- 0.223
