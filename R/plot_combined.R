@@ -342,6 +342,98 @@ spim_plot_log_traj_by_age <- function(dat, regions, yield) {
 }
 
 
+##' Plot variant
+##'
+##' @title Plot variant
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param date_min Starting date for plot
+##'
+##' @export
+spim_plot_variant <- function(dat, regions, date_min = NULL) {
+
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in regions) {
+    spim_plot_variant_region(r, dat, date_min)
+  }
+}
+
+
+spim_plot_variant_region <- function(region, dat, date_min) {
+
+  sample <- dat$samples[[region]]
+  data <- dat$data[[region]]
+  date <- dat$info$date
+  cols <- spim_colours()
+  pos_col <- cols$blue
+  dcols <- c(cols$orange, cols$brown)
+  alpha <- 0.3
+
+  n_non_variant <- data$fitted[, "strain_non_variant"]
+  ntot <- data$fitted[, "strain_tot"]
+  if (all(is.na(ntot))) {
+    ## if na, switch to non-fitted data
+    n_non_variant <- data$full[, "strain_non_variant"]
+    ntot <- data$full[, "strain_tot"]
+    dcols[1] <- cols$green2
+  }
+
+  npos <- ntot - n_non_variant
+  npos[is.na(npos)] <- 0
+  ntot[is.na(ntot)] <- 0
+  dx <- as.Date(data$fitted$date_string)
+
+  trajectories <- sample$trajectories$state
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+
+  tot <- trajectories["sympt_cases_inc", , ]
+  pos <- tot - trajectories["sympt_cases_non_variant_inc", , ]
+
+  res <- pos / tot * 100
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+
+  #data
+  cis <- Hmisc::binconf(x = npos, n = ntot) * 100
+  dy <- cis[, "PointEst"]
+  lower <- cis[, "Lower"]
+  upper <- cis[, "Upper"]
+  dy[ntot == 0] <- NA
+
+  pos_cols <- add_alpha(rep(pos_col, 2), alpha)
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  ##date_min <- date_min %||% min(x[-1L])
+  date_min <- min(x[-1L])
+
+  plot(date_min, 0, type = "n",
+       xlim = c(date_min, dat$info$date),
+       ylim = c(0, 100),
+       las = 1,
+       main = toupper(spim_region_name(region)),
+       font.main = 1,
+       xlab = "", ylab = "VOC proportion (%)")
+
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
+                      horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = pos_col, lty = 1, lwd = 1.5, lend = 1)
+  segments(x0 = dx, y0 = lower, y1 = upper, col = "grey60")
+  points(dx, dy, pch = 23, bg = dcols[1], col = dcols[2], cex = 0.8, lwd = 0.6)
+
+  segments(x0 = max(dx), y0 = 0, y1 = 100, lwd = 3, col = "white")
+
+}
+
+
 spim_plot_log_traj_by_age_region <- function(region, dat, what) {
 
   for (w in what) {
