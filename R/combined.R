@@ -89,7 +89,7 @@ spim_combined_onward_simulate <- function(dat) {
   idx_dates <- dat$samples[[1]]$trajectories$date %in% dates
 
   state <- lapply(dat$samples, function(x)
-    x$trajectories$state[rownames(simulate[[1]]$state), , idx_dates])
+    x$trajectories$state[rownames(simulate$state[[1]]), , idx_dates])
   state <- aperm(abind::abind(state, along = 4), c(1, 2, 4, 3))
 
   state_by_age <- lapply(
