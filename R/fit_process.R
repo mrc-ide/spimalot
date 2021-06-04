@@ -363,6 +363,7 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
     n_vacc_classes <- de[[3]]
     multistrain <- TRUE
   }
+  n_days <- dim(state)[[3]]
 
   # extract array of  mean by age / vaccine class / region == 1 / time
   get_mean_avt <- function(nm, state, strain = TRUE) {
@@ -414,10 +415,14 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
   sum_asr <- function(x) c(apply(x, c(3, 4), sum))
 
   if (multistrain) {
-    ## TODO: this needs fixing, but we might need a n_vaccinated
-    ## against strain
-    protected_against_infection <- protected_against_severe_disease <-
-      rep(NA_real_, dim(V)[[4]])
+    n_vaccinated <- apply(n_vaccinated, c(1, 2, 4), sum)
+    dim(n_vaccinated) <- c(n_groups, n_vacc_classes, 1, n_days)
+
+    R <- apply(R, c(1, 3), sum)
+    dim(R) <- c(n_vacc_classes, 1, n_days)
+
+    protected_against_infection <- rep(NA_real_, n_days)
+    protected_against_severe_disease <- rep(NA_real_, n_days)
   } else {
     protected_against_infection <- sum_asr(c(vp$infection) * V)
     protected_against_severe_disease <- sum_asr(c(vp$severe_disease) * V)
@@ -428,8 +433,7 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
     protected_against_infection = protected_against_infection,
     protected_against_severe_disease = protected_against_severe_disease,
     ever_infected = sum_sr(R),
-    ever_infected_unvaccinated = R[1, , , drop = FALSE]
-  )
+    ever_infected_unvaccinated = R[1, , , drop = FALSE])
 
   ## calculate n_doses
 
