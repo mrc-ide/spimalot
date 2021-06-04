@@ -6,13 +6,15 @@
 ##'   `<region>/fits.rds` for each region in
 ##'   `sircovid::regions("all")`
 ##'
+##' @param regions Region type passed to [sircovid::regions] (default
+##'   is `all`, otherwise try `england`)
+##'
 ##' @return A combined fit object
 ##' @export
-spim_combined_load <- function(path) {
-  regions <- sircovid::regions("all")
+spim_combined_load <- function(path, regions = "all") {
+  regions <- sircovid::regions(regions)
 
   files <- file.path(path, regions, "fit.rds")
-  ## TODO: better error message if not found
   msg <- !file.exists(files)
   if (any(msg)) {
     msg <- sprintf("  - %s", file.path(regions[msg], "fit.rds"))
@@ -115,10 +117,15 @@ combined_aggregate_samples <- function(samples) {
   england <- sircovid::regions("england")
   nations <- sircovid::regions("nations")
 
-  samples$england$trajectories <-
-    sircovid::combine_trajectories(samples[england], rank = FALSE)
-  samples$uk$trajectories <-
-    sircovid::combine_trajectories(samples[nations], rank = FALSE)
+  if (all(england %in% names(samples))) {
+    samples$england$trajectories <-
+      sircovid::combine_trajectories(samples[england], rank = FALSE)
+  }
+
+  if (all(nations %in% names(samples))) {
+    samples$uk$trajectories <-
+      sircovid::combine_trajectories(samples[nations], rank = FALSE)
+  }
 
   samples
 }
@@ -144,13 +151,17 @@ combined_aggregate_data <- function(data) {
   england <- sircovid::regions("england")
   nations <- sircovid::regions("nations")
 
-  data$england$full <- aggregate1(england, "full")
-  data$england$fitted <- aggregate1(england, "fitted")
-  data$england$fitted$deaths <- NA
+  if (all(england %in% names(data))) {
+    data$england$full <- aggregate1(england, "full")
+    data$england$fitted <- aggregate1(england, "fitted")
+    data$england$fitted$deaths <- NA
+  }
 
-  data$uk$full <- aggregate1(nations, "full")
-  data$uk$fitted <- aggregate1(nations, "fitted")
-  data$uk$fitted$deaths <- NA
+  if (all(nations %in% names(data))) {
+    data$uk$full <- aggregate1(nations, "full")
+    data$uk$fitted <- aggregate1(nations, "fitted")
+    data$uk$fitted$deaths <- NA
+  }
 
   data
 }
@@ -159,10 +170,15 @@ combined_aggregate_data <- function(data) {
 combined_aggregate_rt <- function(rt, samples) {
   england <- sircovid::regions("england")
   nations <- sircovid::regions("nations")
-  rt$england <- sircovid::combine_rt(rt[england], samples[england],
-                                     rank = FALSE)
-  rt$uk <- sircovid::combine_rt(rt[nations], samples[nations],
-                                rank = FALSE)
+
+  if (all(england %in% names(rt))) {
+    rt$england <- sircovid::combine_rt(rt[england], samples[england],
+                                       rank = FALSE)
+  }
+  if (all(nations %in% names(rt))) {
+    rt$uk <- sircovid::combine_rt(rt[nations], samples[nations],
+                                  rank = FALSE)
+  }
   rt
 }
 

@@ -4,12 +4,15 @@
 \alias{spim_combined_load}
 \title{Load combined fits}
 \usage{
-spim_combined_load(path)
+spim_combined_load(path, regions = "all")
 }
 \arguments{
 \item{path}{Directory name. Within here we expect to see
 \verb{<region>/fits.rds} for each region in
 \code{sircovid::regions("all")}}
+
+\item{regions}{Region type passed to \link[sircovid:regions]{sircovid::regions} (default
+is \code{all}, otherwise try \code{england})}
 }
 \value{
 A combined fit object
