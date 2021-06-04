@@ -180,18 +180,14 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
                       data$date <= as.Date("2020-09-10")] <- NA_integer_
   }
 
-  # Use hospital data from dashboard for all except Wales (linelist)
+  # Use hospital data from dashboard for all except Wales admissions (linelist)
+  data$final_icu <- data$phe_occupied_mv_beds
+  data$final_general <- data$phe_patients - data$phe_occupied_mv_beds
+  data$final_hosp <- data$phe_patients
   if (region == "wales") {
     data$final_admissions <- data$all_admission
-    data$final_icu <- data$icu
-    data$final_general <- data$general
-    data$final_hosp <- data$icu + data$general
-
   } else {
     data$final_admissions <- data$phe_admissions
-    data$final_icu <- data$phe_occupied_mv_beds
-    data$final_general <- data$phe_patients - data$phe_occupied_mv_beds
-    data$final_hosp <- data$phe_patients
   }
 
   ## Use non lateral flow pillar 2 negatives where we have them; data
