@@ -12,6 +12,15 @@
 ##' @param date_restart Optionally, dates save restart data in the
 ##'   pmcmc (see [mcstate::pmcmc]
 ##'
+##' @param n_particles number of particles to be used in particle filter if
+##'   `short_run = FALSE`
+##'
+##' @param n_mcmc number of steps to be used in PMCMC if
+##'   `short_run = FALSE`
+##'
+##' @param burnin number of steps out of `n_mcmc` to be used as a burn-in in
+##'    PMCMC if `short_run = FALSE`
+##'
 ##' @param workers Logical, indicating if we should enable workers. If
 ##'   `TRUE`, then a number of workers between 1 and 4 will be used
 ##'   depending on `n_chains` and the detected number of cores.
@@ -19,6 +28,7 @@
 ##' @return A list of options
 ##' @export
 spim_control <- function(short_run, n_chains, date_restart = NULL,
+                         n_particles = 192, n_mcmc = 1500, burnin = 500,
                          workers = TRUE) {
   if (short_run) {
     n_particles <- 10
@@ -26,10 +36,10 @@ spim_control <- function(short_run, n_chains, date_restart = NULL,
     n_sample <- 10
     burnin <- 1
   } else {
-    n_particles <- 192
-    n_mcmc <- 1500
+    n_particles <- n_particles
+    n_mcmc <- n_mcmc
     n_sample <- 1000
-    burnin <- 500
+    burnin <- burnin
   }
 
   rerun_every <- 100

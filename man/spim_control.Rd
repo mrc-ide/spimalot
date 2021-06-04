@@ -4,7 +4,15 @@
 \alias{spim_control}
 \title{High-level control}
 \usage{
-spim_control(short_run, n_chains, date_restart = NULL, workers = TRUE)
+spim_control(
+  short_run,
+  n_chains,
+  date_restart = NULL,
+  n_particles = 192,
+  n_mcmc = 1500,
+  burnin = 500,
+  workers = TRUE
+)
 }
 \arguments{
 \item{short_run}{Logical, indicating if this is a debug run. This
@@ -14,6 +22,15 @@ will use freer particles, mcmc steps and a small sample}
 
 \item{date_restart}{Optionally, dates save restart data in the
 pmcmc (see \link[mcstate:pmcmc]{mcstate::pmcmc}}
+
+\item{n_particles}{number of particles to be used in particle filter if
+\code{short_run = FALSE}}
+
+\item{n_mcmc}{number of steps to be used in PMCMC if
+\code{short_run = FALSE}}
+
+\item{burnin}{number of steps out of \code{n_mcmc} to be used as a burn-in in
+PMCMC if \code{short_run = FALSE}}
 
 \item{workers}{Logical, indicating if we should enable workers. If
 \code{TRUE}, then a number of workers between 1 and 4 will be used
