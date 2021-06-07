@@ -91,9 +91,9 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
             "positives", "negatives", "react_positive", "react_samples",
             "pillar2_negatives_total_pcr_over25", "pillar2_negatives_total_pcr",
             "pillar2_positives_over25", "pillar2_negatives_over25",
-            "positives_over25", "pillar2_negatives_non_lft",
-            "pillar2_negatives_non_lft_over25",
-            "pillar2_positives_lft_over25", "pillar2_positives_lft",
+            "positives_over25", "pillar2_positives_pcr_only",
+            "pillar2_positives_pcr_only_over25", "pillar2_positives_pcr_all",
+            "pillar2_positives_pcr_all_over25",
             "s_positive_adj1", "s_negative_adj1",
             "s_positive_adj1_over25", "s_negative_adj1_over25")
   data <- data[c("region", "date", vars)]
@@ -180,6 +180,33 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
                       data$date <= as.Date("2020-09-10")] <- NA_integer_
   }
 
+  data$pillar2_cases <- data$pillar2_positives
+  data$pillar2_cases_over25 <- data$pillar2_positives_over25
+
+  ## Use PCR only for cases where available
+  if (!all(is.na(data$pillar2_positives_pcr_only))) {
+    data$pillar2_cases <- data$pillar2_positives_pcr_only
+  }
+  if (!all(is.na(data$pillar2_positives_pcr_only_over25))) {
+    data$pillar2_cases_over25 <- data$pillar2_positives_pcr_only_over25
+  }
+
+  ## Use PCR all for positives where available
+  if (!all(is.na(data$pillar2_positives_pcr_all))) {
+    data$pillar2_positives <- data$pillar2_positives_pcr_all
+  }
+  if (!all(is.na(data$pillar2_positives_pcr_all_over25))) {
+    data$pillar2_positives_over25 <- data$pillar2_positives_pcr_all_over25
+  }
+
+  ## Use total PCR for negatives where available
+  if (!all(is.na(data$pillar2_negatives_total_pcr))) {
+    data$pillar2_negatives <- data$pillar2_negatives_total_pcr
+  }
+  if (!all(is.na(data$pillar2_negatives_total_pcr_over25))) {
+    data$pillar2_negatives_over25 <- data$pillar2_negatives_total_pcr_over25
+  }
+
   # Use hospital data from dashboard for all except Wales admissions (linelist)
   data$final_icu <- data$phe_occupied_mv_beds
   data$final_general <- data$phe_patients - data$phe_occupied_mv_beds
@@ -190,38 +217,11 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
     data$final_admissions <- data$phe_admissions
   }
 
-  ## Use non lateral flow pillar 2 negatives where we have them; data
-  ## is not available in the same format for all regions, hence the
-  ## need for these checks
-  neg_non_lfts_available <-
-    !all(is.na(data$pillar2_negatives_total_pcr))
-  pos_lfts_available <- !all(is.na(data$pillar2_positives_lft))
-
-  neg_over25_non_lfts_available <-
-    !all(is.na(data$pillar2_negatives_total_pcr_over25))
-  pos_over25_lfts_available <- !all(is.na(data$pillar2_positives_lft_over25))
-
-  if (neg_non_lfts_available & pos_lfts_available) {
-    data$pillar2_negatives <- data$pillar2_negatives_total_pcr
-    data$pillar2_positives <-
-      ifelse(is.na(data$pillar2_positives), 0,
-             data$pillar2_positives) -
-      ifelse(is.na(data$pillar2_positives_lft), 0,
-             data$pillar2_positives_lft)
-  }
-  if (neg_over25_non_lfts_available & pos_over25_lfts_available) {
-    data$pillar2_negatives_over25 <- data$pillar2_negatives_total_pcr_over25
-    data$pillar2_positives_over25 <-
-      ifelse(is.na(data$pillar2_positives_over25), 0,
-             data$pillar2_positives_over25) -
-      ifelse(is.na(data$pillar2_positives_lft_over25), 0,
-             data$pillar2_positives_lft_over25)
-  }
-
   # Remove last 7 days of Pillar 2 data
   last_week <- seq(to = nrow(data), length.out = 7)
-  cols_pillar2 <- c("pillar2_positives", "pillar2_negatives",
-                    "pillar2_positives_over25", "pillar2_negatives_over25")
+  cols_pillar2 <- c("pillar2_positives", "pillar2_negatives", "pillar2_cases",
+                    "pillar2_positives_over25", "pillar2_negatives_over25",
+                    "pillar2_cases_over25")
   data[seq(to = nrow(data), length.out = 7), cols_pillar2] <- NA_integer_
 
   ## ignore pillar 2 testing before 2020-06-01
@@ -246,8 +246,10 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
   stopifnot(
     all(data$pillar2_negatives >= 0, na.rm = TRUE),
     all(data$pillar2_positives >= 0, na.rm = TRUE),
+    all(data$pillar2_cases >= 0, na.rm = TRUE),
     all(data$pillar2_negatives_over25 >= 0, na.rm = TRUE),
-    all(data$pillar2_positives_over25 >= 0, na.rm = TRUE))
+    all(data$pillar2_positives_over25 >= 0, na.rm = TRUE),
+    all(data$pillar2_cases_over25 >= 0, na.rm = TRUE))
 
   ## TODO: with a stripped down compare function wee could drop the NA
   ## columns here.
@@ -266,11 +268,11 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
     all_admission = data$final_admissions,
     pillar2_tot = data$pillar2_positives + data$pillar2_negatives,
     pillar2_pos = data$pillar2_positives,
-    pillar2_cases = data$pillar2_positives,
+    pillar2_cases = data$pillar2_cases,
     pillar2_over25_tot = data$pillar2_positives_over25 +
       data$pillar2_negatives_over25,
     pillar2_over25_pos = data$pillar2_positives_over25,
-    pillar2_over25_cases = data$pillar2_positives_over25,
+    pillar2_over25_cases = data$pillar2_cases_over25,
     react_pos = data$react_positive,
     react_tot = data$react_samples,
     strain_non_variant = data$s_negative_adj1,
