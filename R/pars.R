@@ -27,6 +27,9 @@
 ##' @param parameters Parameter information, from
 ##'   [spimalot::spim_pars_pmcmc_load]
 ##'
+##' @param kernel_scaling Kernel scaling factor. Typically a number
+##'   between 0 and 1 for scaling the proposal VCV
+##'
 ##' @param cross_immunity Optional vector of cross immunity
 ##'   values. Only has an effect if `multistrain` is `TRUE` and then
 ##'   must have a length of 2 if given.
@@ -37,14 +40,15 @@
 ##' @export
 spim_pars <- function(date, region, model_type, multistrain,
                       beta_date, vaccination, parameters,
-                      cross_immunity = NULL) {
+                      kernel_scaling = 1, cross_immunity = NULL) {
   assert_is(parameters, "spim_pars_pmcmc")
 
   ## We take 'info' as the canonical source of names, then check that
   ## prior and proposal align correctly.
   info <- spim_pars_info(region, parameters$info)
   prior <- spim_pars_prior(region, info, parameters$prior)
-  proposal <- spim_pars_proposal(region, info, parameters$proposal)
+  proposal <- spim_pars_proposal(region, info, parameters$proposal,
+                                 kernel_scaling)
 
   pars <- Map(
     mcstate::pmcmc_parameter,
@@ -203,13 +207,13 @@ spim_pars_prior <- function(region, info, prior) {
 }
 
 
-spim_pars_proposal <- function(region, info, proposal) {
+spim_pars_proposal <- function(region, info, proposal, kernel_scaling) {
   proposal <- proposal[proposal$region == region, ]
   assert_setequal(proposal$name, info$name)
   assert_setequal(setdiff(names(proposal), c("name", "region")), info$name)
   proposal <- as.matrix(proposal[match(info$name, proposal$name), info$name])
   rownames(proposal) <- info$name
-  proposal
+  proposal * kernel_scaling
 }
 
 
