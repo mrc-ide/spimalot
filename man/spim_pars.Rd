@@ -12,6 +12,7 @@ spim_pars(
   beta_date,
   vaccination,
   parameters,
+  kernel_scaling = 1,
   cross_immunity = NULL
 )
 }
@@ -38,6 +39,9 @@ parameters. Must align with parameters}
 
 \item{parameters}{Parameter information, from
 \link{spim_pars_pmcmc_load}}
+
+\item{kernel_scaling}{Kernel scaling factor. Typically a number
+between 0 and 1 for scaling the proposal VCV}
 
 \item{cross_immunity}{Optional vector of cross immunity
 values. Only has an effect if \code{multistrain} is \code{TRUE} and then
