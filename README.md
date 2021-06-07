@@ -6,6 +6,8 @@
 [![codecov.io](https://codecov.io/github/mrc-ide/spimalot/coverage.svg?branch=main)](https://codecov.io/github/mrc-ide/spimalot?branch=main)
 <!-- badges: end -->
 
+This package exists to centralise much of our scripts around running [sircovid](https://github.com/mrc-ide/sircovid) on SPI-M data streams. As such the package will be of limited to use to people outside of our group.  We make no effort to maintain backward compatiblity.
+
 ## Installation
 
 To install `spimalot`:

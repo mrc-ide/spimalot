@@ -1,0 +1,1367 @@
+##' Plot admissions by age
+##'
+##' @title Plot admissions by age
+##'
+##' @param dat Combined data set
+##'
+##' @param region Region to plot
+##'
+##' @export
+spim_plot_admissions_by_age <- function(dat, region) {
+
+  sample <- dat$samples[[region]]
+  date <- dat$info$date
+
+  palette <- grDevices::colorRampPalette(c("#213148FF", "#A1B1C8FF"))
+
+  res <- spim_extract_admissions_by_age_region(sample)
+
+  oo <- par(mfrow = c(1, 2), mar = c(3, 3, 1, 1),
+            mgp = c(1.7, 0.7, 0),  bty = "n")
+  on.exit(oo)
+
+  boxplot(as.data.frame(res$prop_total_admissions), pch = ".",
+          col = grDevices::grey(0.8), xaxt = "n", ylab = "% of admissions",
+          las = 1, ylim = c(0, 15))
+  ages <- seq(0, 75, 5)
+  labels <- c(sprintf("[%s-%s)", ages, ages + 5), "80+", "CHW", "CHR")
+  axis(side = 1, at = seq_len(19), labels = labels,
+                 mgp = c(1.7, 0.5, 0))
+
+  # plot over time
+  y <- t(apply(res$mean_admissions_t, 1, cumsum))
+  y <- y / y[, ncol(y)] * 100
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date[-1])
+  xx <- c(x, rev(x))
+  y0 <- rep(0, length(x))
+  plot(x, y0, ylim = c(0, 100), type = "n", xlab = "",
+       ylab = "mean % non-carehome admissions ; older ->")
+  col <- rev(palette(ncol(y)))
+
+  for (i in rev(seq_len(ncol(y)))) {
+    polygon(x = xx, y = c(y0, rev(y[, i])),
+            border = grDevices::grey(0.9), col = col[i])
+  }
+  abline(v = as.Date(date), col = grDevices::grey(0.9), lty = 2)
+}
+
+
+##' Plot trajectories
+##'
+##' @title Plot trajectories
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param what Vector of traces to add
+##'
+##' @param date_min Starting date for plot. If not given, defaults to
+##'   the beginning of the data.
+##'
+##' @param with_forecast Logical, indicating if we should add the forecast
+##'
+##' @param add_betas Logical, indicating if we should add betas
+##'
+##' @export
+spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
+                                   with_forecast = TRUE, add_betas = FALSE) {
+
+  n_regions <- length(regions)
+  op <- par(mfcol = c(length(what), n_regions),
+            oma = c(1, 1, 4, 1),
+            mar = c(3, 3, 0.5, 0.5))
+  on.exit(par(op))
+
+  for (r in regions) {
+    spim_plot_trajectories_region(r, dat, what, date_min,
+                                  with_forecast = with_forecast,
+                                  add_betas = add_betas)
+  }
+
+  mtext(side = 3, text = toupper(spim_region_name(regions)),
+        line = 0.5, outer = TRUE, cex = 0.8,
+        at = seq(1 / n_regions / 2, by = 1 / n_regions, length.out = n_regions))
+}
+
+
+##' Plot Rt
+##'
+##' @title Plot Rt
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param rt_type One of the valid Rt types (e.g., eff_Rt_all)
+##'
+##' @param forecast_until Optional date to forecast till
+##'
+##' @export
+spim_plot_Rt <- function(dat, regions, rt_type, forecast_until = NULL) {
+
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+  if (is.null(forecast_until)) {
+    forecast_until <- dat$info$date
+  }
+  for (r in regions) {
+    spim_plot_Rt_region(r, dat, rt_type, forecast_until)
+  }
+}
+
+##' Plot IFR over time
+##'
+##' @title Plot IFR over time
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param ifr_t_type One of the valid IFR_t types (e.g., IFR_t_all)
+##'
+##' @param ymax Maximum percentage on y-axis
+##'
+##' @param forecast_until Optional date to forecast till
+##'
+##' @export
+spim_plot_ifr_t <- function(dat, regions, ifr_t_type, ymax = 2.5,
+                            forecast_until = NULL) {
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+  if (is.null(forecast_until)) {
+    forecast_until <- dat$info$date
+  }
+  for (r in regions) {
+    spim_plot_ifr_t_region(r, dat, ifr_t_type, ymax, forecast_until)
+  }
+}
+
+
+##' Plot serology
+##'
+##' @title Plot serology
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param sero_flow Number identifying which serology flow to use (1 or 2)
+##'
+##' @param ymax Maximum percentage on y-axis
+##'
+##' @export
+spim_plot_serology <- function(dat, regions, sero_flow, ymax) {
+
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in regions) {
+    if (r == regions[length(regions)]) {
+      spim_plot_serology_region(r, dat, sero_flow, ymax, TRUE)
+    } else {
+      spim_plot_serology_region(r, dat, sero_flow, ymax)
+    }
+  }
+}
+
+
+##' Plot Pillar 2 positivity
+##'
+##' @title Plot Pillar 2 positivity
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param date_min Starting date for plot
+##'
+##' @param ymax Maximum percentage on y-axis
+##'
+##' @param add_betas Logical, indicating if we should add betas
+##'
+##' @export
+spim_plot_pillar2_positivity <- function(dat, regions, date_min, ymax,
+                                         add_betas = FALSE) {
+
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in regions) {
+    spim_plot_pillar2_positivity_region(r, dat, date_min, ymax, add_betas)
+  }
+}
+
+
+##' Plot Pillar 2 cases
+##'
+##' @title Plot Pillar 2 cases
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param date_min Starting date for plot
+##'
+##' @param add_betas Logical, indicating if we should add betas
+##'
+##' @export
+spim_plot_pillar2_cases <- function(dat, regions, date_min, add_betas = FALSE) {
+
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in regions) {
+    spim_plot_pillar2_cases_region(r, dat, date_min, add_betas)
+  }
+}
+
+
+##' Plot REACT
+##'
+##' @title Plot REACT
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param date_min Starting date for plot
+##'
+##' @param ymax Maximum percentage on y-axis
+##'
+##' @param add_betas Logical, indicating if we should add betas
+##'
+##' @export
+spim_plot_react <- function(dat, regions, date_min, ymax, add_betas = FALSE) {
+
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in regions) {
+    spim_plot_react_region(r, dat, date_min, ymax, add_betas)
+  }
+}
+
+
+##' Plot incidence
+##'
+##' @title Plot incidence
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param per_1000 Logical, indicating if we plot incidence per 1000 people
+##'
+##' @export
+spim_plot_incidence <- function(dat, regions, per_1000 = FALSE) {
+
+  oo <- par(mfrow = c(2, length(regions) / 2), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in regions) {
+    spim_plot_incidence_region(r, dat, per_1000)
+  }
+}
+
+
+##' Plot proportion susceptible
+##'
+##' @title Plot proportion susceptible
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param ymin Minimum y axis value
+##'
+##' @export
+spim_plot_prop_susceptible <- function(dat, regions, ymin) {
+
+  oo <- par(mfrow = c(2, 6), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in regions) {
+    if (r == regions[length(regions)]) {
+      spim_plot_prop_susceptible_region(r, dat, ymin, TRUE)
+    } else {
+      spim_plot_prop_susceptible_region(r, dat, ymin)
+    }
+  }
+
+}
+
+##' Plot log trajectories by age
+##'
+##' @title Plot log trajectories by age
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param yield Which kind of age-specific trajectories to add, can be
+##'   "admissions" or "deaths"
+##'
+##' @export
+spim_plot_log_traj_by_age <- function(dat, regions, yield) {
+
+  oo <- par(mfrow = c(length(regions), 5), oma = c(1, 1, 4, 1),
+            mar = c(3, 3, 0.5, 0.5))
+  on.exit(oo)
+
+  if (yield == "admissions") {
+    what <- c("adm_0", "adm_25", "adm_55", "adm_65", "adm_75")
+    what_names <- c("Admissions under 25s", "Admissions 25 to 54",
+                    "Admissions 55 to 64", "Admissions 65 to 74",
+                    "Admissions 75+")
+  }
+  if (yield == "deaths") {
+    what <- c("death_0", "death_55", "death_65", "death_75", "death_chr")
+    what_names <- c("Admissions under 25s", "Admissions 25 to 54",
+                    "Admissions 55 to 64", "Admissions 65 to 74",
+                    "Admissions 75+")
+  }
+
+  for (r in regions) {
+    spim_plot_log_traj_by_age_region(r, dat, what)
+  }
+
+  mtext(side = 3, text = what_names,
+        line = 0.5, outer = TRUE, cex = 0.9, at = c(0.1, 0.32, 0.5, 0.7, 0.9))
+  mtext(side = 2, text = spim_region_name(regions),
+        line = -0.5, outer = TRUE, cex = 0.7,
+        at = c(0.1, 0.24, 0.38, 0.53, 0.67, 0.81, 0.96))
+
+}
+
+
+##' Plot variant
+##'
+##' @title Plot variant
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param date_min Starting date for plot
+##'
+##' @export
+spim_plot_variant <- function(dat, regions, date_min = NULL) {
+
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in regions) {
+    spim_plot_variant_region(r, dat, date_min)
+  }
+}
+
+
+spim_plot_variant_region <- function(region, dat, date_min) {
+
+  sample <- dat$samples[[region]]
+  data <- dat$data[[region]]
+  date <- dat$info$date
+  cols <- spim_colours()
+  pos_col <- cols$blue
+  dcols <- c(cols$orange, cols$brown)
+  alpha <- 0.3
+
+  n_non_variant <- data$fitted[, "strain_non_variant"]
+  ntot <- data$fitted[, "strain_tot"]
+  if (all(is.na(ntot))) {
+    ## if na, switch to non-fitted data
+    n_non_variant <- data$full[, "strain_non_variant"]
+    ntot <- data$full[, "strain_tot"]
+    dcols[1] <- cols$green2
+  }
+
+  npos <- ntot - n_non_variant
+  npos[is.na(npos)] <- 0
+  ntot[is.na(ntot)] <- 0
+  dx <- as.Date(data$fitted$date_string)
+
+  trajectories <- sample$trajectories$state
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+
+  tot <- trajectories["sympt_cases_inc", , ]
+  pos <- tot - trajectories["sympt_cases_non_variant_inc", , ]
+
+  res <- pos / tot * 100
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+
+  #data
+  cis <- Hmisc::binconf(x = npos, n = ntot) * 100
+  dy <- cis[, "PointEst"]
+  lower <- cis[, "Lower"]
+  upper <- cis[, "Upper"]
+  dy[ntot == 0] <- NA
+
+  pos_cols <- add_alpha(rep(pos_col, 2), alpha)
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  ##date_min <- date_min %||% min(x[-1L])
+  date_min <- min(x[-1L])
+
+  plot(date_min, 0, type = "n",
+       xlim = c(date_min, dat$info$date),
+       ylim = c(0, 100),
+       las = 1,
+       main = toupper(spim_region_name(region)),
+       font.main = 1,
+       xlab = "", ylab = "VOC proportion (%)")
+
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
+                      horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = pos_col, lty = 1, lwd = 1.5, lend = 1)
+  segments(x0 = dx, y0 = lower, y1 = upper, col = "grey60")
+  points(dx, dy, pch = 23, bg = dcols[1], col = dcols[2], cex = 0.8, lwd = 0.6)
+
+  segments(x0 = max(dx), y0 = 0, y1 = 100, lwd = 3, col = "white")
+
+}
+
+
+spim_plot_log_traj_by_age_region <- function(region, dat, what) {
+
+  for (w in what) {
+    spim_plot_log_traj_by_age_region1(region, dat, w)
+  }
+
+}
+
+
+spim_plot_log_traj_by_age_region1 <- function(region, dat, what) {
+
+  if (grepl("^death_", what)) {
+    samples <- dat$deaths[[region]]
+  }
+  if (grepl("^adm_", what)) {
+    samples <- dat$admissions[[region]]
+  }
+
+  date <- dat$info$date
+
+  cols <- spim_colours()
+  now_col <- cols$blue
+  dcols <- c(cols$orange, cols$green2)
+  alpha <- 0.3
+
+  # Get model results
+  res <- data.frame(count = samples$output_t[-1L, what],
+                    lb = samples$lower_bound[-1L, what],
+                    ub = samples$upper_bound[-1L, what])
+
+  date_res <- dat$samples[[region]]$trajectories$date[-c(1, 2)]
+  date_res <- sircovid::sircovid_date_as_date(date_res)
+  res$date_res <- date_res
+  res <- res %>% dplyr::filter(date_res <= date)
+
+  # Get data
+  data <- samples$data %>%
+    dplyr::select(date_res = "date", count = get("what")) %>%
+    dplyr::mutate(date_res = as.Date(date_res))
+  suppressMessages(
+    data <- dplyr::left_join(as.data.frame(date_res), as.data.frame(data))
+  )
+
+  # Vectors for plotting
+  x_nowcast <- res$date_res
+  y_nowcast <- res$count + 1
+  lb <- res$lb + 1
+  ub <- res$ub + 1
+
+  dx <- data$date
+  dy <- data$count + 1
+
+  xlim <- c(min(date_res), date)
+  ylim <- c(1, max(res$ub, na.rm = TRUE))
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  plot(xlim[1], 1, type = "n",
+       xlim = xlim,
+       ylim = ylim,
+       log = "y",
+       xlab = "", ylab = "log scale", cex.lab = 0.8)
+  now_cols <- add_alpha(rep(now_col, 2), alpha)
+
+  polygon(c(x_nowcast, rev(x_nowcast)), c(lb, rev(ub)), col = now_cols)
+  lines(x_nowcast, y_nowcast, col = now_col, lty = 1, lwd = 1.5, lend = 1)
+  points(dx, dy, pch = 23, bg = dcols[1], col = dcols[2], cex = 0.7, lwd = 0.6)
+
+}
+
+
+spim_plot_prop_susceptible_region <- function(region, dat, ymin,
+                                          plot_legend = FALSE) {
+
+  sample <- dat$samples[[region]]
+  cols <- spim_colours()
+  S_col <- cols$purple
+  eff_S_col <- cols$blue
+  alpha <- 0.3
+
+  N0 <- sum(sircovid::carehomes_parameters(1, region)$population)
+
+  trajectories <- sample$trajectories$state
+
+  index_S <- grep("^S_", rownames(sample$trajectories$state))
+  S <- apply(trajectories[index_S, , ], c(2, 3), sum)
+  prop_S <- S / N0 * 100
+
+  prop_eff_S <- trajectories["eff_S", , ] / N0 * 100
+
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(prop_S,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+  qs_eff <- apply(prop_eff_S,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+
+  S_cols <- add_alpha(rep(S_col, 2), alpha)
+  eff_S_cols <- add_alpha(rep(eff_S_col, 2), alpha)
+
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  xlim <- c(min(x[-1L]), max(x[-1L]))
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = c(ymin, 100),
+       main = toupper(spim_region_name(region)),
+       font.main = 1,
+       xlab = "Date", ylab = "Proportion susceptible (%)")
+
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = S_cols,
+           horiz = FALSE, leg = FALSE)
+  ci_bands(qs_eff[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = eff_S_cols,
+           horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = S_col, lty = 1, lwd = 1.5, lend = 1)
+  lines(x, qs_eff["50.0%", ], col = eff_S_col, lty = 1, lwd = 1.5, lend = 1)
+
+  if (plot_legend) {
+    leg_cols <- c(S_col, eff_S_col)
+    if (plot_legend) {
+      leg_cols <- c(cols$cyan, cols$purple)
+      legend("topright", legend = c("All", "Effective"),
+             cex = 1, x.intersp = 2, ncol = 1,
+             fill = add_alpha(leg_cols, alpha * 2),
+             border = leg_cols,
+             bty = "n")
+    }
+  }
+
+}
+
+
+spim_plot_incidence_region <- function(region, dat, per_1000 = FALSE) {
+
+  sample <- dat$samples[[region]]
+  title <- spim_region_name(region)
+  cols <- spim_colours()
+  traj_cols <- c(cols$sky_blue1, cols$sky_blue2)
+  line_col <- cols$cyan2
+  alpha <- 0.3
+
+  res <- sample$trajectories$state["infections_inc", , -1L]
+  if (per_1000) {
+    res <- res / sum(sircovid::carehomes_parameters(1, region)$N_tot) * 1000
+  }
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date[-1L])
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  xlim <- c(min(x), max(x))
+  if (per_1000) {
+    ylim <- c(0, 12)
+    ylab <- "Incidence per day per 1000"
+  } else {
+    ylim <- c(0, max(res * 1.1,  na.rm = TRUE))
+    ylab <- "Incidence per day"
+  }
+
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = ylim,
+       main = toupper(title),
+       font.main = 1,
+       xlab = "Date", ylab = ylab)
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x,
+           cols = traj_cols, horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = line_col, lty = 1, lwd = 1.5)
+
+}
+
+
+spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
+                                                add_betas = FALSE,
+                                                hard_xlim = FALSE,
+                                                data_by = NULL) {
+  sample <- dat$samples[[region]]
+  data <- dat$data[[region]]
+  date <- dat$info$date
+  cols <- spim_colours()
+  pos_col <- cols$blue
+  dcols <- c(cols$orange, cols$brown)
+  alpha <- 0.3
+  if (is.null(data_by)) {
+    data_by <- "standard"
+  }
+
+  over25 <- TRUE
+
+  npos <- data$fitted[, "pillar2_over25_pos"]
+  ntot <- data$fitted[, "pillar2_over25_tot"]
+  if (all(is.na(ntot))) {
+    npos <- data$full[, "pillar2_over25_pos"]
+    ntot <- data$full[, "pillar2_over25_tot"]
+
+    ## if still na, switch to all ages
+    if (all(is.na(ntot))) {
+      npos <- data$fitted[, "pillar2_pos"]
+      ntot <- data$fitted[, "pillar2_tot"]
+      if (all(is.na(ntot))) {
+        npos <- data$full[, "pillar2_pos"]
+        ntot <- data$full[, "pillar2_tot"]
+        dcols[1] <- cols$green2
+      }
+      over25 <- FALSE
+    } else {
+      dcols[1] <- cols$green2
+    }
+  }
+
+  npos[is.na(npos)] <- 0
+  ntot[is.na(ntot)] <- 0
+  dx <- as.Date(data$fitted$date_string)
+
+  trajectories <- sample$trajectories$state
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+  if (hard_xlim) {
+    predicted <- sample$trajectories$predicted
+    trajectories <- trajectories[, , !predicted]
+    x <- x[!predicted]
+  }
+
+
+  model_params <- sample$predict$transform(sample$pars[1, ])
+
+  if ("p_NC" %in% colnames(sample$pars)) {
+    p_NC <- sample$pars[, "p_NC"]
+  } else {
+    p_NC <- model_params$p_NC
+  }
+
+  if (over25) {
+    pos <- trajectories["sympt_cases_over25_inc", , ]
+    neg <- (sum(model_params$N_tot[6:19]) - pos) * p_NC
+  } else {
+    pos <- trajectories["sympt_cases_inc", , ]
+    neg <- (sum(model_params$N_tot) - pos) * p_NC
+  }
+
+  res <- (pos * model_params$pillar2_sensitivity +
+            neg * (1 - model_params$pillar2_specificity)) / (pos + neg) * 100
+
+
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+
+
+
+  if (data_by == "rolling week") {
+    npos <- stats::filter(npos, rep(1 / 7, 7))
+    ntot <- stats::filter(ntot, rep(1 / 7, 7))
+    dy <- npos / ntot * 100
+
+  } else {
+    if (data_by == "week") {
+      i_week <- lubridate::week(dx)
+      npos <- tapply(npos, i_week, sum, na.rm = TRUE)
+      ntot <- tapply(ntot, i_week, sum, na.rm = TRUE)
+      dx <- as.Date(sircovid::sircovid_date_as_date(unique(i_week) * 7 - 3.5))
+
+    }
+
+    cis <- Hmisc::binconf(x = npos, n = ntot) * 100
+    dy <- cis[, "PointEst"]
+    lower <- cis[, "Lower"]
+    upper <- cis[, "Upper"]
+  }
+
+
+  #data
+  dy[ntot == 0] <- NA
+
+  pos_cols <- add_alpha(rep(pos_col, 2), alpha)
+
+  if (over25) {
+    if (region == "scotland") {
+      ylab <- "Pillar 1 & 2 over 25 proportion positive (%)"
+    } else {
+      ylab <- "Pillar 2 over 25 proportion positive (%)"
+    }
+  } else {
+    if (region == "scotland") {
+      ylab <- "Pillar 1 & 2 proportion positive (%)"
+    } else {
+      ylab <- "Pillar 2 proportion positive (%)"
+    }
+  }
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  plot(date_min, 0, type = "n",
+       xlim = c(date_min, dat$info$date),
+       ylim = c(0, ymax),
+       las = 1,
+       main = toupper(spim_region_name(region)),
+       font.main = 1,
+       xlab = "", ylab = ylab)
+
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
+           horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = pos_col, lty = 1, lwd = 1.5, lend = 1)
+  if (data_by == "rolling week") {
+    lines(dx, dy, col = grDevices::grey(0.2))
+  } else {
+    lines(dx, dy, col = grDevices::grey(0.2), lend = 1)
+
+  }
+
+  segments(x0 = max(dx), y0 = 0, y1 = 100, lwd = 3, col = "white")
+
+  if (add_betas == TRUE) {
+    abline(v = as.Date(sample$info$beta_date), lty = 2, col = cols$puce)
+  }
+
+}
+
+
+spim_plot_pillar2_cases_region <- function(region, dat, date_min,
+                                           add_betas = FALSE) {
+  sample <- dat$samples[[region]]
+  data <- dat$data[[region]]
+  date <- dat$info$date
+  cols <- spim_colours()
+  pos_col <- cols$blue
+  dcols <- c(cols$orange, cols$brown)
+  alpha <- 0.3
+
+
+  over25 <- TRUE
+
+  dy <- data$fitted[, "pillar2_over25_cases"]
+  if (all(is.na(dy))) {
+    dy <- data$full[, "pillar2_over25_cases"]
+
+    ## if still na, switch to all ages
+    if (all(is.na(dy))) {
+      dy <- data$fitted[, "pillar2_cases"]
+      if (all(is.na(dy))) {
+        dy <- data$full[, "pillar2_cases"]
+        dcols[1] <- cols$green2
+      }
+      over25 <- FALSE
+    } else {
+      dcols[1] <- cols$green2
+    }
+  }
+
+  trajectories <- sample$trajectories$state
+  model_params <- sample$predict$transform(sample$pars[1, ])
+
+  if ("phi_pillar2_cases" %in% colnames(sample$pars)) {
+    phi_pillar2_cases <- sample$pars[, "phi_pillar2_cases"]
+  } else {
+    phi_pillar2_cases <- model_params$phi_pillar2_cases
+  }
+
+  if (over25) {
+    pos <- trajectories["sympt_cases_over25_inc", , ] * phi_pillar2_cases
+    if (region == "scotland") {
+      ylab <- "Pillar 1 & 2 over 25 cases"
+    } else {
+      ylab <- "Pillar 2 over 25 cases"
+    }
+  } else {
+    pos <- trajectories["sympt_cases_inc", , ] * phi_pillar2_cases
+    if (region == "scotland") {
+      ylab <- "Pillar 1 & 2 cases"
+    } else {
+      ylab <- "Pillar 2 cases"
+    }
+  }
+
+  res <- pos
+
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+
+  #data
+  dx <- as.Date(data$fitted$date_string)
+
+  xlim <- c(date_min, dat$info$date)
+  ymax <- max(dy[dx >= xlim[1] & dx <= xlim[2]],
+              qs[, x >= xlim[1] & x <= xlim[2]], na.rm = TRUE)
+  ylim <- c(0, ymax)
+
+  pos_cols <- add_alpha(rep(pos_col, 2), alpha)
+
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = ylim,
+       main = toupper(spim_region_name(region)),
+       font.main = 1,
+       xlab = "Date", ylab = ylab)
+
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
+           horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = pos_col, lty = 1, lwd = 1.5, lend = 1)
+  points(dx, dy, pch = 23, bg = dcols[1], col = dcols[2], cex = 0.8, lwd = 0.6)
+
+  segments(x0 = max(dx), y0 = 0, y1 = 100, lwd = 3, col = "white")
+
+  if (add_betas == TRUE) {
+    abline(v = as.Date(sample$info$beta_date), lty = 2, col = cols$puce)
+  }
+
+}
+
+
+spim_plot_react_region <- function(region, dat, date_min, ymax,
+                                   add_betas = FALSE) {
+
+  sample <- dat$samples[[region]]
+  data <- dat$data[[region]]
+  date <- dat$info$date
+  days_to_agg <- 3
+  min_agg_tot <- 200
+  cols <- spim_colours()
+  pos_col <- cols$blue
+  dcols <- c(cols$orange, cols$brown)
+  alpha <- 0.3
+
+  npos <- data$fitted[, "react_pos"]
+  ntot <- data$fitted[, "react_tot"]
+  if (all(is.na(npos))) {
+    npos <- data$full[, "react_pos"]
+    ntot <- data$full[, "react_tot"]
+    dcols[1] <- cols$green2
+  }
+  npos[is.na(npos)] <- 0
+  ntot[is.na(ntot)] <- 0
+
+  dx <- as.Date(data$fitted$date_string)
+
+  ##aggregate
+  agg_dates <- data.frame(start = dx[seq(1, length(dx), days_to_agg)])
+  agg_dates$end <- agg_dates$start + days_to_agg - 1
+  agg_dates$end[length(agg_dates$end)] <- dx[length(dx)]
+  agg_dates$mid <- floor(rowMeans(apply(agg_dates, 2, sircovid::sircovid_date)))
+  agg_dates$mid <- sircovid::sircovid_date_as_date(agg_dates$mid)
+
+  agg_dates$end <- as.Date(agg_dates$end)
+
+  aggregate_react <- function(i) {
+    agg_pos <- sum(npos[dx >= agg_dates$start[i] & dx <= agg_dates$end[i]])
+    agg_tot <- sum(ntot[dx >= agg_dates$start[i] & dx <= agg_dates$end[i]])
+    if (agg_tot > min_agg_tot) {
+      agg_out <- c(agg_pos, agg_tot)
+    } else {
+      agg_out <- c(0, 0)
+    }
+    agg_out
+  }
+
+  agg_dates$npos <- rep(0, length(agg_dates$mid))
+  agg_dates$ntot <- rep(0, length(agg_dates$mid))
+  agg_dates[, c("npos", "ntot")] <- t(sapply(seq_len(length(agg_dates$mid)),
+                                            aggregate_react))
+
+
+  cis <- Hmisc::binconf(x = agg_dates$npos, n = agg_dates$ntot) * 100
+  dy <- cis[, "PointEst"]
+  lower <- cis[, "Lower"]
+  upper <- cis[, "Upper"]
+  dy[agg_dates$ntot == 0] <- NA
+  dx <- agg_dates$mid
+
+  trajectories <- sample$trajectories$state
+
+  model_params <- sample$predict$transform(sample$pars[1, ])
+
+  pos <- trajectories["react_pos", , ]
+  neg <- (sum(model_params$N_tot_react) - pos)
+
+  res <- (pos * model_params$react_sensitivity +
+            neg * (1 - model_params$react_specificity)) / (pos + neg) * 100
+
+
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+
+  pos_cols <- add_alpha(rep(pos_col, 2), alpha)
+
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  plot(date_min, 0, type = "n",
+       xlim = c(date_min, dat$info$date),
+       ylim = c(0, ymax),
+       main = toupper(spim_region_name(region)),
+       font.main = 1,
+       xlab = "Date", ylab = "REACT proportion positive (%)")
+
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
+           horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = pos_col, lty = 1, lwd = 1.5, lend = 1)
+  segments(x0 = dx, y0 = lower, y1 = upper, col = "grey60")
+  points(dx, dy, pch = 23, bg = dcols[1], col = dcols[2], cex = 0.8, lwd = 0.6)
+
+  segments(x0 = as.Date(date), y0 = 0, y1 = 100, lwd = 3, col = "white")
+
+  if (add_betas == TRUE) {
+    abline(v = as.Date(sample$info$beta_date), lty = 2, col = cols$puce)
+  }
+
+}
+
+spim_plot_serology_region <- function(region, dat, sero_flow, ymax,
+                                      plot_legend = FALSE) {
+
+  sample <- dat$samples[[region]]
+  data <- dat$data[[region]]
+  date <- dat$info$date
+  cols <- spim_colours()
+  alpha <- 0.35
+
+  extract_serodates <- function(data, cap = 150) {
+    sero <- data$full[[paste0("sero_tot_15_64_", sero_flow)]] > cap
+    sero[is.na(sero)] <- FALSE
+    n <- length(sero)
+
+    lag <- seq(4, n)
+
+    start <- sero[lag] & !sero[lag - 1] & !sero[lag - 2] & !sero[lag - 3]
+    end <- sero[lag - 3] & !sero[lag - 2] & !sero[lag - 1] & !sero[lag]
+
+
+    dates <- data$full$date_string
+    res <- data.frame(start = dates[lag][start])
+
+    end_dates <- dates[lag - 3][end]
+    if (length(end_dates) < length(res$start)) {
+      end_dates <- c(end_dates, date)
+    }
+    res$end <- end_dates
+    res
+  }
+
+  sero_dates <- extract_serodates(data)
+  if (nrow(sero_dates) > 0) {
+    tol <- 2
+
+    sero_dates$start <- sero_dates$start - tol
+    sero_dates$end <- sero_dates$end + tol
+
+    rownames(data$fitted) <- data$fitted$date_string
+
+    sero_data <-
+      data$fitted[, paste0(c("sero_tot_15_64_", "sero_pos_15_64_"), sero_flow)]
+    colnames(sero_data) <- c("ntot", "npos")
+    sero_data[is.na(sero_data)] <- 0
+
+    summ_serodata <- sapply(X = seq_len(nrow(sero_dates)), function(i) {
+      w <- seq(from = as.Date(sero_dates[i, "start"]),
+               to = as.Date(sero_dates[i, "end"]), 1)
+      w <- as.character(as.Date(w))
+      colSums(sero_data[w, ], na.rm = TRUE)
+    })
+
+    summ_serodata <- data.frame(sero_dates,
+                                t(summ_serodata),
+                                stringsAsFactors = FALSE)
+
+    summ_serodata <- cbind(summ_serodata,
+                           with(summ_serodata,
+                                Hmisc::binconf(x = npos, n = ntot) * 100))
+    summ_serodata$mid <- (as.numeric(as.Date(summ_serodata$start)) +
+                            as.numeric(as.Date(summ_serodata$end))) / 2
+  }
+
+  p <- sample$predict$transform(sample$pars[1, ])
+  sero_sensitivity <- p[[paste0("sero_sensitivity_", sero_flow)]]
+  sero_specificity <- p[[paste0("sero_specificity_", sero_flow)]]
+  sero_pos <- sample$trajectories$state[paste0("sero_pos_", sero_flow), , ]
+
+  res <- (sero_sensitivity * sero_pos +
+            (1 - sero_specificity) * (p$N_tot_15_64 - sero_pos)) /
+    p$N_tot_15_64 * 100
+  res_infs <- sample$trajectories$state["infections", , ] / p$N_tot_all * 100
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+  qs_infs <- apply(res_infs,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+
+  pos_cols <- add_alpha(rep(cols$purple, 2), alpha)
+  inf_cols <- add_alpha(rep(cols$cyan, 2), alpha)
+
+  ylim <- c(0, ymax)
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+  x <- x[x <= date]
+  xlim <- c(min(x[-1L]), max(x[-1L]))
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = ylim, las = 1,
+       main = "",
+       font.main = 1,
+       xlab = "", ylab = "Cumulative proportion (%)")
+  title(main = toupper(spim_region_name(region)), adj = 0, font.main = 1,
+        line = 0.5, cex.main = 1)
+
+  if (nrow(sero_dates) > 0) {
+    lapply(X = seq_len(nrow(summ_serodata)), FUN = function(i) {
+
+      xx <- rep(unlist(summ_serodata[i, c("start", "end")]), each = 2)
+      yy <- c(ylim, rev(ylim))
+
+      polygon(x = xx, y = yy, col = grDevices::grey(0.9), border = NA)
+    })
+  }
+
+  p_labels <- c("2.5%", "25.0%", "75.0%", "97.5%")
+
+  ci_bands(qs[p_labels, seq_along(x)], x, cols = pos_cols,
+           horiz = FALSE, leg = FALSE)
+  ci_bands(qs_infs[p_labels, seq_along(x)], x, cols = inf_cols,
+           horiz = FALSE, leg = FALSE)
+  lines(x, qs_infs["50.0%", seq_along(x)], col = cols$cyan,
+        lty = 1, lwd = 1.5, lend = 1)
+  lines(x, qs["50.0%", seq_along(x)], col = cols$purple,
+        lty = 1, lwd = 1.5, lend = 1)
+  if (nrow(sero_dates) > 0) {
+    with(summ_serodata, {
+      segments(x0 = mid, y0 = Lower, y1 = Upper, lty = 1, lend = 1)
+      points(x = mid, y = PointEst, pch = 18)
+      points(x = rep(mid, 2), y = c(Lower, Upper), pch = "-")
+    })
+  }
+
+  if (plot_legend) {
+    leg_cols <- c(cols$cyan, cols$purple)
+    legend("topleft", legend = c("Infected", "Seropositive"),
+           cex = 1, x.intersp = 2, ncol = 1,
+           fill = add_alpha(leg_cols, alpha * 2),
+           border = leg_cols,
+           bty = "n")
+  }
+
+}
+
+
+spim_plot_trajectories_region <- function(region, dat, what = NULL,
+                                          date_min = NULL, with_forecast = TRUE,
+                                          add_betas = FALSE) {
+  if (is.null(what)) {
+    what <- c("deaths_hosp", "deaths_comm", "deaths_carehomes",
+              "icu", "general", "admitted", "diagnoses")
+  }
+  for (w in what) {
+    spim_plot_trajectories_region1(
+      w, region, dat, date_min,
+      with_forecast = with_forecast, add_betas = add_betas)
+  }
+}
+
+
+
+
+spim_plot_ifr_t_region <- function(region, dat, ifr_t_type, ymax,
+                                   forecast_until, include_forecast = TRUE,
+                                   add = FALSE) {
+
+  ifr_t <- dat$ifr_t[[region]][[ifr_t_type]][-1L, ]
+  alpha <- 0.3
+  col <- spim_colours()$blue
+
+  x <- sircovid::sircovid_date_as_date(dat$ifr_t[[region]]$date[-1L, 1])
+
+  if (!include_forecast) {
+    ifr_t <- ifr_t[x <= forecast_until, ]
+    x <- x[x <= forecast_until]
+  }
+
+  rownames(ifr_t) <- as.character(x)
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(ifr_t,  MARGIN = 1, FUN = quantile, ps, na.rm = TRUE)
+
+  ## remove NAs for plotting purposes
+  idx_not_na <- which(!is.na(colSums(qs)))
+  x <- x[idx_not_na]
+  qs <- qs[, idx_not_na]
+
+  if (!add) {
+    oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+    on.exit(oo)
+    xlim <- c(x[1], as.Date(forecast_until))
+    plot(xlim[1], 0, type = "n",
+         xlim = xlim,
+         ylim = c(0, ymax),
+         main = toupper(spim_region_name(region)),
+         font.main = 1,
+         xlab = "", ylab = "IFR",
+         xaxt = "n")
+    segments(x0 = xlim[1], x1 = xlim[2], y0 = seq(0, 4, 0.5),
+             col = grDevices::grey(0.9))
+    axis.Date(1, at = seq(as.Date("2020-04-01"), as.Date(forecast_until),
+                          by = "2 month"), format = "%b")
+  }
+  cols <- add_alpha(rep(col, 2), alpha)
+
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = cols,
+           horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = col, lty = 1, lwd = 1.5, lend = 1)
+
+}
+
+
+spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
+  sample_Rt <- dat$rt[[region]][[rt_type]][-1L, ]
+
+  if (rt_type == "beta") {
+    ylab <- expression(beta[t])
+  } else if (grepl("^eff_", rt_type)) {
+    ## TODO: this is printing oddly on the graph
+    ylab <- paste("eff", expression(R[t]))
+  } else {
+    ylab <- expression(R[t])
+  }
+
+  ## sample_Rt,
+  ## Rt_date,
+  col <- spim_colours()$blue
+  alpha <- 0.3
+
+  x <- sircovid::sircovid_date_as_date(dat$rt[[region]]$date[-1L, 1])
+  rownames(sample_Rt) <- as.character(x)
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(sample_Rt,  MARGIN = 1, FUN = quantile, ps, na.rm = TRUE)
+
+  ## remove NAs for plotting purposes
+  idx_not_na <- which(!is.na(colSums(qs)))
+  x <- x[idx_not_na]
+  qs <- qs[, idx_not_na]
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(par(oo))
+
+  xlim <- c(x[1], as.Date(forecast_until))
+  if (rt_type == "beta") {
+    ylim <- c(0, 0.15)
+  } else {
+    ylim <- c(0, 4)
+  }
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = ylim,
+       main = toupper(spim_region_name(region)),
+       font.main = 1,
+       xlab = "Date", ylab = ylab)
+
+  cols <- add_alpha(rep(col, 2), alpha)
+
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = cols,
+           horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = col, lty = 1, lwd = 1.5, lend = 1)
+  if (rt_type != "beta") {
+    abline(h = 1, lty = 2)
+  }
+}
+
+
+spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
+                                           with_forecast = TRUE,
+                                           add_betas = FALSE) {
+  trajectories <- dat$samples[[region]]$trajectories
+  date <- dat$info$date
+  cols <- spim_colours()
+  beta_date <- dat$info[[region]]$beta_date
+  alpha <- 0.3
+
+  trajnames <- c(deaths = "deaths_inc",
+                 deaths_comm = "deaths_comm_inc",
+                 deaths_hosp = "deaths_hosp_inc",
+                 deaths_carehomes = "deaths_carehomes_inc",
+                 icu = "icu",
+                 hosp = "hosp",
+                 general = "general",
+                 diagnoses = "diagnoses_inc",
+                 admitted = "admitted_inc",
+                 all_admission = "all_admission_inc")
+  labs <- c(deaths = "Daily deaths",
+            deaths_comm = "Daily community deaths",
+            deaths_carehomes = "Daily care home deaths",
+            deaths_hosp = "Daily hospital deaths",
+            icu = "ICU beds",
+            general = "general beds",
+            hosp = "Hospital beds",
+            diagnoses = "Daily inpatient diagnoses",
+            admitted = "Daily admissions",
+            all_admission = "Daily admissions (all)")
+
+  ## currently remove first step as the first time period is typically much more
+  ## than one day at the moment
+  if (what == "deaths") {
+    res <-
+      trajectories$state["deaths_hosp_inc", , -1L] +
+      trajectories$state["deaths_comm_inc", , -1L] +
+      trajectories$state["deaths_carehomes_inc", , -1L]
+  } else if (what == "all_admission") {
+    res <-
+      trajectories$state["diagnoses_inc", , -1L] +
+      trajectories$state["admitted_inc", , -1L]
+  } else {
+    res <- trajectories$state[trajnames[what], , -1L]
+  }
+
+  x <- sircovid::sircovid_date_as_date(trajectories$date[-1L])
+  colnames(res) <- as.character(x)
+
+  x_nowcast <- x[x <= date]
+  x_forecast <- x[x > date]
+  res_nowcast <- res[, as.character(x_nowcast)]
+  res_forecast <- res[, as.character(x_forecast)]
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(res, MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+  qs_forecast <- apply(res_forecast,  MARGIN = 2, FUN = quantile, ps,
+                       na.rm = TRUE)
+  qs_nowcast <- apply(res_nowcast,  MARGIN = 2, FUN = quantile, ps,
+                      na.rm = TRUE)
+
+  data <- dat$data[[region]]
+  dx <- as.Date(data$fitted$date_string)
+  dy <- data$fitted[, what]
+
+  dy_extra <- data$full[, what]
+  dy_extra[!is.na(dy)] <- NA_integer_
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  xlim <- c(date_min %||% as.Date("2020-03-16"),
+            if (with_forecast) max(x_forecast) else date)
+
+  rn_res <- as.Date(colnames(res))
+  ylim <- c(0, max(dy[which(dx >= xlim[1] & dx <= xlim[2])],
+                   qs[, which(rn_res >= xlim[1] & rn_res <= xlim[2])],
+                   na.rm = TRUE))
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = ylim,
+       xlab = "", ylab = labs[what])
+  now_cols <- add_alpha(rep(cols$now, 2), alpha)
+  fore_cols <- add_alpha(rep(cols$forecast, 2), alpha)
+
+  ci_bands(qs_nowcast[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x_nowcast,
+           cols = now_cols, horiz = FALSE, leg = FALSE)
+  lines(x_nowcast, qs_nowcast["50.0%", ], col = cols$now, lty = 1, lwd = 1.5,
+        lend = 1)
+
+  if (length(x_forecast) > 0) {
+    ci_bands(qs_forecast[c("2.5%", "25.0%", "75.0%", "97.5%"), ],
+             x_forecast, cols = fore_cols, horiz = FALSE, leg = FALSE)
+    lines(x_forecast, qs_forecast["50.0%", ], col = cols$forecast, lty = 1,
+          lwd = 1.5, lend = 1)
+  }
+
+  points(dx, dy, pch = 23, bg = cols$orange, col = cols$brown, cex = 0.7,
+         lwd = 0.6)
+  points(dx, dy_extra, pch = 23, bg = cols$green2, col = cols$brown, cex = 0.7,
+         lwd = 0.6)
+
+  if (add_betas) {
+    abline(v = as.Date(beta_date), lty = 2, col = cols$puce)
+  }
+}
+
+
+ci_bands <- function(quantiles, y, palette = NULL, cols = NULL, leg = TRUE,
+                     leg_y = 0, leg_x = 1, horiz = TRUE, ...) {
+  yy <- c(y, rev(y))
+  yy <- c(yy, yy[1])
+  n_bands <- (nrow(quantiles) - 1) / 2 + 1
+  if (!is.null(palette)) {
+    cols <- do.call(what = palette,
+                    args = list(n = n_bands))
+  }
+
+  for (band in seq_len(n_bands)) {
+    x1 <- quantiles[band, ]
+    x2 <- quantiles[nrow(quantiles) + 1 - band, ]
+
+    x2 <- rev(x2)
+    x2 <- c(x2, x1[1])
+    if (horiz) {
+      polygon(y = yy,
+              x = c(x1, x2),
+              col = cols[band],
+              border = NA)
+    } else {
+      polygon(x = yy,
+              y = c(x1, x2),
+              col = cols[band],
+              border = NA)
+    }
+
+  }
+  if (leg) {
+    leg_cols <- which(row.names(quantiles) %in% leg)
+    leg <- c(row.names(quantiles)[1], seq(5, 50, 5), "%")
+    leg[seq(2, 10, 2)] <- ""
+    legend(y = leg_y,
+           x = leg_x,
+           pch = 15,
+           col = cols[leg_cols],
+           legend = leg,
+           border = NA,
+           bty = "n", ...)
+  }
+}

@@ -1,0 +1,202 @@
+devtools::document()
+pkgload::load_all(export_all = FALSE)
+
+dat <- spimalot::spim_combined_load("example/fits")
+
+dir.create("outputs", FALSE, TRUE)
+dir.create("figs", FALSE, TRUE)
+
+nowcast <- spimalot::spim_summary_nowcast(dat)
+spimalot::spim_summary_write(nowcast, "example/template_combined.xlsx",
+                             "outputs/spim_output.xlsx")
+
+time_series <- spimalot::spim_summary_time_series(dat, "2020-10-01")
+spimalot::spim_summary_write(time_series, "example/template_combined.xlsx",
+                             "outputs/time_series.xlsx")
+
+spimalot::spim_pars_pmcmc_save(dat$parameters, "outputs/parameters")
+saveRDS(dat$onward, "outputs/combined.rds")
+saveRDS(dat$ifr_t, "outputs/ifr_t.rds")
+
+saveRDS(dat$rt$uk, "outputs/rt_uk.rds")
+
+png("figs/forest_plot.png", width = 2400, height = 1600, res = 200)
+spim_plot_forest(dat, FALSE)
+dev.off()
+
+png("figs/forest_plot_betas.png", width = 2400, height = 1600, res = 200)
+spim_plot_forest(dat, TRUE)
+dev.off()
+
+png("figs/data_fits_regional.png", width = 2400 / 5 * 7, height = 1800,
+    res = 200)
+spimalot::spim_plot_trajectories(
+  dat, sircovid::regions("england"),
+  c("deaths_hosp", "deaths_carehomes", "deaths_comm", "icu", "general",
+    "hosp", "all_admission"),
+  with_forecast = FALSE, add_betas = FALSE)
+dev.off()
+
+png("figs/data_fits_national.png", width = 2400, height = 1800, res = 200)
+spimalot::spim_plot_trajectories(
+  dat, c(sircovid::regions("nations"), "uk"),
+  c("deaths_hosp", "deaths_carehomes", "deaths", "icu", "general",
+    "hosp", "all_admission"),
+  with_forecast = FALSE, add_betas = FALSE)
+dev.off()
+
+png("figs/projections_regional.png", width = 2400 / 5 * 7, height = 1800,
+    res = 200)
+spimalot::spim_plot_trajectories(
+  dat, sircovid::regions("england"),
+  c("deaths_hosp", "deaths_carehomes", "deaths_comm", "icu", "general",
+    "hosp", "all_admission"),
+  date_min = dat$info$date - 42, with_forecast = TRUE, add_betas = FALSE)
+dev.off()
+
+png("figs/projections_national.png", width = 2400, height = 1800, res = 200)
+spimalot::spim_plot_trajectories(
+  dat, c(sircovid::regions("nations"), "uk"),
+  c("deaths_hosp", "deaths_carehomes", "deaths", "icu", "general",
+    "hosp", "all_admission"),
+  date_min = dat$info$date - 42, with_forecast = TRUE, add_betas = FALSE)
+dev.off()
+
+png("figs/serology_euroimmun.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_serology(dat, sircovid::regions("all"), 1, 40)
+dev.off()
+
+png("figs/serology_roche_n.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_serology(dat, sircovid::regions("all"), 2, 40)
+dev.off()
+
+png("figs/susceptible.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_prop_susceptible(
+  dat, c(sircovid::regions("all"), "england", "uk"), 40)
+dev.off()
+
+png("figs/pillar2.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_pillar2_positivity(
+  dat, sircovid::regions("all"), date_min = as.Date("2020-05-15"), ymax = 40)
+dev.off()
+
+png("figs/pillar2_cases.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_pillar2_cases(
+  dat, sircovid::regions("all"), date_min = as.Date("2020-05-15"))
+dev.off()
+
+png("figs/react.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_react(
+  dat, sircovid::regions("all"), date_min = as.Date("2020-05-15"), ymax = 3)
+dev.off()
+
+png("figs/incidence.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_incidence(
+  dat, c(sircovid::regions("all"), "england", "uk"))
+dev.off()
+
+png("figs/incidence_per_1000.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_incidence(
+  dat, c(sircovid::regions("all"), "england", "uk"), per_1000 = TRUE)
+dev.off()
+
+png("figs/Rt_all.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_Rt(
+  dat, c(sircovid::regions("all"), "england", "uk"), "Rt_all")
+dev.off()
+
+png("figs/Rt_eff_all.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_Rt(
+  dat, c(sircovid::regions("all"), "england", "uk"), "eff_Rt_all")
+dev.off()
+
+png("figs/Rt_eff_general.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_Rt(
+  dat, c(sircovid::regions("all"), "england", "uk"), "eff_Rt_general")
+dev.off()
+
+png("figs/Rt_general.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_Rt(
+  dat, c(sircovid::regions("all"), "england", "uk"), "Rt_general")
+dev.off()
+
+png("figs/beta.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_Rt(
+  dat, c(sircovid::regions("all"), "england", "uk"), "beta")
+dev.off()
+
+png("figs/IFR_t_all.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_ifr_t(
+  dat, c(sircovid::regions("all"), "england", "uk"), "IFR_t_all")
+dev.off()
+
+png("figs/IFR_t_all_no_vacc.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_ifr_t(
+  dat, c(sircovid::regions("all"), "england", "uk"), "IFR_t_all_no_vacc")
+dev.off()
+
+png("figs/IFR_t_general.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_ifr_t(
+  dat, c(sircovid::regions("all"), "england", "uk"), "IFR_t_general")
+dev.off()
+
+png("figs/IFR_t_general_no_vacc.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_ifr_t(
+  dat, c(sircovid::regions("all"), "england", "uk"), "IFR_t_general_no_vacc")
+dev.off()
+
+
+## plotting admissions demography
+mean_admissions <- spimalot::spim_extract_admissions_by_age(dat)
+write.csv(mean_admissions, "outputs/mean_admissions_by_age.csv")
+
+png("figs/admissions_demo.png", width = 2400, height = 1000, res = 200)
+spimalot::spim_plot_admissions_by_age(dat, "uk")
+dev.off()
+
+
+## add (zoomed in) plots of SPI-M-relevant trajectories
+dir.create("spim_view", FALSE, TRUE)
+
+png("spim_view/regions.png", width = 2400 / 5 * 7, height = 1800, res = 200)
+spimalot::spim_plot_trajectories(
+  dat, sircovid::regions("england"),
+  c("deaths", "hosp", "all_admission"), date_min = as.Date(dat$info$date) - 45,
+  with_forecast = FALSE, add_betas = TRUE)
+dev.off()
+
+png("spim_view/nations.png", width = 2400, height = 1800, res = 200)
+spimalot::spim_plot_trajectories(
+  dat, c(sircovid::regions("nations"), "uk"),
+  c("deaths_hosp", "deaths_carehomes", "deaths", "icu", "general",
+    "hosp", "all_admission"),
+  with_forecast = FALSE, add_betas = FALSE)
+dev.off()
+
+png("spim_view/pillar2_positivity.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_pillar2_positivity(dat, sircovid::regions("all"),
+                                       date_min = as.Date(dat$info$date) - 45,
+                                       ymax = 10, add_betas = TRUE)
+dev.off()
+
+png("spim_view/pillar2_cases.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_pillar2_cases(dat, sircovid::regions("all"),
+                                  date_min = as.Date(dat$info$date) - 45,
+                                  add_betas = TRUE)
+dev.off()
+
+png("spim_view/prevalence.png", width = 2400, height = 1200, res = 200)
+spimalot::spim_plot_react(dat, sircovid::regions("all"),
+                          date_min = as.Date(dat$info$date) - 45,
+                          ymax = 3, add_betas = TRUE)
+dev.off()
+
+
+## Plot outputs by age
+png("figs/deaths_by_age.png", width = 2400, height = 1800, res = 200)
+spimalot::spim_plot_log_traj_by_age(dat, sircovid::regions("england"), "deaths")
+dev.off()
+
+png("figs/admissions_by_age.png", width = 2400, height = 1800, res = 200)
+spimalot::spim_plot_log_traj_by_age(dat, sircovid::regions("england"), "admissions")
+dev.off()
