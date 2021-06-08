@@ -31,6 +31,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     mu_gamma_H_2 <- pars[["mu_gamma_H_2"]]
     p_H <- pars[["p_H"]]
     p_H_2 <- pars[["p_H_2"]]
+    p_H_3 <- pars[["p_H_3"]]
     alpha_D <- pars[["alpha_D"]]
     alpha_H <- pars[["alpha_H"]]
 
@@ -45,7 +46,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     if (model_type == "BB") {
       p_NC <- pars[["p_NC"]]
       rho_pillar2_tests <- pars[["rho_pillar2_tests"]]
-      ## Total: 39 fitted parameters
+      ## Total: 40 fitted parameters
 
       ## Unused in BB fits so these are dummy values
       phi_pillar2_cases <- 0.5
@@ -54,7 +55,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     if (model_type == "NB") {
       phi_pillar2_cases <- pars[["phi_pillar2_cases"]]
       kappa_pillar2_cases <- 1 / pars[["alpha_pillar2_cases"]]
-      ## Total: 39 fitted parameters
+      ## Total: 40 fitted parameters
 
       ## Unused in NB fits so these are dummy values
       p_NC <- 0.002
@@ -79,8 +80,9 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     p_ICU_date <- sircovid::sircovid_date(c("2020-04-01", "2020-06-01"))
     p_ICU_value <- c(p_ICU, p_ICU_2)
 
-    p_H_date <- sircovid::sircovid_date(c("2020-10-01", "2020-12-15"))
-    p_H_value <- c(p_H, p_H_2)
+    p_H_date <- sircovid::sircovid_date(c("2020-10-01", "2020-12-15",
+                                          "2021-02-15"))
+    p_H_value <- c(p_H, p_H_2, p_H_3)
 
     p_star_date <- sircovid::sircovid_date(c("2020-03-15", "2020-07-01",
                                              "2020-09-20", "2021-04-03"))
