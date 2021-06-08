@@ -32,9 +32,10 @@ spim_plot_forest <- function(dat, plot_betas) {
   beta_names <- par_names[substr(par_names, 1, 4) == "beta"]
   beta_names <- beta_names[order(as.numeric(gsub("beta", "", beta_names)))]
 
+  ## Can set the xmax for specific parameters here. For any left as NA, it will
+  ## instead just use the maximum from the parameters info
   par_max <- rep(NA, length(par_names))
   names(par_max) <- par_names
-
   par_max[c("m_CHW", "m_CHR")] <- 2e-5
   par_max[beta_names] <- 0.15
   if (model_type == "BB") {
