@@ -28,16 +28,18 @@ spim_plot_forest <- function(dat, plot_betas) {
   # formats for region labels
   labels <- spim_region_name(names(samples), "code")
   par_names <- colnames(samples[[1]]$pars)
-  ch_names <- c("eps", "m_CHW", "m_CHR")
-  mu_names <- par_names[substr(par_names, 1, 3) == "mu_"]
-  alpha_names <- par_names[substr(par_names, 1, 6) == "alpha_"]
+
   beta_names <- par_names[substr(par_names, 1, 4) == "beta"]
   beta_names <- beta_names[order(as.numeric(gsub("beta", "", beta_names)))]
-  p_names <- par_names[substr(par_names, 1, 2) == "p_"]
 
-  p_max <- rep(1, length(p_names))
+  par_max <- rep(NA, length(par_names))
+  names(par_max) <- par_names
+
+  par_max[c("m_CHW", "m_CHR")] <- 2e-5
+  par_max[beta_names] <- 0.15
   if (model_type == "BB") {
-    p_max[p_names == "p_NC"] <- 0.01
+    par_max["p_NC"] <- 0.01
+    par_max["rho_pillar2_tests"] <- 0.02
   }
 
   n_regions <- length(samples)
@@ -64,13 +66,20 @@ spim_plot_forest <- function(dat, plot_betas) {
 
   col_line <- "red3" # TODO: move into colours
 
-  plot_par <- function(par_name, xmin = 0, xmax = 0.1) {
+  plot_par <- function(par_name) {
     par <- extract_sample(par_name)
+
+    if (is.na(par_max[[par_name]])) {
+      par_info <- subset(pars_info, pars_info$name == par_name)
+      xmax <- max(par_info$max)
+    } else {
+      xmax <- par_max[[par_name]]
+    }
 
     plot(0, 0, type = "n",
          ylab = "",
          xlab = par_name,
-         xlim = c(xmin, xmax),
+         xlim = c(0, xmax),
          ylim = ylim,
          yaxt = "n"
     )
@@ -133,16 +142,19 @@ spim_plot_forest <- function(dat, plot_betas) {
   }
 
   hps <- dat$parameters$prior
+  pars_info <- dat$parameters$info
 
   op <- par(bty = "n", mar = c(3, 0, 1, 0), mgp = c(2, 0.75, 0),
             oma = c(2, 0, 3, 3))
   on.exit(par(op))
 
   if (plot_betas) {
-    npar <- length(beta_names)
+    pars_to_plot <- beta_names
   } else {
-    npar <- length(par_names) - length(beta_names)
+    pars_to_plot <- setdiff(par_names, c("start_date", beta_names))
+    pars_to_plot <- c("start_date", pars_to_plot)
   }
+  npar <- length(pars_to_plot)
   nrow <- 4
   plot_per_row <- ceiling(npar / nrow)
   colwidth <- 64 / plot_per_row
@@ -156,58 +168,17 @@ spim_plot_forest <- function(dat, plot_betas) {
   )
   at <- seq_len(n_regions)
 
-  if (plot_betas) {
-    ## 1st row
+  for (i in seq_len(nrow)) {
     plot_axis()
     par(mar = c(3, 0, 1, 0.5))
-    mapply(FUN = plot_par, par_name = beta_names[1:5], xmax = 0.15)
-
-    ## 2nd row
-    plot_axis()
-    mapply(FUN = plot_par, par_name = beta_names[6:10], xmax = 0.15)
-
-    ## 3rd row
-    plot_axis()
-    mapply(FUN = plot_par, par_name = beta_names[11:15], xmax = 0.15)
-
-    ## 4th row
-    plot_axis()
-    mapply(FUN = plot_par, par_name = beta_names[16:18], xmax = 0.15)
-
-  } else {
-    ## 1st row
-    plot_axis()
-    par(mar = c(3, 0, 1, 0.5))
-    plot_start_date()
-    mapply(FUN = plot_par, par_name = p_names[1:5], xmax = p_max[1:5])
-
-    if (model_type == "BB") {
-      ## 2nd row
-      plot_axis()
-      mapply(FUN = plot_par, par_name = p_names[6:10], xmax = p_max[6:10])
-      plot_par("rho_pillar2_tests", xmax = 0.02)
-
-      ## 3rd row
-      plot_axis()
-      mapply(FUN = plot_par, par_name = mu_names[1:2], xmax = 1)
-      mapply(FUN = plot_par, par_name = mu_names[3:4], xmax = 2)
-      mapply(FUN = plot_par, par_name = alpha_names[1:2], xmax = 1)
+    if (i == 1 & !plot_betas) {
+      plot_start_date()
+      pars_row <- seq(2, min(npar, plot_per_row))
+      mapply(plot_par, par_name = pars_to_plot[pars_row])
     } else {
-      ## 2nd row
-      plot_axis()
-      mapply(FUN = plot_par, par_name = p_names[6:9], xmax = p_max[6:9])
-      mapply(FUN = plot_par, par_name = mu_names[1:2], xmax = c(1, 1))
-
-      ## 3rd row
-      plot_axis()
-      mapply(FUN = plot_par, par_name = mu_names[3:4], xmax = c(2, 2))
-      plot_par("phi_pillar2_cases", xmax = 1)
-      mapply(FUN = plot_par, par_name = alpha_names[1:3], xmax = 1)
+      pars_row <- seq((i - 1) * plot_per_row + 1, min(npar, i * plot_per_row))
+      mapply(plot_par, par_name = pars_to_plot[pars_row])
     }
-
-    ## 4th row
-    plot_axis()
-    mapply(FUN = plot_par, par_name = ch_names[1:3], xmax = c(1, 2e-5, 2e-5))
   }
 
   mtext(text = paste("Inferred epidemic parameters for NHS regions at", date),
