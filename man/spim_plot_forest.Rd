@@ -4,13 +4,16 @@
 \alias{spim_plot_forest}
 \title{Forest plot}
 \usage{
-spim_plot_forest(dat, plot_betas)
+spim_plot_forest(dat, regions, plot_type)
 }
 \arguments{
 \item{dat}{Combined data from \link{spim_combined_load}}
 
-\item{plot_betas}{Logical, indicating if we should plot betas
-(rather than all other parameters)}
+\item{regions}{Vector of regions to plot}
+
+\item{plot_type}{The type of parameters to plot: \code{all} would plot all
+parameters, \code{betas} would just plot betas, \code{non_betas} would plot all
+non-beta parameters}
 }
 \value{
 Nothing, called for side effects

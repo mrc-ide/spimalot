@@ -3,27 +3,34 @@
 ##' @title Forest plot
 ##' @param dat Combined data from [spimalot::spim_combined_load]
 ##'
-##' @param plot_betas Logical, indicating if we should plot betas
-##'   (rather than all other parameters)
+##' @param regions Vector of regions to plot
+##'
+##' @param plot_type The type of parameters to plot: `all` would plot all
+##'   parameters, `betas` would just plot betas, `non_betas` would plot all
+##'   non-beta parameters
 ##'
 ##' @return Nothing, called for side effects
 ##' @export
-spim_plot_forest <- function(dat, plot_betas) {
-  samples <- dat$samples[sircovid::regions("all")]
+spim_plot_forest <- function(dat, regions, plot_type) {
+  samples <- dat$samples[regions]
   date <- dat$info$date
   model_type <- dat$info$model_type
 
-  # order by start_date
-  mean_start_date <- vnapply(samples, function(x) mean(x$pars[, "start_date"]))
+  if ("start_date" %in% colnames(samples[[1]]$pars)) {
+    # order by start_date
+    mean_start_date <-
+      vnapply(samples, function(x) mean(x$pars[, "start_date"]))
 
-  countries <- c("scotland", "wales", "northern_ireland")
-  region_names <- setdiff(names(samples), c(countries, "england", "uk"))
+    countries <- setdiff(regions, sircovid::regions("england"))
 
-  ordered_regions <- c(names(c(sort(mean_start_date[countries],
-                                    decreasing = TRUE),
-                               sort(mean_start_date[region_names],
-                                    decreasing = TRUE))))
-  samples <- samples[ordered_regions]
+    region_names <- setdiff(regions, sircovid::regions("nations"))
+
+    ordered_regions <- c(names(c(sort(mean_start_date[countries],
+                                      decreasing = TRUE),
+                                 sort(mean_start_date[region_names],
+                                      decreasing = TRUE))))
+    samples <- samples[ordered_regions]
+  }
 
   # formats for region labels
   labels <- spim_region_name(names(samples), "code")
@@ -49,8 +56,6 @@ spim_plot_forest <- function(dat, plot_betas) {
     lapply(samples, function(x) as.numeric(x$pars[, par_name]))
   }
 
-  numeric_start_date <- extract_sample(par_name = "start_date")
-
   ylim <- c(0.5, n_regions + 0.5)
 
   plot_axis <- function() {
@@ -68,35 +73,56 @@ spim_plot_forest <- function(dat, plot_betas) {
   col_line <- "red3" # TODO: move into colours
 
   plot_par <- function(par_name) {
-    par <- extract_sample(par_name)
-
-    if (is.na(par_max[[par_name]])) {
-      par_info <- subset(pars_info, pars_info$name == par_name)
-      xmax <- max(par_info$max)
+    if (par_name == "start_date") {
+      plot_start_date()
     } else {
-      xmax <- par_max[[par_name]]
-    }
+      par <- extract_sample(par_name)
 
-    plot(0, 0, type = "n",
-         ylab = "",
-         xlab = par_name,
-         xlim = c(0, xmax),
-         ylim = ylim,
-         yaxt = "n"
-    )
+      if (is.na(par_max[[par_name]])) {
+        par_info <- subset(pars_info, pars_info$name == par_name)
+        xmax <- max(par_info$max)
+      } else {
+        xmax <- par_max[[par_name]]
+      }
 
-    jitter <- 0.5
-    regions <- names(par)
-    hp <- subset(hps, hps$name == par_name)
-    rownames(hp) <- hp$region
-    hp <- hp[regions, ] # sort in correct order
-    if (hp$type[1] == "beta") {
-      shape1 <- hp$beta_shape1
-      shape2 <- hp$beta_shape2
-      if (!(all(shape1 == 1) && all(shape2 == 1))) {
-        prior <- mapply(qbeta,
-                        shape1 = shape1,
-                        shape2 = shape2,
+      plot(0, 0, type = "n",
+           ylab = "",
+           xlab = par_name,
+           xlim = c(0, xmax),
+           ylim = ylim,
+           yaxt = "n"
+      )
+
+      jitter <- 0.5
+      regions <- names(par)
+      hp <- subset(hps, hps$name == par_name)
+      rownames(hp) <- hp$region
+      hp <- hp[regions, ] # sort in correct order
+      if (hp$type[1] == "beta") {
+        shape1 <- hp$beta_shape1
+        shape2 <- hp$beta_shape2
+        if (!(all(shape1 == 1) && all(shape2 == 1))) {
+          prior <- mapply(qbeta,
+                          shape1 = shape1,
+                          shape2 = shape2,
+                          MoreArgs = list(p = c(0.025, 0.975)),
+                          SIMPLIFY = TRUE)
+
+
+          segments(x0 = prior[1, ],
+                   y0 = at - jitter, y1 = at + jitter,
+                   col = col_line, lty = 2, lwd = 1, lend = 2)
+          segments(x0 = prior[2, ],
+                   y0 = at - jitter, y1 = at + jitter,
+                   col = col_line, lty = 2, lwd = 1, lend = 2)
+        }
+      }
+      if (hp$type[1] == "gamma") {
+        shape <- hp$gamma_shape
+        scale <- hp$gamma_scale
+        prior <- mapply(qgamma,
+                        shape = shape,
+                        scale = scale,
                         MoreArgs = list(p = c(0.025, 0.975)),
                         SIMPLIFY = TRUE)
 
@@ -108,29 +134,13 @@ spim_plot_forest <- function(dat, plot_betas) {
                  y0 = at - jitter, y1 = at + jitter,
                  col = col_line, lty = 2, lwd = 1, lend = 2)
       }
+
+      mapply(FUN = plot_ci_bar, res = par, at = at, width = 0.1)
     }
-    if (hp$type[1] == "gamma") {
-      shape <- hp$gamma_shape
-      scale <- hp$gamma_scale
-      prior <- mapply(qgamma,
-                      shape = shape,
-                      scale = scale,
-                      MoreArgs = list(p = c(0.025, 0.975)),
-                      SIMPLIFY = TRUE)
-
-
-      segments(x0 = prior[1, ],
-               y0 = at - jitter, y1 = at + jitter,
-               col = col_line, lty = 2, lwd = 1, lend = 2)
-      segments(x0 = prior[2, ],
-               y0 = at - jitter, y1 = at + jitter,
-               col = col_line, lty = 2, lwd = 1, lend = 2)
-    }
-
-    mapply(FUN = plot_ci_bar, res = par, at = at, width = 0.1)
   }
 
   plot_start_date <- function() {
+    numeric_start_date <- extract_sample(par_name = "start_date")
     plot(x = sircovid::sircovid_date("2020-01-01"),
          y = 1,
          type = "n",
@@ -149,12 +159,18 @@ spim_plot_forest <- function(dat, plot_betas) {
             oma = c(2, 0, 3, 3))
   on.exit(par(op))
 
-  if (plot_betas) {
+  if (plot_type == "all") {
+    pars_to_plot <- par_names
+  } else if (plot_type == "betas") {
     pars_to_plot <- beta_names
-  } else {
-    pars_to_plot <- setdiff(par_names, c("start_date", beta_names))
-    pars_to_plot <- c("start_date", pars_to_plot)
+  } else if (plot_type == "non_betas") {
+    pars_to_plot <- setdiff(par_names, beta_names)
   }
+
+  if ("start_date" %in% pars_to_plot) {
+    pars_to_plot <- c("start_date", pars_to_plot[pars_to_plot != "start_date"])
+  }
+
   npar <- length(pars_to_plot)
   nrow <- 4
   plot_per_row <- ceiling(npar / nrow)
@@ -172,14 +188,8 @@ spim_plot_forest <- function(dat, plot_betas) {
   for (i in seq_len(nrow)) {
     plot_axis()
     par(mar = c(3, 0, 1, 0.5))
-    if (i == 1 & !plot_betas) {
-      plot_start_date()
-      pars_row <- seq(2, min(npar, plot_per_row))
-      mapply(plot_par, par_name = pars_to_plot[pars_row])
-    } else {
-      pars_row <- seq((i - 1) * plot_per_row + 1, min(npar, i * plot_per_row))
-      mapply(plot_par, par_name = pars_to_plot[pars_row])
-    }
+    pars_row <- seq((i - 1) * plot_per_row + 1, min(npar, i * plot_per_row))
+    mapply(plot_par, par_name = pars_to_plot[pars_row])
   }
 
   mtext(text = paste("Inferred epidemic parameters for NHS regions at", date),
