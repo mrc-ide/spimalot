@@ -60,6 +60,13 @@ spim_fit_process <- function(samples, parameters, data, control) {
   message("Reducing trajectories")
   forecast <- reduce_trajectories(forecast)
 
+  if (!is.null(restart)) {
+    ## When adding the trajectories, we might as well strip them down
+    ## to the last date in the restart
+    i <- forecast$trajectories$date <= max(restart$state$time)
+    restart$trajectories <- trajectories_filter_time(forecast$trajectories, i)
+  }
+
   message("Computing outputs by age class")
   age_class_outputs <- extract_age_class_outputs(samples)
 
@@ -349,6 +356,15 @@ reduce_trajectories <- function(samples) {
     abind1(state[setdiff(rownames(state), nms_S), , ], S)
 
   samples
+}
+
+
+trajectories_filter_time <- function(trajectories, i) {
+  trajectories$step <- trajectories$step[i]
+  trajectories$date <- trajectories$date[i]
+  trajectories$predicted <- trajectories$predicted[i]
+  trajectories$state <- trajectories$state[, , i, drop = FALSE]
+  trajectories
 }
 
 
