@@ -60,21 +60,26 @@ spim_fit_process <- function(samples, parameters, data, control) {
   message("Reducing trajectories")
   forecast <- reduce_trajectories(forecast)
 
-  if (!is.null(restart)) {
-    ## When adding the trajectories, we might as well strip them down
-    ## to the last date in the restart
-    i <- forecast$trajectories$date <= max(restart$state$time)
-    restart$parent <- list(
-      trajectories = trajectories_filter_time(forecast$trajectories, i),
-      rt = rt_filter_time(rt, i),
-      ifr_t = rt_filter_time(ifr_t, i))
-  }
-
   message("Computing outputs by age class")
   age_class_outputs <- extract_age_class_outputs(samples)
 
   message("Computing parameter MLE and covariance matrix")
   parameters <- spim_fit_parameters(samples, parameters)
+
+  if (!is.null(restart)) {
+    ## When adding the trajectories, we might as well strip them down
+    ## to the last date in the restart
+    i <- forecast$trajectories$date <= max(restart$state$time)
+
+    ## The age_class_outputs don't have a time vector, however it's
+    ## not hard to compute (we should tidy this up!). We can also use
+    ## 'which' on i
+    restart$parent <- list(
+      trajectories = trajectories_filter_time(forecast$trajectories, i),
+      rt = rt_filter_time(rt, i),
+      ifr_t = rt_filter_time(ifr_t, i),
+      age_class_outputs = age_class_outputs[, , which(i), drop = FALSE])
+  }
 
   ## Drop the big objects from the output
   samples[c("state", "trajectories", "predict")] <- list(NULL)
@@ -372,7 +377,9 @@ trajectories_filter_time <- function(trajectories, i) {
 
 
 rt_filter_time <- function(rt, i) {
-  lapply(rt, function(x) x[i, , drop = FALSE])
+  ret <- lapply(rt, function(x) x[i, , drop = FALSE])
+  class(ret) <- class(rt)
+  ret
 }
 
 
