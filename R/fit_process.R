@@ -64,7 +64,10 @@ spim_fit_process <- function(samples, parameters, data, control) {
     ## When adding the trajectories, we might as well strip them down
     ## to the last date in the restart
     i <- forecast$trajectories$date <= max(restart$state$time)
-    restart$trajectories <- trajectories_filter_time(forecast$trajectories, i)
+    restart$parent <- list(
+      trajectories = trajectories_filter_time(forecast$trajectories, i),
+      rt = rt_filter_time(rt, i),
+      ifr_t = rt_filter_time(ifr_t, i))
   }
 
   message("Computing outputs by age class")
@@ -365,6 +368,11 @@ trajectories_filter_time <- function(trajectories, i) {
   trajectories$predicted <- trajectories$predicted[i]
   trajectories$state <- trajectories$state[, , i, drop = FALSE]
   trajectories
+}
+
+
+rt_filter_time <- function(rt, i) {
+  lapply(rt, function(x) x[i, , drop = FALSE])
 }
 
 
