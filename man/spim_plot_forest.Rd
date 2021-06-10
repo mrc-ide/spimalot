@@ -4,16 +4,18 @@
 \alias{spim_plot_forest}
 \title{Forest plot}
 \usage{
-spim_plot_forest(dat, regions, plot_type)
+spim_plot_forest(dat, regions = NULL, plot_type = "all")
 }
 \arguments{
 \item{dat}{Combined data from \link{spim_combined_load}}
 
-\item{regions}{Vector of regions to plot}
+\item{regions}{Vector of regions to plot. By default, all regions
+found in \code{dat} will be used (except aggregate regions, such as
+england/uk)}
 
-\item{plot_type}{The type of parameters to plot: \code{all} would plot all
-parameters, \code{betas} would just plot betas, \code{non_betas} would plot all
-non-beta parameters}
+\item{plot_type}{The type of parameters to plot: \code{all} would plot
+all parameters, \code{betas} would just plot betas, \code{non_betas} would
+plot all non-beta parameters}
 }
 \value{
 Nothing, called for side effects

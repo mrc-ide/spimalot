@@ -3,15 +3,28 @@
 ##' @title Forest plot
 ##' @param dat Combined data from [spimalot::spim_combined_load]
 ##'
-##' @param regions Vector of regions to plot
+##' @param regions Vector of regions to plot. By default, all regions
+##'   found in `dat` will be used (except aggregate regions, such as
+##'   england/uk)
 ##'
-##' @param plot_type The type of parameters to plot: `all` would plot all
-##'   parameters, `betas` would just plot betas, `non_betas` would plot all
-##'   non-beta parameters
+##' @param plot_type The type of parameters to plot: `all` would plot
+##'   all parameters, `betas` would just plot betas, `non_betas` would
+##'   plot all non-beta parameters
 ##'
 ##' @return Nothing, called for side effects
 ##' @export
-spim_plot_forest <- function(dat, regions, plot_type) {
+spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
+  if (is.null(regions)) {
+    regions <- intersect(sircovid::regions("all"), names(dat$samples))
+  } else {
+    msg <- setdiff(regions, names(dat$samples))
+    if (length(msg) > 0) {
+      stop("regions missing from 'dat': ", paste(squote(msg), collapse = ", "))
+    }
+  }
+
+  match_value(plot_type, c("all", "betas", "non_betas"))
+
   samples <- dat$samples[regions]
   date <- dat$info$date
   model_type <- dat$info$model_type
