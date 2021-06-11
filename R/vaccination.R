@@ -84,7 +84,8 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
   } else {
     # A number of vaccines have unexpectedly been allocoated to an NA age-group
     # in Scotland, let's filter them out for the time being
-    if (region == "scotland") {
+    nations <- c("scotland", "wales")
+    if (region %in% nations) {
       data <- data %>% dplyr::filter(!is.na(.data$age_band_min))
     }
     i <- is.na(data$age_band_min)
