@@ -412,8 +412,7 @@ spim_plot_variant_region <- function(region, dat, date_min) {
   oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
   on.exit(oo)
 
-  ##date_min <- date_min %||% min(x[-1L])
-  date_min <- min(x[-1L])
+  date_min <- date_min %||% min(x[-1L])
 
   plot(date_min, 0, type = "n",
        xlim = c(date_min, dat$info$date),
