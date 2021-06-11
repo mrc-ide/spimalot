@@ -5,12 +5,13 @@
 ##' @param region Vector of standard region names (london, scotland,
 ##'   england, uk)
 ##'
-##' @param type Convertion type. Current can be one of "name" or "code"
+##' @param type Convertion type. Current can be one of "name", "code" or
+##'   "upper"
 ##'
 ##' @return A vector of new names
 ##' @export
 spim_region_name <- function(region, type = "name") {
-  if (type == "name") {
+  if (type %in% c("name", "upper")) {
     map <- c(
       london = "London",
       east_of_england = "East of England",
@@ -24,6 +25,10 @@ spim_region_name <- function(region, type = "name") {
       northern_ireland = "Northern Ireland",
       england = "England",
       uk = "United Kingdom")
+
+    if (type == "upper") {
+      map <- toupper(type)
+    }
   } else if (type == "code") {
   map <- c(
     london = "LON",
