@@ -21,11 +21,7 @@ spim_fit_process <- function(samples, parameters, data, control) {
   samples$restart <- NULL
 
   message("Running forecasts")
-  incidence_states <- c("deaths", "deaths_hosp", "deaths_comm",
-                        "deaths_carehomes", "admitted", "diagnoses",
-                        "infections", "sympt_cases", "sympt_cases_over25",
-                        "sympt_cases_non_variant",
-                        "sympt_cases_non_variant_over25")
+  incidence_states <- c("deaths", "infections")
   forecast <- sircovid::carehomes_forecast(samples,
                                            control$n_sample,
                                            control$burnin,
@@ -48,6 +44,9 @@ spim_fit_process <- function(samples, parameters, data, control) {
                           c("date", "region", i_deaths_data)]
   deaths$data[is.na(deaths$data)] <- 0
 
+  message("Computing outputs by age class")
+  age_class_outputs <- extract_age_class_outputs(forecast)
+
   ## TODO: someone needs to document what this date is for (appears to
   ## filter trajectories to start at this date) and when we might
   ## change it.
@@ -66,9 +65,6 @@ spim_fit_process <- function(samples, parameters, data, control) {
     i <- forecast$trajectories$date <= max(restart$state$time)
     restart$trajectories <- trajectories_filter_time(forecast$trajectories, i)
   }
-
-  message("Computing outputs by age class")
-  age_class_outputs <- extract_age_class_outputs(samples)
 
   message("Computing parameter MLE and covariance matrix")
   parameters <- spim_fit_parameters(samples, parameters)
