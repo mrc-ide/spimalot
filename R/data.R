@@ -95,7 +95,8 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
             "pillar2_positives_pcr_only_over25", "pillar2_positives_pcr_all",
             "pillar2_positives_pcr_all_over25",
             "s_positive_adj1", "s_negative_adj1",
-            "s_positive_adj1_over25", "s_negative_adj1_over25")
+            "s_positive_adj1_over25", "s_negative_adj1_over25",
+            "death_0", "death_55", "death_65", "death_75")
   data <- data[c("region", "date", vars)]
 
   ## Remove any data after the date parameter
@@ -259,6 +260,10 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
     deaths_comm = data$deaths_comm,
     deaths_carehomes = data$deaths_carehomes,
     deaths_non_hosp = data$deaths_non_hosp,
+    death_0 = data$death_0,
+    death_55 = data$death_55,
+    death_65 = data$death_65,
+    death_75 = data$death_75,
     icu = data$final_icu,
     general = data$final_general,
     hosp = data$final_hosp,
