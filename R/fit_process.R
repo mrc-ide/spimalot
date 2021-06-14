@@ -48,6 +48,9 @@ spim_fit_process <- function(samples, parameters, data, control) {
                           c("date", "region", i_deaths_data)]
   deaths$data[is.na(deaths$data)] <- 0
 
+  message("Computing outputs by age class")
+  age_class_outputs <- extract_age_class_outputs(forecast)
+
   ## TODO: someone needs to document what this date is for (appears to
   ## filter trajectories to start at this date) and when we might
   ## change it.
@@ -66,9 +69,6 @@ spim_fit_process <- function(samples, parameters, data, control) {
     i <- forecast$trajectories$date <= max(restart$state$time)
     restart$trajectories <- trajectories_filter_time(forecast$trajectories, i)
   }
-
-  message("Computing outputs by age class")
-  age_class_outputs <- extract_age_class_outputs(samples)
 
   message("Computing parameter MLE and covariance matrix")
   parameters <- spim_fit_parameters(samples, parameters)
