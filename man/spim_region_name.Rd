@@ -10,7 +10,8 @@ spim_region_name(region, type = "name")
 \item{region}{Vector of standard region names (london, scotland,
 england, uk)}
 
-\item{type}{Convertion type. Current can be one of "name" or "code"}
+\item{type}{Convertion type. Current can be one of "name", "code" or
+"upper"}
 }
 \value{
 A vector of new names

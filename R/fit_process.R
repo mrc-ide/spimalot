@@ -21,11 +21,7 @@ spim_fit_process <- function(samples, parameters, data, control) {
   samples$restart <- NULL
 
   message("Running forecasts")
-  incidence_states <- c("deaths", "deaths_hosp", "deaths_comm",
-                        "deaths_carehomes", "admitted", "diagnoses",
-                        "infections", "sympt_cases", "sympt_cases_over25",
-                        "sympt_cases_non_variant",
-                        "sympt_cases_non_variant_over25")
+  incidence_states <- c("deaths", "infections")
   forecast <- sircovid::carehomes_forecast(samples,
                                            control$n_sample,
                                            control$burnin,
@@ -48,6 +44,9 @@ spim_fit_process <- function(samples, parameters, data, control) {
                           c("date", "region", i_deaths_data)]
   deaths$data[is.na(deaths$data)] <- 0
 
+  message("Computing outputs by age class")
+  age_class_outputs <- extract_age_class_outputs(forecast)
+
   ## TODO: someone needs to document what this date is for (appears to
   ## filter trajectories to start at this date) and when we might
   ## change it.
@@ -60,11 +59,30 @@ spim_fit_process <- function(samples, parameters, data, control) {
   message("Reducing trajectories")
   forecast <- reduce_trajectories(forecast)
 
-  message("Computing outputs by age class")
-  age_class_outputs <- extract_age_class_outputs(samples)
+  if (!is.null(restart)) {
+    ## When adding the trajectories, we might as well strip them down
+    ## to the last date in the restart
+    i <- forecast$trajectories$date <= max(restart$state$time)
+    restart$trajectories <- trajectories_filter_time(forecast$trajectories, i)
+  }
 
   message("Computing parameter MLE and covariance matrix")
   parameters <- spim_fit_parameters(samples, parameters)
+
+  if (!is.null(restart)) {
+    ## When adding the trajectories, we might as well strip them down
+    ## to the last date in the restart
+    restart_date <- max(restart$state$time)
+    i <- forecast$trajectories$date <= restart_date
+
+    restart$parent <- list(
+      trajectories = trajectories_filter_time(forecast$trajectories, i),
+      rt = rt_filter_time(rt, i),
+      ifr_t = rt_filter_time(ifr_t, i),
+      age_class_outputs = age_class_outputs[, , which(i), drop = FALSE],
+      deaths = deaths_filter_time(deaths, restart_date),
+      admissions = deaths_filter_time(deaths, restart_date))
+  }
 
   ## Drop the big objects from the output
   samples[c("state", "trajectories", "predict")] <- list(NULL)
@@ -199,6 +217,8 @@ extract_outputs_by_age <- function(sample, what) {
   output <- apply(cum_output, 1:2, diff)
   mean_output <- apply(output, 1:2, mean)
 
+  ## TODO: consider tdigest::tquantile (see quantile_digest in
+  ## globals)
   out <- list(prop_total_output = prop_output,
               mean_prop_total_output = colMeans(prop_output),
               output_t = mean_output,
@@ -206,6 +226,14 @@ extract_outputs_by_age <- function(sample, what) {
               upper_bound = apply(output, 1:2, quantile, 0.975))
 
   out <- aggregate_outputs_by_age(out, what)
+
+  if (diff(sample$trajectories$date[1:2]) != 1) {
+    for (i in seq_along(out)) {
+      out[[i]][1, ] <- NA
+    }
+  }
+
+  out$date <- sample$trajectories$date[-1]
 
   out
 }
@@ -267,7 +295,6 @@ extract_age_class_state <- function(state) {
     x[, 2L, , ] <- x[, 2L, , ] + x[, 3L, , ]
     x <- x[, -3L, , ]
     colnames(x) <- c("unvaccinated", "partial_protection", "full_protection")
-
 
     ## aggregate age groups
     groups <- list(age_0 = 1:6, # 0-4, 5-9, 10-14, 15-19, 20-24, 25-29
@@ -349,6 +376,33 @@ reduce_trajectories <- function(samples) {
     abind1(state[setdiff(rownames(state), nms_S), , ], S)
 
   samples
+}
+
+
+trajectories_filter_time <- function(trajectories, i) {
+  trajectories$step <- trajectories$step[i]
+  trajectories$date <- trajectories$date[i]
+  trajectories$predicted <- trajectories$predicted[i]
+  trajectories$state <- trajectories$state[, , i, drop = FALSE]
+  trajectories
+}
+
+
+rt_filter_time <- function(rt, i) {
+  ret <- lapply(rt, function(x) x[i, , drop = FALSE])
+  class(ret) <- class(rt)
+  ret
+}
+
+
+deaths_filter_time <- function(x, restart_date) {
+  i <- x$date < restart_date
+  for (v in c("output_t", "lower_bound", "upper_bound")) {
+    x[[v]] <- x[[v]][i, , drop = FALSE]
+  }
+  x$date <- x$date[i]
+  x$data <- x$data[sircovid::sircovid_date(x$data$date) < restart_date, ]
+  x
 }
 
 
