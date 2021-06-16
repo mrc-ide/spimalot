@@ -70,7 +70,32 @@ spim_simulate_prepare <- function(combined, n_par,
 }
 
 
+simulate_args_names <- function() {
+  c(## Core simulation parameters
+    "end_date", "seed", "n_threads",
+    ## Output control
+    "output_keep", "output_rt", "output_time_series", "output_vaccination",
+    "output_state_by_age", "output_weight_rt",
+    ## Rt control
+    "rt_type",
+    "rt_future",
+    ## Seasonality
+    "seasonality",
+    ## Vaccination
+    "vaccine_daily_doses", "vaccine_booster_daily_doses",
+    "vaccine_efficacy", "vaccine_booster_efficacy", "vaccine_eligibility",
+    "vaccine_uptake", "vaccine_lag_groups", "vaccine_lag_days",
+    "vaccine_delay_multiplier",
+    ## Strain/Variant
+    "strain_seed_date",  "strain_transmission", "strain_seed_rate",
+    "strain_vaccine_efficacy", "strain_initial_proportion",
+    "strain_vaccine_booster_efficacy", "strain_cross_immunity",
+    "strain_vaccine_efficacy_modifier")
+}
+
+
 spim_simulate_one <- function(args, combined) {
+  browser()
   multistrain <- combined$info[[1]]$multistrain
   if (multistrain) {
     n_strain <- 4
@@ -91,18 +116,18 @@ spim_simulate_one <- function(args, combined) {
   step_end <- last(steps)
 
   info <- combined$info[[1]]$info
-  index <- simulate_index(info, args$output$keep,
-                          args$output$vaccination,
+  index <- simulate_index(info, args$output_keep,
+                          args$output_vaccination,
                           multistrain)
 
   state_start <- combined$state
 
-  S <- mcstate::array_flatten(state[index$S, , , drop = FALSE], 2:3)
+  S <- mcstate::array_flatten(state_start[index$S, , , drop = FALSE], 2:3)
 
   if (multistrain) {
-    R <- mcstate::array_flatten(state_initial[index$R, , , drop = FALSE], 2:3)
+    R <- mcstate::array_flatten(state_start[index$R, , , drop = FALSE], 2:3)
     prob_strain <- mcstate::array_flatten(
-      state_initial[index$prob_strain, , , drop = FALSE], 2:3)
+      state_start[index$prob_strain, , , drop = FALSE], 2:3)
   } else {
     R <- NULL
     prob_strain <- NULL
@@ -116,40 +141,41 @@ spim_simulate_one <- function(args, combined) {
 
   ## TODO: if we could reuse the rt that we had it and avoid quite a
   ## bit of time here.
-  pars <- setup_future_betas(pars, args$rt$future, S, args$rt$type, step_start,
+  pars <- setup_future_betas(pars, args$rt_future, S, args$rt_type, step_start,
                              step_end, combined$dt, args$seasonality, R,
                              prob_strain)
 
-  if (!is.null(args$strain$initial_proportion)) {
-    state_initial <- move_strain_compartments(
-      state_initial, info, c("E", "I_A", "I_P", "I_C_1"),
-      1, 2, args$strain$initial_proportion, regions)
+  if (!is.null(args$strain_initial_proportion)) {
+    state_start <- move_strain_compartments(
+      state_start, info, c("E", "I_A", "I_P", "I_C_1"),
+      1, 2, args$strain_initial_proportion, regions)
   }
 
   message("Creating dust object")
   obj <- sircovid::carehomes$new(pars, step_start, NULL, pars_multi = TRUE,
                                  n_threads = args$n_threads, seed = args$seed)
-  obj$set_state(state_initial)
+  obj$set_state(state_start)
   obj$set_index(index$run)
   message("Simulating!")
   state <- obj$simulate(steps)
   dimnames(state)[[3]] <- regions
 
+  message("Adding summary statistics")
   ret <- list(
     date = dates,
-    summary_state = create_summary_state(state, args$output$keep, dates))
+    summary_state = create_summary_state(state, args$output_keep, dates))
 
-  if (args$output$time_series) {
-    ret$state <- state[args$output$keep, , , ]
+  if (args$output_time_series) {
+    ret$state <- state[args$output_keep, , , ]
   }
 
-  if (args$output$state_by_age) {
+  if (args$output_state_by_age) {
     ## TODO: collision here of two extract functions that are incompatible
     ret$state_by_age <- fixme_extract_age_class_state(state, index)
   }
 
-  if (args$output$rt) {
-    critical_dates <- unique(sircovid::sircovid_date(args$rt$future$date))
+  if (args$output_rt) {
+    critical_dates <- unique(sircovid::sircovid_date(args$rt_future$date))
     critical_dates <- critical_dates[critical_dates > date_start]
     message("Calculating Rt")
     rt <- simulate_rt(
@@ -160,17 +186,17 @@ spim_simulate_one <- function(args, combined) {
       state[names(index$R), , , ],
       state[names(index$prob_strain), , , ],
       ## TODO: I am not sure this is correct (single 0 evaluates to FALSE)
-      no_seeding = identical(args$strain$seed_rate[[1]], numeric(2)),
-      prop_voc = args$strain$initial_proportion,
-      weight_Rt = args$output$weight_rt)
+      no_seeding = identical(args$strain_seed_rate[[1]], numeric(2)),
+      prop_voc = args$strain_initial_proportion,
+      weight_Rt = args$output_weight_rt)
     ret <- c(ret, rt)
   }
 
-  if (args$output$vaccination) {
+  if (args$output_vaccination) {
     ret <- c(ret,
              simulate_calculate_vaccination(state, index,
-                                            args$vaccination$vacc_efficacy,
-                                            args$vaccination$booster_efficacy,
+                                            args$vaccine_efficacy,
+                                            args$vaccine_booster_efficacy,
                                             n_strain))
   }
 
@@ -178,21 +204,22 @@ spim_simulate_one <- function(args, combined) {
 }
 
 
-spim_simulate_expand_grid <- function(...) {
+spim_simulate_local <- function(args, combined) {
+  f <- function(i) {
+    el <- args[[i]]
+    message(sprintf("-----\nRunning scenario %d / %d", i, length(args)))
+    time <- system.time(
+      ret <- spim_simulate_one(el, combined))
+    message(sprintf("Finished scenario %d in %d s", i, time[["elapsed"]]))
+  }
 
+  lapply(args, f)
 }
 
 
-spim_simulate_local <- function(dat, grid) {
-  lapply(grid, spim_siumulate_one, dat)
-}
-
-
-spim_simulate_rrq <- function(dat, grid, rrq) {
-  rrq$lapply(grid, spim_siumulate_one, dat)
-}
-
-
+## spim_simulate_rrq <- function(dat, grid, rrq) {
+##   rrq$lapply(grid, spim_siumulate_one, dat)
+## }
 
 ### prep
 simulate_prepare_upgrade <- function(combined) {
@@ -349,7 +376,7 @@ simulate_prepare_inflate_vacc_classes <- function(pars, state, info) {
 simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
   priority_population <- sircovid::vaccine_priority_population(
     region,
-    uptake = args$vaccination$uptake_by_age * args$vaccination$eligibility_by_age)
+    uptake = args$vaccine_uptake * args$vaccine_eligibility)
 
   pars <- combined$pars[, region]
   vaccine <- combined$vaccine[[region]]
@@ -358,28 +385,29 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
   vaccine_progression_rate <- pars[[1]]$vaccine_progression_rate_base
   N_tot <- pars[[1]]$N_tot
 
-  if (!is.null(args$vaccination$booster_daily_doses)) {
-    args$vaccination$vacc_efficacy <-
-      Map(cbind, args$vaccination$vacc_efficacy, args$vaccination$booster_efficacy)
-    args$strain$vacc_efficacy <-
-      Map(cbind, args$strain$vacc_efficacy, args$strain$booster_efficacy)
+  if (!is.null(args$vaccine_booster_daily_doses)) {
+    args$vaccine_efficacy <-
+      Map(cbind, args$vaccine_efficacy, args$vaccine_booster_efficacy)
+    args$strain_vaccine_efficacy <-
+      Map(cbind, args$strain_vaccine_efficacy,
+          args$strain_vaccine_booster_efficacy)
     vaccine_index_booster <- pars[[1]]$index_dose[[3]]
   } else {
     vaccine_index_booster <- NULL
   }
 
   mean_days_between_doses <- round(vaccine$mean_days_between_doses *
-                                   args$vaccination$mean_vacc_delay_multiplier)
+                                   args$vaccine_delay_multiplier)
 
   vaccine_schedule <- sircovid::vaccine_schedule_scenario(
     schedule_past = vaccine$schedule,
-    doses_future = args$vaccination$future_daily_doses[[region]],
+    doses_future = args$vaccine_daily_doses[[region]],
     end_date = args$end_date,
     mean_days_between_doses = mean_days_between_doses,
     priority_population = priority_population,
-    lag_groups = args$vaccination$lag_groups,
-    lag_days = args$vaccination$lag_days,
-    boosters_future = args$vaccination$booster_daily_doses[[region]],
+    lag_groups = args$vaccine_lag_groups,
+    lag_days = args$vaccine_lag_days,
+    boosters_future = args$vaccine_booster_daily_doses[[region]],
     boosters_prepend_zero = TRUE)
 
   ## check boosters
@@ -394,9 +422,10 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
   ## but probably better done inside sircovid::vaccine_schedule_scenario
   # vaccine_schedule$doses[1:17, 3, 0] <- 0
 
-  rel_list <- fixme_vaccine_strain_efficacy(args$vaccination$vacc_efficacy,
-                                            args$strain$vacc_efficacy,
-                                            args$strain$modifier)
+  rel_list <- fixme_vaccine_strain_efficacy(
+    args$vaccine_efficacy,
+    args$strain_vaccine_efficacy,
+    args$strain_vaccine_efficacy_modifier)
 
   extra <- sircovid:::carehomes_parameters_vaccination(
     N_tot,
@@ -412,13 +441,13 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
     n_strains = n_strain,
     n_doses = pars[[1]]$n_doses)
 
-  if (!is.null(args$strain$transmission)) {
+  if (!is.null(args$strain_transmission)) {
     strain_params <- sircovid:::carehomes_parameters_strain(
-      args$strain$transmission,
-      sircovid::sircovid_date(args$strain$seed_date),
-      args$strain$seed_rate[[region]],
+      args$strain_transmission,
+      sircovid::sircovid_date(args$strain_seed_date),
+      args$strain_seed_rate[[region]],
       pars[[1]]$dt)
-    strain_params$cross_immunity <- args$strain$cross_immunity
+    strain_params$cross_immunity <- args$strain_cross_immunity
     extra <- c(extra, strain_params)
   }
 
@@ -432,63 +461,25 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
 }
 
 
-simulate_setup_validate <- function(args, regions) {
-  if (is.null(args$vaccination$booster_daily_doses)) {
-    if (!is.null(args$vaccination$booster_efficacy)) {
-      stop("'vaccination$booster_efficacy' given without ",
-           "vaccination$booster_daily_doses")
-    }
-    if (!is.null(args$strain$booster_efficacy)) {
-      stop("'strain$booster_efficacy' given without ",
-           "vaccination$booster_daily_doses")
-    }
-  } else {
-    if (combined$info[[1]]$multistrain) {
-      if (is.null(args$strain$booster_efficacy)) {
-        stop("Expected non-NULL value for strain$booster_efficacy")
-      }
-      args$strain$vacc_efficacy <-
-        Map(cbind, args$strain$vacc_efficacy, args$strain$booster_efficacy)
-    } else {
-      stop("'strain$booster_efficacy' given without ",
-           "vaccination$booster_daily_doses")
-    }
-
-  }
-
-  n_vacc_strata <- ncol(args$vaccination$vacc_efficacy[[1]])
-  n_groups <- nrow(args$vaccination$vacc_efficacy[[1]])
-  if (!all(lengths(args$vaccination$vacc_efficacy) == n_vacc_strata * n_groups)) {
-    stop("Vaccine efficacy parameters must have the same length")
-  }
-  if (!is.null(args$vaccination$vacc_efficacy_strain_2) &&
-      !all(lengths(args$vaccination$vacc_efficacy_strain_2) == n_vacc_strata * n_groups)) {
-    stop("Vaccine efficacy strain 2 parameters must have the same length")
-  }
-
-
-}
-
-
 ## TODO: someone needs to rewrite this.
 fixme_vaccine_strain_efficacy <- function(efficacy, efficacy_strain_2,
-                                          rel_strain_modifier) {
+                                          strain_vaccine_efficacy_modifier) {
   n_strain <- if (is.null(efficacy_strain_2)) 1 else 4
   n_vacc_strata <- ncol(efficacy[[1]])
   n_groups <- nrow(efficacy[[1]])
 
   dim <- c(n_groups, n_strain, n_vacc_strata)
   rel_list <- rep(list(array(rep(NA_integer_), dim = dim)), 4)
-  names(rel_list) <- c("rel_p_sympt", "rel_p_hosp_if_sympt", "rel_susceptibility",
-                       "rel_infectivity")
+  names(rel_list) <- c("rel_p_sympt", "rel_p_hosp_if_sympt",
+                       "rel_susceptibility", "rel_infectivity")
 
 
   for (rel in names(rel_list)) {
     for (s in seq_len(n_strain)) {
-      if (is.null(rel_strain_modifier)) {
+      if (is.null(strain_vaccine_efficacy_modifier)) {
         mod <- 1
       } else {
-        mod <- rel_strain_modifier[[s]][[rel]]
+        mod <- strain_vaccine_efficacy_modifier[[s]][[rel]]
       }
       for (v_s in seq_len(n_vacc_strata)) {
         for (g in seq_len(n_groups)) {
@@ -846,4 +837,290 @@ fixme_calculate_n_protected <- function(n_vaccinated, R, vaccine_efficacy,
   )
 
   aperm(abind_quiet(ret, along = 3), c(3, 1, 2))
+}
+
+
+spim_simulate_args <- function(grid, vars, base, ignore) {
+  simulate_args_validate(grid, vars, base, ignore)
+
+  f <- function(i) {
+    el <- grid[i, ]
+    for (nm in names(el)) {
+      base[[nm]] <- vars[[nm]][[el[[nm]]]]
+    }
+    base[ignore] <- el[ignore]
+    base
+  }
+
+  lapply(seq_len(nrow(grid)), f)
+}
+
+
+simulate_args_validate <- function(grid, vars, base, ignore) {
+  err <- intersect(ignore, names(vars))
+  if (length(err) > 0) {
+    stop("Names in ignore must not occur in vars: ",
+         paste(squote(err), collapse = ", "))
+  }
+
+  err <- intersect(names(vars), names(base))
+  if (length(err) > 0) {
+    stop("Names in base must not occur in vars: ",
+         paste(squote(err), collapse = ", "))
+  }
+
+  msg <- setdiff(names(grid), union(names(vars), ignore))
+  if (length(msg) > 0) {
+    stop("grid elements not found in vars: ",
+         paste(squote(msg), collapse = ", "))
+  }
+
+  for (v in setdiff(names(grid), ignore)) {
+    msg <- setdiff(grid[[v]], names(vars[[v]]))
+    if (length(msg) > 0) {
+      stop(sprintf("Missing elements in %s: %s (found %s)",
+                   v, paste(squote(msg), collapse = ", "),
+                   paste(names(vars[[v]]), collapse = ", ")))
+
+    }
+  }
+
+  msg <- setdiff(simulate_args_names(), union(names(vars), names(base)))
+  if (length(msg) > 0) {
+    stop("Required elements not found in vars or base: ",
+         paste(squote(msg), collapse = ", "))
+  }
+}
+
+
+## this is where we check that any dependencies among parameters will
+## be satisfied. For example if we have booster daily doses then we
+## must also have efficacy information. Other parameters depend on
+## strains.
+##
+## if multistrain is FALSE, then we need all strain_ parameters to be NULL
+simulate_args_validate1 <- function(args, regions, multistrain) {
+  has_boosters <- !is.null(args$vaccine_booster_daily_doses)
+  n_vacc_strata <- ncol(args$vaccine_efficacy[[1]])
+  n_groups <- nrow(args$vaccine_efficacy[[1]])
+
+  expected <- simulate_args_names()
+  if (!multistrain) {
+    expected <- expected[grepl("^strain_", expected)]
+  }
+
+  msg <- setdiff(names(args), expected)
+  if (length(msg) > 0) {
+    stop("Missing expected values from args: ",
+         paste(squote(msg), collapse = ", "))
+  }
+
+  assert_is(args$end_date, "Date")
+  ## seed: null or raw
+  mcstate:::assert_scalar_positive_integer(args$n_threads)
+  mcstate:::assert_character(args$output_keep)
+  mcstate:::assert_scalar_logical(args$output_rt)
+  mcstate:::assert_scalar_logical(args$output_time_series)
+  mcstate:::assert_scalar_logical(args$output_vaccination)
+  mcstate:::assert_scalar_logical(args$output_state_by_age)
+  mcstate:::assert_scalar_logical(args$output_weight_rt)
+  match_value(args$rt_type, c("Rt_general", "Rt_all"))
+
+  orderly:::assert_scalar_numeric(args$seasonality)
+  vaultr:::assert_length(args$vaccine_uptake, n_groups)
+  vaultr:::assert_length(args$vaccine_eligibility, n_groups)
+
+  validate_rt_future(args$rt_future, regions)
+
+  validate_vaccine_efficacy(args$vaccine_efficacy, n_groups, n_vacc_strata)
+  validate_vaccine_doses(args$vaccine_daily_doses, regions,
+                         "vaccine_daily_doses")
+
+  if (multistrain) {
+    assert_is(args$strain_seed_date, "Date")
+    validate_strain_seed_rate(args$strain_seed_rate, regions)
+    validate_vaccine_efficacy(args$strain_vaccine_efficacy,
+                              n_groups, n_vacc_strata)
+    vaultr:::assert_length(args$strain_cross_immunity, 2)
+    orderly:::assert_numeric(args$strain_cross_immunity)
+    validate_strain_vaccine_efficacy_modifier(
+      args$strain_vaccine_efficacy_modifier)
+  } else {
+    for (i in grep("^strain_", names(args), value = TRUE)) {
+      assert_is(args[[i]], "NULL", i)
+    }
+  }
+
+  if (has_boosters) {
+    validate_vaccine_doses(args$vaccine_booster_daily_doses, regions,
+                         "vaccine_booster_daily_doses")
+    validate_vaccine_efficacy(args$vaccine_booster_efficacy,
+                              n_groups, 1)
+  } else {
+    for (v in c("vaccine_booster_daily_doses", "vaccine_booster_efficacy")) {
+      assert_is(args[[v]], "NULL", v)
+    }
+  }
+
+  if (multistrain && has_boosters) {
+    validate_vaccine_efficacy(args$strain_vaccine_booster_efficacy,
+                              n_groups, 1)
+  } else {
+    assert_is(args$strain_vaccine_booster_efficacy, "NULL")
+  }
+}
+
+
+validate_vaccine_doses <- function(x, regions, name = deparse(substitute(x))) {
+  assert_is(x, "list", name)
+  msg <- setdiff(regions, names(x))
+  if (length(msg) > 0) {
+    stop(sprintf("Missing regions from '%s': %s",
+                 name, paste(squote(msg), collapse = ", ")))
+  }
+  for (r in regions) {
+    el <- x[[r]]
+    if (!is.numeric(el) || anyNA(el)) {
+      stop(sprintf("%s$%s must be numeric and non-NA", name, r))
+    }
+    if (is.null(names(el))) {
+      stop(sprintf("%s$%s must be named", name, r))
+    }
+    if (anyNA(suppressWarnings(as.Date(names(el))))) {
+      stop(sprintf("names of %s$%s must be dates (YYYY-MM-DD)", name, r))
+    }
+  }
+}
+
+
+validate_strain_seed_rate <- function(x, regions,
+                                      name = deparse(substitute(x))) {
+  assert_is(x, "list", name)
+  msg <- setdiff(regions, names(x))
+  if (length(msg) > 0) {
+    stop(sprintf("Missing regions from '%s': %s",
+                 name, paste(squote(msg), collapse = ", ")))
+  }
+  for (r in regions) {
+    orderly:::assert_scalar_numeric(x[[r]], sprintf("%s:%s", name, r))
+  }
+}
+
+
+validate_vaccine_efficacy <- function(x, n_groups, n_vacc_strata,
+                                      name = deparse(substitute(x))) {
+  expected <- c("rel_susceptibility", "rel_p_sympt", "rel_p_hosp_if_sympt",
+                "rel_infectivity")
+  if (!setequal(names(x), expected)) {
+    stop(sprintf("Invalid names for %s, expected %s",
+                 name, paste(squote(expected), collapse = ", ")))
+  }
+  ok <- vlapply(x, function(e)
+    identical(dim(e), as.integer(c(n_groups, n_vacc_strata))))
+  if (!all(ok)) {
+    stop(sprintf("All elements of %s must have size %d x %d",
+                 name, n_groups, n_vacc_strata))
+  }
+}
+
+
+## TODO: this data structure can be replaced by a single number
+## ([[3]]$rep_p_hosp_if_sympt) and is generally horrific. Can we
+## simplify this please?
+validate_strain_vaccine_efficacy_modifier <- function(x, name = deparse(substitute(x))) {
+  vaultr:::assert_length(x, 4)
+  for (i in seq_along(x)) {
+    el <- x[[i]]
+    expected <- c("rel_susceptibility", "rel_p_sympt", "rel_p_hosp_if_sympt",
+                  "rel_infectivity")
+    if (!setequal(names(el), expected)) {
+      stop(sprintf("Invalid names for %s[[%d]] expected %s",
+                   name, i, paste(squote(expected), collapse = ", ")))
+    }
+    for (v in names(el)) {
+      orderly:::assert_scalar_numeric(el[[v]],
+                                      sprintf("%s[[%d]]$%s", name, i, v))
+    }
+  }
+}
+
+## TODO: We might filter off dates in the past, and/or require that
+## they are gone here. I (Rich) remember that being nasty in getting
+## future betas done, so be careful.
+validate_rt_future <- function(x, regions, name = deparse(substitute(x))) {
+  assert_is(x$date, "Date", sprintf("%s$date", name))
+  msg <- setdiff(regions, x$region)
+  if (length(msg) > 0) {
+    stop("No rt values found for regions: ",
+         paste(squote(msg), collapse = ", "))
+  }
+  orderly:::assert_numeric(x$Rt, sprintf("%s$Rt", name))
+  orderly:::assert_numeric(x$Rt_sd, sprintf("%s$Rt_sd", name))
+}
+
+
+spim_simulate_validate_args_grid <- function(args, regions, multistrain) {
+  for (i in seq_along(args)) {
+    tryCatch(
+      simulate_args_validate1(args[[i]], regions, multistrain),
+      error = function(e)
+        stop(sprintf("While checking args[[%d]]: %s", i, e$message)))
+  }
+}
+
+
+fixme_extract_age_class_state <- function(state, index) {
+  n_groups <- sircovid:::carehomes_n_groups()
+
+  ## output cumulative states by
+  ## age / vaccine class / sample / region / time
+  arrays <- list(
+    deaths <- state[names(index$D), , , ],
+    infections <- state[names(index$I), , , ],
+    admissions <- state[names(index$A), , , ]
+  )
+  names(arrays) <- c("deaths", "infections", "diagnoses_admitted")
+  strata <- nrow(arrays$deaths) / n_groups
+
+  f <- function(array) {
+
+    x <- mcstate::array_reshape(array, 1L, c(n_groups, strata))
+
+    ## aggregate partially immunised strata
+    x[ , 2L, , , ] <- x[ , 2L, , , ] + x[ , 3L, , , ]
+    x <- x[, -3L, , , ]
+    ## TODO: fix this
+    if (ncol(x) == 3) {
+      colnames(x) <- c("unvaccinated", "partial_protection", "full_protection")
+    } else  if (ncol(x) == 4) {
+      colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
+                       "booster")
+    }
+
+    ## aggregate age groups
+    groups <- list(age_0 = 1:6, # 0-4, 5-9, 10-14, 15-19, 20-24, 25-29
+                   age_30 = 7:10,  # 30-34, 35-39, 40-44, 45-49
+                   age_50 = 11:15, # 50-54, 55-59, 60-64, 65-69, 70-74
+                   age_75 = 16:17, # 75-79, 80+
+                   chw = 18, chr = 19)
+
+    res <- lapply(groups,
+                  function(i) apply(x[i, , , , , drop = FALSE], 2:5, sum))
+
+    # distribute CHW between 30-49 and 50-74 age groups
+    # distribute CHR between 50-74 and 75+ age groups
+    res$age_30 <- res$age_30 + 0.75 * res$chw
+    res$age_50 <- res$age_50 + 0.25 * res$chw + 0.1 * res$chr
+    res$age_75 <- res$age_75 + 0.9 * res$chr
+    res$chw <- NULL
+    res$chr <- NULL
+
+    # take mean across particles
+    ret <- apply(abind::abind(res, along = 5), c(1, 3, 4, 5), mean)
+
+    # [age, vaccine status, region, time]
+    round(aperm(ret, c(4, 1, 2, 3)))
+  }
+
+  lapply(arrays, f)
 }
