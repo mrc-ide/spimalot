@@ -166,6 +166,19 @@ spim_simulate_local <- function(args, combined) {
 }
 
 
+spim_simulate_rrq <- function(args, combined, rrq) {
+  f <- function(i) {
+    el <- args[[i]]
+    message(sprintf("-----\nRunning scenario %d / %d", i, length(args)))
+    time <- system.time(
+      ret <- spim_simulate_one(el, combined))
+    message(sprintf("Finished scenario %d in %2.1f s", i, time[["elapsed"]]))
+  }
+
+  rrq$lapply(seq_along(args), f)
+}
+
+
 simulate_args_names <- function() {
   c(## Core simulation parameters
     "end_date", "seed", "n_threads",
