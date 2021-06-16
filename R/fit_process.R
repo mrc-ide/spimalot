@@ -21,11 +21,7 @@ spim_fit_process <- function(samples, parameters, data, control) {
   samples$restart <- NULL
 
   message("Running forecasts")
-  incidence_states <- c("deaths", "deaths_hosp", "deaths_comm",
-                        "deaths_carehomes", "admitted", "diagnoses",
-                        "infections", "sympt_cases", "sympt_cases_over25",
-                        "sympt_cases_non_variant",
-                        "sympt_cases_non_variant_over25")
+  incidence_states <- c("deaths", "infections")
   forecast <- sircovid::carehomes_forecast(samples,
                                            control$n_sample,
                                            control$burnin,
