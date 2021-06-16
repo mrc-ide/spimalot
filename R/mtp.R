@@ -65,16 +65,23 @@ spim_mtp_npi_key <- function(npi_key, Rt, rt_reduction = 0.5){
 ##'
 ##' @param vaccine_parameters Output from upstream task rtm_vaccination_parameters
 ##'
-##' @param combined Output from combined fitting task rtm_inference_pmcmc_spim_fits2_combined
+##' @param combined Output from combined fitting task
+##'   rtm_inference_pmcmc_spim_fits2_combined
 ##'
 ##' @param rt Rt values for all regions and nations obtained via
 ##'   [spimalot::spim_mtp_rt]
 ##'
+##' @param n_par Number of particles for simulation
+##'
+##' @param end_date Date to end simulation
+##'
+##' @param n_threads Number of threads to run the simulation on
 ##'
 ##' @export
 ##'
 spim_mtp_prepare <- function(mtp_commission, combined,
-                             vaccination_parameters, npi_key, rt) {
+                             vaccination_parameters, npi_key, rt,
+                             n_par, end_date, n_threads) {
   date <- combined$date
 
   ## get current Rt for all regions and nations
@@ -141,10 +148,15 @@ spim_mtp_prepare <- function(mtp_commission, combined,
   vaccine_uptake <- vaccination_parameters$uptake_by_age$central
   eligibility_by_age <- vaccination_parameters$eligibility_by_age$min_18
 
-  list(curr_Rt = curr_Rt,
+  list(combined = combined,
+       curr_Rt = curr_Rt,
        npi_key = npi_key_expand,
        run_grid = run_grid,
        rt_future = rt_future,
+       n_par = n_par,
+       end_date = end_date,
+       n_threads = n_threads,
+       n_run = nrow(run_grid),
        future_daily_doses = future_daily_doses,
        vaccine_efficacy = vaccine_efficacy,
        vaccine_uptake = vaccine_uptake,
@@ -153,12 +165,70 @@ spim_mtp_prepare <- function(mtp_commission, combined,
 }
 
 
-summary_to_template <- function(summary_tidy, run_grid, pop, template_common,
-                                date, regions, spim_state_names, model) {
+##' Prepare MTP outcomes template
+##'
+##' @title Prepare MTP outcomes template
+##'
+##' @param scenario A string for the name of the scenario requested by SPI-M
+##'
+##' @param date Date of the data
+##'
+##' @param model_type Model used
+##'
+##'
+##' @export
+spim_mtp_template_common <- function(scenario, date, model_type) {
+
+  version <- packageVersion("sircovid")
+  version <- substr(version, 3, nchar(version))
+
+  data.frame(Group = "Imperial",
+             Model = model_type,
+             Scenario = scenario,
+             ModelType = "Multiple",
+             Version = version,
+             "Creation Day" = lubridate::day(date),
+             "Creation Month" = lubridate::month(date),
+             "Creation Year" = lubridate::year(date),
+             stringsAsFactors = FALSE,
+             check.names = FALSE)
+}
+
+
+##' Port MTP outcomes to template
+##'
+##' @title Port MTP outcomes to template
+##'
+##' @param summary_tidy A tibble containing MTP projections
+##'
+##' @param run_grid The grid of scenarios ran
+##'
+##' @param date A string for date of simulation outcomes
+##'
+##' @param combined Output from combined fitting task
+##'   rtm_inference_pmcmc_spim_fits2_combined
+##'
+##' @param model_type Model used
+##'
+##' @param spim_state_names Named vector of states to be extracted for SPI-M
+##'
+##'
+##' @export
+spim_mtp_summary_to_template <- function(summary_tidy, run_grid, date, regions,
+                                         combined, model_type,
+                                         spim_state_names) {
+
+  pop <- spim_mtp_get_population(combined)
+
+  if (model_type == "BB"){
+    output_str <- "Stochastic Compartmental Positivity"
+  } else {
+    output_str <- "Stochastic Compartmental Cases"
+  }
 
   ## create common template columns
-  lapply(run_grid$spim_name, template_common,
-         date = date, model = model) %>%
+  lapply(run_grid$spim_name, spim_mtp_template_common,
+         date = date, model_type = model_type) %>%
     dplyr::bind_rows() %>%
     ## join to results
     dplyr::left_join(summary_tidy$state, by = c(Scenario = "spim_name")) %>%
@@ -181,11 +251,47 @@ summary_to_template <- function(summary_tidy, run_grid, pop, template_common,
     tidyr::pivot_wider(names_from = quantile, values_from = value,
                        names_prefix = "Quantile ") %>%
     dplyr::mutate(Value = `Quantile 0.5`, .after = ValueType)
-
 }
 
-save_results <- function(dat, path_template, path_save, root = "outputs") {
 
+##' Get population by region for MTP outcomes to template
+##'
+##' @title Get population by region
+##'
+##' @param combined Output from combined fitting task
+##'   rtm_inference_pmcmc_spim_fits2_combined
+##'
+##'
+##' @export
+spim_mtp_get_population <- function(combined) {
+  pop <- vnapply(names(combined$pars), function(r)
+    sum(combined$transform[[r]](combined$pars[[r]][1, ])$N_tot[2:18]))
+  names(pop) <- names(combined$pars)
+  pop_england <- sum(unlist(pop[sircovid::regions("england")]))
+  pop_uk <- sum(unlist(pop[sircovid::regions("all")]))
+  c(pop, england = pop_england, uk = pop_uk)
+}
+
+
+
+##' Extract MTP simulation outputs into format required by SPI-M
+##'
+##' @title Save MTP outputs for SPI-M
+##'
+##' @param dat Output from MTP simulation
+##'
+##' @param path_template An xlsx template as shared by SPI-M
+##'
+##' @param path_save A string, name of file to save in xlsx format
+##'
+##' @param root Folder for outputs to be saved in
+##'
+##'
+##' @export
+spim_mtp_save_results <- function(dat,
+                                  path_template = "template_combined.xlsx",
+                                  path_save = "Imperial_MTP.xlsx",
+                                  root = "outputs") {
   sheets <- readxl::excel_sheets(path_template)
   template <- setNames(
     lapply(sheets, readxl::read_xlsx, path = path_template,
@@ -196,25 +302,18 @@ save_results <- function(dat, path_template, path_save, root = "outputs") {
   writexl::write_xlsx(template, sprintf("%s/%s", root, path_save))
 }
 
-template_common <- function(date, scenario, model) {
 
-  version <- packageVersion("sircovid")
-  version <- substr(version, 3, nchar(version))
-
-  data.frame(Group = "Imperial",
-             Model = model,
-             Scenario = scenario,
-             ModelType = "Multiple",
-             Version = version,
-             "Creation Day" = lubridate::day(date),
-             "Creation Month" = lubridate::month(date),
-             "Creation Year" = lubridate::year(date),
-             stringsAsFactors = FALSE,
-             check.names = FALSE)
-}
-
-
-get_age_vaccine_outputs <- function(res, region) {
+##' Prepare outputs by age and vaccination class for plotting
+##'
+##' @title MTP simulation outputs by age and vaccination class
+##'
+##' @param dat Output from MTP simulation
+##'
+##' @param region A string, region for which outputs will be plotted
+##'
+##'
+##' @export
+spim_mtp_age_vaccine_outputs <- function(res, region = "england") {
 
   ## Objects for saving list of plots and matrices
   scenario_plots <- NULL
@@ -234,7 +333,6 @@ get_age_vaccine_outputs <- function(res, region) {
 
 
     for (w in unique(res$state)) {
-      ## Vector of dates for plotting
 
       plot_matrix <- tmp %>%
         dplyr::filter(state == w)  %>%
@@ -242,37 +340,39 @@ get_age_vaccine_outputs <- function(res, region) {
                                    levels = unique(group),
                                    labels = c("Under 30s", "30 to 49", "50 to 74",
                                               "75+")))
-      plots_age_vacc[[w]] <- ggplot(plot_matrix, aes(date, value, fill = age)) +
-        ylab(paste(stringr::str_to_sentence(w))) + xlab("") +
-        geom_area() + theme_bw() + facet_wrap(vars(vaccine_status)) +
+      plots_age_vacc[[w]] <- ggplot2::ggplot(
+        plot_matrix,
+        ggplot2::aes(date, value, fill = age)) +
+        ggplot2::ylab(paste(stringr::str_to_sentence(w))) + ggplot2::xlab("") +
+        ggplot2::geom_area() + ggplot2::theme_bw() +
+        ggplot2::facet_wrap(vars(vaccine_status)) +
         ggsci::scale_fill_lancet() +
-        theme(axis.title.y = element_text(size = rel(0.9)),
-              legend.position = "none",
-              axis.title.x = element_text(size = rel(0.8)),
-              legend.title = element_blank(),
-              strip.text.x = element_text(size = rel(0.7)))
+        ggplot2::theme(axis.title.y = element_text(size = rel(0.9)),
+                       legend.position = "none",
+                       axis.title.x = element_text(size = rel(0.8)),
+                       legend.title = element_blank(),
+                       strip.text.x = element_text(size = rel(0.7)))
 
       plots_age_vacc_prop[[w]] <-
         ## Re-arrange matrix for proportional stacked chart
         plot_matrix %>%
-        group_by(date, vaccine_status, age) %>%
-        summarise(n = sum(value)) %>%
-        mutate(percentage = n / sum(n)) %>%
-        # mutate(percentage = if_else(sum(n) == 0, 0, n / sum(n))) %>%
-        ## Plot
-        ggplot(., aes(x=date, y=percentage, fill=age)) +
-        geom_area(alpha=0.6 , size=1, colour="black") +
-        ylab("") + xlab("") +
-        geom_area() + theme_bw() + facet_wrap(vars(vaccine_status)) +
+        dplyr::group_by(date, vaccine_status, age) %>%
+        dplyr::summarise(n = sum(value)) %>%
+        dplyr::mutate(percentage = n / sum(n)) %>%
+        ggplot2::ggplot(., ggplot2::aes(x=date, y=percentage, fill=age)) +
+        ggplot2::geom_area(alpha=0.6 , size=1, colour="black") +
+        ggplot2::ylab("") + ggplot2::xlab("") +
+        ggplot2::geom_area() + ggplot2::theme_bw() +
+        ggplot2::facet_wrap(vars(vaccine_status)) +
         ggsci::scale_fill_lancet() +
-        theme(axis.title.y = element_text(size = rel(0.9)),
-              axis.title.x = element_text(size = rel(0.8)),
-              legend.title = element_blank(),
-              strip.text.x = element_text(size = rel(0.7)))
+        ggplot2::theme(axis.title.y = element_text(size = rel(0.9)),
+                       axis.title.x = element_text(size = rel(0.8)),
+                       legend.title = element_blank(),
+                       strip.text.x = element_text(size = rel(0.7)))
 
       if (w != "diagnoses_admitted_inc"){
         plots_age_vacc_prop[[w]] <- plots_age_vacc_prop[[w]] +
-          theme(legend.position = "none")}
+          ggplot2::theme(legend.position = "none")}
 
       scenario_matrices[[s]][[w]] <- plot_matrix
     }
@@ -303,16 +403,27 @@ get_age_vaccine_outputs <- function(res, region) {
   out
 }
 
-spim_mtp_simulate <- function(obj, subset = NULL) {
-  n_run <- obj$length
+
+##' Run MTP simulation
+##'
+##' @title Run MTP simulation
+##'
+##' @param obj Large object containing parameters for MTP simulation as per
+##'   [spimalot::spim_mtp_prepare]
+##'
+##' @param simulate_schedule Global simulate function, this needs porting over
+##'   to spimalot
+##'
+##'
+##' @export
+spim_mtp_simulate <- function(obj, simulate_schedule) {
+
+  n_run <- nrow(obj$run_grid)
   res <- vector("list", n_run)
-
-  index <- subset %||% seq_len(n_run)
-
   i <- 1L
-  for (i in index) {
+  for (i in seq_len(n_run)) {
     message(sprintf("Running scenario %d / %d", i, n_run))
-    res[[i]] <- spim_simulate_schedule(
+    res[[i]] <- simulate_schedule(
       combined = obj$combined,
       n_par = obj$n_par,
       end_date = obj$end_date,
@@ -320,9 +431,10 @@ spim_mtp_simulate <- function(obj, subset = NULL) {
       keep = obj$output$keep,
       rt_future = obj$rt_future[[i]],
       rt_type = obj$run_grid$type_rt[i],
-      future_daily_doses = obj$vaccine$future_daily_doses,
-      vaccine_efficacy = obj$vaccine$efficacy,
-      uptake_by_age = obj$vaccine$uptake,
+      future_daily_doses = obj$future_daily_doses,
+      vaccine_efficacy = obj$vaccine_efficacy,
+      uptake_by_age = obj$vaccine_uptake,
+      eligibility_by_age = obj$eligibility_by_age[i],
       calculate_rt = TRUE,
       n_strain = 1)
   }
