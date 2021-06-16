@@ -373,7 +373,6 @@ spim_plot_variant_region <- function(region, dat, date_min) {
   cols <- spim_colours()
   pos_col <- cols$blue
   dcols <- c(cols$orange, cols$brown)
-  alpha <- 0.3
 
   n_non_variant <- data$fitted[, "strain_non_variant"]
   ntot <- data$fitted[, "strain_tot"]
@@ -407,7 +406,8 @@ spim_plot_variant_region <- function(region, dat, date_min) {
   upper <- cis[, "Upper"]
   dy[ntot == 0] <- NA
 
-  pos_cols <- add_alpha(rep(pos_col, 2), alpha)
+  pos_cols <- c(mix_cols(pos_col, "white", 0.7),
+                mix_cols(pos_col, "white", 0.495))
 
   oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
   on.exit(oo)
@@ -456,7 +456,6 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, what) {
   cols <- spim_colours()
   now_col <- cols$blue
   dcols <- c(cols$orange, cols$green2)
-  alpha <- 0.3
 
   # Get model results
   res <- data.frame(count = samples$output_t[-1L, what],
@@ -496,7 +495,8 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, what) {
        ylim = ylim,
        log = "y",
        xlab = "", ylab = "log scale", cex.lab = 0.8)
-  now_cols <- add_alpha(rep(now_col, 2), alpha)
+  now_cols <- c(mix_cols(now_col, "white", 0.7),
+                mix_cols(now_col, "white", 0.495))
 
   polygon(c(x_nowcast, rev(x_nowcast)), c(lb, rev(ub)), col = now_cols)
   lines(x_nowcast, y_nowcast, col = now_col, lty = 1, lwd = 1.5, lend = 1)
@@ -574,7 +574,6 @@ spim_plot_incidence_region <- function(region, dat, per_1000 = FALSE) {
   cols <- spim_colours()
   traj_cols <- c(cols$sky_blue1, cols$sky_blue2)
   line_col <- cols$cyan2
-  alpha <- 0.3
 
   res <- sample$trajectories$state["infections_inc", , -1L]
   if (per_1000) {
@@ -621,7 +620,6 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
   cols <- spim_colours()
   pos_col <- cols$blue
   dcols <- c(cols$orange, cols$brown)
-  alpha <- 0.3
   if (is.null(data_by)) {
     data_by <- "standard"
   }
@@ -712,7 +710,8 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
   #data
   dy[ntot == 0] <- NA
 
-  pos_cols <- add_alpha(rep(pos_col, 2), alpha)
+  pos_cols <- c(mix_cols(pos_col, "white", 0.7),
+                mix_cols(pos_col, "white", 0.495))
 
   if (over25) {
     if (region == "scotland") {
@@ -766,8 +765,6 @@ spim_plot_pillar2_cases_region <- function(region, dat, date_min,
   cols <- spim_colours()
   pos_col <- cols$blue
   dcols <- c(cols$orange, cols$brown)
-  alpha <- 0.3
-
 
   over25 <- TRUE
 
@@ -828,7 +825,8 @@ spim_plot_pillar2_cases_region <- function(region, dat, date_min,
               qs[, x >= xlim[1] & x <= xlim[2]], na.rm = TRUE)
   ylim <- c(0, ymax)
 
-  pos_cols <- add_alpha(rep(pos_col, 2), alpha)
+  pos_cols <- c(mix_cols(pos_col, "white", 0.7),
+                mix_cols(pos_col, "white", 0.495))
 
 
   oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
@@ -866,7 +864,6 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   cols <- spim_colours()
   pos_col <- cols$blue
   dcols <- c(cols$orange, cols$brown)
-  alpha <- 0.3
 
   npos <- data$fitted[, "react_pos"]
   ntot <- data$fitted[, "react_tot"]
@@ -929,7 +926,8 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   ps <- seq(0.025, 0.975, 0.005)
   qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
 
-  pos_cols <- add_alpha(rep(pos_col, 2), alpha)
+  pos_cols <- c(mix_cols(pos_col, "white", 0.7),
+                mix_cols(pos_col, "white", 0.495))
 
 
   oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
@@ -1115,7 +1113,6 @@ spim_plot_ifr_t_region <- function(region, dat, ifr_t_type, ymax,
                                    add = FALSE) {
 
   ifr_t <- dat$ifr_t[[region]][[ifr_t_type]][-1L, ]
-  alpha <- 0.3
   col <- spim_colours()$blue
 
   x <- sircovid::sircovid_date_as_date(dat$ifr_t[[region]]$date[-1L, 1])
@@ -1151,7 +1148,8 @@ spim_plot_ifr_t_region <- function(region, dat, ifr_t_type, ymax,
     axis.Date(1, at = seq(as.Date("2020-04-01"), as.Date(forecast_until),
                           by = "2 month"), format = "%b")
   }
-  cols <- add_alpha(rep(col, 2), alpha)
+  cols <- c(mix_cols(col, "white", 0.7),
+            mix_cols(col, "white", 0.495))
 
   ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = cols,
            horiz = FALSE, leg = FALSE)
@@ -1175,7 +1173,6 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
   ## sample_Rt,
   ## Rt_date,
   col <- spim_colours()$blue
-  alpha <- 0.3
 
   x <- sircovid::sircovid_date_as_date(dat$rt[[region]]$date[-1L, 1])
   rownames(sample_Rt) <- as.character(x)
@@ -1204,7 +1201,8 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
        font.main = 1,
        xlab = "Date", ylab = ylab)
 
-  cols <- add_alpha(rep(col, 2), alpha)
+  cols <- c(mix_cols(col, "white", 0.7),
+            mix_cols(col, "white", 0.495))
 
   ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = cols,
            horiz = FALSE, leg = FALSE)
@@ -1222,7 +1220,6 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
   date <- dat$info$date
   cols <- spim_colours()
   beta_date <- dat$info[[region]]$beta_date
-  alpha <- 0.3
 
   trajnames <- c(deaths = "deaths_inc",
                  deaths_comm = "deaths_comm_inc",
@@ -1296,8 +1293,10 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
        xlim = xlim,
        ylim = ylim,
        xlab = "", ylab = labs[what])
-  now_cols <- add_alpha(rep(cols$now, 2), alpha)
-  fore_cols <- add_alpha(rep(cols$forecast, 2), alpha)
+  now_cols <- c(mix_cols(cols$now, "white", 0.7),
+                mix_cols(cols$now, "white", 0.495))
+  fore_cols <- c(mix_cols(cols$forecast, "white", 0.7),
+                 mix_cols(cols$forecast, "white", 0.495))
 
   ci_bands(qs_nowcast[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x_nowcast,
            cols = now_cols, horiz = FALSE, leg = FALSE)
