@@ -509,7 +509,11 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
 }
 
 
-get_vaccine_protection <- function(vaccine_efficacy) {
+get_vaccine_protection <- function(vaccine_efficacy, booster_efficacy = NULL) {
+  if (!is.null(booster_efficacy)) {
+    stopifnot(identical(names(vaccine_efficacy), names(booster_efficacy)))
+    vaccine_efficacy <- Map(cbind, vaccine_efficacy, booster_efficacy)
+  }
   efficacy_infection <- 1 - vaccine_efficacy$rel_susceptibility
   efficacy_disease <- efficacy_infection + (1 - efficacy_infection) *
     (1 - vaccine_efficacy$rel_p_sympt)
