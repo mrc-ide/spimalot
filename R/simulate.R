@@ -1,10 +1,23 @@
-## 1. Load the data
-
-## read in the combined fits
-## - drop unwanted regions
-## - upgrade state, perhaps
-## - convert to multistrain
-## - largely the old prepare function
+##' Prepare combined output for simulations. This carries out
+##' maintenance for the state - upgrading state if sircovid has
+##' updated (within reason), sampling starting parameters, reducing to
+##' selected regions and (potentially) adding empty strain or booster
+##' compartments.
+##'
+##' @title Prepare for simulation
+##' @param combined A "combined" object
+##'
+##' @param n_par The number of parameters to sample
+##'
+##' @param regions Character vector of regions to use
+##'
+##' @param inflate_strain Logical, inidicating if an empty second
+##'   strain should be added
+##'
+##' @param inflate_booster Logical, inidicating if an empty booster
+##'   dose should be added
+##'
+##' @export
 spim_simulate_prepare <- function(combined, n_par,
                                   regions = NULL, inflate_strain = FALSE,
                                   inflate_booster = FALSE) {
@@ -70,6 +83,89 @@ spim_simulate_prepare <- function(combined, n_par,
 }
 
 
+##' Create a list of simulation parameters
+##'
+##' @title Create simulation parameters
+##'
+##' @param grid A scenario grid; this is a data.frame with names being
+##'   the type of thing being changed and the values representing
+##'   quantities in vars
+##'
+##' @param vars A list of parameters organised by scenario
+##'
+##' @param base A list of base parameters
+##'
+##' @param ignore Character vector of additional values in `grid` that
+##'   are not directly model parameters
+##'
+##' @param regions Character vector of regions
+##'
+##' @param multistrain Logical, indicating if the simulation will use
+##'   multiple strains
+##'
+##' @return A list of parameters for the model
+##' @export
+spim_simulate_args <- function(grid, vars, base, ignore, regions, multistrain) {
+  simulate_args_validate(grid, vars, base, ignore)
+
+  f <- function(i) {
+    el <- grid[i, ]
+    for (nm in setdiff(names(el), ignore)) {
+      level <- el[[nm]]
+      if (!(level %in% names(vars[[nm]]))) {
+        stop(sprintf("'%s' not found in vars$%s", level, nm))
+      }
+      ## Special treatment in case the value really is NULL; make sure
+      ## we get a named NULL in the result rather than deleting the
+      ## entry
+      value <- vars[[nm]][[level]]
+      if (is.null(value)) {
+        base[nm] <- list(NULL)
+      } else {
+        base[[nm]] <- value
+      }
+    }
+    base[ignore] <- el[ignore]
+    base
+  }
+
+  ret <- lapply(seq_len(nrow(grid)), f)
+
+  message("Validating generated parameters")
+  for (i in seq_along(args)) {
+    tryCatch(
+      simulate_validate_args1(args[[i]], regions, multistrain),
+      error = function(e)
+        stop(sprintf("While checking args[[%d]]: %s", i, e$message)))
+  }
+
+  ret
+}
+
+
+##' Run simulations locally
+##'
+##' @title Run simulations
+##'
+##' @param args Arguments returned by [spim_simulate_args]
+##'
+##' @param combined Processed combined output returned by
+##'   [spim_simulate_prepare]
+##'
+##' @export
+spim_simulate_local <- function(args, combined) {
+  f <- function(i) {
+    el <- args[[i]]
+    message(sprintf("-----\nRunning scenario %d / %d", i, length(args)))
+    time <- system.time(
+      ret <- spim_simulate_one(el, combined))
+    message(sprintf("Finished scenario %d in %2.1f s", i, time[["elapsed"]]))
+  }
+
+  lapply(seq_along(args), f)
+}
+
+
 simulate_args_names <- function() {
   c(## Core simulation parameters
     "end_date", "seed", "n_threads",
@@ -95,7 +191,8 @@ simulate_args_names <- function() {
 
 
 spim_simulate_one <- function(args, combined) {
-  browser()
+  ## TODO: run validate here again, requires moving ignore into the
+  ## object though.
   multistrain <- combined$info[[1]]$multistrain
   if (multistrain) {
     n_strain <- 4
@@ -132,7 +229,6 @@ spim_simulate_one <- function(args, combined) {
     R <- NULL
     prob_strain <- NULL
   }
-  browser()
 
   pars <- lapply(regions, simulate_one_pars_vaccination, args, combined,
                  n_strain)
@@ -203,23 +299,6 @@ spim_simulate_one <- function(args, combined) {
   ret
 }
 
-
-spim_simulate_local <- function(args, combined) {
-  f <- function(i) {
-    el <- args[[i]]
-    message(sprintf("-----\nRunning scenario %d / %d", i, length(args)))
-    time <- system.time(
-      ret <- spim_simulate_one(el, combined))
-    message(sprintf("Finished scenario %d in %d s", i, time[["elapsed"]]))
-  }
-
-  lapply(args, f)
-}
-
-
-## spim_simulate_rrq <- function(dat, grid, rrq) {
-##   rrq$lapply(grid, spim_siumulate_one, dat)
-## }
 
 ### prep
 simulate_prepare_upgrade <- function(combined) {
@@ -528,7 +607,8 @@ simulate_index <- function(info, keep, calculate_vaccination, multistrain) {
 
   if (multistrain) {
     index_prob_strain <- info$index$prob_strain
-    names(index_prob_strain) <- paste0("prob_strain_", seq_along(index_prob_strain))
+    names(index_prob_strain) <- paste0(
+      "prob_strain_", seq_along(index_prob_strain))
   } else {
     index_prob_strain <- NULL
   }
@@ -840,20 +920,6 @@ fixme_calculate_n_protected <- function(n_vaccinated, R, vaccine_efficacy,
 }
 
 
-spim_simulate_args <- function(grid, vars, base, ignore) {
-  simulate_args_validate(grid, vars, base, ignore)
-
-  f <- function(i) {
-    el <- grid[i, ]
-    for (nm in names(el)) {
-      base[[nm]] <- vars[[nm]][[el[[nm]]]]
-    }
-    base[ignore] <- el[ignore]
-    base
-  }
-
-  lapply(seq_len(nrow(grid)), f)
-}
 
 
 simulate_args_validate <- function(grid, vars, base, ignore) {
@@ -899,7 +965,7 @@ simulate_args_validate <- function(grid, vars, base, ignore) {
 ## strains.
 ##
 ## if multistrain is FALSE, then we need all strain_ parameters to be NULL
-simulate_args_validate1 <- function(args, regions, multistrain) {
+simulate_validate_args1 <- function(args, regions, multistrain) {
   has_boosters <- !is.null(args$vaccine_booster_daily_doses)
   n_vacc_strata <- ncol(args$vaccine_efficacy[[1]])
   n_groups <- nrow(args$vaccine_efficacy[[1]])
@@ -909,7 +975,7 @@ simulate_args_validate1 <- function(args, regions, multistrain) {
     expected <- expected[grepl("^strain_", expected)]
   }
 
-  msg <- setdiff(names(args), expected)
+  msg <- setdiff(expected, names(args))
   if (length(msg) > 0) {
     stop("Missing expected values from args: ",
          paste(squote(msg), collapse = ", "))
@@ -1056,16 +1122,6 @@ validate_rt_future <- function(x, regions, name = deparse(substitute(x))) {
   }
   orderly:::assert_numeric(x$Rt, sprintf("%s$Rt", name))
   orderly:::assert_numeric(x$Rt_sd, sprintf("%s$Rt_sd", name))
-}
-
-
-spim_simulate_validate_args_grid <- function(args, regions, multistrain) {
-  for (i in seq_along(args)) {
-    tryCatch(
-      simulate_args_validate1(args[[i]], regions, multistrain),
-      error = function(e)
-        stop(sprintf("While checking args[[%d]]: %s", i, e$message)))
-  }
 }
 
 
