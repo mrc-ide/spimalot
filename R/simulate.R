@@ -132,9 +132,9 @@ spim_simulate_args <- function(grid, vars, base, ignore, regions, multistrain) {
   ret <- lapply(seq_len(nrow(grid)), f)
 
   message("Validating generated parameters")
-  for (i in seq_along(args)) {
+  for (i in seq_along(ret)) {
     tryCatch(
-      simulate_validate_args1(args[[i]], regions, multistrain),
+      simulate_validate_args1(ret[[i]], regions, multistrain),
       error = function(e)
         stop(sprintf("While checking args[[%d]]: %s", i, e$message)))
   }
