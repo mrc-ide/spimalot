@@ -11,7 +11,8 @@ spim_data(
   rtm,
   serology,
   trim_deaths,
-  full_data = FALSE
+  full_data = FALSE,
+  fit_to_variants = FALSE
 )
 }
 \arguments{
@@ -36,6 +37,8 @@ DESCRIBE FORMAT; TODO: DESCRIBE ORIGIN}
 back-fill issues. We typically use a value of 4 days.}
 
 \item{full_data}{Not sure yet, we'll find out}
+
+\item{fit_to_variants}{Logical, whether to fit to variants data or not}
 }
 \value{
 A \code{\link[=data.frame]{data.frame()}} TODO: describe columns

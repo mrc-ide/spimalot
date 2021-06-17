@@ -26,11 +26,13 @@
 ##'
 ##' @param full_data Not sure yet, we'll find out
 ##'
+##' @param fit_to_variants Logical, whether to fit to variants data or not
+##'
 ##' @return A [data.frame()] TODO: describe columns
 ##'
 ##' @export
 spim_data <- function(date, region, model_type, rtm, serology,
-                      trim_deaths, full_data = FALSE) {
+                      trim_deaths, full_data = FALSE, fit_to_variants = FALSE) {
   check_region(region)
   spim_check_model_type(model_type)
 
@@ -39,15 +41,16 @@ spim_data <- function(date, region, model_type, rtm, serology,
     stop("Not yet supported")
   } else {
     spim_data_single(date, region, model_type, rtm, serology,
-                     trim_deaths, full_data)
+                     trim_deaths, full_data, fit_to_variants)
   }
 }
 
 
 spim_data_single <- function(date, region, model_type, rtm, serology,
-                             trim_deaths, full_data) {
+                             trim_deaths, full_data, fit_to_variants) {
   ## TODO: verify that rtm has consecutive days
-  rtm <- spim_data_rtm(date, region, model_type, rtm, full_data)
+  rtm <- spim_data_rtm(date, region, model_type, rtm, full_data,
+                       fit_to_variants)
   serology <- spim_data_serology(date, region, serology)
 
   ## Merge the two datasets on date
@@ -81,7 +84,8 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 
 
 ##' @importFrom dplyr %>%
-spim_data_rtm <- function(date, region, model_type, data, full_data) {
+spim_data_rtm <- function(date, region, model_type, data, full_data,
+                          fit_to_variants) {
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
@@ -283,8 +287,10 @@ spim_data_rtm <- function(date, region, model_type, data, full_data) {
 
   if (!full_data) {
     ## Typically we do not fit to this
-    ret$strain_non_variant <- NA_integer_
-    ret$strain_tot <- NA_integer_
+    if (!fit_to_variants) {
+      ret$strain_non_variant <- NA_integer_
+      ret$strain_tot <- NA_integer_
+    }
     ret$strain_over25_non_variant <- NA_integer_
     ret$strain_over25_tot <- NA_integer_
 
