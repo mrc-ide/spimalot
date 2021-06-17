@@ -996,18 +996,18 @@ simulate_validate_args1 <- function(args, regions, multistrain) {
 
   assert_is(args$end_date, "Date")
   ## seed: null or raw
-  mcstate:::assert_scalar_positive_integer(args$n_threads)
-  mcstate:::assert_character(args$output_keep)
-  mcstate:::assert_scalar_logical(args$output_rt)
-  mcstate:::assert_scalar_logical(args$output_time_series)
-  mcstate:::assert_scalar_logical(args$output_vaccination)
-  mcstate:::assert_scalar_logical(args$output_state_by_age)
-  mcstate:::assert_scalar_logical(args$output_weight_rt)
+  assert_scalar_positive_integer(args$n_threads)
+  assert_character(args$output_keep)
+  assert_scalar_logical(args$output_rt)
+  assert_scalar_logical(args$output_time_series)
+  assert_scalar_logical(args$output_vaccination)
+  assert_scalar_logical(args$output_state_by_age)
+  assert_scalar_logical(args$output_weight_rt)
   match_value(args$rt_type, c("Rt_general", "Rt_all"))
 
-  orderly:::assert_scalar_numeric(args$seasonality)
-  vaultr:::assert_length(args$vaccine_uptake, n_groups)
-  vaultr:::assert_length(args$vaccine_eligibility, n_groups)
+  assert_scalar_numeric(args$seasonality)
+  assert_length(args$vaccine_uptake, n_groups)
+  assert_length(args$vaccine_eligibility, n_groups)
 
   validate_rt_future(args$rt_future, regions)
 
@@ -1020,8 +1020,8 @@ simulate_validate_args1 <- function(args, regions, multistrain) {
     validate_strain_seed_rate(args$strain_seed_rate, regions)
     validate_vaccine_efficacy(args$strain_vaccine_efficacy,
                               n_groups, n_vacc_strata)
-    vaultr:::assert_length(args$strain_cross_immunity, 2)
-    orderly:::assert_numeric(args$strain_cross_immunity)
+    assert_length(args$strain_cross_immunity, 2)
+    assert_numeric(args$strain_cross_immunity)
     validate_strain_vaccine_efficacy_modifier(
       args$strain_vaccine_efficacy_modifier)
   } else {
@@ -1081,7 +1081,7 @@ validate_strain_seed_rate <- function(x, regions,
                  name, paste(squote(msg), collapse = ", ")))
   }
   for (r in regions) {
-    orderly:::assert_scalar_numeric(x[[r]], sprintf("%s:%s", name, r))
+    assert_scalar_numeric(x[[r]], sprintf("%s:%s", name, r))
   }
 }
 
@@ -1107,7 +1107,7 @@ validate_vaccine_efficacy <- function(x, n_groups, n_vacc_strata,
 ## ([[3]]$rep_p_hosp_if_sympt) and is generally horrific. Can we
 ## simplify this please?
 validate_strain_vaccine_efficacy_modifier <- function(x, name = deparse(substitute(x))) {
-  vaultr:::assert_length(x, 4)
+  assert_length(x, 4)
   for (i in seq_along(x)) {
     el <- x[[i]]
     expected <- c("rel_susceptibility", "rel_p_sympt", "rel_p_hosp_if_sympt",
@@ -1117,8 +1117,7 @@ validate_strain_vaccine_efficacy_modifier <- function(x, name = deparse(substitu
                    name, i, paste(squote(expected), collapse = ", ")))
     }
     for (v in names(el)) {
-      orderly:::assert_scalar_numeric(el[[v]],
-                                      sprintf("%s[[%d]]$%s", name, i, v))
+      assert_scalar_numeric(el[[v]], sprintf("%s[[%d]]$%s", name, i, v))
     }
   }
 }
@@ -1133,8 +1132,8 @@ validate_rt_future <- function(x, regions, name = deparse(substitute(x))) {
     stop("No rt values found for regions: ",
          paste(squote(msg), collapse = ", "))
   }
-  orderly:::assert_numeric(x$Rt, sprintf("%s$Rt", name))
-  orderly:::assert_numeric(x$Rt_sd, sprintf("%s$Rt_sd", name))
+  assert_numeric(x$Rt, sprintf("%s$Rt", name))
+  assert_numeric(x$Rt_sd, sprintf("%s$Rt_sd", name))
 }
 
 
