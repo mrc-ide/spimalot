@@ -160,6 +160,7 @@ spim_simulate_local <- function(args, combined) {
     time <- system.time(
       ret <- spim_simulate_one(el, combined))
     message(sprintf("Finished scenario %d in %2.1f s", i, time[["elapsed"]]))
+    ret
   }
 
   lapply(seq_along(args), f)
