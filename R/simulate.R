@@ -477,6 +477,8 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
   vaccine_progression_rate <- pars[[1]]$vaccine_progression_rate_base
   N_tot <- pars[[1]]$N_tot
 
+  ## TODO: in the validation, if booster doses is non-empty, we should
+  ## check that we have a model with boosters
   if (!is.null(args$vaccine_booster_daily_doses)) {
     args$vaccine_efficacy <-
       Map(cbind, args$vaccine_efficacy, args$vaccine_booster_efficacy)
@@ -1003,7 +1005,7 @@ simulate_validate_args1 <- function(args, regions, multistrain) {
   assert_scalar_logical(args$output_vaccination)
   assert_scalar_logical(args$output_state_by_age)
   assert_scalar_logical(args$output_weight_rt)
-  match_value(args$rt_type, c("Rt_general", "Rt_all"))
+  match_value(args$rt_type, c("Rt_general", "eff_Rt_general"))
 
   assert_scalar_numeric(args$seasonality)
   assert_length(args$vaccine_uptake, n_groups)
