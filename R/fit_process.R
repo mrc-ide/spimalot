@@ -44,9 +44,6 @@ spim_fit_process <- function(samples, parameters, data, control) {
                           c("date", "region", i_deaths_data)]
   deaths$data[is.na(deaths$data)] <- 0
 
-  message("Computing outputs by age class")
-  age_class_outputs <- extract_age_class_outputs(forecast)
-
   ## TODO: someone needs to document what this date is for (appears to
   ## filter trajectories to start at this date) and when we might
   ## change it.
@@ -79,7 +76,6 @@ spim_fit_process <- function(samples, parameters, data, control) {
       trajectories = trajectories_filter_time(forecast$trajectories, i),
       rt = rt_filter_time(rt, i),
       ifr_t = rt_filter_time(ifr_t, i),
-      age_class_outputs = age_class_outputs[, , which(i), drop = FALSE],
       deaths = deaths_filter_time(deaths, restart_date),
       admissions = deaths_filter_time(deaths, restart_date))
   }
@@ -94,7 +90,6 @@ spim_fit_process <- function(samples, parameters, data, control) {
        admissions = admissions,
        deaths = deaths,
        simulate = simulate,
-       age_class_outputs = age_class_outputs,
        parameters = parameters,
        restart = restart,
        vaccination = data$vaccination,
