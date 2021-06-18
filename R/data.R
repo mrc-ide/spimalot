@@ -211,14 +211,18 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     data$pillar2_negatives_over25 <- data$pillar2_negatives_total_pcr_over25
   }
 
-  # Use hospital data from dashboard for all except Wales admissions (linelist)
-  data$final_icu <- data$phe_occupied_mv_beds
-  data$final_general <- data$phe_patients - data$phe_occupied_mv_beds
-  data$final_hosp <- data$phe_patients
+  # Use hospital data from dashboard for all except Wales (linelist)
   if (region == "wales") {
     data$final_admissions <- data$all_admission
+    data$final_icu <- data$icu
+    data$final_general <- data$general
+    data$final_hosp <- data$icu + data$general
+
   } else {
     data$final_admissions <- data$phe_admissions
+    data$final_icu <- data$phe_occupied_mv_beds
+    data$final_general <- data$phe_patients - data$phe_occupied_mv_beds
+    data$final_hosp <- data$phe_patients
   }
 
   # Remove last 7 days of Pillar 2 data
