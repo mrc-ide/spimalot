@@ -12,9 +12,14 @@
 ##'
 ##' @export
 spim_restart_initial <- function(state, date) {
-  n_state <- ncol(state)
-  function(info, n_particles, pars) {
-    i <- sample.int(n_state, n_particles, replace = TRUE)
-    list(state = state[, i], step = date * pars$steps_per_day)
-  }
+  e <- new.env(parent = baseenv())
+  e$state <- state
+  e$date <- sircovid::as_sircovid_date(date)
+  with(e, {
+    n_state <- ncol(state)
+    function(info, n_particles, pars) {
+      i <- sample.int(n_state, n_particles, replace = TRUE)
+      list(state = state[, i], step = date * pars$steps_per_day)
+    }
+  })
 }
