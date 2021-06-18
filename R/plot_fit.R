@@ -106,17 +106,28 @@ spim_plot_fit_traces <- function(samples, region = NULL) {
               font.main = 1)
   }
 
-  par(mfrow = c(6, 8),
-      mar = c(3, 3, 2, 1),
-      mgp = c(2, 0.5, 0),
-      oma = c(1, 1, 1, 1))
-
   if (is.null(region)) {
+
+    n_pars <- length(colnames(samples$pars))
+
+    par(mfrow = rep(ceiling(sqrt(n_pars + 2)), 2),
+        mar = c(3, 3, 2, 1),
+        mgp = c(2, 0.5, 0),
+        oma = c(1, 1, 1, 1))
+
     for (nm in colnames(samples$pars)) {
       plot_traces1(samples$pars[, nm], nm)
     }
     plot_traces1(samples$probabilities[, "log_likelihood"], "log_likelihood")
   } else {
+
+    n_pars <- length(rownames(samples$pars))
+
+    par(mfrow = rep(ceiling(sqrt(n_pars + 2)), 2),
+        mar = c(3, 3, 2, 1),
+        mgp = c(2, 0.5, 0),
+        oma = c(1, 1, 1, 1))
+
     for (nm in rownames(samples$pars)) {
       plot_traces1(samples$pars[nm, region, ], nm)
     }
@@ -179,16 +190,27 @@ spim_plot_fit_posteriors <- function(samples, region = NULL) {
               font.main = 1, bty = "n")
   }
 
-  par(mfrow = c(6, 7),
-      mar = c(3, 3, 2, 1),
-      mgp = c(2, 0.5, 0),
-      oma = c(1, 1, 1, 1))
-
   if (is.null(region)) {
+
+    n_pars <- length(colnames(samples$pars))
+
+    par(mfrow = rep(ceiling(sqrt(n_pars + 1)), 2),
+        mar = c(3, 3, 2, 1),
+        mgp = c(2, 0.5, 0),
+        oma = c(1, 1, 1, 1))
+
     for (nm in colnames(samples$pars)) {
       plot_posteriors1(samples$pars[, nm], nm)
     }
   } else {
+
+    n_pars <- length(rownames(samples$pars))
+
+    par(mfrow = rep(ceiling(sqrt(n_pars + 1)), 2),
+        mar = c(3, 3, 2, 1),
+        mgp = c(2, 0.5, 0),
+        oma = c(1, 1, 1, 1))
+
     for (nm in rownames(samples$pars)) {
       plot_posteriors1(samples$pars[nm, region, ], nm)
     }
