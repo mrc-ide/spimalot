@@ -285,12 +285,15 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     strain_over25_tot = data$s_negative_adj1_over25 +
       data$s_positive_adj1_over25)
 
+  if (!fit_to_variants) {
+    ret$strain_non_variant <- NA_integer_
+    ret$strain_tot <- NA_integer_
+    ret$strain_over25_non_variant <- NA_integer_
+    ret$strain_over25_tot <- NA_integer_
+  }
+
   if (!full_data) {
     ## Typically we do not fit to this
-    if (!fit_to_variants) {
-      ret$strain_non_variant <- NA_integer_
-      ret$strain_tot <- NA_integer_
-    }
     ret$strain_over25_non_variant <- NA_integer_
     ret$strain_over25_tot <- NA_integer_
 
