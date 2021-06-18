@@ -1,117 +1,183 @@
-spim_mtp_prepare <- function(mtp_commission, npi_key, n_par, end_date,
-                             vaccine_parameters, combined, rt) {
-  date <- combined$date
-  npi_key <- mtp_npi_key_prepare(npi_key, rt, date)
-  ## If date is NULL we get NaN entries for Rt and an obscure error
-  ## later.
+##' Port MTP outcomes to template
+##'
+##' @title Port MTP outcomes to template
+##'
+##' @param summary_tidy A tibble containing MTP projections
+##'
+##' @param date The date to start output from (not necessarily the model date)
+##'
+##' @param run_grid The grid of scenarios ran
+##'
+##' @param combined Output from combined fitting task
+##'   rtm_inference_pmcmc_spim_fits2_combined
+##'
+##' @param spim_state_names Named vector of states to be extracted for SPI-M
+##'
+##'
+##' @export
+spim_mtp_summary_to_template <- function(summary_tidy, date, run_grid,
+                                         combined, spim_state_names) {
+  pop <- mtp_population(combined)
 
-  ## TODO: might move 'rt' into the combined depending on size?
+  model_type <- combined$info[[1]]$model_type
+  if (model_type == "BB") {
+    output_str <- "Stochastic Compartmental Positivity"
+  } else {
+    output_str <- "Stochastic Compartmental Cases"
+  }
 
-  ## expand data frame to include all regions
-  f <- function(df) {
-    msg <- setdiff(names(combined$pars), df$region)
-    if (length(msg) > 0) {
-      f <- function(r) {
-        d <- df[df$region == "combined", ]
-        d$region <- r
-        d
-      }
-      df <- dplyr::bind_rows(c(list(df), lapply(msg, f)))
+  regions <- vapply(c(sircovid::regions("all"), "england", "uk"),
+                    spimalot::spim_region_name, "")
+
+  ## create common template columns
+  lapply(run_grid$spim_name, mtp_template_common,
+         date = date, model_type = model_type) %>%
+    dplyr::bind_rows() %>%
+    ## join to results
+    dplyr::left_join(summary_tidy$state, by = c(Scenario = "spim_name")) %>%
+    dplyr::filter(state %in% names(spim_state_names),
+                  date >= !!date,
+                  group == "all") %>%
+    dplyr::mutate("Day of Value" = lubridate::day(date),
+                  "Month of Value" = lubridate::month(date),
+                  "Year of Value" = lubridate::year(date),
+                  AgeBand = "All",
+                  Geography = regions[as.character(region)],
+                  ValueType = spim_state_names[as.character(state)],
+                  quantile = as.numeric(gsub("%", "", quantile)) / 100,
+                  value = if_else(state == "react_pos",
+                                  value / pop[as.character(region)] * 100,
+                                  value),
+                  .after = "Creation Year") %>%
+    dplyr::select(-c(scenario, vaccine_daily_doses, rt_type, rt_future,
+                     date, state, region, group,
+                     vaccine_status)) %>%
+    tidyr::pivot_wider(names_from = quantile, values_from = value,
+                       names_prefix = "Quantile ") %>%
+    dplyr::mutate(Value = `Quantile 0.5`, .after = ValueType)
+}
+
+
+## TODO: this should be harmonised with similar code in combined_spim.R
+mtp_template_common <- function(scenario, date, model_type) {
+  version <- packageVersion("sircovid")
+  version <- substr(version, 3, nchar(version))
+
+  data_frame(Group = "Imperial",
+             Model = model_type,
+             Scenario = scenario,
+             ModelType = "Multiple",
+             Version = version,
+             "Creation Day" = lubridate::day(date),
+             "Creation Month" = lubridate::month(date),
+             "Creation Year" = lubridate::year(date))
+}
+
+
+mtp_population <- function(combined) {
+  pop <- vnapply(combined$pars[1, ], function(x) sum(x$N_tot[2:18]))
+  c(pop,
+    england = sum(unlist(pop[sircovid::regions("england")])),
+    uk = sum(unlist(pop[sircovid::regions("all")])))
+}
+
+
+##' Prepare outputs by age and vaccination class for plotting
+##'
+##' @title MTP simulation outputs by age and vaccination class
+##'
+##' @param dat Output from MTP simulation
+##'
+##' @param region A string, region for which outputs will be plotted
+##'
+##'
+##' @export
+spim_mtp_age_vaccine_outputs <- function(res, region = "england") {
+
+  ## Objects for saving list of plots and matrices
+  scenario_plots <- NULL
+  scenario_plots_proportion <- NULL
+  scenario_matrices <- NULL
+
+  res <- dplyr::filter(res, region == !!region,
+                       group != "all",
+                       state %in% c("infections_inc", "diagnoses_admitted_inc",
+                                    "deaths_inc", "deaths"))
+
+  for (s in unique(res$scenario)) {
+
+    tmp <- dplyr::filter(res, scenario == s)
+    plots_age_vacc <- NULL
+    plots_age_vacc_prop <- NULL
+
+
+    for (w in unique(res$state)) {
+
+      plot_matrix <- tmp %>%
+        dplyr::filter(state == w)  %>%
+        dplyr::mutate(age = factor(group,
+                                   levels = unique(group),
+                                   labels = c("Under 30s", "30 to 49", "50 to 74",
+                                              "75+")))
+      plots_age_vacc[[w]] <- ggplot2::ggplot(
+        plot_matrix,
+        ggplot2::aes(date, value, fill = age)) +
+        ggplot2::ylab(paste(stringr::str_to_sentence(w))) + ggplot2::xlab("") +
+        ggplot2::geom_area() + ggplot2::theme_bw() +
+        ggplot2::facet_wrap(vars(vaccine_status)) +
+        ggsci::scale_fill_lancet() +
+        ggplot2::theme(axis.title.y = element_text(size = rel(0.9)),
+                       legend.position = "none",
+                       axis.title.x = element_text(size = rel(0.8)),
+                       legend.title = element_blank(),
+                       strip.text.x = element_text(size = rel(0.7)))
+
+      plots_age_vacc_prop[[w]] <-
+        ## Re-arrange matrix for proportional stacked chart
+        plot_matrix %>%
+        dplyr::group_by(date, vaccine_status, age) %>%
+        dplyr::summarise(n = sum(value)) %>%
+        dplyr::mutate(percentage = n / sum(n)) %>%
+        ggplot2::ggplot(., ggplot2::aes(x=date, y=percentage, fill=age)) +
+        ggplot2::geom_area(alpha=0.6 , size=1, colour="black") +
+        ggplot2::ylab("") + ggplot2::xlab("") +
+        ggplot2::geom_area() + ggplot2::theme_bw() +
+        ggplot2::facet_wrap(vars(vaccine_status)) +
+        ggsci::scale_fill_lancet() +
+        ggplot2::theme(axis.title.y = element_text(size = rel(0.9)),
+                       axis.title.x = element_text(size = rel(0.8)),
+                       legend.title = element_blank(),
+                       strip.text.x = element_text(size = rel(0.7)))
+
+      if (w != "diagnoses_admitted_inc"){
+        plots_age_vacc_prop[[w]] <- plots_age_vacc_prop[[w]] +
+          ggplot2::theme(legend.position = "none")}
+
+      scenario_matrices[[s]][[w]] <- plot_matrix
     }
-    df[df$region != "combined", ]
+
+    ## Save plot and matrix object into lists
+
+    scenario_plots[[s]] <-
+      (plots_age_vacc[["infections_inc"]] + plots_age_vacc_prop[["infections_inc"]]) /
+      (plots_age_vacc[[ "diagnoses_admitted_inc"]] + plots_age_vacc_prop[[ "diagnoses_admitted_inc"]]) /
+      (plots_age_vacc[["deaths_inc"]] + plots_age_vacc_prop[["deaths_inc"]]) /
+      (plots_age_vacc[["deaths"]] + plots_age_vacc_prop[["deaths"]]) +
+      plot_annotation(
+        caption = "Partial immunity includes those with either one or two doses that have not yet achieved full vaccine efficacy",
+        title = paste(stringr::str_to_sentence(region)),
+        subtitle = paste(stringr::str_to_sentence(sub("_", " ", s))))
+
   }
 
-  mtp_commission <- split(mtp_commission, mtp_commission$scenario)
-  ret <- lapply(mtp_commission, f) %>%
-    dplyr::bind_rows()
+  ## Main scenario always first element in list
+  main_scenario <- grep("main", names(scenario_matrices))
+  other_scenarios <- grep("main", names(scenario_matrices), invert = TRUE)
+  scenario_plots <- scenario_plots[c(main_scenario, other_scenarios)]
+  scenario_matrices <- scenario_matrices[c(main_scenario, other_scenarios)]
 
-  run_grid <- ret %>%
-    dplyr::select(.data$scenario, .data$daily_doses, .data$spim_name,
-                  .data$type_rt) %>%
-    dplyr::distinct()
-
-  rt_future <- ret %>%
-    dplyr::select(-c(.data$daily_doses, .data$spim_name)) %>%
-    tidyr::pivot_longer(c(tidyr::starts_with("npi"),
-                          tidyr::starts_with("date")),
-                        names_to = c(".value", "changepoint"),
-                        names_pattern = "(.+)_(.+)") %>%
-    dplyr::mutate(Rt_sd = npi_key[npi, "Rt_sd"],
-                  Rt = npi_key[npi, "Rt"],
-                  .after = npi)
-
-  rt_future <- split(rt_future, f = rt_future$scenario)
-  rt_future <- rt_future[run_grid$scenario]
-
-  ## Things that we want to keep:
-  inc_states <- c("deaths", "admitted", "diagnoses", "infections")
-  prev_states <- c("icu", "general", "hosp", "react_pos")
-  output <- list(incidence = inc_states,
-                 prevalence = prev_states,
-                 keep = c(inc_states, prev_states))
-
-  vaccine <- list(
-    future_daily_doses = lapply(vaccine_parameters$daily_doses, "[[", "mtp"),
-    efficacy = vaccine_parameters$vacc_efficacy$central,
-    uptake = vaccine_parameters$uptake_by_age$central)
-
-  n_threads <- spim_control_cores()
-  message(sprintf("Running on %d threads", n_threads))
-
-  list(length = nrow(run_grid),
-       combined = combined,
-       n_threads = n_threads,
-       n_par = n_par,
-       end_date = end_date,
-       run_grid = run_grid,
-       rt_future = rt_future,
-       vaccine = vaccine,
-       output = output)
-}
-
-
-mtp_npi_key_prepare <- function(npi_key, rt, date) {
-  curr_eff_Rt <- rt$eff_Rt_general[rt$date == sircovid::sircovid_date(date)]
-  curr_Rt <- rt$Rt_general[rt$date == sircovid::sircovid_date(date)]
-  npi_key$Rt <- round(npi_key$Reff_t * mean(curr_Rt / curr_eff_Rt), 1)
-  npi_key["schools_main", "Rt"] <- round(mean(curr_Rt), 1)
-
-  ## translate 0.5 reduction in Rt_excl_immunity for school closures
-  ## into equivalent reduction in eff_Rt, this is likely to be around
-  ## 0.3
-
-  npi_key_holidays <- npi_key
-  npi_key_holidays$Rt <- npi_key$Rt - 0.5
-  rownames(npi_key_holidays) <- gsub("schools", "holidays", rownames(npi_key))
-
-  rbind(npi_key, npi_key_holidays)
-}
-
-
-spim_mtp_simulate <- function(obj, subset = NULL) {
-  n_run <- obj$length
-  res <- vector("list", n_run)
-
-  index <- subset %||% seq_len(n_run)
-
-  i <- 1L
-  for (i in index) {
-    message(sprintf("Running scenario %d / %d", i, n_run))
-    res[[i]] <- spim_simulate_schedule(
-      combined = obj$combined,
-      n_par = obj$n_par,
-      end_date = obj$end_date,
-      n_threads = obj$n_threads,
-      keep = obj$output$keep,
-      rt_future = obj$rt_future[[i]],
-      rt_type = obj$run_grid$type_rt[i],
-      future_daily_doses = obj$vaccine$future_daily_doses,
-      vaccine_efficacy = obj$vaccine$efficacy,
-      uptake_by_age = obj$vaccine$uptake,
-      calculate_rt = TRUE,
-      n_strain = 1)
-  }
-  names(res) <- obj$run_grid$scenario
-
-  res
+  out <- NULL
+  out[["plots"]] <- scenario_plots
+  out[["matrices"]] <- scenario_matrices
+  out
 }
