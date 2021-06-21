@@ -79,3 +79,8 @@ set_names <- function(x, nms) {
 nlayers <- function(x) {
   dim(x)[[3L]]
 }
+
+
+str_collapse <- function(str) {
+  paste0("(", paste0(str, sep = ", "), "}")
+}

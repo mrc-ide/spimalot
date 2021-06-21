@@ -1188,3 +1188,97 @@ fixme_extract_age_class_state <- function(state, index) {
 
   lapply(arrays, f)
 }
+
+
+##' Create expanded run grid for simulation
+##'
+##' @title Create expanded run grid
+##'
+##' @param ... named variables to expand over, should be in
+##'  `simulation_central_analysis`, omitted variables will take central value
+##' @param full_run If `TRUE` saves trajectories for expanded scenarios, this
+##'   should very rarely be `TRUE`, change default with care as this will lead
+##'   to massive objects
+##' @param prefix prefix for analysis name, prefixes row number
+##'
+##' @return A grid of scenarios to run
+##' @export
+spim_expand_grid <- function(..., full_run = FALSE,
+                             prefix = "Grid_") {
+
+  central <- simulation_central_analysis(full_run)
+
+  actual <- names(list(...))
+  expected <- setdiff(colnames(central), c("RUN", "full_run"))
+  mtc <- is.na(match(actual, expected))
+  if (any(mtc)) {
+    stop(sprintf("Unexpected variables(s) %s", str_collapse(actual[mtc])))
+  }
+
+  expand_grid(
+    RUN = TRUE,
+    full_run,
+    ...
+  ) %>%
+    ## adds central for missing variables
+    tidyr::expand_grid(dplyr::select(central, -names(.)), .) %>%
+    ## add analysis name
+    mutate(analysis = paste0(prefix, seq_len(nrow(.))))
+}
+
+
+##' Create grid of scenarios to run for simulation
+##'
+##' @title Create scenario run grid
+##'
+##' @param scenarios Scenarios to run simulation over
+##' @param csv Path of csv to load run grid from
+##' @param expand_grid Optional large grid of scenarios such as from
+##'   [spim_expand_grid]
+##' @param force_central If `TRUE` (default) then central analysis is always
+##'  included as specified in `simulation_central_analysis`. This should rarely
+##'  be `FALSE` as often required for basic checking plots.
+##' @param set_strain_params If `TRUE` automatically sets strain parameters
+##'   `strain_cross_immunity` and `strain_vaccine_efficacy_modifier`, which are
+##'   currently equivalent to `strain_vaccine_efficacy`
+##'
+##' @return A grid of scenarios to run
+##' @export
+spim_run_grid <- function(scenarios, csv = NULL, expand_grid = NULL,
+                          force_central = TRUE, set_strain_params = TRUE) {
+
+  if (is.null(csv) && is.null(expand_grid) && !force_central) {
+    stop("At least one of 'csv', 'expand_grid', 'force_central' must be
+    non-NULL/TRUE")
+  }
+
+  run_grid <- simulation_central_analysis()
+
+  if (!force_central) {
+    run_grid <- simulation_central_analysis()[-1, ]
+  }
+
+  if (!is.null(csv)) {
+    run_grid <- rbind(run_grid, read.csv(csv))
+  }
+
+  if (!is.null(expand_grid)) {
+    run_grid <- rbind(run_grid, expand_grid)
+  }
+
+  if (set_strain_params) {
+    run_grid <- run_grid %>%
+      dplyr::mutate(strain_cross_immunity = strain_vaccine_efficacy,
+                    strain_vaccine_efficacy_modifier = strain_vaccine_efficacy)
+  }
+
+  run_grid %>%
+    dplyr::filter(RUN) %>%
+    ## expand over scenarios
+    tidyr::expand_grid(scenario = scenarios) %>%
+    ## de-duplicate
+    dplyr::distinct(across(!any_of("analysis")), .keep_all = TRUE) %>%
+    ## set cross immunity and modifier
+    dplyr::mutate(rt_future =
+                    paste(scenario, adherence_to_baseline_npis, sep = ": "))
+}
