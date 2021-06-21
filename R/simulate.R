@@ -1282,3 +1282,94 @@ spim_run_grid <- function(scenarios, csv = NULL, expand_grid = NULL,
     dplyr::mutate(rt_future =
                     paste(scenario, adherence_to_baseline_npis, sep = ": "))
 }
+
+##' Calculate SHAPs from a tidy summary of predictions over various features.
+##'  SHAPs calculated as the expected difference in predicted states with and
+##'  without the given feature of interest (over all feature levels).
+##'
+##' @title Calculate SHAPs over predicted states
+##'
+##' @param summary A tidy summary object such as that returned by
+##'   `create_summary`
+##' @param feats Features to calculate SHAPS for. If NULL then uses default
+##'   selection returned by `spim_simulation_predictors`
+##'
+##' @export
+spim_simulation_shaps <- function(summary, feats = NULL) {
+
+  if (is.null(feats)) {
+    feats <- spim_simulation_predictors(summary)
+  }
+
+  states <- unique(summary$state)
+  out <- set_names(vector("list", length(states)), states)
+
+  for (State in states) {
+    state_df <- summary %>%
+      filter(state == State) %>%
+      dplyr::select(`50%`, feats)
+
+    shaps <- set_names(vector("list", length(feats)), feats)
+    for (i in seq_along(shaps)) {
+      lvls <- unique(state_df[[feats[[i]]]])
+      lvls <- set_names(numeric(length(lvls)), lvls)
+
+      for (j in names(lvls)) {
+        for (k in names(lvls)) {
+          if (!identical(j, k)) {
+            with <- state_df %>%
+              filter(!!as.symbol(feats[[i]]) == j) %>%
+              dplyr::select(`50%`) %>%
+              unlist()
+            without <- state_df %>%
+              filter(!!as.symbol(feats[[i]]) == k) %>%
+              dplyr::select(`50%`) %>%
+              unlist()
+
+            ## only compare possible scenarios
+            which <- intersect(names(with), names(without))
+
+            lvls[[j]] <- mean(c(lvls[[j]], mean(with[which] - without[which])))
+          }
+        }
+      }
+
+      shaps[[i]] <- lvls
+    }
+
+    mshaps <- reshape2::melt(shaps)
+    mshaps$lvl <- unlist(lapply(shaps, names))
+    out[[State]] <- mshaps
+  }
+
+  mout <- do.call(rbind, out)
+  mout$state <- vapply(strsplit(rownames(mout), ".", TRUE), "[[",
+                       character(1), 1)
+  rownames(mout) <- NULL
+  colnames(mout)[[2]] <- "Var"
+  mout
+}
+
+##' Names of 'predictive' variables from a tidy simulation summary object, i.e.
+##'  those variables which: i) are not purely informative;
+##'  ii) impact upon predictions; iii) are not outcome variables.
+##'
+##' @title Return predictive simulation variables
+##'
+##' @param summary A tidy summary object such as that returned by
+##'   `create_summary`
+##'
+##' @export
+spim_simulation_predictors <- function(summary) {
+  vars <- names(which(vapply(summary, function(i) length(unique(i)) > 1, logical(1))))
+  vars <- setdiff(vars, c(## not needed
+                          "analysis", "full_run", "state",
+                          ## taken into account in scenario
+                          "adherence_to_baseline_npis",
+                          ## outcomes
+                          "2.5%", "50%", "97.5%",
+                          ## these two are identical to vaccine_efficacy_strain_2
+                          "strain_cross_immunity", "rel_strain_modifier"))
+
+  vars
+}
