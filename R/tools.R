@@ -53,3 +53,20 @@ spim_region_name <- function(region, type = "name") {
   }
   unname(res)
 }
+
+
+##' Finds an rrq controller if available
+##'
+##' @title Find rrq controller
+##'
+##' @return Returns an rrq controller object if found, otherwise errors
+##' @export
+spim_rrq_controller <- function() {
+  queue_id <- Sys.getenv("CONTEXT_ID", "")
+  if (queue_id == "") {
+    stop("No rrq controller found")
+  } else {
+    message(sprintf("Found rrq controller for queue '%s'", queue_id))
+    rrq::rrq_controller(queue_id)
+  }
+}

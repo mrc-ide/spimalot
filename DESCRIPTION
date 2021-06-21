@@ -1,6 +1,6 @@
 Package: spimalot
 Title: Support for 'sircovid'
-Version: 0.2.2
+Version: 0.2.3
 Authors@R:
     c(person(given = "Marc",
            family = "Baguelin",
@@ -62,6 +62,7 @@ Imports:
     writexl
 Suggests:
     digest,
+    rrq,
     testthat
 Remotes:
     mrc-ide/dust,
