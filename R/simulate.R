@@ -153,7 +153,7 @@ spim_simulate_args <- function(grid, vars, base, ignore, regions, multistrain) {
 ##'
 ##' @export
 spim_simulate_local <- function(args, combined) {
-  lapply(seq_along(args), spim_simulate)
+  lapply(seq_along(args), spim_simulate, args, combined)
 }
 
 ##' Run simulations with rrq workers
@@ -169,7 +169,7 @@ spim_simulate_local <- function(args, combined) {
 ##'
 ##' @export
 spim_simulate_rrq <- function(args, combined, rrq) {
-  rrq$lapply(seq_along(args), spim_simulate)
+  rrq$lapply(seq_along(args), spim_simulate, args, combined)
 }
 
 
