@@ -60,6 +60,11 @@ vnapply <- function(X, FUN, ...) {
 }
 
 
+vlapply <- function(X, FUN, ...) {
+  vapply(X, FUN, logical(1), ...)
+}
+
+
 abind_quiet <- function(...) {
   suppressWarnings(abind::abind(...))
 }

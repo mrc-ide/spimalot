@@ -49,6 +49,7 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
   labels <- spim_region_name(names(samples), "code")
   par_names <- colnames(samples[[1]]$pars)
 
+  beta_date <- dat$samples[[1]]$info$beta_date
   beta_names <- par_names[substr(par_names, 1, 4) == "beta"]
   beta_names <- beta_names[order(as.numeric(gsub("beta", "", beta_names)))]
 
@@ -98,9 +99,16 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
         xmax <- par_max[[par_name]]
       }
 
+      if (grepl("^beta", par_name)) {
+        k <- as.numeric(gsub("beta", "", par_name))
+        xlab <- paste0(par_name, " (", beta_date[k], ")")
+      } else {
+        xlab <- par_name
+      }
+
       plot(0, 0, type = "n",
            ylab = "",
-           xlab = par_name,
+           xlab = xlab,
            xlim = c(0, xmax),
            ylim = ylim,
            yaxt = "n"

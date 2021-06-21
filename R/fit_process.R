@@ -21,7 +21,7 @@ spim_fit_process <- function(samples, parameters, data, control) {
   samples$restart <- NULL
 
   message("Running forecasts")
-  incidence_states <- c("deaths", "infections")
+  incidence_states <- "deaths"
   forecast <- sircovid::carehomes_forecast(samples,
                                            control$n_sample,
                                            control$burnin,
@@ -43,9 +43,6 @@ spim_fit_process <- function(samples, parameters, data, control) {
   deaths$data <- data$rtm[data$rtm$region == region,
                           c("date", "region", i_deaths_data)]
   deaths$data[is.na(deaths$data)] <- 0
-
-  message("Computing outputs by age class")
-  age_class_outputs <- extract_age_class_outputs(forecast)
 
   ## TODO: someone needs to document what this date is for (appears to
   ## filter trajectories to start at this date) and when we might
@@ -79,7 +76,6 @@ spim_fit_process <- function(samples, parameters, data, control) {
       trajectories = trajectories_filter_time(forecast$trajectories, i),
       rt = rt_filter_time(rt, i),
       ifr_t = rt_filter_time(ifr_t, i),
-      age_class_outputs = age_class_outputs[, , which(i), drop = FALSE],
       deaths = deaths_filter_time(deaths, restart_date),
       admissions = deaths_filter_time(deaths, restart_date))
   }
@@ -94,7 +90,6 @@ spim_fit_process <- function(samples, parameters, data, control) {
        admissions = admissions,
        deaths = deaths,
        simulate = simulate,
-       age_class_outputs = age_class_outputs,
        parameters = parameters,
        restart = restart,
        vaccination = data$vaccination,
@@ -509,7 +504,11 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
 }
 
 
-get_vaccine_protection <- function(vaccine_efficacy) {
+get_vaccine_protection <- function(vaccine_efficacy, booster_efficacy = NULL) {
+  if (!is.null(booster_efficacy)) {
+    stopifnot(identical(names(vaccine_efficacy), names(booster_efficacy)))
+    vaccine_efficacy <- Map(cbind, vaccine_efficacy, booster_efficacy)
+  }
   efficacy_infection <- 1 - vaccine_efficacy$rel_susceptibility
   efficacy_disease <- efficacy_infection + (1 - efficacy_infection) *
     (1 - vaccine_efficacy$rel_p_sympt)
