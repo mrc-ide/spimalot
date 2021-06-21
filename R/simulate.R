@@ -143,7 +143,7 @@ spim_simulate_args <- function(grid, vars, base, ignore, regions, multistrain) {
 }
 
 
-##' Run simulations locally
+##' Run simulations locally or with rrq workers
 ##'
 ##' @title Run simulations
 ##'
@@ -152,8 +152,10 @@ spim_simulate_args <- function(grid, vars, base, ignore, regions, multistrain) {
 ##' @param combined Processed combined output returned by
 ##'   [spim_simulate_prepare]
 ##'
+##' @param rrq rrq object, if NULL runs locally
+##'
 ##' @export
-spim_simulate_local <- function(args, combined) {
+spim_simulate <- function(args, combined, rrq = NULL) {
   f <- function(i) {
     el <- args[[i]]
     message(sprintf("-----\nRunning scenario %d / %d", i, length(args)))
@@ -163,20 +165,11 @@ spim_simulate_local <- function(args, combined) {
     ret
   }
 
-  lapply(seq_along(args), f)
-}
-
-
-spim_simulate_rrq <- function(args, combined, rrq) {
-  f <- function(i) {
-    el <- args[[i]]
-    message(sprintf("-----\nRunning scenario %d / %d", i, length(args)))
-    time <- system.time(
-      ret <- spim_simulate_one(el, combined))
-    message(sprintf("Finished scenario %d in %2.1f s", i, time[["elapsed"]]))
+  if (is.null(rrq)) {
+    lapply(seq_along(args), f)
+  } else {
+    rrq$lapply(seq_along(args), f)
   }
-
-  rrq$lapply(seq_along(args), f)
 }
 
 

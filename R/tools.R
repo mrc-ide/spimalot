@@ -53,3 +53,16 @@ spim_region_name <- function(region, type = "name") {
   }
   unname(res)
 }
+
+
+get_rrq_controller <- function() {
+  queue_id <- Sys.getenv("CONTEXT_ID", "")
+  if (queue_id == "") {
+    message("Running without rrq")
+    ## This returns a dummy object that might need some work
+    NULL
+  } else {
+    message(sprintf("Found rrq controller for queue '%s'", queue_id))
+    rrq::rrq_controller(queue_id)
+  }
+}
