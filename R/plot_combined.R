@@ -140,6 +140,33 @@ spim_plot_ifr_t <- function(dat, regions, ifr_t_type, ymax = 2.5,
 }
 
 
+##' Plot average length of stay over time
+##'
+##' @title Plot average length of stay over time
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param ymax Maximum percentage on y-axis
+##'
+##' @param forecast_until Optional date to forecast till
+##'
+##' @export
+spim_plot_alos <- function(dat, regions, ymin = NULL, ymax = NULL,
+                           forecast_until = NULL) {
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+  if (is.null(forecast_until)) {
+    forecast_until <- dat$info$date
+  }
+  for (r in regions) {
+    spim_plot_alos_region(r, dat, ymin, ymax, forecast_until)
+  }
+}
+
+
 ##' Plot serology
 ##'
 ##' @title Plot serology
@@ -1157,6 +1184,60 @@ spim_plot_ifr_t_region <- function(region, dat, ifr_t_type, ymax,
 
 }
 
+
+spim_plot_alos_region <- function(region, dat, ymin, ymax, forecast_until,
+                                  include_forecast = TRUE,
+                                  add = FALSE) {
+
+  ALOS <- dat$ifr_t[[region]]$ALOS[-1L, ]
+  col <- spim_colours()$blue
+
+  x <- sircovid::sircovid_date_as_date(dat$ifr_t[[region]]$date[-1L, 1])
+
+  if (!include_forecast) {
+    ALOS <- ALOS[x <= forecast_until, ]
+    x <- x[x <= forecast_until]
+  }
+
+  rownames(ALOS) <- as.character(x)
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(ALOS,  MARGIN = 1, FUN = quantile, ps, na.rm = TRUE)
+
+  ## remove NAs for plotting purposes
+  idx_not_na <- which(!is.na(colSums(qs)))
+  x <- x[idx_not_na]
+  qs <- qs[, idx_not_na]
+
+  if (is.null(ymax)) {
+    ymax <- max(qs, na.rm = TRUE)
+  }
+  if (is.null(ymin)) {
+    ymin <- 0
+  }
+
+  if (!add) {
+    oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+    on.exit(oo)
+    xlim <- c(x[1], as.Date(forecast_until))
+    plot(xlim[1], 0, type = "n",
+         xlim = xlim,
+         ylim = c(ymin, ymax),
+         main = toupper(spim_region_name(region)),
+         font.main = 1,
+         xlab = "", ylab = "Average length of stay",
+         xaxt = "n")
+    axis.Date(1, at = seq(as.Date("2020-04-01"), as.Date(forecast_until),
+                          by = "2 month"), format = "%b")
+  }
+  cols <- c(mix_cols(col, "white", 0.7),
+            mix_cols(col, "white", 0.495))
+
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = cols,
+           horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = col, lty = 1, lwd = 1.5, lend = 1)
+
+}
 
 spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
   sample_Rt <- dat$rt[[region]][[rt_type]][-1L, ]
