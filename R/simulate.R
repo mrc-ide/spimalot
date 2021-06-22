@@ -1306,7 +1306,7 @@ spim_simulation_shaps <- function(summary, feats = NULL) {
 
   for (State in states) {
     state_df <- summary %>%
-      filter(state == State) %>%
+      dplyr::filter(state == State) %>%
       dplyr::select(`50%`, feats)
 
     shaps <- set_names(vector("list", length(feats)), feats)
@@ -1318,11 +1318,11 @@ spim_simulation_shaps <- function(summary, feats = NULL) {
         for (k in names(lvls)) {
           if (!identical(j, k)) {
             with <- state_df %>%
-              filter(!!as.symbol(feats[[i]]) == j) %>%
+              dplyr::filter(!!as.symbol(feats[[i]]) == j) %>%
               dplyr::select(`50%`) %>%
               unlist()
             without <- state_df %>%
-              filter(!!as.symbol(feats[[i]]) == k) %>%
+              dplyr::filter(!!as.symbol(feats[[i]]) == k) %>%
               dplyr::select(`50%`) %>%
               unlist()
 
