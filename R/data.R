@@ -386,24 +386,76 @@ spim_data_serology <- function(date, region, data) {
 ##' @param admissions A data.frame from the admissions by age sitrep
 ##'
 ##' @param region Name of the region
+##'
+##' @param new Logical indicating whether admissions data has new or old sitrep
+##'   age bands
 ##' @export
 ##' @importFrom dplyr .data
-spim_data_admissions <- function(admissions, region) {
+spim_data_admissions <- function(admissions, region, new = TRUE) {
+
+  if (new) {
+    nations <- c("scotland", "wales", "northern_ireland")
+
+    if (region %in% nations) {
+      admissions <- data.frame(
+        date = unique(admissions$date),
+        region = region,
+        adm_0 = NA_integer_,
+        adm_25 = NA_integer_,
+        adm_55 = NA_integer_,
+        adm_65 = NA_integer_,
+        adm_75 = NA_integer_)
+    } else {
+      vector_age_bands <- unique(admissions$age_from)
+      age_bands <- c("date", "region", "adm_0", "adm_25", "adm_55", "adm_65",
+                     "adm_75")
+
+      admissions$region <- gsub(" ", "_", admissions$region)
+      admissions <- admissions[admissions$region == region, ]
+
+      admissions <- admissions %>%
+        dplyr::group_by(date, .data$age_from) %>%
+        dplyr::mutate(age_from = paste0("adm_", .data$age_from)) %>%
+        dplyr::mutate(value = sum(admissions)) %>%
+        dplyr::slice(1) %>%
+        dplyr::select(date, region, .data$age_from, value)
+
+      stopifnot(nrow(admissions) == length(unique(admissions$date)) *
+                  length(vector_age_bands))
+
+      admissions <- admissions %>%
+        tidyr::pivot_wider(id_cols = c(date, region),
+                           names_from = .data$age_from)
+
+      admissions$adm_0 <- rowSums(admissions[, 3:4])
+      admissions$adm_25 <- rowSums(admissions[, 5:7])
+      admissions$adm_75 <- rowSums(admissions[, 11:12])
+
+      admissions <- admissions %>% dplyr::select(dplyr::all_of(age_bands))
+
+    } else {
+      admissions <- data_admissions_old(admissions, region)
+    }
+  }
+
+  admissions
+}
+
+
+data_admissions_old <- function(admissions, region) {
   nations <- c("scotland", "wales", "northern_ireland")
 
   if (region %in% nations) {
     admissions <- data.frame(
       date = unique(admissions$date),
       region = region,
-      adm_0 = NA_integer_,
-      adm_25 = NA_integer_,
-      adm_55 = NA_integer_,
-      adm_65 = NA_integer_,
-      adm_75 = NA_integer_)
+      admissions_under_65 = NA_integer_,
+      admissions_65_84 = NA_integer_,
+      admissions_85_plus = NA_integer_)
   } else {
     vector_age_bands <- unique(admissions$age_from)
-    age_bands <- c("date", "region", "adm_0", "adm_25", "adm_55", "adm_65",
-                   "adm_75")
+    age_bands <- c("date", "region", "admissions_under_65", "admissions_65_84",
+                   "admissions_85_plus")
 
     admissions$region <- gsub(" ", "_", admissions$region)
     admissions <- admissions[admissions$region == region, ]
@@ -416,15 +468,15 @@ spim_data_admissions <- function(admissions, region) {
       dplyr::select(date, region, .data$age_from, value)
 
     stopifnot(nrow(admissions) == length(unique(admissions$date)) *
-              length(vector_age_bands))
+                length(vector_age_bands))
 
     admissions <- admissions %>%
       tidyr::pivot_wider(id_cols = c(date, region),
                          names_from = .data$age_from)
 
-    admissions$adm_0 <- rowSums(admissions[, 3:4])
-    admissions$adm_25 <- rowSums(admissions[, 5:7])
-    admissions$adm_75 <- rowSums(admissions[, 11:12])
+    admissions$admissions_under_65 <- rowSums(admissions[, 3:5])
+    admissions$admissions_65_84 <- rowSums(admissions[, 6])
+    admissions$admissions_85_plus <- rowSums(admissions[, 7])
 
     admissions <- admissions %>% dplyr::select(dplyr::all_of(age_bands))
   }

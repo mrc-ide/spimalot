@@ -31,7 +31,7 @@ spim_mtp_summary_to_template <- function(summary_tidy, date, run_grid,
 
   ## create common template columns
   lapply(run_grid$spim_name, mtp_template_common,
-         date = date, model_type = model_type) %>%
+         date = date, model_type = output_str) %>%
     dplyr::bind_rows() %>%
     ## join to results
     dplyr::left_join(summary_tidy$state, by = c(Scenario = "spim_name")) %>%
