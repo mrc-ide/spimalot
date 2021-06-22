@@ -22,9 +22,9 @@ spim_plot_fit_forecasts <- function(samples, region = NULL) {
   date <- sircovid::sircovid_date_as_date(step / samples$predict$rate)
 
   info <- list(
-    list(index = "deaths_hosp",
-         ylab = "Deaths",
-         lag = TRUE),
+    # list(index = "deaths_hosp",
+    #      ylab = "Deaths",
+    #      lag = TRUE),
     list(index = "icu",
          ylab = "Confirmed covid-19 patients in ICU",
          lag = FALSE),
