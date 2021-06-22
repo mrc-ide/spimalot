@@ -52,6 +52,7 @@ Imports:
     dust,
     ggplot2,
     ggsci,
+    khroma,
     lubridate,
     mcstate (>= 0.5.14),
     readxl,
