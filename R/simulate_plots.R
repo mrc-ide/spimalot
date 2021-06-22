@@ -117,14 +117,28 @@ plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
 ##'  from the RGB code of `palette` to darken the colour palette for
 ##'  `dark_scens`
 ##' @param palette Colour palette, passed to [khroma::colour]
+##' @param highR If `TRUE` then `dark_scens` is taken to be all scenarios
+##'   that contain "High R"; `dark_scens` should be `NULL` if `TRUE`
 ##'
 ##' @export
 spim_scenario_cols <- function(scens, dark_scens = NULL, darken = 50,
-                               palette = "bright") {
+                               palette = "bright", highR = TRUE) {
 
   stopifnot(all(table(scens)) == 1)
 
-  n_scens <- scens
+  n_scens <- length(scens)
+
+  if (highR) {
+    if (!is.null(dark_scens)) {
+      stop("`dark_scens` must be `NULL` if `highR` is `TRUE`")
+    }
+    dark_scens <- grep("High R", scens, value = TRUE)
+    scens <- setdiff(scens, dark_scens)
+    n_scens <- length(scens)
+    if (length(dark_scens) == 0) {
+      dark_scens <- NULL
+    }
+  }
 
   if (!is.null(dark_scens)) {
     stopifnot(all(table(dark_scens)) == 1)

@@ -4,7 +4,13 @@
 \alias{spim_scenario_cols}
 \title{Return accessible scenario colours}
 \usage{
-spim_scenario_cols(scens, dark_scens = NULL, darken = 50, palette = "bright")
+spim_scenario_cols(
+  scens,
+  dark_scens = NULL,
+  darken = 50,
+  palette = "bright",
+  highR = TRUE
+)
 }
 \arguments{
 \item{scens}{Unique scenario names}
@@ -18,6 +24,9 @@ from the RGB code of \code{palette} to darken the colour palette for
 \code{dark_scens}}
 
 \item{palette}{Colour palette, passed to \link[khroma:colour]{khroma::colour}}
+
+\item{highR}{If \code{TRUE} then \code{dark_scens} is taken to be all scenarios
+that contain "High R"; \code{dark_scens} should be \code{NULL} if \code{TRUE}}
 }
 \description{
 Select colours for plotting simulation scenarios
