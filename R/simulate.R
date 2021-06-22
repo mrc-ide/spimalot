@@ -1363,7 +1363,7 @@ spim_simulation_shaps <- function(summary, feats = NULL) {
 spim_simulation_predictors <- function(summary) {
   vars <- names(which(vapply(summary, function(i) length(unique(i)) > 1, logical(1))))
   vars <- setdiff(vars, c(## not needed
-                          "analysis", "full_run", "state",
+                          "analysis", "full_run", "state", "rt_future",
                           ## taken into account in scenario
                           "adherence_to_baseline_npis",
                           ## outcomes
