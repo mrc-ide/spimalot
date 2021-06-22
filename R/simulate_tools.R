@@ -1,4 +1,4 @@
-spim_simulate <- function(i) {
+spim_simulate <- function(i, args, combined) {
   el <- args[[i]]
   message(sprintf("-----\nRunning scenario %d / %d", i, length(args)))
   time <- system.time(
