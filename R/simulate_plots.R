@@ -105,3 +105,44 @@ plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
             legend.title = element_blank()
         )
 }
+
+##' Select colours for plotting simulation scenarios
+##' @title Return accessible scenario colours
+##'
+##' @param scens Unique scenario names
+##' @param dark_scens Optional unique scenario names that should be same length
+##'  as `scens` as provided and will be the same colours but darker. Useful
+##'  if plotting scenarios and their High R counterparts.
+##' @param darken If `dark_scens` is not `NULL` then `darken` is subtracted
+##'  from the RGB code of `palette` to darken the colour palette for
+##'  `dark_scens`
+##' @param palette Colour palette, passed to [khroma::colour]
+##'
+##' @export
+spim_scenario_cols <- function(scens, dark_scens = NULL, darken = 50,
+                               palette = "bright") {
+
+  stopifnot(all(table(scens)) == 1)
+
+  n_scens <- scens
+
+  if (!is.null(dark_scens)) {
+    stopifnot(all(table(dark_scens)) == 1)
+    stopifnot(n_scens == length(dark_scens))
+  }
+
+  cols <- khroma::colour(palette)(n_scens)
+  names(cols) <- scens
+
+  if (is.null(dark_scens)) {
+    return(cols)
+  }
+
+  col_rgb <- col2rgb(cols) - darken
+  col_rgb[col_rgb < 0] <- 0
+  dark_cols <- apply(col_rgb, 2, function(x) rgb(x[1], x[2], x[3],
+                     maxColorValue = 255))
+  names(dark_cols) <- dark_scens
+
+  c(cols, dark_cols)
+}
