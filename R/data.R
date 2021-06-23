@@ -24,6 +24,7 @@
 ##' @param trim_deaths The number of days of deaths to trim to avoid
 ##'   back-fill issues. We typically use a value of 4 days.
 ##'
+##' @param data_admissions A dataframe with age disaggregated admissions data
 ##' @param full_data Not sure yet, we'll find out
 ##'
 ##' @param fit_to_variants Logical, whether to fit to variants data or not
@@ -31,8 +32,8 @@
 ##' @return A [data.frame()] TODO: describe columns
 ##'
 ##' @export
-spim_data <- function(date, region, model_type, rtm, serology,
-                      trim_deaths, full_data = FALSE, fit_to_variants = FALSE) {
+spim_data <- function(date, region, model_type, rtm, serology, trim_deaths,
+                      data_admissions, full_data = FALSE, fit_to_variants = FALSE) {
   check_region(region)
   spim_check_model_type(model_type)
 
@@ -40,17 +41,18 @@ spim_data <- function(date, region, model_type, rtm, serology,
     ## See the original task
     stop("Not yet supported")
   } else {
-    spim_data_single(date, region, model_type, rtm, serology,
-                     trim_deaths, full_data, fit_to_variants)
+    spim_data_single(date, region, model_type, rtm, serology, trim_deaths,
+                     data_admissions, full_data, fit_to_variants)
   }
 }
 
 
 spim_data_single <- function(date, region, model_type, rtm, serology,
-                             trim_deaths, full_data, fit_to_variants) {
+                             trim_deaths, data_admissions, full_data,
+                             fit_to_variants) {
   ## TODO: verify that rtm has consecutive days
-  rtm <- spim_data_rtm(date, region, model_type, rtm, full_data,
-                       fit_to_variants)
+  rtm <- spim_data_rtm(date, region, model_type, rtm, data_admissions,
+                       full_data, fit_to_variants)
   serology <- spim_data_serology(date, region, serology)
 
   ## Merge the two datasets on date
@@ -84,12 +86,13 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 
 
 ##' @importFrom dplyr %>%
-spim_data_rtm <- function(date, region, model_type, data, full_data,
-                          fit_to_variants) {
+spim_data_rtm <- function(date, region, model_type, data, data_admissions,
+                          full_data, fit_to_variants) {
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
             "death2", "death3", "death_chr", "death_comm",
+            "death_0", "death_65", "death_85",
             "ons_death_carehome", "ons_death_noncarehome",
             "pillar2_positives", "pillar2_negatives",
             "positives", "negatives", "react_positive", "react_samples",
@@ -99,8 +102,7 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
             "pillar2_positives_pcr_only_over25", "pillar2_positives_pcr_all",
             "pillar2_positives_pcr_all_over25",
             "s_positive_adj1", "s_negative_adj1",
-            "s_positive_adj1_over25", "s_negative_adj1_over25",
-            "death_0", "death_55", "death_65", "death_75")
+            "s_positive_adj1_over25", "s_negative_adj1_over25")
   data <- data[c("region", "date", vars)]
 
   ## Remove any data after the date parameter
@@ -118,7 +120,7 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
   if (length(dates_incomplete > 0)) {
     for (d in rows_out$date[dates_incomplete]) {
       missing_regions <- all_regions[!all_regions %in%
-                                      data[data$date == d, "region"]]
+                                       data[data$date == d, "region"]]
 
       tmp <-  data %>% filter(date == d)
       tmp_add <- tmp[seq_along(missing_regions), ]
@@ -130,6 +132,9 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
   }
 
   # Set NA deaths to 0
+  data[which(is.na(data$death2)), "death_0"] <- 0
+  data[which(is.na(data$death_65)), "death_65"] <- 0
+  data[which(is.na(data$death_85)), "death_85"] <- 0
   data[which(is.na(data$death2)), "death2"] <- 0
   data[which(is.na(data$death3)), "death3"] <- 0
   data[which(is.na(data$death_chr)), "death_chr"] <- 0
@@ -149,12 +154,15 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
   if (region %in% c("northern_ireland", "scotland", "wales", "uk")) {
     data$deaths <- data$death2
     data$deaths_hosp <- NA_integer_
+    data$death_0 <- NA_integer_
+    data$death_65 <- NA_integer_
+    data$death_85 <- NA_integer_
     data$deaths_comm <- NA_integer_
     data$deaths_carehomes <- NA_integer_
     data$deaths_non_hosp <- NA_integer_
   } else {
     data$deaths <- NA_integer_
-    data$deaths_hosp <- data$death3
+    data$deaths_hosp <- NA_integer_
     data$deaths_non_hosp <- NA_integer_
 
     if (!full_data) {
@@ -182,7 +190,7 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     data$pillar2_negatives_over25 <- data$negatives_over25
 
     data$phe_patients[data$date >= as.Date("2020-06-01") &
-                      data$date <= as.Date("2020-09-10")] <- NA_integer_
+                        data$date <= as.Date("2020-09-10")] <- NA_integer_
   }
 
   data$pillar2_cases <- data$pillar2_positives
@@ -260,6 +268,16 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     all(data$pillar2_positives_over25 >= 0, na.rm = TRUE),
     all(data$pillar2_cases_over25 >= 0, na.rm = TRUE))
 
+  ## Join admissions data
+  data <- dplyr::left_join(data, data_admissions)
+  if (region %in% c("northern_ireland", "scotland", "wales", "uk")){
+    data$admissions_under_65 <- NA_integer_
+    data$admissions_65_84 <- NA_integer_
+    data$admissions_85_plus <- NA_integer_
+  } else {
+    data$final_admissions <- NA_integer_
+  }
+
   ## TODO: with a stripped down compare function wee could drop the NA
   ## columns here.
   ret <- data_frame(
@@ -269,9 +287,8 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     deaths_carehomes = data$deaths_carehomes,
     deaths_non_hosp = data$deaths_non_hosp,
     death_0 = data$death_0,
-    death_55 = data$death_55,
     death_65 = data$death_65,
-    death_75 = data$death_75,
+    death_85 = data$death_85,
     icu = data$final_icu,
     general = data$final_general,
     hosp = data$final_hosp,
@@ -279,6 +296,9 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     admitted = data$admitted,
     diagnoses = data$new,
     all_admission = data$final_admissions,
+    all_admission_0_64 = data$admissions_under_65,
+    all_admission_65_84 = data$admissions_65_84,
+    all_admission_85_plus = data$admissions_85_plus,
     pillar2_tot = data$pillar2_positives + data$pillar2_negatives,
     pillar2_pos = data$pillar2_positives,
     pillar2_cases = data$pillar2_cases,
@@ -335,6 +355,7 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     all(ret$deaths_carehomes >= 0, na.rm = TRUE),
     all(ret$general >= 0, na.rm = TRUE))
 
+
   ret
 }
 
@@ -389,6 +410,7 @@ spim_data_serology <- function(date, region, data) {
 ##'
 ##' @param new Logical indicating whether admissions data has new or old sitrep
 ##'   age bands
+##'
 ##' @export
 ##' @importFrom dplyr .data
 spim_data_admissions <- function(admissions, region, new = TRUE) {
@@ -433,9 +455,9 @@ spim_data_admissions <- function(admissions, region, new = TRUE) {
 
       admissions <- admissions %>% dplyr::select(dplyr::all_of(age_bands))
 
-    } else {
-      admissions <- data_admissions_old(admissions, region)
     }
+  } else {
+    admissions <- data_admissions_old(admissions, region)
   }
 
   admissions

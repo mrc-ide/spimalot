@@ -34,15 +34,15 @@ spim_fit_process <- function(samples, parameters, data, control) {
   ifr_t <- calculate_ifr_t(forecast) # TODO: a bit slow
 
   message("Summarising admissions")
-  admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
-  admissions[["data"]] <- data$admissions
+  # admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
+  # admissions[["data"]] <- data$admissions
 
   message("Summarising deaths")
-  deaths <- extract_outputs_by_age(forecast, "D_hosp") # slow
-  i_deaths_data <- colnames(deaths$output_t)
-  deaths$data <- data$rtm[data$rtm$region == region,
-                          c("date", "region", i_deaths_data)]
-  deaths$data[is.na(deaths$data)] <- 0
+  # deaths <- extract_outputs_by_age(forecast, "D_hosp") # slow
+  # i_deaths_data <- colnames(deaths$output_t)
+  # deaths$data <- data$rtm[data$rtm$region == region,
+  #                         c("date", "region", i_deaths_data)]
+  # deaths$data[is.na(deaths$data)] <- 0
 
   ## TODO: someone needs to document what this date is for (appears to
   ## filter trajectories to start at this date) and when we might
@@ -75,9 +75,11 @@ spim_fit_process <- function(samples, parameters, data, control) {
     restart$parent <- list(
       trajectories = trajectories_filter_time(forecast$trajectories, i),
       rt = rt_filter_time(rt, i),
-      ifr_t = rt_filter_time(ifr_t, i),
-      deaths = deaths_filter_time(deaths, restart_date),
-      admissions = deaths_filter_time(deaths, restart_date))
+      ifr_t = rt_filter_time(ifr_t, i)
+      # ,
+      # deaths = deaths_filter_time(deaths, restart_date),
+      # admissions = deaths_filter_time(deaths, restart_date)
+      )
   }
 
   ## Drop the big objects from the output
@@ -87,8 +89,8 @@ spim_fit_process <- function(samples, parameters, data, control) {
        pmcmc = samples,
        rt = rt,
        ifr_t = ifr_t,
-       admissions = admissions,
-       deaths = deaths,
+       #admissions = admissions,
+       #deaths = deaths,
        simulate = simulate,
        parameters = parameters,
        restart = restart,

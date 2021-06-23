@@ -11,6 +11,7 @@ spim_data(
   rtm,
   serology,
   trim_deaths,
+  data_admissions,
   full_data = FALSE,
   fit_to_variants = FALSE
 )
@@ -35,6 +36,8 @@ DESCRIBE FORMAT; TODO: DESCRIBE ORIGIN}
 
 \item{trim_deaths}{The number of days of deaths to trim to avoid
 back-fill issues. We typically use a value of 4 days.}
+
+\item{data_admissions}{A dataframe with age disaggregated admissions data}
 
 \item{full_data}{Not sure yet, we'll find out}
 

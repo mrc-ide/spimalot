@@ -4,12 +4,15 @@
 \alias{spim_data_admissions}
 \title{Load admissions data}
 \usage{
-spim_data_admissions(admissions, region)
+spim_data_admissions(admissions, region, new = TRUE)
 }
 \arguments{
 \item{admissions}{A data.frame from the admissions by age sitrep}
 
 \item{region}{Name of the region}
+
+\item{new}{Logical indicating whether admissions data has new or old sitrep
+age bands}
 }
 \description{
 Load admissions data
