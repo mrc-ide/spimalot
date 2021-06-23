@@ -5,28 +5,31 @@
 \title{Return accessible scenario colours}
 \usage{
 spim_scenario_cols(
-  scens,
-  dark_scens = NULL,
-  darken = 50,
+  scenarios,
+  dark_scenarios = NULL,
+  weight = 0.3,
   palette = "bright",
-  highR = TRUE
+  highR = TRUE,
+  preview = FALSE
 )
 }
 \arguments{
-\item{scens}{Unique scenario names}
+\item{scenarios}{Unique scenario names}
 
-\item{dark_scens}{Optional unique scenario names that should be same length
-as \code{scens} as provided and will be the same colours but darker. Useful
-if plotting scenarios and their High R counterparts.}
+\item{dark_scenarios}{Optional unique scenario names that should be same
+length as \code{scenarios} as provided and will be the same colours but darker.
+Useful if plotting scenarios and their High R counterparts.}
 
-\item{darken}{If \code{dark_scens} is not \code{NULL} then \code{darken} is subtracted
-from the RGB code of \code{palette} to darken the colour palette for
-\code{dark_scens}}
+\item{weight}{If \code{dark_scenarios} is not \code{NULL} then \code{weight} passed to
+\code{mix_cols} to darken colours by mixing with "#000000" (black)}
 
 \item{palette}{Colour palette, passed to \link[khroma:colour]{khroma::colour}}
 
-\item{highR}{If \code{TRUE} then \code{dark_scens} is taken to be all scenarios
-that contain "High R"; \code{dark_scens} should be \code{NULL} if \code{TRUE}}
+\item{highR}{If \code{TRUE} then \code{dark_scenarios} is taken to be all scenarios
+that contain "High R"; \code{dark_scenarios} should be \code{NULL} if \code{TRUE}}
+
+\item{preview}{If \code{TRUE} then plots the final colour scheme with
+\link[khroma:plot]{khroma::plot_scheme}}
 }
 \description{
 Select colours for plotting simulation scenarios

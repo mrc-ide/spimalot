@@ -20,7 +20,7 @@ plot_rt_dist <- function(npi_key, xlim, ylim, labels = NULL, legend_ncol = 1,
        ylab = "Density",
        las = 1)
   cols <- viridis(nrow(npi_key))
-  for (i in seq_len(nrow(npi_key))) {
+  for (i in seq_rows(npi_key)) {
     dist <- distr6::dstr("Lognormal", mean = npi_key$Rt[i], sd = npi_key$Rt_sd[i])
     curve(dist$pdf(x), add = TRUE, col = cols[i], from = xlim[1], to = xlim[2],
           n = 1e3, lwd = 2)
@@ -28,7 +28,7 @@ plot_rt_dist <- function(npi_key, xlim, ylim, labels = NULL, legend_ncol = 1,
   }
   if (!is.null(npi_key2)) {
     cols <- viridis(nrow(npi_key2))
-    for (i in seq_len(nrow(npi_key))) {
+    for (i in seq_rows(npi_key)) {
       dist <- distr6::dstr("Lognormal", mean = npi_key2$Rt[i], sd = npi_key2$Rt_sd[i])
       curve(dist$pdf(x),
             add = TRUE, col = cols[i], from = xlim[1], to = xlim[2],
@@ -73,6 +73,7 @@ plot_seasonality <- function(peak_date = as.Date("2020-02-15"), seasonality = 0.
 ##'
 ##' @export
 plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
+
     R1_range <- as.list(
         distr6::dstrs(
             "Lognormal",
@@ -84,16 +85,19 @@ plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
         c(min(R1_range[[i]]) * min(epsilon_range), max(R1_range[[i]]) * max(epsilon_range))
     })
 
-    data.frame(do.call(rbind, Map(rbind, R1_range, R2_range))) %>%
-        `colnames<-`(c("min", "max")) %>%
-        mutate(
-            central = c(R1[1], (R1 * epsilon_central)[1], R1[2], (R1 * epsilon_central)[2]),
+    data_frame(do.call(rbind, Map(rbind, R1_range, R2_range))) %>%
+       `colnames<-`(c("min", "max")) %>%
+        dplyr::mutate(
+            central = c(R1[1], (R1 * epsilon_central)[1], R1[2],
+                        (R1 * epsilon_central)[2]),
             variant = rep(c("B.1.1.7", "B.1.617.2"), 2),
-            NPI = c(rep("central R after NPI lift", 2), rep("high R after NPI lift", 2)),
+            NPI = c(rep("central R after NPI lift", 2),
+                    rep("high R after NPI lift", 2)),
             NPI = factor(NPI, levels = unique(NPI))
         ) %>%
-        ggplot() +
-        geom_pointrange(aes(x = NPI, y = central, ymin = min, ymax = max, colour = variant),
+        ggplot2::ggplot() +
+        geom_pointrange(aes(x = NPI, y = central, ymin = min, ymax = max,
+                            colour = variant),
             size = 1, position = position_dodge(width = 0.2)
         ) +
         scale_y_continuous(breaks = seq(0, 12, 2), limits = c(0, 11)) +
@@ -109,54 +113,56 @@ plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
 ##' Select colours for plotting simulation scenarios
 ##' @title Return accessible scenario colours
 ##'
-##' @param scens Unique scenario names
-##' @param dark_scens Optional unique scenario names that should be same length
-##'  as `scens` as provided and will be the same colours but darker. Useful
-##'  if plotting scenarios and their High R counterparts.
-##' @param darken If `dark_scens` is not `NULL` then `darken` is subtracted
-##'  from the RGB code of `palette` to darken the colour palette for
-##'  `dark_scens`
+##' @param scenarios Unique scenario names
+##' @param dark_scenarios Optional unique scenario names that should be same
+##'  length as `scenarios` as provided and will be the same colours but darker.
+##'  Useful if plotting scenarios and their High R counterparts.
+##' @param weight If `dark_scenarios` is not `NULL` then `weight` passed to
+##'  `mix_cols` to darken colours by mixing with "#000000" (black)
 ##' @param palette Colour palette, passed to [khroma::colour]
-##' @param highR If `TRUE` then `dark_scens` is taken to be all scenarios
-##'   that contain "High R"; `dark_scens` should be `NULL` if `TRUE`
+##' @param highR If `TRUE` then `dark_scenarios` is taken to be all scenarios
+##'   that contain "High R"; `dark_scenarios` should be `NULL` if `TRUE`
+##' @param preview If `TRUE` then plots the final colour scheme with
+##'   [khroma::plot_scheme]
 ##'
 ##' @export
-spim_scenario_cols <- function(scens, dark_scens = NULL, darken = 50,
-                               palette = "bright", highR = TRUE) {
+spim_scenario_cols <- function(scenarios, dark_scenarios = NULL, weight = 0.3,
+                               palette = "bright", highR = TRUE,
+                               preview = FALSE) {
 
-  stopifnot(all(table(scens)) == 1)
+  stopifnot(all(table(scenarios)) == 1)
 
-  n_scens <- length(scens)
+  n_scens <- length(scenarios)
 
   if (highR) {
-    if (!is.null(dark_scens)) {
-      stop("`dark_scens` must be `NULL` if `highR` is `TRUE`")
+    if (!is.null(dark_scenarios)) {
+      stop("`dark_scenarios` must be `NULL` if `highR` is `TRUE`")
     }
-    dark_scens <- grep("High R", scens, value = TRUE)
-    scens <- setdiff(scens, dark_scens)
-    n_scens <- length(scens)
-    if (length(dark_scens) == 0) {
-      dark_scens <- NULL
+    dark_scenarios <- grep("High R", scenarios, value = TRUE)
+    scenarios <- setdiff(scenarios, dark_scenarios)
+    n_scens <- length(scenarios)
+    if (length(dark_scenarios) == 0) {
+      dark_scenarios <- NULL
     }
   }
 
-  if (!is.null(dark_scens)) {
-    stopifnot(all(table(dark_scens)) == 1)
-    stopifnot(n_scens == length(dark_scens))
+  if (!is.null(dark_scenarios)) {
+    stopifnot(all(table(dark_scenarios)) == 1,
+              n_scens == length(dark_scenarios))
   }
 
   cols <- khroma::colour(palette)(n_scens)
-  names(cols) <- scens
+  names(cols) <- scenarios
 
-  if (is.null(dark_scens)) {
-    return(cols)
+  if (!is.null(dark_scenarios)) {
+    dark_cols <- mix_cols(cols, rep("#000000", length(cols)), 0.3)
+    names(dark_cols) <- dark_scenarios
+    cols <- c(cols, dark_cols)
   }
 
-  col_rgb <- col2rgb(cols) - darken
-  col_rgb[col_rgb < 0] <- 0
-  dark_cols <- apply(col_rgb, 2, function(x) rgb(x[1], x[2], x[3],
-                     maxColorValue = 255))
-  names(dark_cols) <- dark_scens
+  if (preview) {
+    khroma::plot_scheme(cols)
+  }
 
-  c(cols, dark_cols)
+  cols
 }

@@ -129,7 +129,7 @@ spim_simulate_args <- function(grid, vars, base, ignore, regions, multistrain) {
     base
   }
 
-  ret <- lapply(seq_len(nrow(grid)), f)
+  ret <- lapply(seq_rows(grid), f)
 
   message("Validating generated parameters")
   for (i in seq_along(ret)) {
@@ -666,7 +666,7 @@ setup_future_betas <- function(pars, rt_future, S, rt_type,
     rt_future_r$step_start <- sircovid::sircovid_date(rt_future_r$date) / dt
     rt_future_r$step_end <- c(rt_future_r$step_start[-1L] - 1L, step_end)
 
-    for (i in seq_len(nrow(rt_future_r))) {
+    for (i in seq_rows(rt_future_r)) {
       j <- seq(rt_future_r$step_start[[i]], rt_future_r$step_end[[i]])
 
       if (rt_future_r$Rt_sd[[i]] > 0) {
@@ -1223,7 +1223,7 @@ spim_expand_grid <- function(..., full_run = FALSE,
     ## adds central for missing variables
     tidyr::expand_grid(dplyr::select(central, -names(.)), .) %>%
     ## add analysis name
-    mutate(analysis = paste0(prefix, seq_len(nrow(.))))
+    mutate(analysis = paste0(prefix, seq_rows(.)))
 }
 
 

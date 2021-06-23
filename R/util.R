@@ -82,5 +82,10 @@ nlayers <- function(x) {
 
 
 str_collapse <- function(str) {
-  paste0("(", paste0(str, sep = ", "), "}")
+  sprintf("{%s}", paste0(str, sep = ", "))
+}
+
+
+seq_rows <- function(x) {
+  seq_len(nrow(x))
 }
