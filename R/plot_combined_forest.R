@@ -29,21 +29,25 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
   date <- dat$info$date
   model_type <- dat$info$model_type
 
+  countries <- setdiff(regions, sircovid::regions("england"))
+
+  region_names <- setdiff(regions, sircovid::regions("nations"))
+
   if ("start_date" %in% colnames(samples[[1]]$pars)) {
     # order by start_date
     mean_start_date <-
       vnapply(samples, function(x) mean(x$pars[, "start_date"]))
 
-    countries <- setdiff(regions, sircovid::regions("england"))
-
-    region_names <- setdiff(regions, sircovid::regions("nations"))
-
     ordered_regions <- c(names(c(sort(mean_start_date[countries],
                                       decreasing = TRUE),
                                  sort(mean_start_date[region_names],
                                       decreasing = TRUE))))
-    samples <- samples[ordered_regions]
+  } else {
+    ordered_regions <- c(sort(countries, decreasing = TRUE),
+                         sort(region_names, decreasing = TRUE))
   }
+
+  samples <- samples[ordered_regions]
 
   # formats for region labels
   labels <- spim_region_name(names(samples), "code")
