@@ -11,8 +11,8 @@
 ##'   lines
 ##'
 ##' @export
-plot_rt_dist <- function(npi_key, xlim, ylim, labels = NULL, legend_ncol = 1,
-                         npi_key2 = NULL) {
+spim_plot_rt_dist <- function(npi_key, xlim, ylim, labels = NULL,
+                              legend_ncol = 1, npi_key2 = NULL) {
 
   labels <- labels %||% rownames(npi_key)
   plot(0, 0, xlim = xlim, ylim = ylim, type = "n",
@@ -50,7 +50,8 @@ plot_rt_dist <- function(npi_key, xlim, ylim, labels = NULL, legend_ncol = 1,
 ##' @param seasonality Seasonal multiplier
 ##'
 ##' @export
-plot_seasonality <- function(peak_date = as.Date("2020-02-15"), seasonality = 0.1) {
+spim_plot_seasonality <- function(peak_date = as.Date("2020-02-15"),
+                                  seasonality = 0.1) {
   x <- seq_len(365)
   dx <- sircovid::sircovid_date_as_date(x)
   plot(dx,
@@ -72,7 +73,7 @@ plot_seasonality <- function(peak_date = as.Date("2020-02-15"), seasonality = 0.
 ##' @param epsilon_central Relative mean for strain 2
 ##'
 ##' @export
-plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
+spim_plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
 
     R1_range <- as.list(
         distr6::dstrs(
