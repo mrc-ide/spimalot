@@ -14,7 +14,7 @@
 ##'
 ##' @export
 spim_restart_initial <- function(state, date, multistrain) {
-  e <- new.env(parent = baseenv())
+  e <- new.env(parent = topenv())
   e$state <- state
   e$date <- sircovid::as_sircovid_date(date)
   e$multistrain <- multistrain
