@@ -1,6 +1,6 @@
 Package: spimalot
 Title: Support for 'sircovid'
-Version: 0.2.5
+Version: 0.2.6
 Authors@R:
     c(person(given = "Marc",
            family = "Baguelin",
@@ -52,6 +52,7 @@ Imports:
     dust,
     ggplot2,
     ggsci,
+    khroma,
     lubridate,
     mcstate (>= 0.5.14),
     readxl,
