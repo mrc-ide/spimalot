@@ -206,7 +206,7 @@ spim_population <- function(combined, ignore_uk = FALSE, by_age = TRUE,
   if (!ignore_uk) {
     pop_uk <- rowSums(pop[, sircovid::regions("all")])
   } else {
-    pop_uk <- NA * pop_england
+    pop_uk <- rep(NA_real_, length(pop_england))
   }
 
   df <- data.frame(pop, england = pop_england, uk = pop_uk)
