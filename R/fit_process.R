@@ -31,7 +31,8 @@ spim_fit_process <- function(samples, parameters, data, control) {
   message("Computing Rt")
   rt <- calculate_Rt(forecast, samples$info$multistrain) # TODO: very slow
   message("Computing IFR")
-  ifr_t <- calculate_ifr_t(forecast) # TODO: a bit slow
+  ifr_t <-
+    calculate_ifr_t(forecast, samples$info$multistrain) # TODO: a bit slow
 
   message("Summarising admissions")
   admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
@@ -167,7 +168,7 @@ calculate_Rt <- function(samples, multistrain) {
 
   S <- samples$trajectories$state[index_S, , , drop = FALSE]
 
-  pars <- lapply(seq_len(nrow(samples$pars)), function(i)
+  pars <- lapply(seq_rows(samples$pars), function(i)
     samples$predict$transform(samples$pars[i, ]))
 
   sircovid::carehomes_Rt_trajectories(
@@ -178,22 +179,26 @@ calculate_Rt <- function(samples, multistrain) {
 }
 
 
-calculate_ifr_t <- function(samples) {
+calculate_ifr_t <- function(samples, multistrain) {
   step <- samples$trajectories$step
 
   index_S <- grep("^S_", names(samples$predict$index))
   index_I_weighted <- grep("^I_weighted_", names(samples$predict$index))
+  index_R <- grep("^R_", names(samples$predict$index))
 
   S <- samples$trajectories$state[index_S, , , drop = FALSE]
-
-  index_I_weighted <- grep("^I_weighted_", names(samples$predict$index))
   I_weighted <- samples$trajectories$state[index_I_weighted, , , drop = FALSE]
+  if (multistrain) {
+    R <- samples$trajectories$state[index_R, , , drop = FALSE]
+  } else {
+    R <- NULL
+  }
 
-  pars <- lapply(seq_len(nrow(samples$pars)), function(i)
+  pars <- lapply(seq_rows(samples$pars), function(i)
     samples$predict$transform(samples$pars[i, ]))
 
   sircovid::carehomes_ifr_t_trajectories(
-    step, S, I_weighted, pars,
+    step, S, I_weighted, pars, R = R,
     initial_step_from_parameters = TRUE,
     shared_parameters = FALSE)
 }

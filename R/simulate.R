@@ -106,7 +106,7 @@ spim_simulate_prepare <- function(combined, n_par,
 ##' @return A list of parameters for the model
 ##' @export
 spim_simulate_args <- function(grid, vars, base, ignore, regions, multistrain) {
-  simulate_args_validate(grid, vars, base, ignore)
+  simulate_args_validate(grid, vars, base, ignore, multistrain)
 
   f <- function(i) {
     el <- grid[i, ]
@@ -129,7 +129,7 @@ spim_simulate_args <- function(grid, vars, base, ignore, regions, multistrain) {
     base
   }
 
-  ret <- lapply(seq_len(nrow(grid)), f)
+  ret <- lapply(seq_rows(grid), f)
 
   message("Validating generated parameters")
   for (i in seq_along(ret)) {
@@ -173,27 +173,35 @@ spim_simulate_rrq <- function(args, combined, rrq) {
 }
 
 
-simulate_args_names <- function() {
-  c(## Core simulation parameters
-    "end_date", "seed", "n_threads",
-    ## Output control
-    "output_keep", "output_rt", "output_time_series", "output_vaccination",
-    "output_state_by_age", "output_weight_rt",
-    ## Rt control
-    "rt_type",
-    "rt_future",
-    ## Seasonality
-    "seasonality",
-    ## Vaccination
-    "vaccine_daily_doses", "vaccine_booster_daily_doses",
-    "vaccine_efficacy", "vaccine_booster_efficacy", "vaccine_eligibility",
-    "vaccine_uptake", "vaccine_lag_groups", "vaccine_lag_days",
-    "vaccine_delay_multiplier",
-    ## Strain/Variant
-    "strain_seed_date",  "strain_transmission", "strain_seed_rate",
-    "strain_vaccine_efficacy", "strain_initial_proportion",
-    "strain_vaccine_booster_efficacy", "strain_cross_immunity",
-    "strain_vaccine_efficacy_modifier")
+simulate_args_names <- function(multistrain = TRUE) {
+  args <-
+    c( ## Core simulation parameters
+      "end_date", "seed", "n_threads",
+      ## Output control
+      "output_keep", "output_rt", "output_time_series", "output_vaccination",
+      "output_state_by_age", "output_weight_rt",
+      ## Rt control
+      "rt_type",
+      "rt_future",
+      ## Seasonality
+      "seasonality",
+      ## Vaccination
+      "vaccine_daily_doses", "vaccine_booster_daily_doses",
+      "vaccine_efficacy", "vaccine_booster_efficacy", "vaccine_eligibility",
+      "vaccine_uptake", "vaccine_lag_groups", "vaccine_lag_days",
+      "vaccine_delay_multiplier"
+    )
+
+  if (multistrain) {
+    args <-
+      c(args,
+        "strain_seed_date", "strain_transmission", "strain_seed_rate",
+        "strain_vaccine_efficacy", "strain_initial_proportion",
+        "strain_vaccine_booster_efficacy", "strain_cross_immunity",
+        "strain_vaccine_efficacy_modifier")
+  }
+
+  args
 }
 
 
@@ -552,7 +560,8 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
 ## TODO: someone needs to rewrite this.
 fixme_vaccine_strain_efficacy <- function(efficacy, efficacy_strain_2,
                                           strain_vaccine_efficacy_modifier) {
-  n_strain <- if (is.null(efficacy_strain_2)) 1 else 4
+
+  n_strain <- if (length(efficacy_strain_2) == 0) 1 else 4
   n_vacc_strata <- ncol(efficacy[[1]])
   n_groups <- nrow(efficacy[[1]])
 
@@ -666,7 +675,7 @@ setup_future_betas <- function(pars, rt_future, S, rt_type,
     rt_future_r$step_start <- sircovid::sircovid_date(rt_future_r$date) / dt
     rt_future_r$step_end <- c(rt_future_r$step_start[-1L] - 1L, step_end)
 
-    for (i in seq_len(nrow(rt_future_r))) {
+    for (i in seq_rows(rt_future_r)) {
       j <- seq(rt_future_r$step_start[[i]], rt_future_r$step_end[[i]])
 
       if (rt_future_r$Rt_sd[[i]] > 0) {
@@ -931,7 +940,7 @@ fixme_calculate_n_protected <- function(n_vaccinated, R, vaccine_efficacy,
 
 
 
-simulate_args_validate <- function(grid, vars, base, ignore) {
+simulate_args_validate <- function(grid, vars, base, ignore, multistrain) {
   err <- intersect(ignore, names(vars))
   if (length(err) > 0) {
     stop("Names in ignore must not occur in vars: ",
@@ -960,7 +969,8 @@ simulate_args_validate <- function(grid, vars, base, ignore) {
     }
   }
 
-  msg <- setdiff(simulate_args_names(), union(names(vars), names(base)))
+  msg <- setdiff(simulate_args_names(multistrain),
+                 union(names(vars), names(base)))
   if (length(msg) > 0) {
     stop("Required elements not found in vars or base: ",
          paste(squote(msg), collapse = ", "))
@@ -979,10 +989,7 @@ simulate_validate_args1 <- function(args, regions, multistrain) {
   n_vacc_strata <- ncol(args$vaccine_efficacy[[1]])
   n_groups <- nrow(args$vaccine_efficacy[[1]])
 
-  expected <- simulate_args_names()
-  if (!multistrain) {
-    expected <- expected[grepl("^strain_", expected)]
-  }
+  expected <- simulate_args_names(multistrain)
 
   msg <- setdiff(expected, names(args))
   if (length(msg) > 0) {
@@ -1187,4 +1194,194 @@ fixme_extract_age_class_state <- function(state, index) {
   }
 
   lapply(arrays, f)
+}
+
+
+##' Create expanded run grid for simulation
+##'
+##' @title Create expanded run grid
+##'
+##' @param ... named variables to expand over, should be in
+##'  `simulation_central_analysis`, omitted variables will take central value
+##' @param full_run If `TRUE` saves trajectories for expanded scenarios, this
+##'   should very rarely be `TRUE`, change default with care as this will lead
+##'   to massive objects
+##' @param prefix prefix for analysis name, prefixes row number
+##'
+##' @return A grid of scenarios to run
+##' @export
+spim_expand_grid <- function(..., full_run = FALSE, prefix = "Grid_") {
+
+  central <- simulation_central_analysis(full_run)
+
+  actual <- names(list(...))
+  expected <- setdiff(colnames(central), c("RUN", "full_run"))
+  mtc <- is.na(match(actual, expected))
+  if (any(mtc)) {
+    stop(sprintf("Unexpected variables(s) %s", str_collapse(actual[mtc])))
+  }
+
+  expand_grid(
+    RUN = TRUE,
+    full_run,
+    ...
+  ) %>%
+    ## adds central for missing variables
+    tidyr::expand_grid(dplyr::select(central, -names(.)), .) %>%
+    ## add analysis name
+    mutate(analysis = paste0(prefix, seq_rows(.)))
+}
+
+
+##' Create grid of scenarios to run for simulation
+##'
+##' @title Create scenario run grid
+##'
+##' @param scenarios Scenarios to run simulation over
+##' @param csv Path of csv to load run grid from
+##' @param expand_grid Optional large grid of scenarios such as from
+##'   [spim_expand_grid]
+##' @param force_central If `TRUE` (default) then central analysis is always
+##'  included as specified in `simulation_central_analysis`. This should rarely
+##'  be `FALSE` as often required for basic checking plots.
+##' @param set_strain_params If `TRUE` automatically sets strain parameters
+##'   `strain_cross_immunity` and `strain_vaccine_efficacy_modifier`, which are
+##'   currently equivalent to `strain_vaccine_efficacy`
+##' @param multistrain If `FALSE` then removes all columns related to a second
+##'   strain
+##'
+##' @return A grid of scenarios to run
+##' @export
+spim_run_grid <- function(scenarios, csv = NULL, expand_grid = NULL,
+                          force_central = TRUE, set_strain_params = TRUE,
+                          multistrain = TRUE) {
+
+  if (is.null(csv) && is.null(expand_grid) && !force_central) {
+    stop("At least one of 'csv', 'expand_grid', 'force_central' must be
+    non-NULL/TRUE")
+  }
+
+  run_grid <- simulation_central_analysis(TRUE, multistrain)
+  if (!force_central) {
+    run_grid <- run_grid[-1, ]
+  }
+
+  if (!is.null(csv)) {
+    csv_grid <- read.csv(csv)
+    if (!multistrain) {
+      csv_grid <- csv_grid %>% select(-starts_with("strain_"))
+    }
+    run_grid <- rbind(run_grid, csv_grid)
+  }
+
+  if (!is.null(expand_grid)) {
+    run_grid <- rbind(run_grid, expand_grid)
+  }
+
+  if (multistrain && set_strain_params) {
+    run_grid <- run_grid %>%
+      dplyr::mutate(strain_cross_immunity = strain_vaccine_efficacy,
+                    strain_vaccine_efficacy_modifier = strain_vaccine_efficacy)
+  }
+
+  run_grid %>%
+    dplyr::filter(RUN) %>%
+    ## expand over scenarios
+    tidyr::expand_grid(scenario = scenarios) %>%
+    ## de-duplicate
+    dplyr::distinct(across(!any_of("analysis")), .keep_all = TRUE) %>%
+    ## set cross immunity and modifier
+    dplyr::mutate(rt_future =
+                    paste(scenario, adherence_to_baseline_npis, sep = ": "))
+}
+
+##' Calculate SHAPs from a tidy summary of predictions over various features.
+##'  SHAPs calculated as the expected difference in predicted states with and
+##'  without the given feature of interest (over all feature levels).
+##'
+##' @title Calculate SHAPs over predicted states
+##'
+##' @param summary A tidy summary object such as that returned by
+##'   `create_summary`
+##' @param feats Features to calculate SHAPS for. If NULL then uses default
+##'   selection returned by `spim_simulation_predictors`
+##'
+##' @export
+spim_simulation_shaps <- function(summary, feats = NULL) {
+
+  if (is.null(feats)) {
+    feats <- spim_simulation_predictors(summary)
+  }
+
+  states <- unique(summary$state)
+  out <- set_names(vector("list", length(states)), states)
+
+  for (State in states) {
+    state_df <- summary %>%
+      dplyr::filter(state == State) %>%
+      dplyr::select(`50%`, feats)
+
+    shaps <- set_names(vector("list", length(feats)), feats)
+    for (i in seq_along(shaps)) {
+      lvls <- unique(state_df[[feats[[i]]]])
+      lvls <- set_names(numeric(length(lvls)), lvls)
+
+      for (j in names(lvls)) {
+        for (k in names(lvls)) {
+          if (!identical(j, k)) {
+            with <- state_df %>%
+              dplyr::filter(!!as.symbol(feats[[i]]) == j) %>%
+              dplyr::select(`50%`) %>%
+              unlist()
+            without <- state_df %>%
+              dplyr::filter(!!as.symbol(feats[[i]]) == k) %>%
+              dplyr::select(`50%`) %>%
+              unlist()
+
+            ## only compare possible scenarios
+            which <- intersect(names(with), names(without))
+
+            lvls[[j]] <- mean(c(lvls[[j]], mean(with[which] - without[which])))
+          }
+        }
+      }
+
+      shaps[[i]] <- lvls
+    }
+
+    mshaps <- reshape2::melt(shaps)
+    mshaps$lvl <- unlist(lapply(shaps, names))
+    out[[State]] <- mshaps
+  }
+
+  mout <- do.call(rbind, out)
+  mout$state <- vapply(strsplit(rownames(mout), ".", TRUE), "[[",
+                       character(1), 1)
+  rownames(mout) <- NULL
+  colnames(mout)[[2]] <- "Var"
+  mout
+}
+
+##' Names of 'predictive' variables from a tidy simulation summary object, i.e.
+##'  those variables which: i) are not purely informative;
+##'  ii) impact upon predictions; iii) are not outcome variables.
+##'
+##' @title Return predictive simulation variables
+##'
+##' @param summary A tidy summary object such as that returned by
+##'   `create_summary`
+##'
+##' @export
+spim_simulation_predictors <- function(summary) {
+  vars <- names(which(vapply(summary, function(i) length(unique(i)) > 1, logical(1))))
+  vars <- setdiff(vars, c(## not needed
+                          "analysis", "full_run", "state", "rt_future",
+                          ## taken into account in scenario
+                          "adherence_to_baseline_npis",
+                          ## outcomes
+                          "2.5%", "50%", "97.5%",
+                          ## these two are identical to vaccine_efficacy_strain_2
+                          "strain_cross_immunity", "rel_strain_modifier"))
+
+  vars
 }
