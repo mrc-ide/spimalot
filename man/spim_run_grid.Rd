@@ -9,7 +9,8 @@ spim_run_grid(
   csv = NULL,
   expand_grid = NULL,
   force_central = TRUE,
-  set_strain_params = TRUE
+  set_strain_params = TRUE,
+  multistrain = TRUE
 )
 }
 \arguments{
@@ -27,6 +28,9 @@ be \code{FALSE} as often required for basic checking plots.}
 \item{set_strain_params}{If \code{TRUE} automatically sets strain parameters
 \code{strain_cross_immunity} and \code{strain_vaccine_efficacy_modifier}, which are
 currently equivalent to \code{strain_vaccine_efficacy}}
+
+\item{multistrain}{If \code{FALSE} then removes all columns related to a second
+strain}
 }
 \value{
 A grid of scenarios to run
