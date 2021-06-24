@@ -190,3 +190,29 @@ combined_switch_levels <- function(x) {
   names(y) <- nms
   y
 }
+
+##' Get region and country population from a combined fits object
+##' @title Get population from combined
+##' @param combined Combined fits object
+##' @param ignore_uk If `TRUE` population of UK is retured as NA
+##' @return data.frame of region/country populations
+##' @export
+get_population <- function(combined, ignore_uk = FALSE, by_age = TRUE,
+                           group = 1:19) {
+  pop <- vapply(names(combined$pars), function(r)
+    as.integer(combined$transform[[r]](combined$pars[[r]][1, ])$N_tot[group]),
+    group)
+  pop_england <- rowSums(pop[, sircovid::regions("england")])
+  if (!ignore_uk) {
+    pop_uk <- rowSums(pop[, sircovid::regions("all")])
+  } else {
+    pop_uk <- NA * pop_england
+  }
+
+  df <- data.frame(pop, england = pop_england, uk = pop_uk)
+  if (!by_age) {
+    df <- colSums(df)
+  }
+
+  df
+}
