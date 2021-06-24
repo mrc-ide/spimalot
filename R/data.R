@@ -231,8 +231,8 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
                     "pillar2_cases_over25")
   data[seq(to = nrow(data), length.out = 7), cols_pillar2] <- NA_integer_
 
-  ## ignore pillar 2 testing before 2020-06-01
-  data[which(data$date < "2020-06-01"), cols_pillar2] <- NA_integer_
+  ## ignore pillar 2 testing before 2020-06-18
+  data[which(data$date < "2020-06-18"), cols_pillar2] <- NA_integer_
 
   ## Remove last week admissions for Wales (due to backfill)
   if (region == "wales") {
