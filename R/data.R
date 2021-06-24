@@ -92,7 +92,7 @@ spim_data_rtm <- function(date, region, model_type, data, data_admissions,
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
             "death2", "death3", "death_chr", "death_comm",
-            "death_0", "death_65", "death_85",
+            "deaths_hosp_0_64", "deaths_hosp_65_plus",
             "ons_death_carehome", "ons_death_noncarehome",
             "pillar2_positives", "pillar2_negatives",
             "positives", "negatives", "react_positive", "react_samples",
@@ -132,9 +132,8 @@ spim_data_rtm <- function(date, region, model_type, data, data_admissions,
   }
 
   # Set NA deaths to 0
-  data[which(is.na(data$death2)), "death_0"] <- 0
-  data[which(is.na(data$death_65)), "death_65"] <- 0
-  data[which(is.na(data$death_85)), "death_85"] <- 0
+  data[which(is.na(data$death2)), "deaths_hosp_0_64"] <- 0
+  data[which(is.na(data$death_65)), "deaths_hosp_65_plus"] <- 0
   data[which(is.na(data$death2)), "death2"] <- 0
   data[which(is.na(data$death3)), "death3"] <- 0
   data[which(is.na(data$death_chr)), "death_chr"] <- 0
@@ -154,9 +153,8 @@ spim_data_rtm <- function(date, region, model_type, data, data_admissions,
   if (region %in% c("northern_ireland", "scotland", "wales", "uk")) {
     data$deaths <- data$death2
     data$deaths_hosp <- NA_integer_
-    data$death_0 <- NA_integer_
-    data$death_65 <- NA_integer_
-    data$death_85 <- NA_integer_
+    data$deaths_hosp_0_64 <- NA_integer_
+    data$deaths_hosp_65_plus <- NA_integer_
     data$deaths_comm <- NA_integer_
     data$deaths_carehomes <- NA_integer_
     data$deaths_non_hosp <- NA_integer_
@@ -272,8 +270,7 @@ spim_data_rtm <- function(date, region, model_type, data, data_admissions,
   data <- dplyr::left_join(data, data_admissions)
   if (region %in% c("northern_ireland", "scotland", "wales", "uk")){
     data$admissions_under_65 <- NA_integer_
-    data$admissions_65_84 <- NA_integer_
-    data$admissions_85_plus <- NA_integer_
+    data$admissions_65_plus <- NA_integer_
   } else {
     data$final_admissions <- NA_integer_
   }
@@ -286,9 +283,8 @@ spim_data_rtm <- function(date, region, model_type, data, data_admissions,
     deaths_comm = data$deaths_comm,
     deaths_carehomes = data$deaths_carehomes,
     deaths_non_hosp = data$deaths_non_hosp,
-    death_0 = data$death_0,
-    death_65 = data$death_65,
-    death_85 = data$death_85,
+    deaths_hosp_0_64 = data$deaths_hosp_0_64,
+    deaths_hosp_65_plus = data$deaths_hosp_65_plus,
     icu = data$final_icu,
     general = data$final_general,
     hosp = data$final_hosp,
@@ -296,9 +292,8 @@ spim_data_rtm <- function(date, region, model_type, data, data_admissions,
     admitted = data$admitted,
     diagnoses = data$new,
     all_admission = data$final_admissions,
-    all_admission_0_64 = data$admissions_under_65,
-    all_admission_65_84 = data$admissions_65_84,
-    all_admission_85_plus = data$admissions_85_plus,
+    all_admission_0_64 = data$all_admission_0_64,
+    all_admission_65_plus = data$all_admission_65_plus,
     pillar2_tot = data$pillar2_positives + data$pillar2_negatives,
     pillar2_pos = data$pillar2_positives,
     pillar2_cases = data$pillar2_cases,
@@ -471,13 +466,12 @@ data_admissions_old <- function(admissions, region) {
     admissions <- data.frame(
       date = unique(admissions$date),
       region = region,
-      admissions_under_65 = NA_integer_,
-      admissions_65_84 = NA_integer_,
-      admissions_85_plus = NA_integer_)
+      all_admission_0_64 = NA_integer_,
+      all_admission_65_plus = NA_integer_)
   } else {
     vector_age_bands <- unique(admissions$age_from)
-    age_bands <- c("date", "region", "admissions_under_65", "admissions_65_84",
-                   "admissions_85_plus")
+    age_bands <- c("date", "region", "all_admission_0_64",
+                   "all_admission_65_plus")
 
     admissions$region <- gsub(" ", "_", admissions$region)
     admissions <- admissions[admissions$region == region, ]
@@ -496,9 +490,8 @@ data_admissions_old <- function(admissions, region) {
       tidyr::pivot_wider(id_cols = c(date, region),
                          names_from = .data$age_from)
 
-    admissions$admissions_under_65 <- rowSums(admissions[, 3:5])
-    admissions$admissions_65_84 <- rowSums(admissions[, 6])
-    admissions$admissions_85_plus <- rowSums(admissions[, 7])
+    admissions$all_admission_0_64 <- rowSums(admissions[, 3:5])
+    admissions$all_admission_65_plus <- rowSums(admissions[, 6:7])
 
     admissions <- admissions %>% dplyr::select(dplyr::all_of(age_bands))
   }

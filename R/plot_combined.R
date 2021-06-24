@@ -1304,17 +1304,15 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
                  deaths_comm = "deaths_comm_inc",
                  deaths_hosp = "deaths_hosp_inc",
                  deaths_carehomes = "deaths_carehomes_inc",
-                 death_0 = "deaths_hosp_inc_0_64",
-                 death_65 = "deaths_hosp_inc_65_84",
-                 death_85 = "deaths_hosp_inc_85_plus",
+                 deaths_hosp_0_64 = "deaths_hosp_inc_0_64",
+                 deaths_hosp_65_plus = "deaths_hosp_inc_65_plus",
                  icu = "icu",
                  hosp = "hosp",
                  general = "general",
                  diagnoses = "diagnoses_inc",
                  admitted = "admitted_inc",
                  all_admission_0_64 = "admitted_inc_0_64",
-                 all_admission_65_84 = "admitted_inc_65_84",
-                 all_admission_85_plus = "admitted_inc_85_plus",
+                 all_admission_65_plus = "admitted_inc_65+",
                  all_admission = "all_admission_inc")
   labs <- c(deaths = "Daily deaths",
             deaths_comm = "Daily community deaths",
@@ -1326,12 +1324,10 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
             diagnoses = "Daily inpatient diagnoses",
             admitted = "Daily admissions",
             all_admission = "Daily admissions (all)",
-            death_0 = "Daily hospital deaths 0-64",
-            death_65 = "Daily hospital deaths 65-84",
-            death_85 = "Daily hospital deaths 85+",
+            deaths_hosp_0_64 = "Daily hospital deaths 0-64",
+            deaths_hosp_65_plus = "Daily hospital deaths 65+",
             all_admission_0_64 = "Daily admissions (all) 0-64",
-            all_admission_65_84 = "Daily admissions (all) 65-84",
-            all_admission_85_plus = "Daily admissions (all) 85+")
+            all_admission_65_plus = "Daily admissions (all) 65-84")
 
   ## currently remove first step as the first time period is typically much more
   ## than one day at the moment
@@ -1348,14 +1344,10 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
     res <-
       trajectories$state["diagnoses_inc_0_64", , -1L] +
       trajectories$state["admitted_inc_0_64", , -1L]
-  } else if (what == "all_admission_65_84") {
+  } else if (what == "all_admission_65_plus") {
     res <-
-      trajectories$state["diagnoses_inc_65_84", , -1L] +
-      trajectories$state["admitted_inc_65_84", , -1L]
-  } else if (what == "all_admission_85_plus") {
-    res <-
-      trajectories$state["diagnoses_inc_85_plus", , -1L] +
-      trajectories$state["admitted_inc_85_plus", , -1L]
+      trajectories$state["diagnoses_inc_65_plus", , -1L] +
+      trajectories$state["admitted_inc_65_plus", , -1L]
   } else {
     res <- trajectories$state[trajnames[what], , -1L]
   }
