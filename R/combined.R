@@ -197,7 +197,7 @@ combined_switch_levels <- function(x) {
 ##' @param ignore_uk If `TRUE` population of UK is retured as NA
 ##' @return data.frame of region/country populations
 ##' @export
-get_population <- function(combined, ignore_uk = FALSE, by_age = TRUE,
+spim_population <- function(combined, ignore_uk = FALSE, by_age = TRUE,
                            group = 1:19) {
   pop <- vapply(names(combined$pars), function(r)
     as.integer(combined$transform[[r]](combined$pars[[r]][1, ])$N_tot[group]),
