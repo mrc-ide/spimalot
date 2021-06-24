@@ -22,15 +22,17 @@ simulation_central_analysis <- function(full_run = TRUE, multistrain = TRUE) {
     vaccine_booster_efficacy = "central"
    )
 
-  grid <- cbind(
-    grid,
-    tibble::tibble(
-      strain_transmission = "no_voc", strain_seed_rate = "no_seeding",
-      strain_vaccine_efficacy = "central",
-      strain_initial_proportion = "no_voc",
-      strain_vaccine_booster_efficacy = "central"
+  if (multistrain) {
+    grid <- cbind(
+      grid,
+      tibble::tibble(
+        strain_transmission = "no_voc", strain_seed_rate = "no_seeding",
+        strain_vaccine_efficacy = "central",
+        strain_initial_proportion = "no_voc",
+        strain_vaccine_booster_efficacy = "central"
+      )
     )
-  )
+  }
 
   grid
 }

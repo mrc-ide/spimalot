@@ -990,9 +990,6 @@ simulate_validate_args1 <- function(args, regions, multistrain) {
   n_groups <- nrow(args$vaccine_efficacy[[1]])
 
   expected <- simulate_args_names(multistrain)
-  if (!multistrain) {
-    expected <- expected[grepl("^strain_", expected)]
-  }
 
   msg <- setdiff(expected, names(args))
   if (length(msg) > 0) {
@@ -1265,13 +1262,16 @@ spim_run_grid <- function(scenarios, csv = NULL, expand_grid = NULL,
   }
 
   run_grid <- simulation_central_analysis(TRUE, multistrain)
-
   if (!force_central) {
-    run_grid <- simulation_central_analysis(TRUE, multistrain)[-1, ]
+    run_grid <- run_grid[-1, ]
   }
 
   if (!is.null(csv)) {
-    run_grid <- rbind(run_grid, read.csv(csv))
+    csv_grid <- read.csv(csv)
+    if (!multistrain) {
+      csv_grid <- csv_grid %>% select(-starts_with("strain_"))
+    }
+    run_grid <- rbind(run_grid, csv_grid)
   }
 
   if (!is.null(expand_grid)) {
@@ -1282,10 +1282,6 @@ spim_run_grid <- function(scenarios, csv = NULL, expand_grid = NULL,
     run_grid <- run_grid %>%
       dplyr::mutate(strain_cross_immunity = strain_vaccine_efficacy,
                     strain_vaccine_efficacy_modifier = strain_vaccine_efficacy)
-  }
-
-  if (!multistrain) {
-    run_grid <- run_grid %>% select(-starts_with("strain_"))
   }
 
   run_grid %>%
