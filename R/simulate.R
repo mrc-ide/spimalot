@@ -1278,7 +1278,7 @@ spim_run_grid <- function(scenarios, csv = NULL, expand_grid = NULL,
     run_grid <- rbind(run_grid, expand_grid)
   }
 
-  if (set_strain_params) {
+  if (multistrain && set_strain_params) {
     run_grid <- run_grid %>%
       dplyr::mutate(strain_cross_immunity = strain_vaccine_efficacy,
                     strain_vaccine_efficacy_modifier = strain_vaccine_efficacy)
