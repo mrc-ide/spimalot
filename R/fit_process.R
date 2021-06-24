@@ -29,7 +29,12 @@ spim_fit_process <- function(samples, parameters, data, control) {
                                            incidence_states)
 
   message("Computing Rt")
-  rt <- calculate_Rt(forecast, samples$info$multistrain) # TODO: very slow
+  rt <- calculate_Rt(forecast, samples$info$multistrain, TRUE) # TODO: very slow
+  if (samples$info$multistrain) {
+    variant_rt <- calculate_Rt(forecast, samples$info$multistrain, FALSE)
+  } else {
+    variant_rt <- NULL
+  }
   message("Computing IFR")
   ifr_t <-
     calculate_ifr_t(forecast, samples$info$multistrain) # TODO: a bit slow
@@ -87,6 +92,7 @@ spim_fit_process <- function(samples, parameters, data, control) {
   list(samples = forecast, # note complicated naming change here
        pmcmc = samples,
        rt = rt,
+       variant_rt = variant_rt,
        ifr_t = ifr_t,
        admissions = admissions,
        deaths = deaths,
@@ -151,7 +157,7 @@ create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
 }
 
 
-calculate_Rt <- function(samples, multistrain) {
+calculate_Rt <- function(samples, multistrain, weight_Rt) {
   step <- samples$trajectories$step
 
   index_S <- grep("^S_", names(samples$predict$index))
@@ -175,7 +181,7 @@ calculate_Rt <- function(samples, multistrain) {
     step, S, pars,
     initial_step_from_parameters = TRUE,
     shared_parameters = FALSE, R = R, prob_strain = prob_strain,
-    weight_Rt = TRUE)
+    weight_Rt = weight_Rt)
 }
 
 
