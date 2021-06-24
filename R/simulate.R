@@ -106,7 +106,7 @@ spim_simulate_prepare <- function(combined, n_par,
 ##' @return A list of parameters for the model
 ##' @export
 spim_simulate_args <- function(grid, vars, base, ignore, regions, multistrain) {
-  simulate_args_validate(grid, vars, base, ignore)
+  simulate_args_validate(grid, vars, base, ignore, multistrain)
 
   f <- function(i) {
     el <- grid[i, ]
@@ -173,27 +173,35 @@ spim_simulate_rrq <- function(args, combined, rrq) {
 }
 
 
-simulate_args_names <- function() {
-  c(## Core simulation parameters
-    "end_date", "seed", "n_threads",
-    ## Output control
-    "output_keep", "output_rt", "output_time_series", "output_vaccination",
-    "output_state_by_age", "output_weight_rt",
-    ## Rt control
-    "rt_type",
-    "rt_future",
-    ## Seasonality
-    "seasonality",
-    ## Vaccination
-    "vaccine_daily_doses", "vaccine_booster_daily_doses",
-    "vaccine_efficacy", "vaccine_booster_efficacy", "vaccine_eligibility",
-    "vaccine_uptake", "vaccine_lag_groups", "vaccine_lag_days",
-    "vaccine_delay_multiplier",
-    ## Strain/Variant
-    "strain_seed_date",  "strain_transmission", "strain_seed_rate",
-    "strain_vaccine_efficacy", "strain_initial_proportion",
-    "strain_vaccine_booster_efficacy", "strain_cross_immunity",
-    "strain_vaccine_efficacy_modifier")
+simulate_args_names <- function(multistrain = TRUE) {
+  args <-
+    c( ## Core simulation parameters
+      "end_date", "seed", "n_threads",
+      ## Output control
+      "output_keep", "output_rt", "output_time_series", "output_vaccination",
+      "output_state_by_age", "output_weight_rt",
+      ## Rt control
+      "rt_type",
+      "rt_future",
+      ## Seasonality
+      "seasonality",
+      ## Vaccination
+      "vaccine_daily_doses", "vaccine_booster_daily_doses",
+      "vaccine_efficacy", "vaccine_booster_efficacy", "vaccine_eligibility",
+      "vaccine_uptake", "vaccine_lag_groups", "vaccine_lag_days",
+      "vaccine_delay_multiplier"
+    )
+
+  if (multistrain) {
+    args <-
+      c(args,
+        "strain_seed_date", "strain_transmission", "strain_seed_rate",
+        "strain_vaccine_efficacy", "strain_initial_proportion",
+        "strain_vaccine_booster_efficacy", "strain_cross_immunity",
+        "strain_vaccine_efficacy_modifier")
+  }
+
+  args
 }
 
 
@@ -552,7 +560,8 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
 ## TODO: someone needs to rewrite this.
 fixme_vaccine_strain_efficacy <- function(efficacy, efficacy_strain_2,
                                           strain_vaccine_efficacy_modifier) {
-  n_strain <- if (is.null(efficacy_strain_2)) 1 else 4
+
+  n_strain <- if (length(efficacy_strain_2) == 0) 1 else 4
   n_vacc_strata <- ncol(efficacy[[1]])
   n_groups <- nrow(efficacy[[1]])
 
@@ -931,7 +940,7 @@ fixme_calculate_n_protected <- function(n_vaccinated, R, vaccine_efficacy,
 
 
 
-simulate_args_validate <- function(grid, vars, base, ignore) {
+simulate_args_validate <- function(grid, vars, base, ignore, multistrain) {
   err <- intersect(ignore, names(vars))
   if (length(err) > 0) {
     stop("Names in ignore must not occur in vars: ",
@@ -960,7 +969,8 @@ simulate_args_validate <- function(grid, vars, base, ignore) {
     }
   }
 
-  msg <- setdiff(simulate_args_names(), union(names(vars), names(base)))
+  msg <- setdiff(simulate_args_names(multistrain),
+                 union(names(vars), names(base)))
   if (length(msg) > 0) {
     stop("Required elements not found in vars or base: ",
          paste(squote(msg), collapse = ", "))
@@ -979,10 +989,7 @@ simulate_validate_args1 <- function(args, regions, multistrain) {
   n_vacc_strata <- ncol(args$vaccine_efficacy[[1]])
   n_groups <- nrow(args$vaccine_efficacy[[1]])
 
-  expected <- simulate_args_names()
-  if (!multistrain) {
-    expected <- expected[grepl("^strain_", expected)]
-  }
+  expected <- simulate_args_names(multistrain)
 
   msg <- setdiff(expected, names(args))
   if (length(msg) > 0) {
@@ -1203,8 +1210,7 @@ fixme_extract_age_class_state <- function(state, index) {
 ##'
 ##' @return A grid of scenarios to run
 ##' @export
-spim_expand_grid <- function(..., full_run = FALSE,
-                             prefix = "Grid_") {
+spim_expand_grid <- function(..., full_run = FALSE, prefix = "Grid_") {
 
   central <- simulation_central_analysis(full_run)
 
@@ -1241,32 +1247,38 @@ spim_expand_grid <- function(..., full_run = FALSE,
 ##' @param set_strain_params If `TRUE` automatically sets strain parameters
 ##'   `strain_cross_immunity` and `strain_vaccine_efficacy_modifier`, which are
 ##'   currently equivalent to `strain_vaccine_efficacy`
+##' @param multistrain If `FALSE` then removes all columns related to a second
+##'   strain
 ##'
 ##' @return A grid of scenarios to run
 ##' @export
 spim_run_grid <- function(scenarios, csv = NULL, expand_grid = NULL,
-                          force_central = TRUE, set_strain_params = TRUE) {
+                          force_central = TRUE, set_strain_params = TRUE,
+                          multistrain = TRUE) {
 
   if (is.null(csv) && is.null(expand_grid) && !force_central) {
     stop("At least one of 'csv', 'expand_grid', 'force_central' must be
     non-NULL/TRUE")
   }
 
-  run_grid <- simulation_central_analysis()
-
+  run_grid <- simulation_central_analysis(TRUE, multistrain)
   if (!force_central) {
-    run_grid <- simulation_central_analysis()[-1, ]
+    run_grid <- run_grid[-1, ]
   }
 
   if (!is.null(csv)) {
-    run_grid <- rbind(run_grid, read.csv(csv))
+    csv_grid <- read.csv(csv)
+    if (!multistrain) {
+      csv_grid <- csv_grid %>% select(-starts_with("strain_"))
+    }
+    run_grid <- rbind(run_grid, csv_grid)
   }
 
   if (!is.null(expand_grid)) {
     run_grid <- rbind(run_grid, expand_grid)
   }
 
-  if (set_strain_params) {
+  if (multistrain && set_strain_params) {
     run_grid <- run_grid %>%
       dplyr::mutate(strain_cross_immunity = strain_vaccine_efficacy,
                     strain_vaccine_efficacy_modifier = strain_vaccine_efficacy)
