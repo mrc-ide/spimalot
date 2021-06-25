@@ -4,16 +4,17 @@
 \alias{spim_data_admissions}
 \title{Load admissions data}
 \usage{
-spim_data_admissions(admissions, region, new = TRUE)
+spim_data_admissions(new_data, old_data, region)
 }
 \arguments{
-\item{admissions}{A data.frame from the admissions by age sitrep}
+\item{new_data}{A data.frame from the admissions by age sitrep using (finer)
+age-bands available from October 13, 2020 onward}
+
+\item{old_data}{A data.frame from the admissions by age sitrep using (broad)
+age-bands available from the start of the epidemic onward}
 
 \item{region}{Name of the region}
-
-\item{new}{Logical indicating whether admissions data has new or old sitrep
-age bands}
 }
 \description{
-Load admissions data
+Process SitRep admissions data
 }
