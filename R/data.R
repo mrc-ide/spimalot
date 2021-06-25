@@ -95,11 +95,10 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
             "positives", "negatives", "react_positive", "react_samples",
             "pillar2_negatives_total_pcr_over25", "pillar2_negatives_total_pcr",
             "pillar2_positives_over25", "pillar2_negatives_over25",
-            "positives_over25", "pillar2_positives_pcr_only",
-            "pillar2_positives_pcr_only_over25", "pillar2_positives_pcr_all",
-            "pillar2_positives_pcr_all_over25",
-            "s_positive_adj1", "s_negative_adj1",
-            "s_positive_adj1_over25", "s_negative_adj1_over25")
+            "positives_over25", "pillar2_positives_symp_pcr_only",
+            "pillar2_positives_symp_pcr_only_over25",
+            "pillar2_positives_pcr_all", "pillar2_positives_pcr_all_over25",
+            "n_delta_variant", "n_non_delta_variant")
   data <- data[c("region", "date", vars)]
 
   ## Remove any data after the date parameter
@@ -187,12 +186,12 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
   data$pillar2_cases <- data$pillar2_positives
   data$pillar2_cases_over25 <- data$pillar2_positives_over25
 
-  ## Use PCR only for cases where available
-  if (!all(is.na(data$pillar2_positives_pcr_only))) {
-    data$pillar2_cases <- data$pillar2_positives_pcr_only
+  ## Use symp PCR only for cases where available
+  if (!all(is.na(data$pillar2_positives_symp_pcr_only))) {
+    data$pillar2_cases <- data$pillar2_positives_symp_pcr_only
   }
-  if (!all(is.na(data$pillar2_positives_pcr_only_over25))) {
-    data$pillar2_cases_over25 <- data$pillar2_positives_pcr_only_over25
+  if (!all(is.na(data$pillar2_positives_symp_pcr_only_over25))) {
+    data$pillar2_cases_over25 <- data$pillar2_positives_symp_pcr_only_over25
   }
 
   ## Use PCR all for positives where available
@@ -232,8 +231,8 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
                     "pillar2_cases_over25")
   data[seq(to = nrow(data), length.out = 7), cols_pillar2] <- NA_integer_
 
-  ## ignore pillar 2 testing before 2020-06-01
-  data[which(data$date < "2020-06-01"), cols_pillar2] <- NA_integer_
+  ## ignore pillar 2 testing before 2020-06-18
+  data[which(data$date < "2020-06-18"), cols_pillar2] <- NA_integer_
 
   ## Remove last week admissions for Wales (due to backfill)
   if (region == "wales") {
@@ -283,11 +282,10 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     pillar2_over25_cases = data$pillar2_cases_over25,
     react_pos = data$react_positive,
     react_tot = data$react_samples,
-    strain_non_variant = data$s_negative_adj1,
-    strain_tot = data$s_negative_adj1 + data$s_positive_adj1,
-    strain_over25_non_variant = data$s_negative_adj1_over25,
-    strain_over25_tot = data$s_negative_adj1_over25 +
-      data$s_positive_adj1_over25)
+    strain_non_variant = data$n_non_delta_variant,
+    strain_tot = data$n_delta_variant + data$n_non_delta_variant,
+    strain_over25_non_variant = NA_integer_,
+    strain_over25_tot = NA_integer_)
 
   if (!fit_to_variants) {
     ret$strain_non_variant <- NA_integer_

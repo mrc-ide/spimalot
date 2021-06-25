@@ -41,6 +41,12 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       strain_transmission_2 <- NULL
     }
 
+    if ("prop_strain_2" %in% names(pars)) {
+      prop_strain_2 <- pars[["prop_strain_2"]]
+    } else {
+      prop_strain_2 <- NULL
+    }
+
     beta_value <- unname(pars[paste0("beta", seq_along(beta_date))])
 
     if (model_type == "BB") {
@@ -245,6 +251,8 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
     ## Could be moved to sircovid as a default
     ret$I_A_transmission <- 0.223
+
+    ret$prop_strain_2 <- prop_strain_2
 
     ret
   }

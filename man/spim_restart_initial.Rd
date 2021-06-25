@@ -4,7 +4,7 @@
 \alias{spim_restart_initial}
 \title{Create restart initial conditions}
 \usage{
-spim_restart_initial(state, date)
+spim_restart_initial(state, date, multistrain)
 }
 \arguments{
 \item{state}{Final state at the point of the restart (matrix with
@@ -13,6 +13,8 @@ samples)}
 
 \item{date}{The sircovid date of the restart; this will be
 converted into the initial step.}
+
+\item{multistrain}{Logical, whether the restart fits are multistrain or not}
 }
 \description{
 Create an mcstate "initial" function from a previous final state
