@@ -485,15 +485,18 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
 
     protected_against_infection <- rep(NA_real_, n_days)
     protected_against_severe_disease <- rep(NA_real_, n_days)
+    protected_against_death <- rep(NA_real_, n_days)
   } else {
     protected_against_infection <- sum_asr(c(vp$infection) * V)
     protected_against_severe_disease <- sum_asr(c(vp$severe_disease) * V)
+    protected_against_death <- sum_asr(c(vp$death) * V)
   }
 
   n_protected <- rbind(
     ever_vaccinated = colSums(n_vaccinated[, 1, , ]),
     protected_against_infection = protected_against_infection,
     protected_against_severe_disease = protected_against_severe_disease,
+    protected_against_death = protected_against_death,
     ever_infected = sum_sr(R),
     ever_infected_unvaccinated = R[1, , , drop = FALSE])
 
@@ -520,15 +523,19 @@ get_vaccine_protection <- function(vaccine_efficacy, booster_efficacy = NULL) {
     stopifnot(identical(names(vaccine_efficacy), names(booster_efficacy)))
     vaccine_efficacy <- Map(cbind, vaccine_efficacy, booster_efficacy)
   }
+
   efficacy_infection <- 1 - vaccine_efficacy$rel_susceptibility
   efficacy_disease <- efficacy_infection + (1 - efficacy_infection) *
     (1 - vaccine_efficacy$rel_p_sympt)
   efficacy_severe_disease <- efficacy_disease + (1 - efficacy_disease) *
     (1 - vaccine_efficacy$rel_p_hosp_if_sympt)
+  efficacy_death <- efficacy_severe_disease + (1 - efficacy_severe_disease) *
+    (1 - vaccine_efficacy$rel_p_death)
 
   list(infection = efficacy_infection,
        disease = efficacy_disease,
-       severe_disease = efficacy_severe_disease)
+       severe_disease = efficacy_severe_disease,
+       death = efficacy_death)
 }
 
 
