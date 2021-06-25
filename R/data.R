@@ -98,7 +98,7 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
             "positives_over25", "pillar2_positives_symp_pcr_only",
             "pillar2_positives_symp_pcr_only_over25",
             "pillar2_positives_pcr_all", "pillar2_positives_pcr_all_over25",
-            "n_delta_variant", "n_non_delta_variant")
+            "n_symp_delta_variant", "n_symp_non_delta_variant")
   data <- data[c("region", "date", vars)]
 
   ## Remove any data after the date parameter
@@ -282,8 +282,8 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     pillar2_over25_cases = data$pillar2_cases_over25,
     react_pos = data$react_positive,
     react_tot = data$react_samples,
-    strain_non_variant = data$n_non_delta_variant,
-    strain_tot = data$n_delta_variant + data$n_non_delta_variant,
+    strain_non_variant = data$n_symp_non_delta_variant,
+    strain_tot = data$n_symp_delta_variant + data$n_symp_non_delta_variant,
     strain_over25_non_variant = NA_integer_,
     strain_over25_tot = NA_integer_)
 
