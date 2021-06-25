@@ -420,9 +420,6 @@ spim_data_serology <- function(date, region, data) {
 ##' @importFrom dplyr .data
 spim_data_admissions <- function(new_data, old_data, region) {
 
-  new_data <- data_admissions_new
-  old_data <- data_admissions_old
-
   new_data <- process_new_admissions(new_data, region)
   old_data <- process_old_admissions(old_data, region)
 
