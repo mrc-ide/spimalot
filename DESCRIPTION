@@ -56,7 +56,7 @@ Imports:
     lubridate,
     mcstate (>= 0.5.14),
     readxl,
-    sircovid (>= 0.11.16),
+    sircovid (>= 0.11.17),
     stringr,
     tidyr,
     viridisLite,
