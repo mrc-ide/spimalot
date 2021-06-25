@@ -32,9 +32,9 @@ continues beyond that date, it's fine)}
 
 \item{efficacy}{Vaccine efficacy data. This will be a list with
 elements \code{rel_susceptibility}, \code{rel_p_sympt},
-\code{rel_p_hosp_if_sympt} and \code{rel_infectivity} (relative effect of
-susceptibility, symptomatic disease, hospitalisation conditional
-on symtomatic and infectivity). Each of the list elements must
+\code{rel_p_hosp_if_sympt}, \code{rel_p_death}, \code{rel_infectivity} (relative effect
+of susceptibility, symptomatic disease, hospitalisation conditional
+on symtomatic, death,  and infectivity). Each of the list elements must
 be a \verb{19 x n} matrix (where \code{n} is the number of vaccination
 classes and is shared across all elements). Every number in the
 matrix must be a proportion and decrease across columns.}

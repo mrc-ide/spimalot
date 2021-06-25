@@ -14,9 +14,9 @@
 ##'
 ##' @param efficacy Vaccine efficacy data. This will be a list with
 ##'   elements `rel_susceptibility`, `rel_p_sympt`,
-##'   `rel_p_hosp_if_sympt` and `rel_infectivity` (relative effect of
-##'   susceptibility, symptomatic disease, hospitalisation conditional
-##'   on symtomatic and infectivity). Each of the list elements must
+##'   `rel_p_hosp_if_sympt`, `rel_p_death`, `rel_infectivity` (relative effect
+##'   of susceptibility, symptomatic disease, hospitalisation conditional
+##'   on symtomatic, death,  and infectivity). Each of the list elements must
 ##'   be a `19 x n` matrix (where `n` is the number of vaccination
 ##'   classes and is shared across all elements). Every number in the
 ##'   matrix must be a proportion and decrease across columns.

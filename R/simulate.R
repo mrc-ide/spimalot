@@ -106,6 +106,7 @@ spim_simulate_prepare <- function(combined, n_par,
 ##' @return A list of parameters for the model
 ##' @export
 spim_simulate_args <- function(grid, vars, base, ignore, regions, multistrain) {
+
   simulate_args_validate(grid, vars, base, ignore, multistrain)
 
   f <- function(i) {
@@ -198,7 +199,7 @@ simulate_args_names <- function(multistrain = TRUE) {
         "strain_seed_date", "strain_transmission", "strain_seed_rate",
         "strain_vaccine_efficacy", "strain_initial_proportion",
         "strain_vaccine_booster_efficacy", "strain_cross_immunity",
-        "strain_vaccine_efficacy_modifier")
+        "strain_severity_modifier")
   }
 
   args
@@ -521,7 +522,7 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
   rel_list <- fixme_vaccine_strain_efficacy(
     args$vaccine_efficacy,
     args$strain_vaccine_efficacy,
-    args$strain_vaccine_efficacy_modifier)
+    args$strain_severity_modifier)
 
   extra <- sircovid:::carehomes_parameters_vaccination(
     N_tot,
@@ -529,6 +530,7 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
     rel_susceptibility = rel_list$rel_susceptibility,
     rel_p_sympt = rel_list$rel_p_sympt,
     rel_p_hosp_if_sympt = rel_list$rel_p_hosp_if_sympt,
+    rel_p_death = rel_list$rel_p_death,
     rel_infectivity = rel_list$rel_infectivity,
     vaccine_schedule = vaccine_schedule,
     vaccine_index_dose2 = vaccine_index_dose2,
@@ -559,24 +561,25 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
 
 ## TODO: someone needs to rewrite this.
 fixme_vaccine_strain_efficacy <- function(efficacy, efficacy_strain_2,
-                                          strain_vaccine_efficacy_modifier) {
+                                          strain_severity_modifier) {
 
   n_strain <- if (length(efficacy_strain_2) == 0) 1 else 4
   n_vacc_strata <- ncol(efficacy[[1]])
   n_groups <- nrow(efficacy[[1]])
 
   dim <- c(n_groups, n_strain, n_vacc_strata)
-  rel_list <- rep(list(array(rep(NA_integer_), dim = dim)), 4)
+  rel_list <- rep(list(array(rep(NA_integer_), dim = dim)), 5)
   names(rel_list) <- c("rel_p_sympt", "rel_p_hosp_if_sympt",
-                       "rel_susceptibility", "rel_infectivity")
+                       "rel_susceptibility", "rel_infectivity",
+                       "rel_p_death")
 
 
   for (rel in names(rel_list)) {
     for (s in seq_len(n_strain)) {
-      if (is.null(strain_vaccine_efficacy_modifier)) {
+      if (is.null(strain_severity_modifier)) {
         mod <- 1
       } else {
-        mod <- strain_vaccine_efficacy_modifier[[s]][[rel]]
+        mod <- strain_severity_modifier[[s]][[rel]]
       }
       for (v_s in seq_len(n_vacc_strata)) {
         for (g in seq_len(n_groups)) {
@@ -930,6 +933,7 @@ fixme_calculate_n_protected <- function(n_vaccinated, R, vaccine_efficacy,
     ever_vaccinated = sum_sr(n_vaccinated[, 1, , ]),
     protected_against_infection = sum_asr(c(vp$infection) * V),
     protected_against_severe_disease = sum_asr(c(vp$severe_disease) * V),
+    protected_against_death = sum_asr(c(vp$death) * V),
     ever_infected = sum_sr(R),
     ever_infected_unvaccinated = R[1, , ]
   )
@@ -1025,8 +1029,8 @@ simulate_validate_args1 <- function(args, regions, multistrain) {
                               n_groups, n_vacc_strata)
     assert_length(args$strain_cross_immunity, 2)
     assert_numeric(args$strain_cross_immunity)
-    validate_strain_vaccine_efficacy_modifier(
-      args$strain_vaccine_efficacy_modifier)
+    validate_strain_severity_modifier(
+      args$strain_severity_modifier)
   } else {
     for (i in grep("^strain_", names(args), value = TRUE)) {
       assert_is(args[[i]], "NULL", i)
@@ -1092,7 +1096,7 @@ validate_strain_seed_rate <- function(x, regions,
 validate_vaccine_efficacy <- function(x, n_groups, n_vacc_strata,
                                       name = deparse(substitute(x))) {
   expected <- c("rel_susceptibility", "rel_p_sympt", "rel_p_hosp_if_sympt",
-                "rel_infectivity")
+                "rel_infectivity", "rel_p_death")
   if (!setequal(names(x), expected)) {
     stop(sprintf("Invalid names for %s, expected %s",
                  name, paste(squote(expected), collapse = ", ")))
@@ -1109,12 +1113,12 @@ validate_vaccine_efficacy <- function(x, n_groups, n_vacc_strata,
 ## TODO: this data structure can be replaced by a single number
 ## ([[3]]$rep_p_hosp_if_sympt) and is generally horrific. Can we
 ## simplify this please?
-validate_strain_vaccine_efficacy_modifier <- function(x, name = deparse(substitute(x))) {
+validate_strain_severity_modifier <- function(x, name = deparse(substitute(x))) {
   assert_length(x, 4)
   for (i in seq_along(x)) {
     el <- x[[i]]
     expected <- c("rel_susceptibility", "rel_p_sympt", "rel_p_hosp_if_sympt",
-                  "rel_infectivity")
+                  "rel_infectivity", "rel_p_death")
     if (!setequal(names(el), expected)) {
       stop(sprintf("Invalid names for %s[[%d]] expected %s",
                    name, i, paste(squote(expected), collapse = ", ")))
@@ -1245,7 +1249,7 @@ spim_expand_grid <- function(..., full_run = FALSE, prefix = "Grid_") {
 ##'  included as specified in `simulation_central_analysis`. This should rarely
 ##'  be `FALSE` as often required for basic checking plots.
 ##' @param set_strain_params If `TRUE` automatically sets strain parameters
-##'   `strain_cross_immunity` and `strain_vaccine_efficacy_modifier`, which are
+##'   `strain_cross_immunity` and `strain_severity_modifier`, which are
 ##'   currently equivalent to `strain_vaccine_efficacy`
 ##' @param multistrain If `FALSE` then removes all columns related to a second
 ##'   strain
@@ -1281,7 +1285,7 @@ spim_run_grid <- function(scenarios, csv = NULL, expand_grid = NULL,
   if (multistrain && set_strain_params) {
     run_grid <- run_grid %>%
       dplyr::mutate(strain_cross_immunity = strain_vaccine_efficacy,
-                    strain_vaccine_efficacy_modifier = strain_vaccine_efficacy)
+                    strain_severity_modifier = strain_vaccine_efficacy)
   }
 
   run_grid %>%
