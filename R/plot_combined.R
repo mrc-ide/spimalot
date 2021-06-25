@@ -1304,15 +1304,23 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
                  deaths_comm = "deaths_comm_inc",
                  deaths_hosp = "deaths_hosp_inc",
                  deaths_carehomes = "deaths_carehomes_inc",
-                 deaths_hosp_0_64 = "deaths_hosp_inc_0_64",
-                 deaths_hosp_65_plus = "deaths_hosp_inc_65_plus",
+                 deaths_hosp_0_34 = "deaths_hosp_inc_0_34",
+                 deaths_hosp_35_54 = "deaths_hosp_inc_35_54",
+                 deaths_hosp_55_64 = "deaths_hosp_inc_55_64",
+                 deaths_hosp_65_74 = "deaths_hosp_inc_65_74",
+                 deaths_hosp_75_plus = "deaths_hosp_inc_75_plus",
                  icu = "icu",
                  hosp = "hosp",
                  general = "general",
                  diagnoses = "diagnoses_inc",
                  admitted = "admitted_inc",
                  all_admission_0_64 = "admitted_inc_0_64",
-                 all_admission_65_plus = "admitted_inc_65+",
+                 all_admission_65_plus = "admitted_inc_65_plus",
+                 all_admission_0_34 = "admitted_inc_0_34",
+                 all_admission_35_54 = "admitted_inc_35_54",
+                 all_admission_55_64 = "admitted_inc_55_64",
+                 all_admission_65_74 = "admitted_inc_65_74",
+                 all_admission_75_plus = "admitted_inc_75_plus",
                  all_admission = "all_admission_inc")
   labs <- c(deaths = "Daily deaths",
             deaths_comm = "Daily community deaths",
@@ -1324,10 +1332,18 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
             diagnoses = "Daily inpatient diagnoses",
             admitted = "Daily admissions",
             all_admission = "Daily admissions (all)",
-            deaths_hosp_0_64 = "Daily hospital deaths 0-64",
-            deaths_hosp_65_plus = "Daily hospital deaths 65+",
+            deaths_hosp_0_34 = "Daily hospital deaths 0-34",
+            deaths_hosp_35_54 = "Daily hospital deaths 35-54",
+            deaths_hosp_55_64 = "Daily hospital deaths 55-64",
+            deaths_hosp_65_74 = "Daily hospital deaths 65-74",
+            deaths_hosp_75_plus = "Daily hospital deaths 75+",
             all_admission_0_64 = "Daily admissions (all) 0-64",
-            all_admission_65_plus = "Daily admissions (all) 65-84")
+            all_admission_65_plus = "Daily admissions (all) 65+",
+            all_admission_0_34 = "Daily admissions (all) 0-34",
+            all_admission_35_54 = "Daily admissions (all) 35-54",
+            all_admission_55_64 = "Daily admissions (all) 55-64",
+            all_admission_65_74 = "Daily admissions (all) 65-74",
+            all_admission_75_plus = "Daily admissions (all) 75+")
 
   ## currently remove first step as the first time period is typically much more
   ## than one day at the moment
@@ -1348,6 +1364,26 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
     res <-
       trajectories$state["diagnoses_inc_65_plus", , -1L] +
       trajectories$state["admitted_inc_65_plus", , -1L]
+  } else if (what == "all_admission_0_34") {
+    res <-
+      trajectories$state["diagnoses_inc_0_34", , -1L] +
+      trajectories$state["admitted_inc_0_34", , -1L]
+  } else if (what == "all_admission_35_54") {
+    res <-
+      trajectories$state["diagnoses_inc_35_54", , -1L] +
+      trajectories$state["admitted_inc_35_54", , -1L]
+  } else if (what == "all_admission_55_64") {
+    res <-
+      trajectories$state["diagnoses_inc_55_64", , -1L] +
+      trajectories$state["admitted_inc_55_64", , -1L]
+  } else if (what == "all_admission_65_74") {
+    res <-
+      trajectories$state["diagnoses_inc_65_74", , -1L] +
+      trajectories$state["admitted_inc_65_74", , -1L]
+  } else if (what == "all_admission_75_plus") {
+    res <-
+      trajectories$state["diagnoses_inc_75_plus", , -1L] +
+      trajectories$state["admitted_inc_75_plus", , -1L]
   } else {
     res <- trajectories$state[trajnames[what], , -1L]
   }
