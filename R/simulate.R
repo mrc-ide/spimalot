@@ -519,7 +519,7 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
   ## but probably better done inside sircovid::vaccine_schedule_scenario
   # vaccine_schedule$doses[1:17, 3, 0] <- 0
 
-  rel_list <- fixme_vaccine_strain_efficacy(
+  rel_list <- sircovid::modify_severity(
     args$vaccine_efficacy,
     args$strain_vaccine_efficacy,
     args$strain_severity_modifier)
@@ -556,48 +556,6 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
   ## TODO: someone could explain why this is the check function wanted
   ## here, as it is not obvious.
   lapply(pars, sircovid::carehomes_check_severity)
-}
-
-
-## TODO: someone needs to rewrite this.
-fixme_vaccine_strain_efficacy <- function(efficacy, efficacy_strain_2,
-                                          strain_severity_modifier) {
-
-  n_strain <- if (length(efficacy_strain_2) == 0) 1 else 4
-  n_vacc_strata <- ncol(efficacy[[1]])
-  n_groups <- nrow(efficacy[[1]])
-
-  dim <- c(n_groups, n_strain, n_vacc_strata)
-  rel_list <- rep(list(array(rep(NA_integer_), dim = dim)), 5)
-  names(rel_list) <- c("rel_p_sympt", "rel_p_hosp_if_sympt",
-                       "rel_susceptibility", "rel_infectivity",
-                       "rel_p_death")
-
-
-  for (rel in names(rel_list)) {
-    for (s in seq_len(n_strain)) {
-      if (is.null(strain_severity_modifier)) {
-        mod <- 1
-      } else {
-        mod <- strain_severity_modifier[[s]][[rel]]
-      }
-      for (v_s in seq_len(n_vacc_strata)) {
-        for (g in seq_len(n_groups)) {
-          ## If not multistrain then all use same params, otherwise split
-          ##  by strains. Strains: 1 (=1), 2(=2), 3(=1->2), 4(=2->1)
-          if (is.null(efficacy_strain_2) || s %in% c(1, 4)) {
-            ## Strains 1 and 2->1 (if multistrain)
-            rel_list[[rel]][g, s, v_s] <- efficacy[[rel]][g, v_s] * mod
-          } else {
-            ## Strains 2 and 1->2 (if multistrain)
-            rel_list[[rel]][g, s, v_s] <- efficacy_strain_2[[rel]][g, v_s] * mod
-          }
-        }
-      }
-    }
-  }
-
-  rel_list
 }
 
 
