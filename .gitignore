@@ -16,3 +16,6 @@ docs
 inst/doc
 pkgdown
 example
+pkgs/
+figs/
+outputs/
