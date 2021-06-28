@@ -120,17 +120,19 @@ spim_combined_onward_simulate <- function(dat) {
   ret <- c(ret, rt_combined)
 
   if (dat$info$multistrain) {
-    idx_dates_variant <- dat$variant_rt[[1]]$date[, 1] %in% dates
+    idx_dates_mv_rt <- dat$variant_rt[[1]]$date[, 1] %in% dates
 
-    ## variant_Rt_general and variant_eff_Rt_general will have dimensions:
-    ## [n particles x n regions x n variants x n dates]
-    variant_rt <-
-      list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
-    variant_rt_combined <- lapply(variant_rt, function(x)
-      aperm(abind::abind(x, along = 4), c(3, 4, 2, 1))[, , , idx_dates_variant])
-    names(variant_rt_combined) <- paste0("variant_", names(variant_rt_combined))
+    ## multivariant_Rt_general and multivariant_eff_Rt_general will have
+    ## dimensions: [n particles x n regions x n variants x n dates]
+    ## TODO: we are putting "multivariant" in the name here for clarity,
+    ## so we may want to rename variant_rt wherever it appears to
+    ## multivariant_rt
+    mv_rt <- list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
+    mv_rt_combined <- lapply(mv_rt, function(x)
+      aperm(abind::abind(x, along = 4), c(3, 4, 2, 1))[, , , idx_dates_mv_rt])
+    names(mv_rt_combined) <- paste0("multivariant_", names(mv_rt_combined))
 
-    ret <- c(ret, variant_rt_combined)
+    ret <- c(ret, mv_rt_combined)
   }
 
   ret
