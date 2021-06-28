@@ -46,6 +46,9 @@ spim_combined_load <- function(path, regions = "all") {
   ret$samples <- Map(sircovid::reorder_sample, ret$samples, rank_cum_inc)
   ret$rt <- Map(sircovid::reorder_rt_ifr, ret$rt, rank_cum_inc)
   ret$ifr_t <- Map(sircovid::reorder_rt_ifr, ret$ifr_t, rank_cum_inc)
+  if (ret$info$multistrain) {
+    ret$variant_rt <- Map(reorder_variant_rt, ret$variant_rt, rank_cum_inc)
+  }
 
   ## NOTE: have not ported the "randomise trajectory order" bit over,
   ## but I do not think that we need to.
@@ -109,7 +112,21 @@ spim_combined_onward_simulate <- function(dat) {
   rt_combined <- lapply(rt, function(x)
     aperm(abind::abind(x, along = 3), c(2, 3, 1))[, , idx_dates])
 
-  c(ret, rt_combined)
+  ret <- c(ret, rt_combined)
+
+  if (dat$info$multistrain) {
+    idx_dates_variant <- dat$variant_rt[[1]]$date[, 1] %in% dates
+
+    variant_rt <-
+      list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
+    variant_rt_combined <- lapply(variant_rt, function(x)
+      aperm(abind::abind(x, along = 4), c(3, 4, 2, 1))[, , , idx_dates_variant])
+    names(variant_rt_combined) <- paste0("variant_", names(variant_rt_combined))
+
+    ret <- c(ret, variant_rt_combined)
+  }
+
+  ret
 }
 
 
@@ -215,4 +232,30 @@ spim_population <- function(combined, ignore_uk = FALSE, by_age = TRUE,
   }
 
   df
+}
+
+reorder_variant_rt <- function(x, rank) {
+
+  what <- setdiff(names(x), c("step", "date"))
+
+  for (j in seq_len(2)) {
+    v <- x
+
+    for (i in what[what != "beta"]) {
+      v[[i]] <- v[[i]][, j, ]
+    }
+
+    v <- sircovid::reorder_rt_ifr(v, rank)
+
+    for (i in what) {
+      if (i == "beta") {
+        x[[i]] <- v[[i]]
+      } else {
+        x[[i]][, j, ] <- v[[i]]
+      }
+
+    }
+  }
+
+  x
 }

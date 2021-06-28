@@ -352,7 +352,6 @@ reduce_trajectories <- function(samples) {
   })
   state <- state[-unlist(index_remove), , ]
 
-
   ## Add index_S
   nms_S <- grep("^S_", rownames(state), value = TRUE)
   S <- state[nms_S, , ]
