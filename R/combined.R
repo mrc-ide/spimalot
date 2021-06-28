@@ -159,7 +159,6 @@ combined_aggregate_samples <- function(samples) {
 
 
 combined_aggregate_data <- function(data) {
-  browser()
   aggregate1 <- function(region_names, type = "full") {
     d <- lapply(data[region_names], "[[", type)
     x <- d[[1]]
