@@ -227,7 +227,9 @@ combined_aggregate_variant_rt <- function(variant_rt, samples) {
   variant_rt
 }
 
-
+## FIXME: this is basically a version of sircovid::combine_rt that works
+## for two variants. Ideally we would adapt that sircovid function so it can
+## be used for single variant and multivariant Rt objects
 combine_variant_rt <- function(variant_rt, samples, rank) {
 
   ## the samples trajectories and the variant_rt do not necessarily have the
@@ -307,6 +309,10 @@ spim_population <- function(combined, ignore_uk = FALSE, by_age = TRUE,
   df
 }
 
+
+## FIXME: this is basically a version of sircovid::reorder_rt_ifr that works
+## for two variants. Ideally we would adapt that sircovid function so it can
+## be used for single variant and multivariant Rt objects
 reorder_variant_rt <- function(x, rank) {
 
   what <- setdiff(names(x), c("step", "date"))
