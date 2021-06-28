@@ -65,6 +65,9 @@ spim_combined_load <- function(path, regions = "all") {
   ret$data <- combined_aggregate_data(ret$data)
   ret$rt <- combined_aggregate_rt(ret$rt, ret$samples)
   ret$ifr_t <- combined_aggregate_rt(ret$ifr_t, ret$samples)
+  if (ret$info$multistrain) {
+    ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, ret$samples)
+  }
 
   ret
 }
@@ -109,6 +112,8 @@ spim_combined_onward_simulate <- function(dat) {
 
   ## This is not terrible:
   rt <- list_transpose(dat$rt)[c("Rt_general", "eff_Rt_general")]
+  ## Rt_general and eff_Rt_general will have dimensions:
+  ## [n particles x n regions x n dates]
   rt_combined <- lapply(rt, function(x)
     aperm(abind::abind(x, along = 3), c(2, 3, 1))[, , idx_dates])
 
@@ -117,6 +122,8 @@ spim_combined_onward_simulate <- function(dat) {
   if (dat$info$multistrain) {
     idx_dates_variant <- dat$variant_rt[[1]]$date[, 1] %in% dates
 
+    ## variant_Rt_general and variant_eff_Rt_general will have dimensions:
+    ## [n particles x n regions x n variants x n dates]
     variant_rt <-
       list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
     variant_rt_combined <- lapply(variant_rt, function(x)
@@ -200,6 +207,68 @@ combined_aggregate_rt <- function(rt, samples) {
 }
 
 
+combined_aggregate_variant_rt <- function(variant_rt, samples) {
+  england <- sircovid::regions("england")
+  nations <- sircovid::regions("nations")
+
+  if (all(england %in% names(variant_rt))) {
+    variant_rt$england <- combine_variant_rt(variant_rt[england],
+                                             samples[england],
+                                             rank = FALSE)
+  }
+  if (all(nations %in% names(variant_rt))) {
+    variant_rt$uk <- combine_variant_rt(variant_rt[nations], samples[nations],
+                                        rank = FALSE)
+  }
+  variant_rt
+}
+
+
+combine_variant_rt <- function(variant_rt, samples, rank) {
+
+  ## the samples trajectories and the variant_rt do not necessarily have the
+  ## same span of dates so we need to filter the trajectories
+  dates <- variant_rt[[1]]$date
+  idx_dates <- samples[[1]]$trajectories$date %in% dates[-1L]
+  idx_dates[1] <- TRUE
+  for (r in names(samples)) {
+    samples[[r]]$trajectories$state <-
+      samples[[r]]$trajectories$state[, , idx_dates]
+    samples[[r]]$trajectories$date <-
+      samples[[r]]$trajectories$date[idx_dates]
+  }
+
+  what <- setdiff(names(variant_rt[[1]]), c("step", "date", "beta"))
+
+  ## combine_rt in sircovid only works for one variant so we need to combine
+  ## each variant separately
+  combine_variant_rt_j <- function(j) {
+    get_variant_j <- function(v) {
+      for (w in what) {
+        v[[w]] <- v[[w]][, j, ]
+      }
+      v
+    }
+
+    sircovid::combine_rt(lapply(variant_rt, get_variant_j),
+                         samples, rank)
+
+  }
+
+  variant1 <- combine_variant_rt_j(1)
+  variant2 <- combine_variant_rt_j(2)
+
+  ## finally we join the variants together
+  ret <- variant1
+  for (w in what) {
+    ret[[w]] <- aperm(abind::abind(variant1[[w]], variant2[[w]], along = 3),
+                         c(1, 3, 2))
+  }
+
+  ret
+}
+
+
 ## Used to invert regions/variable in rt data
 combined_switch_levels <- function(x) {
   nms <- names(x[[1]])
@@ -238,6 +307,8 @@ reorder_variant_rt <- function(x, rank) {
 
   what <- setdiff(names(x), c("step", "date"))
 
+  ## reorder_rt_ifr will only work for one variant so we will have to reorder
+  ## each variant separately
   for (j in seq_len(2)) {
     v <- x
 
