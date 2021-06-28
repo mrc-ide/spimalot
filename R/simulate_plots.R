@@ -91,7 +91,7 @@ spim_plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
         dplyr::mutate(
             central = c(R1[1], (R1 * epsilon_central)[1], R1[2],
                         (R1 * epsilon_central)[2]),
-            variant = rep(c("B.1.1.7", "B.1.617.2"), 2),
+            variant = rep(c("Alpha", "Delta"), 2),
             NPI = c(rep("central R after NPI lift", 2),
                     rep("high R after NPI lift", 2)),
             NPI = factor(NPI, levels = unique(NPI))
