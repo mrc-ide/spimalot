@@ -127,7 +127,8 @@ spim_combined_onward_simulate <- function(dat) {
     ## TODO: we are putting "multivariant" in the name here for clarity,
     ## so we may want to rename variant_rt wherever it appears to
     ## multivariant_rt
-    mv_rt <- list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
+    mv_rt <-
+      list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
     mv_rt_combined <- lapply(mv_rt, function(x)
       aperm(abind::abind(x, along = 4), c(3, 4, 2, 1))[, , , idx_dates_mv_rt])
     names(mv_rt_combined) <- paste0("multivariant_", names(mv_rt_combined))
@@ -158,6 +159,7 @@ combined_aggregate_samples <- function(samples) {
 
 
 combined_aggregate_data <- function(data) {
+  browser()
   aggregate1 <- function(region_names, type = "full") {
     d <- lapply(data[region_names], "[[", type)
     x <- d[[1]]
