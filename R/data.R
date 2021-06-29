@@ -166,8 +166,18 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
         data$date >= date_death_change ~ NA_integer_
       )
     } else {
-      data$deaths_carehomes <- data$ons_death_carehome
-      data$deaths_comm <- data$ons_death_noncarehome
+      ## due to ONS data being lagged, in the full_data version (not used in
+      ## fitting) we will use death linelist data for recent care home and
+      ## community deaths
+      date_death_change <- as.Date(date) - 45
+      data$deaths_carehomes <- dplyr::case_when(
+        data$date < date_death_change ~ as.integer(data$ons_death_carehome),
+        data$date >= date_death_change ~ as.integer(data$death_chr)
+      )
+      data$deaths_comm <- dplyr::case_when(
+        data$date < date_death_change ~ as.integer(data$ons_death_noncarehome),
+        data$date >= date_death_change ~ as.integer(data$death_comm)
+      )
     }
   }
 

@@ -177,7 +177,7 @@ combined_aggregate_data <- function(data) {
     ret$deaths <- pmax(ret$deaths,
                        rowSums(ret[, death_nms], na.rm = TRUE),
                        na.rm = TRUE)
-    ret[-seq_len(nrow(ret) - 5), ] <- NA
+    ret[-seq_len(nrow(ret) - 4), death_nms] <- NA
     data_frame(ret, x[, date_names])
   }
 
