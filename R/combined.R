@@ -50,24 +50,30 @@ spim_combined_load <- function(path, regions = "all") {
     ret$variant_rt <- Map(reorder_variant_rt, ret$variant_rt, rank_cum_inc)
   }
 
+  message("Aggregating England/UK")
+  ## Aggregate some of these to get england/uk entries
+  ## Note that we do not store the aggregated outputs in ret yet to avoid
+  ## including in the onward object below. The exception is the Rt values,
+  ## as aggregated Rt values are used in onwards simulations
+  agg_samples <- combined_aggregate_samples(ret$samples)
+  agg_data <- combined_aggregate_data(ret$data)
+  agg_ifr_t <- combined_aggregate_rt(ret$ifr_t, agg_samples)
+  ret$rt <- combined_aggregate_rt(ret$rt, agg_samples)
+  if (ret$info$multistrain) {
+    ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, agg_samples)
+  }
+
   ## NOTE: have not ported the "randomise trajectory order" bit over,
   ## but I do not think that we need to.
   message("Creating data for onward use")
-  ## Do this step *before* aggregation because otherwise we end up
-  ## with the onward data including england/uk
   ret$onward <- spim_combined_onward(ret)
   ret$parameters <- lapply(list_transpose(ret$parameters), dplyr::bind_rows)
 
-  message("Aggregating England/UK")
-  ## Aggregate some of these to get england/uk entries
-  ret$samples <- combined_aggregate_samples(ret$samples)
-
-  ret$data <- combined_aggregate_data(ret$data)
-  ret$rt <- combined_aggregate_rt(ret$rt, ret$samples)
-  ret$ifr_t <- combined_aggregate_rt(ret$ifr_t, ret$samples)
-  if (ret$info$multistrain) {
-    ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, ret$samples)
-  }
+  ## Now the onward object has been created, we can safely store the
+  ## other aggregated outputs in ret
+  ret$samples <- agg_samples
+  ret$data <- agg_data
+  ret$ifr_t <- agg_ifr_t
 
   ret
 }
