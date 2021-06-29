@@ -1347,3 +1347,96 @@ spim_simulation_predictors <- function(summary) {
 
   vars
 }
+
+##' Prepare csv with NPI keys for simulation task
+##'
+##' @title Prepare NPI key csv for simulation
+##'
+##' @param path File path to a csv containing columns: nation
+##'  (at least one of england, scotland, wales, northern ireland), npi
+##'  (name of NPI step for associated schedule), Rt (mean value for Rt),
+##'  Rt_sd (standard deviation for Rt)
+##'
+##' @param country If `"england"` then all other nations filtered, otherwise
+##'  no filtering.
+##'
+##' @return tibble for passing to [spim_prepare_rt_future]
+##'
+##' @export
+spim_prepare_npi_key <- function(path, country) {
+  npi_key <- read_csv(path) %>%
+    filter(nation == case_when(country == "england" ~ "england",
+                               TRUE ~ nation))
+
+  nations <- unique(npi_key$nation)
+
+  npi_key$adherence <- "central"
+  npi_key_low <- npi_key_high <- npi_key
+  npi_key_low$adherence <- "low"
+  npi_key_high$adherence <- "high"
+
+  fmt <- "%s:%s"
+  key <- sprintf(fmt, npi_key$nation, npi_key$npi)
+
+  mtc_fun <- function(str, obj, school) {
+    if (any(grepl(str, npi_key$npi))) {
+      from <- match(sprintf(fmt, nations, paste0(school, str)), key)
+      to <- match(sprintf(fmt, nations, school), key)
+      stopifnot(!anyNA(from), !anyNA(to))
+      obj[to, c("Rt", "Rt_sd")] <- obj[from, c("Rt", "Rt_sd")]
+      obj
+    }
+  }
+
+  for (v in c("full_lift_schools_closed", "full_lift_schools_open")) {
+    npi_key_low <- mtc_fun("_pessimistic", npi_key_low, v)
+    npi_key_high <- mtc_fun("_optimistic", npi_key_high, v)
+  }
+
+  npi_key <- rbind(npi_key, npi_key_low, npi_key_high)
+  npi_key <- npi_key[!grepl("_(pessimistic|optimistic)$", npi_key$npi), ]
+
+  rownames(npi_key) <- NULL
+  npi_key
+}
+
+##' Prepare Rt future grid for simulation task
+##'
+##' @title Prepare Rt future for simulation
+##'
+##' @param path File path to a csv containing columns: nation
+##'  (at least one of england, scotland, wales, northern ireland), scenario
+##'  (scenario ID), year (YYYY), month (MM), (DD), npi
+##'  (NPI ID to match npi_key$npi)
+##'
+##' @param start_date Start date of simulation, all changes in schedule before
+##'  this date are removed.
+##'
+##' @param end_date End date of simulation, all changes in schedule after
+##'  this date are removed.
+##'
+##' @return tibble which is essentially a column binds of npi_key and
+##'  Rt_schedule datasets after cleaning
+##'
+##' @export
+spim_prepare_rt_future <- function(path, npi_key, start_date, end_date) {
+  res <-
+    read_csv(path) %>%
+    filter(
+      nation %in% unique(npi_key$nation),
+      ## remove all dates after the end date and before the start date
+      as.Date(sprintf("%s-%s-%s", year, month, day)) >= as.Date(start_date),
+      as.Date(sprintf("%s-%s-%s", year, month, day)) <= as.Date(end_date)
+    ) %>%
+    dplyr::left_join(npi_key, by = c("nation", "npi")) %>%
+    mutate(key = paste(scenario, adherence, sep = ": "))
+
+  res_celtic <- res %>%
+    dplyr::filter(nation != "england") %>%
+    dplyr::mutate(region = nation)
+
+  res %>%
+    dplyr::filter(nation == "england") %>%
+    tidyr::expand_grid(region = sircovid::regions("england")) %>%
+    dplyr::bind_rows(res_celtic)
+}
