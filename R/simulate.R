@@ -1365,8 +1365,8 @@ spim_simulation_predictors <- function(summary) {
 ##' @export
 spim_prepare_npi_key <- function(path, country) {
   npi_key <- read_csv(path) %>%
-    filter(nation == case_when(country == "england" ~ "england",
-                               TRUE ~ nation))
+    dplyr::filter(nation == case_when(country == "england" ~ "england",
+                                      TRUE ~ nation))
 
   nations <- unique(npi_key$nation)
 
@@ -1422,7 +1422,7 @@ spim_prepare_npi_key <- function(path, country) {
 spim_prepare_rt_future <- function(path, npi_key, start_date, end_date) {
   res <-
     read_csv(path) %>%
-    filter(
+    dplyr::filter(
       nation %in% unique(npi_key$nation),
       ## remove all dates after the end date and before the start date
       as.Date(sprintf("%s-%s-%s", year, month, day)) >= as.Date(start_date),
