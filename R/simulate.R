@@ -1422,14 +1422,16 @@ spim_prepare_npi_key <- function(path, country) {
 spim_prepare_rt_future <- function(path, npi_key, start_date, end_date) {
   res <-
     read_csv(path) %>%
+    mutate(date = as.Date(sprintf("%s-%s-%s", year, month, day))) %>%
     dplyr::filter(
       nation %in% unique(npi_key$nation),
       ## remove all dates after the end date and before the start date
-      as.Date(sprintf("%s-%s-%s", year, month, day)) >= as.Date(start_date),
-      as.Date(sprintf("%s-%s-%s", year, month, day)) <= as.Date(end_date)
+      date >= as.Date(start_date),
+      date <= as.Date(end_date)
     ) %>%
     dplyr::left_join(npi_key, by = c("nation", "npi")) %>%
-    mutate(key = paste(scenario, adherence, sep = ": "))
+    mutate(key = paste(scenario, adherence, sep = ": ")) %>%
+    select(-day, -month, -year)
 
   res_celtic <- res %>%
     dplyr::filter(nation != "england") %>%
