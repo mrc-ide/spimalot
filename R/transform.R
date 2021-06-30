@@ -41,6 +41,12 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       strain_transmission_2 <- NULL
     }
 
+    if ("prop_strain_2" %in% names(pars)) {
+      prop_strain_2 <- pars[["prop_strain_2"]]
+    } else {
+      prop_strain_2 <- NULL
+    }
+
     beta_value <- unname(pars[paste0("beta", seq_along(beta_date))])
 
     if (model_type == "BB") {
@@ -234,6 +240,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       rel_susceptibility = rel_efficacy$rel_susceptibility,
       rel_p_sympt = rel_efficacy$rel_p_sympt,
       rel_p_hosp_if_sympt = rel_efficacy$rel_p_hosp_if_sympt,
+      rel_p_death = rel_efficacy$rel_p_death,
       rel_infectivity = rel_efficacy$rel_infectivity,
       vaccine_progression_rate = c(0, 1 / 21, 0, 0),
       vaccine_schedule = vaccination$schedule,
@@ -244,6 +251,8 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
     ## Could be moved to sircovid as a default
     ret$I_A_transmission <- 0.223
+
+    ret$prop_strain_2 <- prop_strain_2
 
     ret
   }

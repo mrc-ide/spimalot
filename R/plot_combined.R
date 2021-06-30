@@ -416,6 +416,12 @@ spim_plot_variant_region <- function(region, dat, date_min) {
   trajectories <- sample$trajectories$state
   x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
 
+  if ("time_index" %in% names(sample$info)) {
+    parent <- sample$info$time_index$parent
+    trajectories <- trajectories[, , -parent, drop = FALSE]
+    x <- x[-parent]
+  }
+
   tot <- trajectories["sympt_cases_inc", , ]
   pos <- tot - trajectories["sympt_cases_non_variant_inc", , ]
 
@@ -1024,7 +1030,7 @@ spim_plot_serology_region <- function(region, dat, sero_flow, ymax,
     colnames(sero_data) <- c("ntot", "npos")
     sero_data[is.na(sero_data)] <- 0
 
-    summ_serodata <- sapply(X = seq_len(nrow(sero_dates)), function(i) {
+    summ_serodata <- sapply(X = seq_rows(sero_dates), function(i) {
       w <- seq(from = as.Date(sero_dates[i, "start"]),
                to = as.Date(sero_dates[i, "end"]), 1)
       w <- as.character(as.Date(w))
@@ -1077,7 +1083,7 @@ spim_plot_serology_region <- function(region, dat, sero_flow, ymax,
         line = 0.5, cex.main = 1)
 
   if (nrow(sero_dates) > 0) {
-    lapply(X = seq_len(nrow(summ_serodata)), FUN = function(i) {
+    lapply(X = seq_rows(summ_serodata), FUN = function(i) {
 
       xx <- rep(unlist(summ_serodata[i, c("start", "end")]), each = 2)
       yy <- c(ylim, rev(ylim))

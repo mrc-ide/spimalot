@@ -46,22 +46,34 @@ spim_combined_load <- function(path, regions = "all") {
   ret$samples <- Map(sircovid::reorder_sample, ret$samples, rank_cum_inc)
   ret$rt <- Map(sircovid::reorder_rt_ifr, ret$rt, rank_cum_inc)
   ret$ifr_t <- Map(sircovid::reorder_rt_ifr, ret$ifr_t, rank_cum_inc)
+  if (ret$info$multistrain) {
+    ret$variant_rt <- Map(reorder_variant_rt, ret$variant_rt, rank_cum_inc)
+  }
+
+  message("Aggregating England/UK")
+  ## Aggregate some of these to get england/uk entries
+  ## Note that we do not store the aggregated outputs in ret yet to avoid
+  ## including in the onward object below. The exception is the Rt values,
+  ## as aggregated Rt values are used in onwards simulations
+  agg_samples <- combined_aggregate_samples(ret$samples)
+  agg_data <- combined_aggregate_data(ret$data)
+  agg_ifr_t <- combined_aggregate_rt(ret$ifr_t, agg_samples)
+  ret$rt <- combined_aggregate_rt(ret$rt, agg_samples)
+  if (ret$info$multistrain) {
+    ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, agg_samples)
+  }
 
   ## NOTE: have not ported the "randomise trajectory order" bit over,
   ## but I do not think that we need to.
   message("Creating data for onward use")
-  ## Do this step *before* aggregation because otherwise we end up
-  ## with the onward data including england/uk
   ret$onward <- spim_combined_onward(ret)
   ret$parameters <- lapply(list_transpose(ret$parameters), dplyr::bind_rows)
 
-  message("Aggregating England/UK")
-  ## Aggregate some of these to get england/uk entries
-  ret$samples <- combined_aggregate_samples(ret$samples)
-
-  ret$data <- combined_aggregate_data(ret$data)
-  ret$rt <- combined_aggregate_rt(ret$rt, ret$samples)
-  ret$ifr_t <- combined_aggregate_rt(ret$ifr_t, ret$samples)
+  ## Now the onward object has been created, we can safely store the
+  ## other aggregated outputs in ret
+  ret$samples <- agg_samples
+  ret$data <- agg_data
+  ret$ifr_t <- agg_ifr_t
 
   ret
 }
@@ -106,10 +118,31 @@ spim_combined_onward_simulate <- function(dat) {
 
   ## This is not terrible:
   rt <- list_transpose(dat$rt)[c("Rt_general", "eff_Rt_general")]
+  ## Rt_general and eff_Rt_general will have dimensions:
+  ## [n particles x n regions x n dates]
   rt_combined <- lapply(rt, function(x)
     aperm(abind::abind(x, along = 3), c(2, 3, 1))[, , idx_dates])
 
-  c(ret, rt_combined)
+  ret <- c(ret, rt_combined)
+
+  if (dat$info$multistrain) {
+    idx_dates_mv_rt <- dat$variant_rt[[1]]$date[, 1] %in% dates
+
+    ## multivariant_Rt_general and multivariant_eff_Rt_general will have
+    ## dimensions: [n particles x n regions x n variants x n dates]
+    ## TODO: we are putting "multivariant" in the name here for clarity,
+    ## so we may want to rename variant_rt wherever it appears to
+    ## multivariant_rt
+    mv_rt <-
+      list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
+    mv_rt_combined <- lapply(mv_rt, function(x)
+      aperm(abind::abind(x, along = 4), c(3, 4, 2, 1))[, , , idx_dates_mv_rt])
+    names(mv_rt_combined) <- paste0("multivariant_", names(mv_rt_combined))
+
+    ret <- c(ret, mv_rt_combined)
+  }
+
+  ret
 }
 
 
@@ -144,7 +177,7 @@ combined_aggregate_data <- function(data) {
     ret$deaths <- pmax(ret$deaths,
                        rowSums(ret[, death_nms], na.rm = TRUE),
                        na.rm = TRUE)
-    ret[-seq_len(nrow(ret) - 5), ] <- NA
+    ret[-seq_len(nrow(ret) - 4), death_nms] <- NA
     data_frame(ret, x[, date_names])
   }
 
@@ -183,10 +216,132 @@ combined_aggregate_rt <- function(rt, samples) {
 }
 
 
+combined_aggregate_variant_rt <- function(variant_rt, samples) {
+  england <- sircovid::regions("england")
+  nations <- sircovid::regions("nations")
+
+  if (all(england %in% names(variant_rt))) {
+    variant_rt$england <- combine_variant_rt(variant_rt[england],
+                                             samples[england],
+                                             rank = FALSE)
+  }
+  if (all(nations %in% names(variant_rt))) {
+    variant_rt$uk <- combine_variant_rt(variant_rt[nations], samples[nations],
+                                        rank = FALSE)
+  }
+  variant_rt
+}
+
+## FIXME: this is basically a version of sircovid::combine_rt that works
+## for two variants. Ideally we would adapt that sircovid function so it can
+## be used for single variant and multivariant Rt objects
+combine_variant_rt <- function(variant_rt, samples, rank) {
+
+  ## the samples trajectories and the variant_rt do not necessarily have the
+  ## same span of dates so we need to filter the trajectories
+  dates <- variant_rt[[1]]$date
+  idx_dates <- samples[[1]]$trajectories$date %in% dates[-1L]
+  idx_dates[1] <- TRUE
+  for (r in names(samples)) {
+    samples[[r]]$trajectories$state <-
+      samples[[r]]$trajectories$state[, , idx_dates]
+    samples[[r]]$trajectories$date <-
+      samples[[r]]$trajectories$date[idx_dates]
+  }
+
+  what <- setdiff(names(variant_rt[[1]]), c("step", "date", "beta"))
+
+  ## combine_rt in sircovid only works for one variant so we need to combine
+  ## each variant separately
+  combine_variant_rt_j <- function(j) {
+    get_variant_j <- function(v) {
+      for (w in what) {
+        v[[w]] <- v[[w]][, j, ]
+      }
+      v
+    }
+
+    sircovid::combine_rt(lapply(variant_rt, get_variant_j),
+                         samples, rank)
+
+  }
+
+  variant1 <- combine_variant_rt_j(1)
+  variant2 <- combine_variant_rt_j(2)
+
+  ## finally we join the variants together
+  ret <- variant1
+  for (w in what) {
+    ret[[w]] <- aperm(abind::abind(variant1[[w]], variant2[[w]], along = 3),
+                         c(1, 3, 2))
+  }
+
+  ret
+}
+
+
 ## Used to invert regions/variable in rt data
 combined_switch_levels <- function(x) {
   nms <- names(x[[1]])
   y <- lapply(nms, function(z) lapply(x, "[[", z))
   names(y) <- nms
   y
+}
+
+##' Get region and country population from a combined fits object
+##' @title Get population from combined
+##' @param combined Combined fits object
+##' @param ignore_uk If `TRUE` population of UK is retured as NA
+##' @return data.frame of region/country populations
+##' @export
+spim_population <- function(combined, ignore_uk = FALSE, by_age = TRUE,
+                           group = 1:19) {
+  pop <- vapply(names(combined$pars), function(r)
+    as.integer(combined$transform[[r]](combined$pars[[r]][1, ])$N_tot[group]),
+    group)
+  pop_england <- rowSums(pop[, sircovid::regions("england")])
+  if (!ignore_uk) {
+    pop_uk <- rowSums(pop[, sircovid::regions("all")])
+  } else {
+    pop_uk <- rep(NA_real_, length(pop_england))
+  }
+
+  df <- data.frame(pop, england = pop_england, uk = pop_uk)
+  if (!by_age) {
+    df <- colSums(df)
+  }
+
+  df
+}
+
+
+## FIXME: this is basically a version of sircovid::reorder_rt_ifr that works
+## for two variants. Ideally we would adapt that sircovid function so it can
+## be used for single variant and multivariant Rt objects
+reorder_variant_rt <- function(x, rank) {
+
+  what <- setdiff(names(x), c("step", "date"))
+
+  ## reorder_rt_ifr will only work for one variant so we will have to reorder
+  ## each variant separately
+  for (j in seq_len(2)) {
+    v <- x
+
+    for (i in what[what != "beta"]) {
+      v[[i]] <- v[[i]][, j, ]
+    }
+
+    v <- sircovid::reorder_rt_ifr(v, rank)
+
+    for (i in what) {
+      if (i == "beta") {
+        x[[i]] <- v[[i]]
+      } else {
+        x[[i]][, j, ] <- v[[i]]
+      }
+
+    }
+  }
+
+  x
 }

@@ -79,3 +79,13 @@ set_names <- function(x, nms) {
 nlayers <- function(x) {
   dim(x)[[3L]]
 }
+
+
+str_collapse <- function(str) {
+  sprintf("{%s}", paste0(str, sep = ", "))
+}
+
+
+seq_rows <- function(x) {
+  seq_len(nrow(x))
+}

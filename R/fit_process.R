@@ -29,9 +29,15 @@ spim_fit_process <- function(samples, parameters, data, control) {
                                            incidence_states)
 
   message("Computing Rt")
-  rt <- calculate_Rt(forecast, samples$info$multistrain) # TODO: very slow
+  rt <- calculate_Rt(forecast, samples$info$multistrain, TRUE) # TODO: very slow
+  if (samples$info$multistrain) {
+    variant_rt <- calculate_Rt(forecast, samples$info$multistrain, FALSE)
+  } else {
+    variant_rt <- NULL
+  }
   message("Computing IFR")
-  ifr_t <- calculate_ifr_t(forecast) # TODO: a bit slow
+  ifr_t <-
+    calculate_ifr_t(forecast, samples$info$multistrain) # TODO: a bit slow
 
   message("Summarising admissions")
   # admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
@@ -88,6 +94,7 @@ spim_fit_process <- function(samples, parameters, data, control) {
   list(samples = forecast, # note complicated naming change here
        pmcmc = samples,
        rt = rt,
+       variant_rt = variant_rt,
        ifr_t = ifr_t,
        #admissions = admissions,
        #deaths = deaths,
@@ -152,7 +159,7 @@ create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
 }
 
 
-calculate_Rt <- function(samples, multistrain) {
+calculate_Rt <- function(samples, multistrain, weight_Rt) {
   step <- samples$trajectories$step
 
   index_S <- grep("^S_", names(samples$predict$index))
@@ -169,33 +176,37 @@ calculate_Rt <- function(samples, multistrain) {
 
   S <- samples$trajectories$state[index_S, , , drop = FALSE]
 
-  pars <- lapply(seq_len(nrow(samples$pars)), function(i)
+  pars <- lapply(seq_rows(samples$pars), function(i)
     samples$predict$transform(samples$pars[i, ]))
 
   sircovid::carehomes_Rt_trajectories(
     step, S, pars,
     initial_step_from_parameters = TRUE,
     shared_parameters = FALSE, R = R, prob_strain = prob_strain,
-    weight_Rt = TRUE)
+    weight_Rt = weight_Rt)
 }
 
 
-calculate_ifr_t <- function(samples) {
+calculate_ifr_t <- function(samples, multistrain) {
   step <- samples$trajectories$step
 
   index_S <- grep("^S_", names(samples$predict$index))
   index_I_weighted <- grep("^I_weighted_", names(samples$predict$index))
+  index_R <- grep("^R_", names(samples$predict$index))
 
   S <- samples$trajectories$state[index_S, , , drop = FALSE]
-
-  index_I_weighted <- grep("^I_weighted_", names(samples$predict$index))
   I_weighted <- samples$trajectories$state[index_I_weighted, , , drop = FALSE]
+  if (multistrain) {
+    R <- samples$trajectories$state[index_R, , , drop = FALSE]
+  } else {
+    R <- NULL
+  }
 
-  pars <- lapply(seq_len(nrow(samples$pars)), function(i)
+  pars <- lapply(seq_rows(samples$pars), function(i)
     samples$predict$transform(samples$pars[i, ]))
 
   sircovid::carehomes_ifr_t_trajectories(
-    step, S, I_weighted, pars,
+    step, S, I_weighted, pars, R = R,
     initial_step_from_parameters = TRUE,
     shared_parameters = FALSE)
 }
@@ -476,15 +487,18 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
 
     protected_against_infection <- rep(NA_real_, n_days)
     protected_against_severe_disease <- rep(NA_real_, n_days)
+    protected_against_death <- rep(NA_real_, n_days)
   } else {
     protected_against_infection <- sum_asr(c(vp$infection) * V)
     protected_against_severe_disease <- sum_asr(c(vp$severe_disease) * V)
+    protected_against_death <- sum_asr(c(vp$death) * V)
   }
 
   n_protected <- rbind(
     ever_vaccinated = colSums(n_vaccinated[, 1, , ]),
     protected_against_infection = protected_against_infection,
     protected_against_severe_disease = protected_against_severe_disease,
+    protected_against_death = protected_against_death,
     ever_infected = sum_sr(R),
     ever_infected_unvaccinated = R[1, , , drop = FALSE])
 
@@ -511,15 +525,19 @@ get_vaccine_protection <- function(vaccine_efficacy, booster_efficacy = NULL) {
     stopifnot(identical(names(vaccine_efficacy), names(booster_efficacy)))
     vaccine_efficacy <- Map(cbind, vaccine_efficacy, booster_efficacy)
   }
+
   efficacy_infection <- 1 - vaccine_efficacy$rel_susceptibility
   efficacy_disease <- efficacy_infection + (1 - efficacy_infection) *
     (1 - vaccine_efficacy$rel_p_sympt)
   efficacy_severe_disease <- efficacy_disease + (1 - efficacy_disease) *
     (1 - vaccine_efficacy$rel_p_hosp_if_sympt)
+  efficacy_death <- efficacy_severe_disease + (1 - efficacy_severe_disease) *
+    (1 - vaccine_efficacy$rel_p_death)
 
   list(infection = efficacy_infection,
        disease = efficacy_disease,
-       severe_disease = efficacy_severe_disease)
+       severe_disease = efficacy_severe_disease,
+       death = efficacy_death)
 }
 
 
