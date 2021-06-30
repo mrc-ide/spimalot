@@ -169,3 +169,48 @@ spim_scenario_cols <- function(scenarios, dark_scenarios = NULL, weight = 0.3,
 
   cols
 }
+
+
+##' Prepare aggregated real data for plotting
+##' @title Prepare aggregated data for plotting
+##'
+##' @param path Path to aggregated rds object containing a named list where
+##'  names correspond to regions and each element is a list with `full` data
+##'  and `fitted` data
+##'
+##' @return Returns a list where elements correspond to regions and `fitted`
+##'  data is removed. Data processing includes: adding `deaths`
+##'  column as the sum over all death compartments; fixes when NAs converted to
+##'  0s erroneously; and fitted data removed.
+##'
+##' @export
+spim_prepare_aggregated_data <- function(path) {
+
+  agg_data <-
+    readRDS(path) %>%
+    lapply(function(x) {
+      x <- x$full
+
+      deaths <- cbind(x$deaths_hosp, x$deaths_comm,
+                      x$deaths_carehomes, x$deaths_non_hosp)
+
+      x$deaths <- rowSums(deaths, na.rm = TRUE)
+      x$deaths[apply(deaths, 1, function(x) all(is.na(x)))] <- NA
+      x
+    })
+
+  nr <- nrow(agg_data[[1]])
+
+  f <- function(what) {
+    mat <- vapply(agg_data[sircovid::regions("england")],
+                  function(x) x[[what]], integer(nr))
+    which <- apply(mat, 1, function(x) all(is.na(x)))
+    mat <- rowSums(mat, na.rm = TRUE)
+    mat[which] <- NA
+    mat
+  }
+
+  what <- c("icu", "general", "hosp",  "admitted", "diagnoses", "all_admission")
+  agg_data$england[, what] <- vapply(what, f, numeric(nr))
+  agg_data
+}
