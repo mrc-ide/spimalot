@@ -8,9 +8,11 @@ spim_plot_rt_dist(
   npi_key,
   xlim,
   ylim,
+  cols,
   labels = NULL,
   legend_ncol = 1,
-  npi_key2 = NULL
+  npi_key2 = NULL,
+  multiplier = 1
 )
 }
 \arguments{
@@ -21,12 +23,18 @@ nations, npi (scenario), Rt (mean), Rt_sd}
 
 \item{ylim}{Passed to \code{plot}}
 
+\item{cols}{Colours for plots, should be same for \code{npi_key2} if given}
+
 \item{labels}{Passed to \link{legend} \code{legend} parameter}
 
 \item{legend_ncol}{Passed to \link{legend} \code{ncol} parameter}
 
 \item{npi_key2}{Optional second npi_key that will be plotted with dashed
 lines}
+
+\item{multiplier}{Multiplier on the R values to plot - the distribution
+plotted will be that of multiplier * x where x is drawn from a lognormal
+with parameters specified in npi_key}
 }
 \description{
 Plot Rt distribution over time for various scenarios

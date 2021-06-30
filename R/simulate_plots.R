@@ -5,6 +5,7 @@
 ##'   nations, npi (scenario), Rt (mean), Rt_sd
 ##' @param xlim Passed to `plot`
 ##' @param ylim Passed to `plot`
+##' @param cols Colours for plots, should be same for `npi_key2` if given
 ##' @param labels Passed to [legend] `legend` parameter
 ##' @param legend_ncol Passed to [legend] `ncol` parameter
 ##' @param npi_key2 Optional second npi_key that will be plotted with dashed
@@ -14,7 +15,7 @@
 ##' with parameters specified in npi_key
 ##'
 ##' @export
-spim_plot_rt_dist <- function(npi_key, xlim, ylim, labels = NULL,
+spim_plot_rt_dist <- function(npi_key, xlim, ylim, cols, labels = NULL,
                               legend_ncol = 1, npi_key2 = NULL,
                               multiplier = 1) {
 
@@ -26,14 +27,12 @@ spim_plot_rt_dist <- function(npi_key, xlim, ylim, labels = NULL,
        ylab = "Density",
        las = 1)
 
-  cols <- spim_scenario_cols(seq_rows(npi_key))
   for (i in seq_rows(npi_key)) {
     dist <- distr6::dstr("Lognormal", mean = npi_key$Rt[i], sd = npi_key$Rt_sd[i])
     lines(x * multiplier, dist$pdf(x) / multiplier, col = cols[i], lwd = 2)
     legend_lty <- rep(1, nrow(npi_key2))
   }
   if (!is.null(npi_key2)) {
-    cols <- spim_scenario_cols(seq_rows(npi_key2))
     for (i in seq_rows(npi_key)) {
       dist <- distr6::dstr("Lognormal", mean = npi_key2$Rt[i], sd = npi_key2$Rt_sd[i])
       lines(x * multiplier, dist$pdf(x) / multiplier, col = cols[i], lwd = 2, lty = 2)
