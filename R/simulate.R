@@ -1348,6 +1348,7 @@ spim_simulation_predictors <- function(summary) {
   vars
 }
 
+
 ##' Prepare csv with NPI keys for simulation task
 ##'
 ##' @title Prepare NPI key csv for simulation
@@ -1400,6 +1401,7 @@ spim_prepare_npi_key <- function(path, country) {
   npi_key
 }
 
+
 ##' Prepare Rt future grid for simulation task
 ##'
 ##' @title Prepare Rt future for simulation
@@ -1430,8 +1432,8 @@ spim_prepare_rt_future <- function(path, npi_key, start_date, end_date) {
       date <= as.Date(end_date)
     ) %>%
     dplyr::left_join(npi_key, by = c("nation", "npi")) %>%
-    mutate(key = paste(scenario, adherence, sep = ": ")) %>%
-    select(-day, -month, -year)
+    dplyr::mutate(key = paste(scenario, adherence, sep = ": ")) %>%
+    dplyr::select(-day, -month, -year)
 
   res_celtic <- res %>%
     dplyr::filter(nation != "england") %>%
