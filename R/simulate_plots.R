@@ -5,39 +5,42 @@
 ##'   nations, npi (scenario), Rt (mean), Rt_sd
 ##' @param xlim Passed to `plot`
 ##' @param ylim Passed to `plot`
+##' @param cols Colours for plots, should be same for `npi_key2` if given
 ##' @param labels Passed to [legend] `legend` parameter
 ##' @param legend_ncol Passed to [legend] `ncol` parameter
 ##' @param npi_key2 Optional second npi_key that will be plotted with dashed
 ##'   lines
+##' @param multiplier Multiplier on the R values to plot - the distribution
+##' plotted will be that of multiplier * x where x is drawn from a lognormal
+##' with parameters specified in npi_key
 ##'
 ##' @export
-spim_plot_rt_dist <- function(npi_key, xlim, ylim, labels = NULL,
-                              legend_ncol = 1, npi_key2 = NULL) {
+spim_plot_rt_dist <- function(npi_key, xlim, ylim, cols, labels = NULL,
+                              legend_ncol = 1, npi_key2 = NULL,
+                              multiplier = 1) {
+
+  x <- seq(min(xlim), max(xlim), length.out = 1e3)
 
   labels <- labels %||% rownames(npi_key)
   plot(0, 0, xlim = xlim, ylim = ylim, type = "n",
        xlab = expression(R[excl_immunity]),
        ylab = "Density",
        las = 1)
-  cols <- viridis(nrow(npi_key))
+
   for (i in seq_rows(npi_key)) {
     dist <- distr6::dstr("Lognormal", mean = npi_key$Rt[i], sd = npi_key$Rt_sd[i])
-    curve(dist$pdf(x), add = TRUE, col = cols[i], from = xlim[1], to = xlim[2],
-          n = 1e3, lwd = 2)
+    lines(x * multiplier, dist$pdf(x) / multiplier, col = cols[i], lwd = 2)
     legend_lty <- rep(1, nrow(npi_key2))
   }
   if (!is.null(npi_key2)) {
-    cols <- viridis(nrow(npi_key2))
     for (i in seq_rows(npi_key)) {
       dist <- distr6::dstr("Lognormal", mean = npi_key2$Rt[i], sd = npi_key2$Rt_sd[i])
-      curve(dist$pdf(x),
-            add = TRUE, col = cols[i], from = xlim[1], to = xlim[2],
-            n = 1e3, lwd = 2, lty = 2
-      )
+      lines(x * multiplier, dist$pdf(x) / multiplier, col = cols[i], lwd = 2, lty = 2)
     }
     legend_lty <- c(legend_lty, 1, 2)
     cols <- c(cols, 1, 1)
   }
+
   legend("topleft", legend = labels, ncol = legend_ncol, bty = "n",
          lty = legend_lty, lwd = 2, col = cols)
 }
