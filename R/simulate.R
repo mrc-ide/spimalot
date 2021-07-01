@@ -1211,12 +1211,13 @@ spim_expand_grid <- function(..., full_run = FALSE, prefix = "Grid_") {
 ##'   currently equivalent to `strain_vaccine_efficacy`
 ##' @param multistrain If `FALSE` then removes all columns related to a second
 ##'   strain
+##' @param analyses If not `NULL` then filters grid by given analyses
 ##'
 ##' @return A grid of scenarios to run
 ##' @export
 spim_run_grid <- function(scenarios, csv = NULL, expand_grid = NULL,
                           force_central = TRUE, set_strain_params = TRUE,
-                          multistrain = TRUE) {
+                          multistrain = TRUE, analyses = NULL) {
 
   if (is.null(csv) && is.null(expand_grid) && !force_central) {
     stop("At least one of 'csv', 'expand_grid', 'force_central' must be
@@ -1244,6 +1245,11 @@ spim_run_grid <- function(scenarios, csv = NULL, expand_grid = NULL,
     run_grid <- run_grid %>%
       dplyr::mutate(strain_cross_immunity = strain_vaccine_efficacy,
                     strain_severity_modifier = strain_vaccine_efficacy)
+  }
+
+  if (!is.null(analyses)) {
+    run_grid <- run_grid %>%
+      dplyr::filter(analysis %in% analyses)
   }
 
   run_grid %>%

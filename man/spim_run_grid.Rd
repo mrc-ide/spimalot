@@ -10,7 +10,8 @@ spim_run_grid(
   expand_grid = NULL,
   force_central = TRUE,
   set_strain_params = TRUE,
-  multistrain = TRUE
+  multistrain = TRUE,
+  analyses = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ currently equivalent to \code{strain_vaccine_efficacy}}
 
 \item{multistrain}{If \code{FALSE} then removes all columns related to a second
 strain}
+
+\item{analyses}{If not \code{NULL} then filters grid by given analyses}
 }
 \value{
 A grid of scenarios to run
