@@ -1462,7 +1462,7 @@ spim_prepare_rt_future <- function(path, npi_key, start_date, end_date) {
 ##'  computed over all scenarios.
 ##' @param analyses Analyses for which to compute little r . If `NULL`
 ##'  computed over all analyses.
-##' @param fmt_numeric If `TRUE` (default) returns results in long format as numeric,
+##' @param wide If `FALSE` (default) returns results in long format as numeric,
 ##'  otherwise returns wide format with dates as columns and scenarios/analyses
 ##'  as rows and entries are given as `central (low, high)`
 ##'
@@ -1470,7 +1470,7 @@ spim_prepare_rt_future <- function(path, npi_key, start_date, end_date) {
 ##'
 ##' @export
 spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
-                             fmt_numeric = TRUE) {
+                             wide = FALSE) {
   ### generation time distribution from STM paper ###
   # https://stm.sciencemag.org/content/scitransmed/suppl/2021/06/21/scitranslmed.abg4262.DC1/abg4262_SM.pdf
 
@@ -1513,7 +1513,7 @@ spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
     `colnames<-`(c("50%", "2.5%", "97.5%", "date", "analysis", "scenario")) %>%
     dplyr::arrange(date, scenario, analysis)
 
-  if (!fmt_numeric) {
+  if (wide) {
     out <- out %>%
       dplyr::mutate(r = sprintf("%#.4f (%#.4f, %#.4f)", `50%`, `2.5%`, `97.5%`)) %>%
       dplyr::select(date, scenario, analysis, r) %>%

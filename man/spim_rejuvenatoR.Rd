@@ -9,7 +9,7 @@ spim_rejuvenatoR(
   dates,
   scenarios = NULL,
   analyses = NULL,
-  fmt_numeric = TRUE
+  wide = FALSE
 )
 }
 \arguments{
@@ -23,7 +23,7 @@ computed over all scenarios.}
 \item{analyses}{Analyses for which to compute little r . If \code{NULL}
 computed over all analyses.}
 
-\item{fmt_numeric}{If \code{TRUE} (default) returns results in long format as numeric,
+\item{wide}{If \code{FALSE} (default) returns results in long format as numeric,
 otherwise returns wide format with dates as columns and scenarios/analyses
 as rows and entries are given as \code{central (low, high)}}
 }
