@@ -122,12 +122,10 @@ spim_extract_variants_rt <- function(dat, type_rt = "Rt_general"){
       rt[[i]]$date == sircovid::sircovid_date(date_rt)]
     curr_rt_alpha <- curr_rt[c(TRUE, FALSE)]
     curr_rt_delta <- curr_rt[c(FALSE, TRUE)]
-
-    ret <- rbind(
-      c(mean(curr_rt_alpha), quantile(curr_rt_alpha, c(0.025, 0.975))),
-      c(mean(curr_rt_delta), quantile(curr_rt_delta, c(0.025, 0.975))),
-      delta/alpha
-    )
+    alpha <- c(mean(curr_rt_alpha), quantile(curr_rt_alpha, c(0.025, 0.975)))
+    delta <- c(mean(curr_rt_delta), quantile(curr_rt_delta, c(0.025, 0.975)))
+    epsilon <- delta/alpha
+    ret <- rbind(alpha, delta, epsilon)
     colnames(ret) <- c("mean", "LB", "UB")
     ret <- as.data.frame(ret)
     ret$variant <- c("alpha", "delta", "epsilon")
