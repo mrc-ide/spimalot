@@ -1459,9 +1459,10 @@ spim_prepare_rt_future <- function(path, npi_key, start_date, end_date) {
 ##' @param summary Simulation summary object
 ##' @param dates Dates for which to compute little r
 ##' @param scenarios Scenarios for which to compute little r . If `NULL`
-##'  computed over all scenarios.
+##'  computed over all scenarios
 ##' @param analyses Analyses for which to compute little r . If `NULL`
-##'  computed over all analyses.
+##'  computed over all analyses
+##' @param reg Region to filter summary object by
 ##' @param wide If `FALSE` (default) returns results in long format as numeric,
 ##'  otherwise returns wide format with dates as columns and scenarios/analyses
 ##'  as rows and entries are given as `central (low, high)`
@@ -1470,7 +1471,7 @@ spim_prepare_rt_future <- function(path, npi_key, start_date, end_date) {
 ##'
 ##' @export
 spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
-                             wide = FALSE) {
+                             reg = "england", wide = FALSE) {
   ### generation time distribution from STM paper ###
   # https://stm.sciencemag.org/content/scitransmed/suppl/2021/06/21/scitranslmed.abg4262.DC1/abg4262_SM.pdf
 
@@ -1500,6 +1501,7 @@ spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
 
   obj <- summary$state %>%
     dplyr::filter(state == "eff_Rt_general",
+                  region == reg,
                   date %in% dates,
                   analysis %in% analyses,
                   scenario %in% scenarios)

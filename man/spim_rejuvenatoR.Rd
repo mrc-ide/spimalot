@@ -9,6 +9,7 @@ spim_rejuvenatoR(
   dates,
   scenarios = NULL,
   analyses = NULL,
+  reg = "england",
   wide = FALSE
 )
 }
@@ -18,10 +19,12 @@ spim_rejuvenatoR(
 \item{dates}{Dates for which to compute little r}
 
 \item{scenarios}{Scenarios for which to compute little r . If \code{NULL}
-computed over all scenarios.}
+computed over all scenarios}
 
 \item{analyses}{Analyses for which to compute little r . If \code{NULL}
-computed over all analyses.}
+computed over all analyses}
+
+\item{reg}{Region to filter summary object by}
 
 \item{wide}{If \code{FALSE} (default) returns results in long format as numeric,
 otherwise returns wide format with dates as columns and scenarios/analyses
