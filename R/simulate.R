@@ -1450,3 +1450,75 @@ spim_prepare_rt_future <- function(path, npi_key, start_date, end_date) {
     tidyr::expand_grid(region = sircovid::regions("england")) %>%
     dplyr::bind_rows(res_celtic)
 }
+
+
+##' Find little r from big R
+##'
+##' @title Find daily little r values from big R
+##'
+##' @param summary Simulation summary object
+##' @param dates Dates for which to compute little r
+##' @param scenarios Scenarios for which to compute little r . If `NULL`
+##'  computed over all scenarios.
+##' @param analyses Analyses for which to compute little r . If `NULL`
+##'  computed over all analyses.
+##' @param fmt_numeric If `TRUE` (default) returns results in long format as numeric,
+##'  otherwise returns wide format with dates as columns and scenarios/analyses
+##'  as rows and entries are given as `central (low, high)`
+##'
+##' @return data.frame with daily little r at given dates, scenarios, analyses
+##'
+##' @export
+spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
+                             fmt_numeric = TRUE) {
+  ### generation time distribution from STM paper ###
+  # https://stm.sciencemag.org/content/scitransmed/suppl/2021/06/21/scitranslmed.abg4262.DC1/abg4262_SM.pdf
+
+  if (is.null(scenarios)) {
+    scenarios <- unique(summary$state$scenario)
+  }
+  if (is.null(analyses)) {
+    analyses <- unique(summary$state$analysis)
+  }
+
+  t <- seq(0, 30, 1)
+  mean_gt <- 6.7
+  sd_gt <- 3.5
+  w <- EpiEstim::discr_si(t, mean_gt, sd_gt)
+
+  ### grid of r values
+  r_grid <- seq(-0.5, 0.5, 0.0001)
+  R_grid <- epitrix::r2R0(r = r_grid, w = w)
+  r_R_corresp <- data.frame(r = r_grid, R = R_grid)
+
+  find_r_from_R <- function(R) {
+    if (R < min(r_R_corresp$R) || R > max(r_R_corresp$R)) {
+      stop("R value outside of grid, expand grid further")
+    }
+    r_R_corresp$r[which.min(abs(r_R_corresp$R - R))]
+  }
+
+  obj <- summary$state %>%
+    dplyr::filter(state == "eff_Rt_general",
+                  date %in% dates,
+                  analysis %in% analyses,
+                  scenario %in% scenarios)
+
+  out <- apply(obj, 1, function(x) {
+    x <-vapply(as.numeric(c(x[["50%"]], x[["2.5%"]], x[["97.5%"]])), find_r_from_R, numeric(1))
+  }) %>%
+  `rownames<-`(c("50%", "2.5%", "97.5%")) %>%
+    t() %>%
+    data.frame(obj$date, obj$analysis, obj$scenario) %>%
+    `colnames<-`(c("50%", "2.5%", "97.5%", "date", "analysis", "scenario")) %>%
+    dplyr::arrange(date, scenario, analysis)
+
+  if (!fmt_numeric) {
+    out <- out %>%
+      dplyr::mutate(r = sprintf("%#.4f (%#.4f, %#.4f)", `50%`, `2.5%`, `97.5%`)) %>%
+      dplyr::select(date, scenario, analysis, r) %>%
+      tidyr::pivot_wider(names_from = date, values_from = r)
+  }
+
+  out
+}
