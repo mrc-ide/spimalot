@@ -166,7 +166,7 @@ spim_data_rtm <- function(date, region, model_type, data, data_admissions,
     data$deaths_non_hosp <- NA_integer_
   } else {
     data$deaths <- NA_integer_
-    data$deaths_hosp <- NA_integer_
+    data$deaths_hosp <- data$death3
     data$deaths_non_hosp <- NA_integer_
 
     if (!full_data) {
@@ -340,7 +340,8 @@ spim_data_rtm <- function(date, region, model_type, data, data_admissions,
 
     if (model_type == "BB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
-                "pillar2_cases", "pillar2_over25_cases")
+                "pillar2_cases", "pillar2_over25_cases", "all_admission",
+                "deaths_hosp")
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
@@ -353,7 +354,8 @@ spim_data_rtm <- function(date, region, model_type, data, data_admissions,
     }
     if (model_type == "NB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
-                "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos")
+                "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos",
+                "all_admission", "deaths_hosp")
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
