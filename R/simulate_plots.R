@@ -121,48 +121,75 @@ spim_plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
 ##' @param dark_scenarios Optional unique scenario names that should be same
 ##'  length as `scenarios` as provided and will be the same colours but darker.
 ##'  Useful if plotting scenarios and their High R counterparts.
+##' @param light_scenarios Optional unique scenario names that should be same
+##'  length as `scenarios` as provided and will be the same colours but lighter.
+##'  Useful if plotting scenarios and their Low R counterparts.
 ##' @param weight If `dark_scenarios` is not `NULL` then `weight` passed to
 ##'  `mix_cols` to darken colours by mixing with "#000000" (black)
 ##' @param palette Colour palette, passed to [khroma::colour]
 ##' @param highR If `TRUE` then `dark_scenarios` is taken to be all scenarios
 ##'   that contain "High R"; `dark_scenarios` should be `NULL` if `TRUE`
+##' @param lowR If `TRUE` then `light_scenarios` is taken to be all scenarios
+##'   that contain "Low R"; `light_scenarios` should be `NULL` if `TRUE`
 ##' @param preview If `TRUE` then plots the final colour scheme with
 ##'   [khroma::plot_scheme]
 ##'
 ##' @export
-spim_scenario_cols <- function(scenarios, dark_scenarios = NULL, weight = 0.3,
-                               palette = "bright", highR = TRUE,
+spim_scenario_cols <- function(scenarios, dark_scenarios = NULL,
+                               light_scenarios = NULL, weight = 0.3,
+                               palette = "bright", highR = TRUE, lowR = TRUE,
                                preview = FALSE) {
 
   stopifnot(all(table(scenarios)) == 1)
 
   n_scens <- length(scenarios)
 
-  if (highR) {
-    if (!is.null(dark_scenarios)) {
-      stop("`dark_scenarios` must be `NULL` if `highR` is `TRUE`")
+  f <- function(R, scen, str) {
+    if (R) {
+      if (!is.null(scen)) {
+        stop("`dark_scenarios`/`light_scenarios` must be `NULL` if
+            `highR`/`lowR` is `TRUE`")
+      }
+      scen <- grep(paste(str, "R"), scenarios, value = TRUE)
+      if (length(scen) == 0) {
+        scen <- NULL
+      }
     }
-    dark_scenarios <- grep("High R", scenarios, value = TRUE)
-    scenarios <- setdiff(scenarios, dark_scenarios)
-    n_scens <- length(scenarios)
-    if (length(dark_scenarios) == 0) {
-      dark_scenarios <- NULL
-    }
+    scen
   }
+
+  dark_scenarios <- f(highR, dark_scenarios, "High")
+  light_scenarios <- f(lowR, light_scenarios, "Low")
+
+  scenarios <- setdiff(scenarios, c(dark_scenarios, light_scenarios))
+  n_scens <- length(scenarios)
 
   if (!is.null(dark_scenarios)) {
     stopifnot(all(table(dark_scenarios)) == 1,
               n_scens == length(dark_scenarios))
   }
 
+  if (!is.null(light_scenarios)) {
+    stopifnot(all(table(light_scenarios)) == 1,
+              n_scens == length(light_scenarios))
+  }
+
   cols <- khroma::colour(palette)(n_scens)
   names(cols) <- scenarios
 
+  dark_cols <- light_cols <- character()
+
   if (!is.null(dark_scenarios)) {
-    dark_cols <- mix_cols(cols, rep("#000000", length(cols)), 0.3)
+    dark_cols <- mix_cols(cols, rep("#000000", length(cols)), weight)
     names(dark_cols) <- dark_scenarios
-    cols <- c(cols, dark_cols)
   }
+
+  if (!is.null(light_scenarios)) {
+    light_cols <- mix_cols(cols, rep("#FFFFFF", length(cols)), weight)
+    names(light_cols) <- light_scenarios
+  }
+
+  cols <- c(cols, dark_cols, light_cols)
 
   if (preview) {
     khroma::plot_scheme(cols)

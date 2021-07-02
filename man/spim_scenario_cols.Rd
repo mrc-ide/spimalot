@@ -7,9 +7,11 @@
 spim_scenario_cols(
   scenarios,
   dark_scenarios = NULL,
+  light_scenarios = NULL,
   weight = 0.3,
   palette = "bright",
   highR = TRUE,
+  lowR = TRUE,
   preview = FALSE
 )
 }
@@ -20,6 +22,10 @@ spim_scenario_cols(
 length as \code{scenarios} as provided and will be the same colours but darker.
 Useful if plotting scenarios and their High R counterparts.}
 
+\item{light_scenarios}{Optional unique scenario names that should be same
+length as \code{scenarios} as provided and will be the same colours but lighter.
+Useful if plotting scenarios and their Low R counterparts.}
+
 \item{weight}{If \code{dark_scenarios} is not \code{NULL} then \code{weight} passed to
 \code{mix_cols} to darken colours by mixing with "#000000" (black)}
 
@@ -27,6 +33,9 @@ Useful if plotting scenarios and their High R counterparts.}
 
 \item{highR}{If \code{TRUE} then \code{dark_scenarios} is taken to be all scenarios
 that contain "High R"; \code{dark_scenarios} should be \code{NULL} if \code{TRUE}}
+
+\item{lowR}{If \code{TRUE} then \code{light_scenarios} is taken to be all scenarios
+that contain "Low R"; \code{light_scenarios} should be \code{NULL} if \code{TRUE}}
 
 \item{preview}{If \code{TRUE} then plots the final colour scheme with
 \link[khroma:plot]{khroma::plot_scheme}}

@@ -1183,7 +1183,7 @@ spim_expand_grid <- function(..., full_run = FALSE, prefix = "Grid_") {
     stop(sprintf("Unexpected variables(s) %s", str_collapse(actual[mtc])))
   }
 
-  expand_grid(
+  tidyr::expand_grid(
     RUN = TRUE,
     full_run,
     ...
@@ -1191,7 +1191,7 @@ spim_expand_grid <- function(..., full_run = FALSE, prefix = "Grid_") {
     ## adds central for missing variables
     tidyr::expand_grid(dplyr::select(central, -names(.)), .) %>%
     ## add analysis name
-    mutate(analysis = paste0(prefix, seq_rows(.)))
+    dplyr::mutate(analysis = paste0(prefix, seq_rows(.)))
 }
 
 
