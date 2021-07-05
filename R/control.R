@@ -29,7 +29,7 @@
 ##' @export
 spim_control <- function(short_run, n_chains, date_restart = NULL,
                          n_particles = 192, n_mcmc = 1500, burnin = 500,
-                         workers = TRUE) {
+                         forecast_days = 57, workers = TRUE) {
   if (short_run) {
     n_particles <- 10
     n_mcmc <- 20
@@ -47,7 +47,7 @@ spim_control <- function(short_run, n_chains, date_restart = NULL,
     date_restart <- sircovid::sircovid_date(date_restart)
   }
 
-  forecast_days <- 57
+  forecast_days <- forecast_days
 
   parallel <- spim_control_parallel(n_chains, workers)
 
