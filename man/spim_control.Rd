@@ -11,6 +11,7 @@ spim_control(
   n_particles = 192,
   n_mcmc = 1500,
   burnin = 500,
+  forecast_days = 57,
   workers = TRUE
 )
 }
