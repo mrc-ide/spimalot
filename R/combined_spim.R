@@ -108,23 +108,26 @@ spim_extract_admissions_by_age_region <- function(sample) {
 ##' @title Extract multivariant Rt
 ##'
 ##' @param dat Combined data set
+##' @param type_rt Either 'Rt_general' or 'eff_Rt_general'
 ##'
 ##' @export
-spim_extract_variants_rt <- function(dat, type_rt = "Rt_general"){
+spim_extract_variants_rt <- function(dat, type_rt) {
+
+  stopifnot(type_rt %in% c("Rt_general", "eff_Rt_general"))
 
   rt <- dat$variant_rt
 
   date_rt <- dat$info$date
 
   out <- NULL
-  for (i in c(sircovid::regions("england"),"england")) {
+  for (i in c(sircovid::regions("england"), "england")) {
     curr_rt <- rt[[i]][[type_rt]][
       rt[[i]]$date == sircovid::sircovid_date(date_rt)]
     curr_rt_alpha <- curr_rt[c(TRUE, FALSE)]
     curr_rt_delta <- curr_rt[c(FALSE, TRUE)]
     alpha <- c(mean(curr_rt_alpha), quantile(curr_rt_alpha, c(0.025, 0.975)))
     delta <- c(mean(curr_rt_delta), quantile(curr_rt_delta, c(0.025, 0.975)))
-    epsilon <- delta/alpha
+    epsilon <- delta / alpha
     ret <- rbind(alpha, delta, epsilon)
     colnames(ret) <- c("mean", "LB", "UB")
     ret <- as.data.frame(ret)
