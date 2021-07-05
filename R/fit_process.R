@@ -83,7 +83,10 @@ spim_fit_process <- function(samples, parameters, data, control) {
       rt = rt_filter_time(rt, i),
       ifr_t = rt_filter_time(ifr_t, i),
       deaths = deaths_filter_time(deaths, restart_date),
-      admissions = deaths_filter_time(deaths, restart_date))
+      admissions = deaths_filter_time(deaths, restart_date),
+      ## TODO: check to make sure that this is just the one region's
+      ## parameters at this point (see the region column)
+      prior = parameters$prior)
   }
 
   ## Drop the big objects from the output
