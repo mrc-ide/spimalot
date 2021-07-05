@@ -136,10 +136,12 @@ spim_pars_pmcmc_save <- function(p, path) {
 ##'
 ##' @title Create vector of beta dates
 ##'
-##' @param date Todays dates (last date is set two weeks ago)
+##' @param date Todays dates (last date is set to last_beta_days_ago)
+##'
+##' @param last_beta_days_ago Number of days in the past for last beta point
 ##'
 ##' @export
-spim_pars_beta <- function(date) {
+spim_pars_beta <- function(date, last_beta_days_ago = 21) {
   ## Dates are as follows
   ##  1. 2020-03-16 - PM advises WFH, against non-essential travel etc
   ##  2. 2020-03-23 - PM announces full lockdown
@@ -167,7 +169,7 @@ spim_pars_beta <- function(date) {
     "2020-10-14", "2020-10-31", "2020-11-05",
     "2020-12-02", "2020-12-18", "2021-01-05",
     "2021-03-08", "2021-04-19", "2021-05-17",
-    as.character(as.Date(date) - 21))
+    as.character(as.Date(date) - last_beta_days_ago))
 }
 
 
