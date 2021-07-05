@@ -140,6 +140,29 @@ spim_extract_variants_rt <- function(dat, type_rt) {
 }
 
 
+##' Extract current ALOS by region
+##'
+##' @title Extract average length of hospital stay
+##'
+##' @param dat Combined data set
+##' @param regions String or vector of strings with region names for output
+##' @param date Latest data point date
+##'
+##' @export
+spim_extract_alos <- function(dat, regions, date) {
+
+  tmp <- dat$ifr_t
+
+  out <- NULL
+  for (i in regions) {
+    curr <- tmp[[i]]$ALOS[tmp[[i]]$date == sircovid::sircovid_date(date)]
+    curr <- c(i, mean(curr), quantile(curr, c(0.025, 0.975)))
+    out <- rbind(out, curr)
+  }
+  out
+}
+
+
 
 spim_summary_region_rt <-  function(region, dat, time_series_date) {
   date <- dat$info$date
