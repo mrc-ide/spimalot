@@ -69,11 +69,10 @@ spim_fit_process <- function(samples, parameters, data, control) {
 
     ## When adding the trajectories, we might as well strip them down
     ## to the last date in the restart
-    i <- forecast$trajectories$date <= max(restart$state$time)
-    restart$trajectories <- trajectories_filter_time(forecast$trajectories, i)
-
     restart_date <- max(restart$state$time)
     i <- forecast$trajectories$date <= restart_date
+
+    restart$trajectories <- trajectories_filter_time(forecast$trajectories, i)
 
     restart$parent <- list(
       trajectories = trajectories_filter_time(forecast$trajectories, i),
