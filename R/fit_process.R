@@ -16,10 +16,6 @@
 spim_fit_process <- function(samples, parameters, data, control) {
   region <- samples$info$region
 
-  message("Computing restart information")
-  restart <- fit_process_restart(samples, parameters, data, control)
-  samples$restart <- NULL
-
   message("Running forecasts")
   incidence_states <- "deaths"
   forecast <- sircovid::carehomes_forecast(samples,
@@ -62,19 +58,20 @@ spim_fit_process <- function(samples, parameters, data, control) {
   message("Reducing trajectories")
   forecast <- reduce_trajectories(forecast)
 
+  message("Computing parameter MLE and covariance matrix")
+  parameters <- spim_fit_parameters(samples, parameters)
+
+  message("Computing restart information")
+  restart <- fit_process_restart(samples, parameters, data, control)
+  samples$restart <- NULL
+
   if (!is.null(restart)) {
+
     ## When adding the trajectories, we might as well strip them down
     ## to the last date in the restart
     i <- forecast$trajectories$date <= max(restart$state$time)
     restart$trajectories <- trajectories_filter_time(forecast$trajectories, i)
-  }
 
-  message("Computing parameter MLE and covariance matrix")
-  parameters <- spim_fit_parameters(samples, parameters)
-
-  if (!is.null(restart)) {
-    ## When adding the trajectories, we might as well strip them down
-    ## to the last date in the restart
     restart_date <- max(restart$state$time)
     i <- forecast$trajectories$date <= restart_date
 
@@ -558,6 +555,7 @@ extract_age_class_outputs <- function(samples) {
 
 
 spim_fit_parameters <- function(samples, parameters) {
+
   info <- parameters$info[parameters$info$region == samples$info$region, ]
   rownames(info) <- NULL
   i <- which.max(samples$probabilities[, "log_posterior"])
@@ -568,12 +566,13 @@ spim_fit_parameters <- function(samples, parameters) {
   rownames(prior) <- NULL
 
   covariance <- cov(samples$pars)
-  rownames(covariance) <- NULL
-  proposal <- data_frame(region = samples$info$region,
-                           name = colnames(covariance),
-                           covariance)
+  proposal <-
+    parameters$proposal[parameters$proposal$region == samples$info$region, ]
+  k <- match(rownames(covariance), proposal$name)
+  proposal[k, colnames(covariance)] <- covariance
 
   list(info = info,
        prior = prior,
        proposal = proposal)
+
 }

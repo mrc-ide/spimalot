@@ -1,11 +1,10 @@
-fit_process_restart <- function(samples, parameters, data, control) {
+fit_process_restart <- function(samples, pars, data, control) {
   if (is.null(samples$restart)) {
     return(NULL)
   }
 
-  samples <- mcstate::pmcmc_thin(samples, control$burnin, control$thin)
+  samples <- mcstate::pmcmc_thin(samples, control$burnin + 1L, control$thin)
 
-  pars <- spim_fit_parameters(samples, parameters)
   pars$prior <- fit_process_restart_priors(samples$pars, pars)
   pars$sample <- samples$pars
   class(pars) <- "spim_pars_pmcmc"
