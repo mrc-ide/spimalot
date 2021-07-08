@@ -61,12 +61,13 @@ spim_region_name <- function(region, type = "name") {
 ##'
 ##' @return Returns an rrq controller object if found, otherwise errors
 ##' @export
-spim_rrq_controller <- function() {
+spim_rrq_controller <- function(root = here::here()) {
   queue_id <- Sys.getenv("CONTEXT_ID", "")
   if (queue_id == "") {
     stop("No rrq controller found")
   } else {
     message(sprintf("Found rrq controller for queue '%s'", queue_id))
-    rrq::rrq_controller(queue_id)
+    message(sprintf("Using root directory '%s'", root))
+    withr::with_dir(root, rrq::rrq_controller(queue_id))
   }
 }
