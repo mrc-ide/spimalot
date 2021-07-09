@@ -4,7 +4,7 @@
 \alias{spim_rrq_controller}
 \title{Find rrq controller}
 \usage{
-spim_rrq_controller()
+spim_rrq_controller(root = here::here())
 }
 \value{
 Returns an rrq controller object if found, otherwise errors
