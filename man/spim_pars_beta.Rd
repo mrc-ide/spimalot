@@ -4,10 +4,12 @@
 \alias{spim_pars_beta}
 \title{Create vector of beta dates}
 \usage{
-spim_pars_beta(date)
+spim_pars_beta(date, last_beta_days_ago = 21)
 }
 \arguments{
-\item{date}{Todays dates (last date is set two weeks ago)}
+\item{date}{Todays dates (last date is set to last_beta_days_ago)}
+
+\item{last_beta_days_ago}{Number of days in the past for last beta point}
 }
 \description{
 Create vector of beta dates
