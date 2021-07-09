@@ -206,7 +206,7 @@ simulate_args_names <- function(multistrain = TRUE) {
 }
 
 
-spim_simulate_one <- function(args, combined) {
+spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
   ## TODO: run validate here again, requires moving ignore into the
   ## object though.
   multistrain <- combined$info[[1]]$multistrain
@@ -257,7 +257,7 @@ spim_simulate_one <- function(args, combined) {
                              step_end, combined$dt, args$seasonality, R,
                              prob_strain)
 
-  if (!is.null(args$strain_initial_proportion)) {
+  if (!is.null(args$strain_initial_proportion) & move_between_strains) {
     state_start <- move_strain_compartments(
       state_start, info, c("E", "I_A", "I_P", "I_C_1"),
       1, 2, args$strain_initial_proportion, regions)
@@ -696,9 +696,9 @@ move_strain_compartments <- function(state, info, compartment,
       new_state <- array(new_state, c(dim, ncol(new_state)))
 
       if (length(dim) == 4) {
-        new_state[, 2, , , ] <-
-          round(prop[[regions[[r]]]] * new_state[, 1, , , ])
-        new_state[, 1, , , ] <- new_state[, 1, , , ] - new_state[, 2, , , ]
+        tmp_array <- round(prop[[regions[[r]]]] * new_state[, 1, , , ])
+        new_state[, 2, , , ] <- new_state[, 2, , , ] + tmp_array
+        new_state[, 1, , , ] <- new_state[, 1, , , ] - tmp_array
       } else {
         stop(sprintf("Unexpected dimensions (%d) in move_strain_compartment",
                      length(dim)))
