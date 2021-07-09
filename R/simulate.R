@@ -257,7 +257,7 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
                              step_end, combined$dt, args$seasonality, R,
                              prob_strain)
 
-  if (!is.null(args$strain_initial_proportion) & move_between_strains) {
+  if (!is.null(args$strain_initial_proportion) && move_between_strains) {
     state_start <- move_strain_compartments(
       state_start, info, c("E", "I_A", "I_P", "I_C_1"),
       1, 2, args$strain_initial_proportion, regions)
