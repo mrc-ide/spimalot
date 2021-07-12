@@ -1362,49 +1362,114 @@ spim_simulation_predictors <- function(summary) {
 ##' @param path File path to a csv containing columns: nation
 ##'  (at least one of england, scotland, wales, northern ireland), npi
 ##'  (name of NPI step for associated schedule), Rt (mean value for Rt),
-##'  Rt_sd (standard deviation for Rt)
+##'  Rt_sd (standard deviation for Rt), adherence (low, central, or high)
+##'
+##' @param schools Should be 'open' or 'closed' and specifies which state
+##'  values in the csv correspond to
+##'
+##' @param modifier Amount to modifier Rt by dependent on if schools are open
+##'  or closed. If `schools = 'open'` then the modifier will be subtracted
+##'  from the given csv to create `schools = "closed"` scenarios, otherwise
+##'  added
 ##'
 ##' @param country If `"england"` then all other nations filtered, otherwise
 ##'  no filtering.
 ##'
+##' @param gradual_start,gradual_end,gradual_steps If all three of these are
+##'  non-NULL then creates a scenario of gradual transition from Rt in scenario
+##'  `gradual_start` to Rt in `gradual_end` in `gradual_steps` number of steps
+##'
+##' @param overwrite_central,overwrite_low,overwrite_high If non-NULL then a
+##'  list with names corresponding to `npi` and values to overwrite the csv
+##'  with in the central/low/high adherence scenario
+##'
 ##' @return tibble for passing to [spim_prepare_rt_future]
 ##'
 ##' @export
-spim_prepare_npi_key <- function(path, country) {
+spim_prepare_npi_key <- function(path, schools, modifier, country,
+                                 gradual_start = NULL, gradual_end = NULL,
+                                 gradual_steps = NULL,
+                                 overwrite_central = NULL,
+                                 overwrite_low = NULL, overwrite_high = NULL) {
+
+  modifier <- abs(modifier)
+
+  all_schools <- c("open", "closed")
+  stopifnot(schools %in% all_schools)
+
+  stopifnot(length(c(gradual_start, gradual_end, gradual_steps)) %in% c(0, 3))
+
   npi_key <- read_csv(path) %>%
     dplyr::filter(nation == case_when(country == "england" ~ "england",
-                                      TRUE ~ nation))
+                                      TRUE ~ nation)) %>%
+    dplyr::mutate(npi = sprintf("%s_schools_%s", npi, schools))
 
   nations <- unique(npi_key$nation)
 
-  npi_key$adherence <- "central"
-  npi_key_low <- npi_key_high <- npi_key
-  npi_key_low$adherence <- "low"
-  npi_key_high$adherence <- "high"
-
-  fmt <- "%s:%s"
-  key <- sprintf(fmt, npi_key$nation, npi_key$npi)
-
-  mtc_fun <- function(str, obj, school) {
-    if (any(grepl(str, npi_key$npi))) {
-      from <- match(sprintf(fmt, nations, paste0(school, str)), key)
-      to <- match(sprintf(fmt, nations, school), key)
-      stopifnot(!anyNA(from), !anyNA(to))
-      obj[to, c("Rt", "Rt_sd")] <- obj[from, c("Rt", "Rt_sd")]
-      obj
+  ## FIXME RS - This is terrible and needs fixing
+  for (ad in unique(npi_key$adherence)) {
+    for (n in unique(npi_key$npi)) {
+      if (sum(npi_key$npi == n & npi_key$adherence == ad) == 0) {
+        tmp <- npi_key[npi_key$npi == n & npi_key$adherence == "central", ]
+        tmp$adherence <- ad
+        npi_key <- rbind(npi_key, tmp)
+      }
     }
   }
 
-  for (v in c("full_lift_schools_closed", "full_lift_schools_open")) {
-    npi_key_low <- mtc_fun("_pessimistic", npi_key_low, v)
-    npi_key_high <- mtc_fun("_optimistic", npi_key_high, v)
+ ## FIXME RS - This also isn't great
+  for (ad in unique(npi_key$adherence)) {
+    obj <- get(sprintf("overwrite_%s", ad))
+    if (!is.null(obj)) {
+      for (i in seq_along(obj)) {
+        npi_key[npi_key$npi == names(obj)[[i]] & npi_key$adherence == ad, "Rt"] <-
+          obj[[i]]
+      }
+    }
   }
 
-  npi_key <- rbind(npi_key, npi_key_low, npi_key_high)
-  npi_key <- npi_key[!grepl("_(pessimistic|optimistic)$", npi_key$npi), ]
+  if (!is.null(gradual_start)) {
 
-  rownames(npi_key) <- NULL
-  npi_key
+    gradualise <- function(start, end, steps, ad) {
+      lapply(unique(npi_key$nation), function (nat) {
+        to <- npi_key %>%
+          dplyr::filter(npi == end, adherence == ad, nation == nat) %>%
+          dplyr::select(Rt) %>%
+          as.numeric()
+        from <- npi_key %>%
+          dplyr::filter(npi == start, adherence == ad, nation == nat) %>%
+          dplyr::select(Rt) %>%
+          as.numeric()
+        sd <- npi_key %>%
+          dplyr::filter(npi == end, adherence == ad, nation == nat) %>%
+          dplyr::select(Rt_sd) %>%
+          as.numeric()
+        steps <- round(seq.int(from, to, length.out = steps + 1)[2:steps], 3)
+
+        data.frame(nation = nat, npi = sprintf("%s_p%d", end, seq_along(steps - 1)),
+                  Rt = steps, Rt_sd = sd, adherence = ad)
+      }) %>%
+      dplyr::bind_rows()
+    }
+
+    npi_key <- npi_key %>% dplyr::bind_rows(
+      dplyr::bind_rows(lapply(npi_key[npi_key$npi == gradual_end, "adherence"], function(ad) {
+        gradualise(gradual_start, gradual_end, gradual_steps, ad)
+      }))
+    )
+  }
+
+  dplyr::bind_rows(
+    npi_key,
+    npi_key %>%
+    dplyr::mutate(npi = gsub(schools, setdiff(all_schools, schools), npi),
+                  Rt = case_when(schools == "open" ~ Rt - modifier,
+                                  schools == "closed" ~ Rt + modifier))
+    ) %>%
+    dplyr::arrange(adherence, nation, npi) %>%
+    dplyr::mutate(Rt = round(Rt, 3)) %>%
+    `rownames<-`(NULL)
+
 }
 
 

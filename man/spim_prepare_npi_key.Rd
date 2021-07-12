@@ -4,16 +4,43 @@
 \alias{spim_prepare_npi_key}
 \title{Prepare NPI key csv for simulation}
 \usage{
-spim_prepare_npi_key(path, country)
+spim_prepare_npi_key(
+  path,
+  schools,
+  modifier,
+  country,
+  gradual_start = NULL,
+  gradual_end = NULL,
+  gradual_steps = NULL,
+  overwrite_central = NULL,
+  overwrite_low = NULL,
+  overwrite_high = NULL
+)
 }
 \arguments{
 \item{path}{File path to a csv containing columns: nation
 (at least one of england, scotland, wales, northern ireland), npi
 (name of NPI step for associated schedule), Rt (mean value for Rt),
-Rt_sd (standard deviation for Rt)}
+Rt_sd (standard deviation for Rt), adherence (low, central, or high)}
+
+\item{schools}{Should be 'open' or 'closed' and specifies which state
+values in the csv correspond to}
+
+\item{modifier}{Amount to modifier Rt by dependent on if schools are open
+or closed. If \code{schools = 'open'} then the modifier will be subtracted
+from the given csv to create \code{schools = "closed"} scenarios, otherwise
+added}
 
 \item{country}{If \code{"england"} then all other nations filtered, otherwise
 no filtering.}
+
+\item{gradual_start, gradual_end, gradual_steps}{If all three of these are
+non-NULL then creates a scenario of gradual transition from Rt in scenario
+\code{gradual_start} to Rt in \code{gradual_end} in \code{gradual_steps} number of steps}
+
+\item{overwrite_central, overwrite_low, overwrite_high}{If non-NULL then a
+list with names corresponding to \code{npi} and values to overwrite the csv
+with in the central/low/high adherence scenario}
 }
 \value{
 tibble for passing to \link{spim_prepare_rt_future}
