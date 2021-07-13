@@ -1294,7 +1294,7 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
   if (rt_type == "beta") {
     ylim <- c(0, 0.15)
   } else {
-    ylim <- c(0, 4)
+    ylim <- c(0, 5)
   }
   plot(xlim[1], 0, type = "n",
        xlim = xlim,
