@@ -44,7 +44,19 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     if ("prop_strain_2" %in% names(pars)) {
       prop_strain_2 <- pars[["prop_strain_2"]]
     } else {
-      prop_strain_2 <- NULL
+      prop_strain_2 <- 0
+    }
+
+    if ("strain_seed_date" %in% names(pars)) {
+      strain_seed_date <- pars[["strain_seed_date"]]
+    } else {
+      strain_seed_date <- NULL
+    }
+
+    if ("strain_seed_rate" %in% names(pars)) {
+      strain_seed_rate <- pars[["strain_seed_rate"]]
+    } else {
+      strain_seed_rate <- NULL
     }
 
     beta_value <- unname(pars[paste0("beta", seq_along(beta_date))])
@@ -247,6 +259,8 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       vaccine_index_dose2 = 3L,
       ## Strains
       strain_transmission = strain_transmission,
+      strain_seed_date = strain_seed_date,
+      strain_seed_rate = strain_seed_rate,
       cross_immunity = cross_immunity)
 
     ## Could be moved to sircovid as a default
