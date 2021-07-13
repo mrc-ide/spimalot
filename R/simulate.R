@@ -1364,13 +1364,13 @@ spim_simulation_predictors <- function(summary) {
 ##'  (name of NPI step for associated schedule), Rt (mean value for Rt),
 ##'  Rt_sd (standard deviation for Rt), adherence (low, central, or high)
 ##'
-##' @param schools Should be 'open' or 'closed' and specifies which state
-##'  values in the csv correspond to
+##' @param schools Should be one of 'open' or 'closed' and specifies which
+##'  state values in the csv correspond to
 ##'
-##' @param modifier Amount to modifier Rt by dependent on if schools are open
-##'  or closed. If `schools = 'open'` then the modifier will be subtracted
+##' @param schools_modifier Amount to modify first strain Rt by.
+##'  If `schools = 'open'` then the modifier will be subtracted
 ##'  from the given csv to create `schools = "closed"` scenarios, otherwise
-##'  added
+##'  added - `abs(schools_modifier)` is applied internally
 ##'
 ##' @param country If `"england"` then all other nations filtered, otherwise
 ##'  no filtering.
@@ -1381,19 +1381,20 @@ spim_simulation_predictors <- function(summary) {
 ##'
 ##' @param overwrite_central_adherence,overwrite_low_adherence,overwrite_high_adherence
 ##'  If non-NULL then a list with names corresponding to `npi` and values to
-##   overwrite the csv in the central/low/high adherence scenario
+##'  overwrite the csv in the central/low/high adherence scenario. This may be
+##'  be useful if automating some, but not all, of the Rt values
 ##'
 ##' @return tibble for passing to [spim_prepare_rt_future]
 ##'
 ##' @export
-spim_prepare_npi_key <- function(path, schools, modifier, country,
+spim_prepare_npi_key <- function(path, schools, schools_modifier, country,
                                  gradual_start = NULL, gradual_end = NULL,
                                  gradual_steps = NULL,
                                  overwrite_central_adherence = NULL,
                                  overwrite_low_adherence = NULL,
                                  overwrite_high_adherence = NULL) {
 
-  modifier <- abs(modifier)
+  schools_modifier <- abs(schools_modifier)
 
   all_schools <- c("open", "closed")
   stopifnot(schools %in% all_schools)
@@ -1464,8 +1465,8 @@ spim_prepare_npi_key <- function(path, schools, modifier, country,
     npi_key,
     npi_key %>%
     dplyr::mutate(npi = gsub(schools, setdiff(all_schools, schools), npi),
-                  Rt = case_when(schools == "open" ~ Rt - modifier,
-                                  schools == "closed" ~ Rt + modifier))
+                  Rt = case_when(schools == "open" ~ Rt - schools_modifier,
+                                  schools == "closed" ~ Rt + schools_modifier))
     ) %>%
     dplyr::arrange(adherence, nation, npi) %>%
     dplyr::mutate(Rt = round(Rt, 3)) %>%
