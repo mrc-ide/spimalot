@@ -1379,9 +1379,9 @@ spim_simulation_predictors <- function(summary) {
 ##'  non-NULL then creates a scenario of gradual transition from Rt in scenario
 ##'  `gradual_start` to Rt in `gradual_end` in `gradual_steps` number of steps
 ##'
-##' @param overwrite_central,overwrite_low,overwrite_high If non-NULL then a
-##'  list with names corresponding to `npi` and values to overwrite the csv
-##'  with in the central/low/high adherence scenario
+##' @param overwrite_central_adherence,overwrite_low_adherence,overwrite_high_adherence
+##'  If non-NULL then a list with names corresponding to `npi` and values to
+##   overwrite the csv in the central/low/high adherence scenario
 ##'
 ##' @return tibble for passing to [spim_prepare_rt_future]
 ##'
@@ -1389,8 +1389,9 @@ spim_simulation_predictors <- function(summary) {
 spim_prepare_npi_key <- function(path, schools, modifier, country,
                                  gradual_start = NULL, gradual_end = NULL,
                                  gradual_steps = NULL,
-                                 overwrite_central = NULL,
-                                 overwrite_low = NULL, overwrite_high = NULL) {
+                                 overwrite_central_adherence = NULL,
+                                 overwrite_low_adherence = NULL,
+                                 overwrite_high_adherence = NULL) {
 
   modifier <- abs(modifier)
 

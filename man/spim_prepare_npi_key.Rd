@@ -12,9 +12,9 @@ spim_prepare_npi_key(
   gradual_start = NULL,
   gradual_end = NULL,
   gradual_steps = NULL,
-  overwrite_central = NULL,
-  overwrite_low = NULL,
-  overwrite_high = NULL
+  overwrite_central_adherence = NULL,
+  overwrite_low_adherence = NULL,
+  overwrite_high_adherence = NULL
 )
 }
 \arguments{
@@ -38,9 +38,7 @@ no filtering.}
 non-NULL then creates a scenario of gradual transition from Rt in scenario
 \code{gradual_start} to Rt in \code{gradual_end} in \code{gradual_steps} number of steps}
 
-\item{overwrite_central, overwrite_low, overwrite_high}{If non-NULL then a
-list with names corresponding to \code{npi} and values to overwrite the csv
-with in the central/low/high adherence scenario}
+\item{overwrite_central_adherence, overwrite_low_adherence, overwrite_high_adherence}{If non-NULL then a list with names corresponding to \code{npi} and values to}
 }
 \value{
 tibble for passing to \link{spim_prepare_rt_future}
