@@ -1420,7 +1420,7 @@ spim_prepare_npi_key <- function(path, schools, modifier, country,
 
  ## FIXME RS - This also isn't great
   for (ad in unique(npi_key$adherence)) {
-    obj <- get(sprintf("overwrite_%s", ad))
+    obj <- get(sprintf("overwrite_%s_adherence", ad))
     if (!is.null(obj)) {
       for (i in seq_along(obj)) {
         npi_key[npi_key$npi == names(obj)[[i]] & npi_key$adherence == ad, "Rt"] <-
