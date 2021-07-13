@@ -1367,7 +1367,7 @@ spim_simulation_predictors <- function(summary) {
 ##' @param schools Should be one of 'open' or 'closed' and specifies which
 ##'  state values in the csv correspond to
 ##'
-##' @param schools_modifier Amount to modify first strain Rt by.
+##' @param schools_modifier Amount to modify first strain Rt (excl. immunity).
 ##'  If `schools = 'open'` then the modifier will be subtracted
 ##'  from the given csv to create `schools = "closed"` scenarios, otherwise
 ##'  added - `abs(schools_modifier)` is applied internally

@@ -26,7 +26,7 @@ Rt_sd (standard deviation for Rt), adherence (low, central, or high)}
 \item{schools}{Should be one of 'open' or 'closed' and specifies which
 state values in the csv correspond to}
 
-\item{schools_modifier}{Amount to modify first strain Rt by.
+\item{schools_modifier}{Amount to modify first strain Rt (excl. immunity).
 If \code{schools = 'open'} then the modifier will be subtracted
 from the given csv to create \code{schools = "closed"} scenarios, otherwise
 added - \code{abs(schools_modifier)} is applied internally}
