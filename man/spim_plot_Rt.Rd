@@ -4,7 +4,14 @@
 \alias{spim_plot_Rt}
 \title{Plot Rt}
 \usage{
-spim_plot_Rt(dat, regions, rt_type, forecast_until = NULL)
+spim_plot_Rt(
+  dat,
+  regions,
+  rt_type,
+  forecast_until = NULL,
+  variant = NULL,
+  add_betas = FALSE
+)
 }
 \arguments{
 \item{dat}{Combined data set}
