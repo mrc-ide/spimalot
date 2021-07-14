@@ -96,12 +96,14 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
     } else {
       par <- extract_sample(par_name)
 
+      par_info <- subset(pars_info, pars_info$name == par_name)
       if (is.na(par_max[[par_name]])) {
-        par_info <- subset(pars_info, pars_info$name == par_name)
         xmax <- max(par_info$max)
       } else {
         xmax <- par_max[[par_name]]
       }
+
+      xmin <- min(par_info$min)
 
       if (grepl("^beta", par_name)) {
         k <- as.numeric(gsub("beta", "", par_name))
