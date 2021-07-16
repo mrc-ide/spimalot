@@ -63,6 +63,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
     if (model_type == "BB") {
       p_NC <- pars[["p_NC"]]
+      p_NC_weekend <- pars[["p_NC_weekend"]]
       rho_pillar2_tests <- pars[["rho_pillar2_tests"]]
       ## Total: 40 fitted parameters
 
@@ -249,6 +250,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       m_CHW = m_CHW,
       m_CHR = m_CHR,
       p_NC = p_NC,
+      p_NC_weekend = p_NC_weekend,
       rel_susceptibility = rel_efficacy$rel_susceptibility,
       rel_p_sympt = rel_efficacy$rel_p_sympt,
       rel_p_hosp_if_sympt = rel_efficacy$rel_p_hosp_if_sympt,
