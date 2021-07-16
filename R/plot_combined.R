@@ -663,19 +663,23 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
 
   over25 <- TRUE
 
-  npos <- data$fitted[, "pillar2_over25_pos"]
-  ntot <- data$fitted[, "pillar2_over25_tot"]
+  pos_columns <- c("pillar2_over25_pos", "pillar2_over25_pos_weekend")
+  tot_columns <- c("pillar2_over25_tot", "pillar2_over25_tot_weekend")
+  npos <- rowSums(data$fitted[, pos_columns], na.rm = TRUE)
+  ntot <- rowSums(data$fitted[, tot_columns], na.rm = TRUE)
   if (all(is.na(ntot))) {
-    npos <- data$full[, "pillar2_over25_pos"]
-    ntot <- data$full[, "pillar2_over25_tot"]
+    npos <- rowSums(data$full[, pos_columns], na.rm = TRUE)
+    ntot <- rowSums(data$full[, tot_columns], na.rm = TRUE)
 
     ## if still na, switch to all ages
     if (all(is.na(ntot))) {
-      npos <- data$fitted[, "pillar2_pos"]
-      ntot <- data$fitted[, "pillar2_tot"]
+      pos_columns <- c("pillar2_pos", "pillar2_pos_weekend")
+      tot_columns <- c("pillar2_tot", "pillar2_tot_weekend")
+      npos <- rowSums(data$fitted[, pos_columns], na.rm = TRUE)
+      ntot <- rowSums(data$fitted[, tot_columns], na.rm = TRUE)
       if (all(is.na(ntot))) {
-        npos <- data$full[, "pillar2_pos"]
-        ntot <- data$full[, "pillar2_tot"]
+        npos <- rowSums(data$full[, pos_columns], na.rm = TRUE)
+        ntot <- rowSums(data$full[, tot_columns], na.rm = TRUE)
         dcols[1] <- cols$green2
       }
       over25 <- FALSE
@@ -705,12 +709,20 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
     p_NC <- model_params$p_NC
   }
 
+  if ("p_NC_weekend" %in% colnames(sample$pars)) {
+    p_NC_weekend <- sample$pars[, "p_NC_weekend"]
+  } else {
+    p_NC_weekend <- model_params$p_NC_weekend
+  }
+
   if (over25) {
     pos <- trajectories["sympt_cases_over25_inc", , ]
-    neg <- (sum(model_params$N_tot[6:19]) - pos) * p_NC
+    neg <- (sum(model_params$N_tot[6:19]) - pos) *
+      ifelse(grepl("^S", weekdays(x)), p_NC_weekend, p_NC)
   } else {
     pos <- trajectories["sympt_cases_inc", , ]
-    neg <- (sum(model_params$N_tot) - pos) * p_NC
+    neg <- (sum(model_params$N_tot) - pos) *
+      ifelse(grepl("^S", weekdays(x)), p_NC_weekend, p_NC)
   }
 
   res <- (pos * model_params$pillar2_sensitivity +
