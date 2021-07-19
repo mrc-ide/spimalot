@@ -115,7 +115,7 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
       plot(0, 0, type = "n",
            ylab = "",
            xlab = xlab,
-           xlim = c(0, xmax),
+           xlim = c(xmin, xmax),
            ylim = ylim,
            yaxt = "n"
       )

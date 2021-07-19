@@ -99,7 +99,8 @@ spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
 ##'
 ##' @export
 spim_plot_Rt <- function(dat, regions, rt_type, forecast_until = NULL,
-                         variant = NULL, add_betas = FALSE) {
+                         variant = NULL, add_betas = FALSE,
+                         multistrain = TRUE) {
 
   oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
             mar = c(3, 3, 3, 1))
@@ -111,7 +112,8 @@ spim_plot_Rt <- function(dat, regions, rt_type, forecast_until = NULL,
     variant = "weighted"
   }
   for (r in regions) {
-    spim_plot_Rt_region(r, dat, rt_type, forecast_until, variant, add_betas)
+    spim_plot_Rt_region(r, dat, rt_type, forecast_until, variant, add_betas,
+                        multistrain)
   }
 }
 
@@ -1250,17 +1252,29 @@ spim_plot_alos_region <- function(region, dat, ymin, ymax, forecast_until,
 }
 
 spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
-                                variant, add_betas) {
+                                variant, add_betas, multistrain) {
+
   beta_date <- dat$samples[[region]]$info$beta_date
   if (variant == "weighted") {
     sample_Rt <- dat$rt[[region]][[rt_type]][-1L, ]
     x <- sircovid::sircovid_date_as_date(dat$rt[[region]]$date[-1L, 1])
   } else {
-    x <- sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
     if (variant == "delta") {
       sample_Rt <- dat$variant_rt[[region]][[rt_type]][-1L, 2, ]
+      x <- sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
+    } else if (variant == "all") {
+      if (!multistrain) {
+        sample_non_variant <- dat$rt[[region]][[rt_type]][-1L, ]
+        sample_variant <- dat$rt[[region]][[rt_type]][-1L, ]
+        x <- sircovid::sircovid_date_as_date(dat$rt[[region]]$date[-1L, 1])
+      } else {
+        sample_non_variant <- dat$variant_rt[[region]][[rt_type]][-1L, 1, ]
+        sample_variant <- dat$variant_rt[[region]][[rt_type]][-1L, 2, ]
+        x <- sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
+      }
     } else {
       sample_Rt <- dat$variant_rt[[region]][[rt_type]][-1L, 1, ]
+      x <- sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
     }
   }
 
@@ -1273,19 +1287,31 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
     ylab <- paste(expression(R[t]), variant)
   }
 
-  ## sample_Rt,
-  ## Rt_date,
   col <- spim_colours()$blue
 
-  rownames(sample_Rt) <- as.character(x)
-
   ps <- seq(0.025, 0.975, 0.005)
-  qs <- apply(sample_Rt,  MARGIN = 1, FUN = quantile, ps, na.rm = TRUE)
 
-  ## remove NAs for plotting purposes
-  idx_not_na <- which(!is.na(colSums(qs)))
-  x <- x[idx_not_na]
-  qs <- qs[, idx_not_na]
+  if (variant != "all"){
+    rownames(sample_Rt) <- as.character(x)
+    qs <- apply(sample_Rt,  MARGIN = 1, FUN = quantile, ps, na.rm = TRUE)
+    ## remove NAs for plotting purposes
+    idx_not_na <- which(!is.na(colSums(qs)))
+    x <- x[idx_not_na]
+    qs <- qs[, idx_not_na]
+  } else {
+    rownames(sample_non_variant) <- as.character(x)
+    rownames(sample_variant) <- as.character(x)
+    qs <- NULL
+    qs[["non_variant"]] <- apply(sample_non_variant,  MARGIN = 1,
+                                 FUN = quantile, ps, na.rm = TRUE)
+    qs[["variant"]] <- apply(sample_variant,  MARGIN = 1,
+                             FUN = quantile, ps, na.rm = TRUE)
+    ## remove NAs for plotting purposes
+    idx_not_na <- which(!is.na(colSums(qs[[1]])))
+    x <- x[idx_not_na]
+    qs[[1]] <- qs[[1]][, idx_not_na]
+    qs[[2]] <- qs[[2]][, idx_not_na]
+  }
 
   oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
   on.exit(par(oo))
@@ -1306,14 +1332,27 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
   cols <- c(mix_cols(col, "white", 0.7),
             mix_cols(col, "white", 0.495))
 
-  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = cols,
-           horiz = FALSE, leg = FALSE)
-  lines(x, qs["50.0%", ], col = col, lty = 1, lwd = 1.5, lend = 1)
+  if (variant != "all"){
+    ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = cols,
+             horiz = FALSE, leg = FALSE)
+    lines(x, qs["50.0%", ], col = col, lty = 1, lwd = 1.5, lend = 1)
+  } else {
+    ci_bands(qs[[1]][c("2.5%", "25.0%", "75.0%", "97.5%"), ], x,
+             cols = c(spim_colours()$sky_blue, spim_colours()$sky_blue),
+             horiz = FALSE, leg = FALSE)
+    lines(x, qs[[1]]["50.0%", ], col = col, lty = 1, lwd = 1.5, lend = 1)
+
+    ci_bands(qs[[2]][c("2.5%", "25.0%", "75.0%", "97.5%"), ], x,
+             cols = c(spim_colours()$cyan, spim_colours()$cyan),
+             horiz = FALSE, leg = FALSE)
+    lines(x, qs[[2]]["50.0%", ], col = spim_colours()$blue, lty = 1,
+          lwd = 1.5, lend = 1)
+  }
   if (rt_type != "beta") {
     abline(h = 1, lty = 2)
   }
   if (add_betas) {
-    abline(v = as.Date(beta_date), lty = 2, col = spim_colours()$purple)
+    abline(v = as.Date(beta_date), lty = 2, col = spim_colours()$orange)
   }
 }
 
