@@ -667,17 +667,17 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
   tot_columns <- c("pillar2_over25_tot", "pillar2_over25_tot_weekend")
   npos <- rowSums(data$fitted[, pos_columns], na.rm = TRUE)
   ntot <- rowSums(data$fitted[, tot_columns], na.rm = TRUE)
-  if (all(is.na(ntot))) {
+  if (all(ntot == 0)) {
     npos <- rowSums(data$full[, pos_columns], na.rm = TRUE)
     ntot <- rowSums(data$full[, tot_columns], na.rm = TRUE)
 
     ## if still na, switch to all ages
-    if (all(is.na(ntot))) {
+    if (all(ntot == 0)) {
       pos_columns <- c("pillar2_pos", "pillar2_pos_weekend")
       tot_columns <- c("pillar2_tot", "pillar2_tot_weekend")
       npos <- rowSums(data$fitted[, pos_columns], na.rm = TRUE)
       ntot <- rowSums(data$fitted[, tot_columns], na.rm = TRUE)
-      if (all(is.na(ntot))) {
+      if (all(ntot == 0)) {
         npos <- rowSums(data$full[, pos_columns], na.rm = TRUE)
         ntot <- rowSums(data$full[, tot_columns], na.rm = TRUE)
         dcols[1] <- cols$green2
@@ -717,13 +717,16 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
 
   if (over25) {
     pos <- trajectories["sympt_cases_over25_inc", , ]
-    neg <- (sum(model_params$N_tot[6:19]) - pos) *
-      ifelse(grepl("^S", weekdays(x)), p_NC_weekend, p_NC)
+    neg <- (sum(model_params$N_tot[6:19]) - pos)
   } else {
     pos <- trajectories["sympt_cases_inc", , ]
-    neg <- (sum(model_params$N_tot) - pos) *
-      ifelse(grepl("^S", weekdays(x)), p_NC_weekend, p_NC)
+    neg <- (sum(model_params$N_tot) - pos)
   }
+
+  neg[, grepl("^S", weekdays(x))] <-
+    neg[, grepl("^S", weekdays(x))] * p_NC_weekend
+  neg[, !grepl("^S", weekdays(x))] <-
+    neg[, !grepl("^S", weekdays(x))] * p_NC
 
   res <- (pos * model_params$pillar2_sensitivity +
             neg * (1 - model_params$pillar2_specificity)) / (pos + neg) * 100
