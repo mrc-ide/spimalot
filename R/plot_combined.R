@@ -99,7 +99,8 @@ spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
 ##'
 ##' @export
 spim_plot_Rt <- function(dat, regions, rt_type, forecast_until = NULL,
-                         variant = NULL, add_betas = FALSE) {
+                         variant = NULL, add_betas = FALSE,
+                         multivariant = TRUE) {
 
   oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
             mar = c(3, 3, 3, 1))
@@ -111,7 +112,8 @@ spim_plot_Rt <- function(dat, regions, rt_type, forecast_until = NULL,
     variant = "weighted"
   }
   for (r in regions) {
-    spim_plot_Rt_region(r, dat, rt_type, forecast_until, variant, add_betas)
+    spim_plot_Rt_region(r, dat, rt_type, forecast_until, variant, add_betas,
+                        multivariant)
   }
 }
 
@@ -1250,7 +1252,7 @@ spim_plot_alos_region <- function(region, dat, ymin, ymax, forecast_until,
 }
 
 spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
-                                variant, add_betas) {
+                                variant, add_betas, multivariant) {
 
   beta_date <- dat$samples[[region]]$info$beta_date
   if (variant == "weighted") {
@@ -1261,9 +1263,15 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
       sample_Rt <- dat$variant_rt[[region]][[rt_type]][-1L, 2, ]
       x <- sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
     } else if (variant == "all") {
-      sample_non_variant <- dat$variant_rt[[region]][[rt_type]][-1L, 1, ]
-      sample_variant <- dat$variant_rt[[region]][[rt_type]][-1L, 2, ]
-      x <- sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
+      if (!multivariant) {
+        sample_non_variant <- dat$rt[[region]][[rt_type]][-1L, ]
+        sample_variant <- dat$rt[[region]][[rt_type]][-1L, ]
+        x <- sircovid::sircovid_date_as_date(dat$rt[[region]]$date[-1L, 1])
+      } else {
+        sample_non_variant <- dat$variant_rt[[region]][[rt_type]][-1L, 1, ]
+        sample_variant <- dat$variant_rt[[region]][[rt_type]][-1L, 2, ]
+        x <- sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
+      }
     } else {
       sample_Rt <- dat$variant_rt[[region]][[rt_type]][-1L, 1, ]
       x <- sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
