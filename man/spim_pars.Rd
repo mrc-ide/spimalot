@@ -13,7 +13,8 @@ spim_pars(
   vaccination,
   parameters,
   kernel_scaling = 1,
-  cross_immunity = NULL
+  cross_immunity = NULL,
+  assumptions = "central"
 )
 }
 \arguments{

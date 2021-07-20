@@ -1,5 +1,6 @@
 spim_transform <- function(region, model_type, multistrain, beta_date,
-                           vaccination, assumptions = "central") {
+                           vaccination, cross_immunity = NULL,
+                           assumptions = "central") {
   beta_date <- sircovid::sircovid_date(beta_date)
   assert_is(vaccination, "spim_vaccination_data")
 
@@ -14,6 +15,8 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     } else if (assumptions == "optimistic") {
       waning_rate <- 0
     }
+  } else {
+    waning_rate <- 1 / (6 * 365)
   }
 
   n_strain <- if (multistrain) 2 else 1
