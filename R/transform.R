@@ -58,7 +58,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       strain_seed_rate <- rep(pars[["strain_seed_rate"]], 7)
     } else if (multistrain) {
 
-      strain_seed_pp <- 20 / sum(sircovid:::sircovid_population("uk"))
+      strain_seed_pp <- 20 / 1000000
       regional_pop <- sum(sircovid:::sircovid_population(region))
       strain_seed_rate <- rep(strain_seed_pp * regional_pop, 7)
 
