@@ -1,23 +1,11 @@
 spim_transform <- function(region, model_type, multistrain, beta_date,
                            vaccination, cross_immunity = NULL,
-                           assumptions = "central") {
+                           waning_rate) {
   beta_date <- sircovid::sircovid_date(beta_date)
   assert_is(vaccination, "spim_vaccination_data")
 
   severity <- read_csv(spimalot_file("extdata/support_severity.csv"))
   progression <- read_csv(spimalot_file("extdata/support_progression.csv"))
-
-  if (multistrain) {
-    if (assumptions == "central") {
-      waning_rate <- 1 / (6 * 365)
-    } else if (assumptions == "pessimistic") {
-      waning_rate <- 1 / (3 * 365)
-    } else if (assumptions == "optimistic") {
-      waning_rate <- 0
-    }
-  } else {
-    waning_rate <- 1 / (6 * 365)
-  }
 
   n_strain <- if (multistrain) 2 else 1
   if (is.null(cross_immunity)) {
@@ -70,7 +58,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       strain_seed_rate <- rep(pars[["strain_seed_rate"]], 7)
     } else if (multistrain) {
 
-      strain_seed_pp <- 20/sum(sircovid:::sircovid_population("uk"))
+      strain_seed_pp <- 20 / sum(sircovid:::sircovid_population("uk"))
       regional_pop <- sum(sircovid:::sircovid_population(region))
       strain_seed_rate <- rep(strain_seed_pp * regional_pop, 7)
 
@@ -190,9 +178,6 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     progression$gamma_sero_pos_2 <- 1 / 400
     # Time to diagnosis if admitted without test
     progression$gamma_U <- 1 / 3
-
-    ## Waning immunity rate (exponential)
-    waning_rate <- waning_rate
 
     observation <- sircovid::carehomes_parameters_observation()
 

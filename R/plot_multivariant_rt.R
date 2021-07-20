@@ -1,4 +1,4 @@
-## Plotting function for Rt for VOC manuscript
+## Plotting function for multivariant Rt
 ##'
 ##' @title Create multivariant Rt plot
 ##'
