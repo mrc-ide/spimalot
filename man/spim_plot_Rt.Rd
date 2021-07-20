@@ -10,7 +10,8 @@ spim_plot_Rt(
   rt_type,
   forecast_until = NULL,
   variant = NULL,
-  add_betas = FALSE
+  add_betas = FALSE,
+  multivariant = TRUE
 )
 }
 \arguments{
