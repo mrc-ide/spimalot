@@ -60,9 +60,9 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
       dat$rt[[region]][[rt_type]][-1, ], probs = 0.975)
   )
 
-  rt_region <- dplyr::left_join(wt, mv) %>% dplyr::left_join(., betas) %>%
-    filter(dates >= as.Date("2020-12-01") &
-             dates <= as.Date(date))
+  rt_region <- dplyr::left_join(wt, mv) %>% dplyr::left_join(., betas)
+  rt_region <- rt_region %>% dplyr::filter(dates >= as.Date("2020-12-01") &
+                                             dates <= as.Date(date))
 
   if (rt_type == "eff_Rt_general") {
     ylim <- c(0,2)
@@ -70,7 +70,7 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
     ylim <- c(0,4)
   }
 
-  p <- ggplot2::ggplot(rt_eng, ggplot2::aes(x = dates)) +
+  p <- ggplot2::ggplot(rt_region, ggplot2::aes(x = dates)) +
     ggplot2::annotate(geom = "rect",
                       xmin = as.Date('2020-12-18'),
                       xmax = as.Date('2021-01-04'),
@@ -95,7 +95,7 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
     ggplot2::geom_vline(xintercept = as.Date(betas[ ,1]), lty = 3,
                         col = "red4") +
     ggplot2::geom_text(ggplot2::aes(label = label, y = 0.25),
-                       angle = 45, size = 4) +
+                       angle = 45, size = 3) +
     ggplot2::ylab(paste("Effective", expression(R[t]))) +
     ggplot2::xlab("") +
     ggplot2::ggtitle(paste(stringr::str_to_sentence(region))) +
