@@ -79,11 +79,13 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
     ggplot2::ylab(paste("Effective", expression(R[t]))) +
     ggplot2::xlab("") +
     ggplot2::ggtitle(paste(stringr::str_to_sentence(region))) +
-    ggplot2::scale_x_date(scales::date_breaks = "months",
+    ggplot2::scale_x_date(date_breaks = "months",
                           date_labels = "%b") +
     ggplot2::theme_bw() + ggplot2::ylim(ylim) +
     ggplot2::theme(panel.border = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
-                   legend.title = ggplot2::element_blank())
+                   legend.title = ggplot2::element_blank()) +
+    ggthemes::scale_colour_colorblind() +
+    ggthemes::scale_fill_colorblind()
   p
 }
