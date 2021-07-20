@@ -1,3 +1,23 @@
+## Plotting function for Rt for VOC manuscript
+##'
+##' @title Create multivariant Rt plot
+##'
+##' @param dat Main fitting outputs object
+##'
+##' @param date Date of the analysis
+##'
+##' @param date_restart Date for multivariant model restart
+##'
+##' @param last_beta_days_ago Integer for setting last beta changepoint in
+##'   relation to date of analysis
+##'
+##' @param region A string for the name of the region to plot
+##'
+##' @param rt_type A string, must be one of eff_Rt_general or Rt_general
+##'
+##' @return A ggplot2 object for multivariant Rt
+##'
+##' @export
 spim_multivariant_rt_plot <- function(dat, date, date_restart,
                                       last_beta_days_ago, region = "england",
                                       rt_type = "eff_Rt_general"){
