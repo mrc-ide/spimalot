@@ -416,6 +416,7 @@ deaths_filter_time <- function(x, restart_date) {
 
 
 calculate_vaccination <- function(state, vaccine_efficacy) {
+  browser()
   de <- dim(vaccine_efficacy[[1]])
   if (length(de) == 2L) {
     n_groups <- de[[1]]
