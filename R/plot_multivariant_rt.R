@@ -73,11 +73,11 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
   p <- ggplot2::ggplot(rt_region, ggplot2::aes(x = dates)) +
     ggplot2::annotate(geom = "rect",
                       xmin = as.Date('2020-12-18'),
-                      xmax = as.Date('2021-01-04'),
+                      xmax = as.Date('2021-01-05'),
                       ymin = -Inf, ymax = Inf, fill = "grey", alpha = 0.4) +
     ggplot2::annotate(geom = "rect",
-                      xmin = as.Date('2021-04-01'),
-                      xmax = as.Date('2021-04-19'),
+                      xmin = as.Date('2021-04-02'),
+                      xmax = as.Date('2021-04-18'),
                       ymin = -Inf, ymax = Inf, fill = "grey", alpha = 0.4) +
     ggplot2::geom_line(ggplot2::aes(y = rt_weighted, col = "Weighted")) +
     ggplot2::geom_ribbon(ggplot2::aes(ymin = lb_weighted, ymax = ub_weighted,
