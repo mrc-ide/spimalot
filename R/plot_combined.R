@@ -710,7 +710,7 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
   if ("p_NC_weekend" %in% colnames(sample$pars)) {
     p_NC_weekend <- sample$pars[, "p_NC_weekend"]
   } else {
-    p_NC_weekend <- model_params$p_NC_weekend
+    p_NC_weekend <- p_NC
   }
 
   if (over25) {

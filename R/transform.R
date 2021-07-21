@@ -62,7 +62,6 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
     if (model_type == "BB") {
       p_NC <- pars[["p_NC"]]
-      p_NC_weekend <- pars[["p_NC_weekend"]]
       rho_pillar2_tests <- pars[["rho_pillar2_tests"]]
       ## Total: 40 fitted parameters
 
@@ -78,6 +77,12 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       ## Unused in NB fits so these are dummy values
       p_NC <- 0.002
       rho_pillar2_tests <- 0.01
+    }
+
+    if ("p_NC_weekend" %in% names(pars)) {
+      p_NC_weekend <- pars[["p_NC_weekend"]]
+    } else {
+      p_NC_weekend <- p_NC
     }
 
     ## Set severity parameters based on Bob's analysis and fitted parameters.
