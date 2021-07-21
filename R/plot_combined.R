@@ -665,23 +665,19 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
 
   over25 <- TRUE
 
-  pos_columns <- c("pillar2_over25_pos", "pillar2_over25_pos_weekend")
-  tot_columns <- c("pillar2_over25_tot", "pillar2_over25_tot_weekend")
-  npos <- rowSums(data$fitted[, pos_columns], na.rm = TRUE)
-  ntot <- rowSums(data$fitted[, tot_columns], na.rm = TRUE)
-  if (all(ntot == 0)) {
-    npos <- rowSums(data$full[, pos_columns], na.rm = TRUE)
-    ntot <- rowSums(data$full[, tot_columns], na.rm = TRUE)
+  npos <- data$fitted[, "pillar2_over25_pos"]
+  ntot <- data$fitted[, "pillar2_over25_tot"]
+  if (all(is.na(ntot))) {
+    npos <- data$full[, "pillar2_over25_pos"]
+    ntot <- data$full[, "pillar2_over25_tot"]
 
     ## if still na, switch to all ages
-    if (all(ntot == 0)) {
-      pos_columns <- c("pillar2_pos", "pillar2_pos_weekend")
-      tot_columns <- c("pillar2_tot", "pillar2_tot_weekend")
-      npos <- rowSums(data$fitted[, pos_columns], na.rm = TRUE)
-      ntot <- rowSums(data$fitted[, tot_columns], na.rm = TRUE)
-      if (all(ntot == 0)) {
-        npos <- rowSums(data$full[, pos_columns], na.rm = TRUE)
-        ntot <- rowSums(data$full[, tot_columns], na.rm = TRUE)
+    if (all(is.na(ntot))) {
+      npos <- data$fitted[, "pillar2_pos"]
+      ntot <- data$fitted[, "pillar2_tot"]
+      if (all(is.na(ntot))) {
+        npos <- data$full[, "pillar2_pos"]
+        ntot <- data$full[, "pillar2_tot"]
         dcols[1] <- cols$green2
       }
       over25 <- FALSE
