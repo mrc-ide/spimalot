@@ -278,25 +278,6 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     all(data$pillar2_positives_over25 >= 0, na.rm = TRUE),
     all(data$pillar2_cases_over25 >= 0, na.rm = TRUE))
 
-  weekend <- grepl("^S", weekdays(as.Date(data$date)))
-
-  data$pillar2_positives_weekend <-
-    ifelse(weekend, data$pillar2_positives, NA_integer_)
-  data$pillar2_negatives_weekend <-
-    ifelse(weekend, data$pillar2_negatives, NA_integer_)
-  data$pillar2_positives_over25_weekend <-
-    ifelse(weekend, data$pillar2_positives_over25, NA_integer_)
-  data$pillar2_negatives_over25_weekend <-
-    ifelse(weekend, data$pillar2_negatives_over25, NA_integer_)
-  data$pillar2_positives <-
-    ifelse(!weekend, data$pillar2_positives, NA_integer_)
-  data$pillar2_negatives <-
-    ifelse(!weekend, data$pillar2_negatives, NA_integer_)
-  data$pillar2_positives_over25 <-
-    ifelse(!weekend, data$pillar2_positives_over25, NA_integer_)
-  data$pillar2_negatives_over25 <-
-    ifelse(!weekend, data$pillar2_negatives_over25, NA_integer_)
-
   ## TODO: with a stripped down compare function wee could drop the NA
   ## columns here.
   ret <- data_frame(
@@ -314,16 +295,10 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     all_admission = data$final_admissions,
     pillar2_tot = data$pillar2_positives + data$pillar2_negatives,
     pillar2_pos = data$pillar2_positives,
-    pillar2_tot_weekend = data$pillar2_positives_weekend +
-      data$pillar2_negatives_weekend,
-    pillar2_pos_weekend = data$pillar2_positives_weekend,
     pillar2_cases = data$pillar2_cases,
     pillar2_over25_tot = data$pillar2_positives_over25 +
       data$pillar2_negatives_over25,
     pillar2_over25_pos = data$pillar2_positives_over25,
-    pillar2_over25_tot_weekend = data$pillar2_positives_over25_weekend +
-      data$pillar2_negatives_over25_weekend,
-    pillar2_over25_pos_weekend = data$pillar2_positives_over25_weekend,
     pillar2_over25_cases = data$pillar2_cases_over25,
     react_pos = data$react_positive,
     react_tot = data$react_samples,
@@ -346,7 +321,6 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
 
     if (model_type == "BB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
-                "pillar2_tot_weekend", "pillar2_pos_weekend",
                 "pillar2_cases", "pillar2_over25_cases")
       for (i in omit) {
         ret[[i]] <- NA_integer_
@@ -354,20 +328,13 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
       if (all(is.na(ret$pillar2_over25_tot))) {
         ret$pillar2_tot <- data$pillar2_positives + data$pillar2_negatives
         ret$pillar2_pos <- data$pillar2_positives
-        ret$pillar2_tot_weekend <- data$pillar2_positives_weekend +
-          data$pillar2_negatives_weekend
-        ret$pillar2_pos_weekend <- data$pillar2_positives_weekend
         ret$pillar2_over25_tot <- NA_integer_
         ret$pillar2_over25_pos <- NA_integer_
-        ret$pillar2_over25_tot_weekend <- NA_integer_
-        ret$pillar2_over25_pos_weekend <- NA_integer_
       }
     }
     if (model_type == "NB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
-                "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos",
-                "pillar2_tot_weekend", "pillar2_pos_weekend",
-                "pillar2_over25_tot_weekend", "pillar2_over25_pos_weekend")
+                "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos")
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
