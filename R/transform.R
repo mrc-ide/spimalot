@@ -50,19 +50,11 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
     if ("strain_seed_date" %in% names(pars)) {
       strain_seed_date <- pars[["strain_seed_date"]] + seq(0, 6)
-    } else {
-      strain_seed_date <- NULL
-    }
-
-    if ("strain_seed_rate" %in% names(pars)) {
-      strain_seed_rate <- rep(pars[["strain_seed_rate"]], 7)
-    } else if (multistrain) {
-
-      strain_seed_pp <- 20 / 1000000
+      strain_seed_pp <- 2 / 1e6
       regional_pop <- sum(sircovid:::sircovid_population(region))
       strain_seed_rate <- rep(strain_seed_pp * regional_pop, 7)
-
     } else {
+      strain_seed_date <- NULL
       strain_seed_rate <- NULL
     }
 
