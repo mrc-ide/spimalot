@@ -11,7 +11,7 @@ spim_plot_Rt(
   forecast_until = NULL,
   variant = NULL,
   add_betas = FALSE,
-  multivariant = TRUE
+  multistrain = TRUE
 )
 }
 \arguments{
