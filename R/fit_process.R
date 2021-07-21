@@ -146,8 +146,10 @@ create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
               state = samples$trajectories$state[, , idx_dates])
   # add state_by_age
   ret$state_by_age <- extract_age_class_state(ret$state)
-  # add n_protected and n_doses2
-  ret <- c(ret, calculate_vaccination(ret$state, vaccine_efficacy))
+  # add n_protected and n_doses2s
+  cross_immunity <- samples$predict$transform(samples$pars[1, ])$cross_immunity
+
+  ret <- c(ret, calculate_vaccination(ret$state, vaccine_efficacy, cross_immunity))
 
   # thin trajectories
   ret$state <- ret$state[c("deaths", "deaths_comm", "admitted", "diagnoses",
@@ -415,8 +417,8 @@ deaths_filter_time <- function(x, restart_date) {
 }
 
 
-calculate_vaccination <- function(state, vaccine_efficacy) {
-  browser()
+calculate_vaccination <- function(state, vaccine_efficacy, cross_immunity) {
+
   de <- dim(vaccine_efficacy[[1]])
   if (length(de) == 2L) {
     n_groups <- de[[1]]
@@ -443,6 +445,7 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
 
   ## mean R by vaccine class / region == 1, time
   R <- get_mean_avt("^R_", state, TRUE)
+  ## sum out age
   R <- apply(R, c(2, 3, 4), sum)
 
   ## mean cumulative vaccinations by age / vaccine class / region == 1 / time
@@ -481,28 +484,38 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
   sum_asr <- function(x) c(apply(x, c(3, 4), sum))
 
   if (multistrain) {
-    n_vaccinated <- apply(n_vaccinated, c(1, 2, 4), sum)
-    dim(n_vaccinated) <- c(n_groups, n_vacc_classes, 1, n_days)
 
-    R <- apply(R, c(1, 3), sum)
-    dim(R) <- c(n_vacc_classes, 1, n_days)
+    ever_vaccinated <- colSums(n_vaccinated[, 1, , ])
+    R_strain_1 <- apply(R[, -2, ], c(1, 3), sum) + R[, 2, ] * cross_immunity[2]
+    R_strain_2 <-  apply(R[, -1, ], c(1, 3), sum) + R[, 1, ] * cross_immunity[1]
 
-    protected_against_infection <- rep(NA_real_, n_days)
-    protected_against_severe_disease <- rep(NA_real_, n_days)
-    protected_against_death <- rep(NA_real_, n_days)
+    n_protected <- list(
+      strain_1 = rbind(
+        ever_vaccinated = ever_vaccinated,
+        protected_against_infection = sum_asr(c(vp$infection[, 1, ]) * V),
+        protected_against_severe_disease = sum_asr(c(vp$severe_disease[, 1, ]) * V),
+        protected_against_death = sum_asr(c(vp$death[, 1, ]) * V),
+        ever_infected = colSums(R_strain_1),
+        ever_infected_unvaccinated = R_strain_1[1, ]),
+      strain_2 = rbind(
+        ever_vaccinated = ever_vaccinated,
+        protected_against_infection = sum_asr(c(vp$infection[, 1, ]) * V),
+        protected_against_severe_disease = sum_asr(c(vp$severe_disease[, 2, ]) * V),
+        protected_against_death = sum_asr(c(vp$death[, 2, ]) * V),
+        ever_infected = colSums(R_strain_2),
+        ever_infected_unvaccinated = R_strain_2[1, ]))
+
   } else {
-    protected_against_infection <- sum_asr(c(vp$infection) * V)
-    protected_against_severe_disease <- sum_asr(c(vp$severe_disease) * V)
-    protected_against_death <- sum_asr(c(vp$death) * V)
+
+    n_protected <- list(strain_1 = rbind(
+      ever_vaccinated = colSums(n_vaccinated[, 1, , ]),
+      protected_against_infection = sum_asr(c(vp$infection) * V),
+      protected_against_severe_disease = sum_asr(c(vp$severe_disease) * V),
+      protected_against_death = sum_asr(c(vp$death) * V),
+      ever_infected = sum_sr(R),
+      ever_infected_unvaccinated = R[1, , , drop = FALSE]))
   }
 
-  n_protected <- rbind(
-    ever_vaccinated = colSums(n_vaccinated[, 1, , ]),
-    protected_against_infection = protected_against_infection,
-    protected_against_severe_disease = protected_against_severe_disease,
-    protected_against_death = protected_against_death,
-    ever_infected = sum_sr(R),
-    ever_infected_unvaccinated = R[1, , , drop = FALSE])
 
   ## calculate n_doses
 
@@ -516,8 +529,8 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
 
   n_doses <- abind::abind(doses, doses_inc, along = 2)
 
-  list(n_protected = mcstate::array_reshape(n_protected, i = 2,
-                                            d = c(1, ncol(n_protected))),
+  list(n_protected = lapply(n_protected, mcstate::array_reshape, i = 2,
+                                            d = c(1, ncol(n_protected[[1]]))),
              n_doses = n_doses)
 }
 
