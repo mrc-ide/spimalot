@@ -40,7 +40,8 @@
 ##' @export
 spim_pars <- function(date, region, model_type, multistrain,
                       beta_date, vaccination, parameters,
-                      kernel_scaling = 1, cross_immunity = NULL) {
+                      kernel_scaling = 1, cross_immunity = NULL,
+                      waning_rate) {
   assert_is(parameters, "spim_pars_pmcmc")
 
   ## We take 'info' as the canonical source of names, then check that
@@ -60,7 +61,7 @@ spim_pars <- function(date, region, model_type, multistrain,
     prior = lapply(split(prior, prior$name), make_prior))
 
   transform <- spim_transform(region, model_type, multistrain, beta_date,
-                              vaccination, cross_immunity)
+                              vaccination, cross_immunity, waning_rate)
 
   ret <- mcstate::pmcmc_parameters$new(pars, proposal, transform)
 

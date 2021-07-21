@@ -1,5 +1,6 @@
 spim_transform <- function(region, model_type, multistrain, beta_date,
-                           vaccination, cross_immunity = NULL) {
+                           vaccination, cross_immunity = NULL,
+                           waning_rate) {
   beta_date <- sircovid::sircovid_date(beta_date)
   assert_is(vaccination, "spim_vaccination_data")
 
@@ -49,13 +50,11 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
     if ("strain_seed_date" %in% names(pars)) {
       strain_seed_date <- pars[["strain_seed_date"]] + seq(0, 6)
+      strain_seed_pp <- 2 / 1e6
+      regional_pop <- sum(sircovid:::sircovid_population(region))
+      strain_seed_rate <- rep(strain_seed_pp * regional_pop, 7)
     } else {
       strain_seed_date <- NULL
-    }
-
-    if ("strain_seed_rate" %in% names(pars)) {
-      strain_seed_rate <- rep(pars[["strain_seed_rate"]], 7)
-    } else {
       strain_seed_rate <- NULL
     }
 
@@ -123,10 +122,10 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       progression[grep("^k_", progression$parameter), ]
     gammas <-
       progression[grep("^gamma_", progression$parameter),
-                          "value"]
+                  "value"]
     names(gammas) <-
       progression[grep("^gamma_", progression$parameter),
-                          "parameter"]
+                  "parameter"]
     gammas <- as.list(gammas)
 
     # Reduce length of stay; same dates apply
@@ -171,9 +170,6 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     progression$gamma_sero_pos_2 <- 1 / 400
     # Time to diagnosis if admitted without test
     progression$gamma_U <- 1 / 3
-
-    ## Waning immunity rate (exponential)
-    waning_rate <- 1 / (3 * 365)
 
     observation <- sircovid::carehomes_parameters_observation()
 
