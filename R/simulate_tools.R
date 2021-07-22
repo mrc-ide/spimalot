@@ -84,7 +84,7 @@ spim_simulate_combine_trajectories <- function(res, name, regions = NULL, rm.rtU
       for (rt_type in rt_names) {
         which <- match("uk", colnames(res[[rt_type]]))
         if (!is.na(which)) {
-          res[[rt_type]] <- res[[rt_type]][, -which, ]
+          res[[rt_type]] <- res[[rt_type]][, -which, , ]
         }
       }
     }
@@ -315,6 +315,8 @@ spim_simulate_process_output <- function(obj, combined_region, regions,
   if (reset_states) {
     ret <- spim_simulate_reset_cumulative_states(ret, incidence_states)
   }
+  ret$multivariant_Rt_general <- NULL
+  ret$multivariant_eff_Rt_general <- NULL
 
   ret
 }

@@ -119,10 +119,24 @@ spim_combined_onward_simulate <- function(dat) {
 
   ## This is not terrible:
   rt <- list_transpose(dat$rt)[c("Rt_general", "eff_Rt_general")]
-  ## Rt_general and eff_Rt_general will have dimensions:
+    ## Rt_general and eff_Rt_general will have dimensions:
   ## [n particles x n regions x n dates]
   rt_combined <- lapply(rt, function(x)
     aperm(abind_quiet(x, along = 3), c(2, 3, 1))[, , idx_dates])
+
+  if (dat$info$multistrain) {
+    idx_variant_dates <- dat$variant_rt[[1]]$date[, 1] %in% dates
+
+    variant_rt <-
+      list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
+    variant_rt_combined <- lapply(variant_rt, function(x)
+      aperm(abind_quiet(x, along = 4), c(3, 4, 1, 2))[, , idx_variant_dates, ])
+
+    rt_combined <- Map(function(rt, weighted_rt) {
+      x <- abind_quiet(rt, weighted_rt, along = 4)
+      dimnames(x)[[4]] <- c("strain_1", "strain_2", "both")
+      x}, variant_rt_combined, rt_combined)
+  }
 
   ret <- c(ret, rt_combined)
 
