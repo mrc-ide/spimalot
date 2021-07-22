@@ -301,7 +301,28 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
       ## TODO: I am not sure this is correct (single 0 evaluates to FALSE)
       no_seeding = identical(args$strain_seed_rate[[1]], numeric(2)),
       prop_voc = args$strain_initial_proportion,
-      weight_Rt = args$output_weight_rt)
+      weight_Rt = FALSE)
+    if (args$output_weight_rt) {
+      weighted_rt <- simulate_rt(
+        steps,
+        state[names(index$S), , , ],
+        pars,
+        sort(critical_dates),
+        state[names(index$R), , , ],
+        state[names(index$prob_strain), , , ],
+        ## TODO: I am not sure this is correct (single 0 evaluates to FALSE)
+        no_seeding = identical(args$strain_seed_rate[[1]], numeric(2)),
+        prop_voc = args$strain_initial_proportion,
+        weight_Rt = TRUE)
+
+      # combined weighted and strain specific outputs
+      rt <- Map(function(rt, weighted_rt) {
+        x <- abind_quiet(rt, weighted_rt, along = 4)
+        dimnames(x)[[4]] <- c("strain_1", "strain_2", "both")
+        x}, rt, weighted_rt)
+    }
+
+
     ret <- c(ret, rt)
   }
 
