@@ -28,6 +28,7 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
                                                    last_beta_days_ago), 9)),
     label = c(
       "End of 2nd Lockdown",
+      "End of December NPI Relaxation",
       "School Holidays",
       "Start of 3rd Lockdown",
       "Roadmap Step 1",
