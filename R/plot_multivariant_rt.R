@@ -64,6 +64,11 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
   rt_region <- rt_region %>% dplyr::filter(dates >= as.Date("2020-12-01") &
                                              dates <= as.Date(date))
 
+  # Only plot variant after date of first reported cases on 2021-03-23
+  variant_names <- c("rt_variant", "lb_variant", "ub_variant")
+  rt_region[which(as.Date(rt_region$dates) < "2021-03-23"),
+            variant_names] <- NA_integer_
+
   if (rt_type == "eff_Rt_general") {
     ylim <- c(0,2)
   } else if (rt_type == "Rt_general") {
