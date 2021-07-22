@@ -80,6 +80,12 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       rho_pillar2_tests <- 0.01
     }
 
+    if ("p_NC_weekend" %in% names(pars)) {
+      p_NC_weekend <- pars[["p_NC_weekend"]]
+    } else {
+      p_NC_weekend <- p_NC
+    }
+
     ## Set severity parameters based on Bob's analysis and fitted parameters.
     severity[severity$Name == "p_sero_pos_1", 2:18] <- 0.85
     severity[severity$Name == "p_sero_pos_2", 2:18] <- 0.85
@@ -247,6 +253,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       m_CHW = m_CHW,
       m_CHR = m_CHR,
       p_NC = p_NC,
+      p_NC_weekend = p_NC_weekend,
       rel_susceptibility = rel_efficacy$rel_susceptibility,
       rel_p_sympt = rel_efficacy$rel_p_sympt,
       rel_p_hosp_if_sympt = rel_efficacy$rel_p_hosp_if_sympt,
