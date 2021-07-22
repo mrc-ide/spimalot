@@ -19,7 +19,8 @@
 ##'
 ##' @export
 spim_multivariant_rt_plot <- function(dat, date, date_restart,
-                                      last_beta_days_ago, region = "england",
+                                      last_beta_days_ago = 21,
+                                      region = "england",
                                       rt_type = "eff_Rt_general"){
   # Get relevant betas to current date and filter out school holidays
   betas <- data.frame(
@@ -71,8 +72,10 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
 
   if (rt_type == "eff_Rt_general") {
     ylim <- c(0,2)
+    ylab <- paste("Effective", expression(R[t]))
   } else if (rt_type == "Rt_general") {
     ylim <- c(0,4)
+    ylab <- paste(expression(R[t]), "excluding immunity")
   }
 
   p <- ggplot2::ggplot(rt_region, ggplot2::aes(x = dates)) +
@@ -101,7 +104,7 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
                         col = "red4") +
     ggplot2::geom_text(ggplot2::aes(label = label, y = 0.25),
                        angle = 45, size = 3) +
-    ggplot2::ylab(paste("Effective", expression(R[t]))) +
+    ggplot2::ylab(ylab) +
     ggplot2::xlab("") +
     ggplot2::ggtitle(paste(stringr::str_to_sentence(region))) +
     ggplot2::scale_x_date(date_breaks = "months",
