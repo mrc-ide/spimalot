@@ -103,11 +103,20 @@ spim_simulate_combine_trajectories <- function(res, name, regions = NULL, rm.rtU
       sum_w <- combined_Rt
 
       for (rt_type in rt_names) {
+
+        # add strain dimension to rt if needed
+        dim_rt <- dim(res[[rt_type]])
+        if (length(dim_rt) == 3) {
+          dim(res[[rt_type]]) <- c(dim_rt, 1)
+          dimnames(res[[rt_type]])[[4]] <- "both"
+        }
         for (r in regions) {
-          x <- res[[rt_type]][, r, ]
-          w <- cbind(NA, t(incid[, , r]))
+
+          x <- res[[rt_type]][, r, , , drop = FALSE]
+          w <- c(cbind(NA, t(incid[, , r])))
           combined_Rt[[rt_type]] <- combined_Rt[[rt_type]] + x * w
           sum_w[[rt_type]] <- sum_w[[rt_type]] + w
+
         }
       }
 
@@ -179,12 +188,13 @@ spim_simulate_simplify_rt <- function(x) {
 
   names_rt <- c("Rt_general", "eff_Rt_general")
   for (v in names_rt) {
-    x[[v]] <- array(x[[v]], c(1L, dim(x[[v]])))
+    x[[v]] <- aperm(x[[v]], c(4, 1, 2, 3))
+    rownames(x[[v]]) <- paste(v, rownames(x[[v]]), sep = "_")
   }
-  suppressWarnings({
-    rt <- abind::abind(x[names_rt], along = 1L)
-    x$state <- abind::abind(x$state, rt, along = 1L)
-  })
+
+  rt <- abind_quiet(x[names_rt], along = 1L)
+  x$state <- abind_quiet(x$state, rt, along = 1L)
+
 
   x[setdiff(names(x), names_rt)]
 }
