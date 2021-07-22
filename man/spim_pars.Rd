@@ -14,7 +14,7 @@ spim_pars(
   parameters,
   kernel_scaling = 1,
   cross_immunity = NULL,
-  assumptions = "central"
+  waning_rate
 )
 }
 \arguments{

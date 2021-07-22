@@ -8,7 +8,7 @@ spim_multivariant_rt_plot(
   dat,
   date,
   date_restart,
-  last_beta_days_ago,
+  last_beta_days_ago = 21,
   region = "england",
   rt_type = "eff_Rt_general"
 )

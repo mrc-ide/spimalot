@@ -65,6 +65,7 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
   par_max[beta_names] <- 0.25
   if (model_type == "BB") {
     par_max["p_NC"] <- 0.01
+    par_max["p_NC_weekend"] <- 0.01
     par_max["rho_pillar2_tests"] <- 0.02
   }
 
