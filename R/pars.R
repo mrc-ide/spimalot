@@ -40,7 +40,8 @@
 ##' @export
 spim_pars <- function(date, region, model_type, multistrain,
                       beta_date, vaccination, parameters,
-                      kernel_scaling = 1, cross_immunity = NULL) {
+                      kernel_scaling = 1, cross_immunity = NULL,
+                      waning_rate) {
   assert_is(parameters, "spim_pars_pmcmc")
 
   ## We take 'info' as the canonical source of names, then check that
@@ -60,7 +61,7 @@ spim_pars <- function(date, region, model_type, multistrain,
     prior = lapply(split(prior, prior$name), make_prior))
 
   transform <- spim_transform(region, model_type, multistrain, beta_date,
-                              vaccination, cross_immunity)
+                              vaccination, cross_immunity, waning_rate)
 
   ret <- mcstate::pmcmc_parameters$new(pars, proposal, transform)
 
@@ -157,20 +158,22 @@ spim_pars_beta <- function(date, last_beta_days_ago = 21) {
   ## 12. 2020-11-05 - lockdown 2 starts
   ## 13. 2020-12-02 - lockdown 2 ends
   ## 14. 2020-12-18 - school Christmas holidays
-  ## 15. 2021-01-05 - Lockdown 3 starts
-  ## 16. 2021-03-08 - Step 1 of roadmap: schools reopen
-  ## 17. 2021-04-01 - Semi-arbitrary - school holidays / restart date
-  ## 18. 2021-04-19 - Step 2 of roadmap: outdoors hospitality (04-12)
+  ## 15. 2020-12-25 - last day of holidays season relaxation
+  ## 16. 2021-01-05 - Lockdown 3 starts
+  ## 17. 2021-03-08 - Step 1 of roadmap: schools reopen
+  ## 18. 2021-04-01 - Semi-arbitrary - school holidays / restart date
+  ## 19. 2021-04-19 - Step 2 of roadmap: outdoors hospitality (04-12)
   ##                  and schools return (04-19)
-  ## 19. 2021-05-17 - Step 3 of roadmap: indoors hospitality
-  ## 20. Three weeks ago
+  ## 20. 2021-05-17 - Step 3 of roadmap: indoors hospitality
+  ## 21. Three weeks ago
   c("2020-03-16", "2020-03-23", "2020-03-25",
     "2020-05-11", "2020-06-15", "2020-07-04",
     "2020-08-01", "2020-09-01", "2020-09-14",
     "2020-10-14", "2020-10-31", "2020-11-05",
-    "2020-12-02", "2020-12-18", "2021-01-05",
-    "2021-03-08", "2021-04-01", "2021-04-19",
-    "2021-05-17", as.character(as.Date(date) - last_beta_days_ago))
+    "2020-12-02", "2020-12-18", "2020-12-25",
+    "2021-01-05", "2021-03-08", "2021-04-01",
+    "2021-04-19", "2021-05-17",
+    as.character(as.Date(date) - last_beta_days_ago))
 }
 
 
