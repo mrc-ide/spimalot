@@ -37,6 +37,9 @@ DESCRIBE FORMAT; TODO: DESCRIBE ORIGIN}
 \item{trim_deaths}{The number of days of deaths to trim to avoid
 back-fill issues. We typically use a value of 4 days.}
 
+\item{trim_pillar2}{The number of days of pillar 2 data to trim to avoid
+back-fill issues. We typically use a value of 7 days.}
+
 \item{full_data}{Not sure yet, we'll find out}
 
 \item{fit_to_variants}{Logical, whether to fit to variants data or not}
