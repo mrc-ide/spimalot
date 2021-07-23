@@ -499,7 +499,7 @@ calculate_vaccination <- function(state, vaccine_efficacy, cross_immunity) {
         ever_infected_unvaccinated = R_strain_1[1, ]),
       strain_2 = rbind(
         ever_vaccinated = ever_vaccinated,
-        protected_against_infection = sum_asr(c(vp$infection[, 1, ]) * V),
+        protected_against_infection = sum_asr(c(vp$infection[, 2, ]) * V),
         protected_against_severe_disease = sum_asr(c(vp$severe_disease[, 2, ]) * V),
         protected_against_death = sum_asr(c(vp$death[, 2, ]) * V),
         ever_infected = colSums(R_strain_2),
