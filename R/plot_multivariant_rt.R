@@ -24,10 +24,12 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
                                       rt_type = "eff_Rt_general"){
   # Get relevant betas to current date and filter out school holidays
   betas <- data.frame(
-    dates = as.Date(tail(spimalot:::spim_pars_beta(date, last_beta_days_ago), 8)),
+    dates = as.Date(tail(spimalot:::spim_pars_beta(date,
+                                                   last_beta_days_ago), 9)),
     label = c(
       "End of 2nd Lockdown",
       "School Holidays",
+      "End of December NPI Relaxation",
       "Start of 3rd Lockdown",
       "Roadmap Step 1",
       "School Holidays",

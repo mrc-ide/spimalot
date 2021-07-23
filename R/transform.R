@@ -30,6 +30,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     mu_D_2 <- pars[["mu_D_2"]]
     mu_gamma_H <- pars[["mu_gamma_H"]]
     mu_gamma_H_2 <- pars[["mu_gamma_H_2"]]
+    mu_gamma_H_3 <- pars[["mu_gamma_H_3"]]
     p_H <- pars[["p_H"]]
     p_H_2 <- pars[["p_H_2"]]
     p_H_3 <- pars[["p_H_3"]]
@@ -137,8 +138,9 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     # Reduce length of stay; same dates apply
     mu_gamma_H_date <- sircovid::sircovid_date(c("2020-12-01",
                                                  "2021-01-01",
-                                                 "2021-03-01"))
-    mu_gamma_H_value <- c(1, 1 / mu_gamma_H, 1 / mu_gamma_H_2)
+                                                 "2021-03-01",
+                                                 "2021-06-01"))
+    mu_gamma_H_value <- c(1, 1 / mu_gamma_H, 1 / mu_gamma_H_2, 1 / mu_gamma_H_3)
 
     gamma_ICU_pre <- gammas$gamma_ICU_pre
     gamma_ICU_D <- gammas$gamma_ICU_D
