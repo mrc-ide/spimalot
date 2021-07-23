@@ -257,6 +257,10 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     data$final_hosp <- data$phe_patients
   }
 
+  cols_pillar2 <- c("pillar2_positives", "pillar2_negatives", "pillar2_cases",
+                    "pillar2_positives_over25", "pillar2_negatives_over25",
+                    "pillar2_cases_over25")
+
   # ignore pillar 2 testing before 2020-06-18
   data[which(data$date < "2020-06-18"), cols_pillar2] <- NA_integer_
 
