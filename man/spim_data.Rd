@@ -11,6 +11,7 @@ spim_data(
   rtm,
   serology,
   trim_deaths,
+  trim_pillar2,
   full_data = FALSE,
   fit_to_variants = FALSE
 )
