@@ -1,6 +1,6 @@
 Package: spimalot
 Title: Support for 'sircovid'
-Version: 0.2.33
+Version: 0.2.34
 Authors@R:
     c(person(given = "Marc",
            family = "Baguelin",
@@ -60,7 +60,8 @@ Imports:
     stringr,
     tidyr,
     viridisLite,
-    writexl
+    writexl,
+    ggthemes
 Suggests:
     digest,
     rrq,
