@@ -21,6 +21,7 @@
 spim_simulate_prepare <- function(combined, n_par,
                                   regions = NULL, inflate_strain = FALSE,
                                   inflate_booster = FALSE) {
+
   if (is.null(regions)) {
     regions <- sircovid::regions("all")
   }
@@ -300,16 +301,41 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
       ## TODO: I am not sure this is correct (single 0 evaluates to FALSE)
       no_seeding = identical(args$strain_seed_rate[[1]], numeric(2)),
       prop_voc = args$strain_initial_proportion,
-      weight_Rt = args$output_weight_rt)
+      weight_Rt = FALSE)
+    if (args$output_weight_rt) {
+      weighted_rt <- simulate_rt(
+        steps,
+        state[names(index$S), , , ],
+        pars,
+        sort(critical_dates),
+        state[names(index$R), , , ],
+        state[names(index$prob_strain), , , ],
+        ## TODO: I am not sure this is correct (single 0 evaluates to FALSE)
+        no_seeding = identical(args$strain_seed_rate[[1]], numeric(2)),
+        prop_voc = args$strain_initial_proportion,
+        weight_Rt = TRUE)
+
+      # combined weighted and strain specific outputs
+      rt <- Map(function(rt, weighted_rt) {
+        x <- abind_quiet(rt, weighted_rt, along = 4)
+        dimnames(x)[[4]] <- c("strain_1", "strain_2", "both")
+        x}, rt, weighted_rt)
+    }
+
+
     ret <- c(ret, rt)
   }
 
   if (args$output_vaccination) {
+
     ret <- c(ret,
              simulate_calculate_vaccination(state, index,
                                             args$vaccine_efficacy,
                                             args$vaccine_booster_efficacy,
-                                            n_strain))
+                                            n_strain,
+                                            args$strain_vaccine_efficacy,
+                                            args$strain_vaccine_booster_efficacy,
+                                            args$strain_cross_immunity))
   }
 
   ret
@@ -802,7 +828,10 @@ simulate_rt <- function(steps, S, pars, critical_dates, R = NULL,
 
 
 simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
-                                           booster_efficacy, n_strain) {
+                                           booster_efficacy, n_strain,
+                                           strain_vaccine_efficacy,
+                                           strain_vaccine_booster_efficacy,
+                                           strain_cross_immunity) {
   n_groups <- sircovid:::carehomes_n_groups()
   regions <- dimnames(state)[[3]]
 
@@ -815,18 +844,42 @@ simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
     mcstate::array_reshape(n_vaccinated, 1L, c(n_groups, n_strata))
 
   ## output the number recovered in each vaccine stratum / region / over time
+  ## R_raw: [age, strain, vaccine, particle, region, time]
   R_raw <- mcstate::array_reshape(
     state[names(index$R), , , , drop = FALSE], 1L, c(n_groups, n_strain, n_strata))
-  ## the mean is taken here over age and particle
-  ## but we want the number for each age group so you multiply back by n_groups = 19
-  ## only extract strain 1
-  R_strain_1 <- R_raw[, 1, , , , ]
-  R <- apply(R_strain_1, c(2, 4, 5), mean) * n_groups
 
-  # calculate the proportion protected given vaccine efficacy
-  n_protected <- fixme_calculate_n_protected(
-    n_vaccinated, R, vaccine_efficacy, booster_efficacy)
-  dimnames(n_protected)[[2]] <- regions
+  ## Take the sum over age
+  R <- apply(R_raw, seq(2, 6), sum)
+  ## take the mean over the particles
+  R <- apply(R, c(1, 2, 4, 5), mean)
+  ## R: [strain, vaccine, region, time]
+
+  ## need to allow for imperfect cross-strain immunity
+  ## R_strain_1: 100% of strain-level 1, 3, 4 + args$cross_protection[2] * strain-level 2
+  ## R_strain_2: 100% of strain-level 2, 3, 4 + args$cross_protection[1] * strain-level 1
+
+  calc_strain_immunity <- function(strain, R, strain_cross_immunity) {
+    apply(R[-strain, , , ], seq(2, 4), sum) +
+      R[strain, , , ] * strain_cross_immunity[strain]
+  }
+
+  idx_strain <- c(1, 2)
+  R_strain <- lapply(idx_strain, calc_strain_immunity, R, strain_cross_immunity)
+  names(R_strain) <- paste0("strain_", idx_strain)
+
+  ## R_strain: [vaccine, region, time]
+
+  # calculate the proportion protected given strain-specific vaccine efficacy
+  # and cross-strain immunity
+
+  n_protected_strain_1 <- fixme_calculate_n_protected(
+    n_vaccinated, R_strain$strain_1, vaccine_efficacy, booster_efficacy)
+  dimnames(n_protected_strain_1)[[2]] <- regions
+
+  n_protected_strain_2 <- fixme_calculate_n_protected(
+    n_vaccinated, R_strain$strain_2, strain_vaccine_efficacy,
+    strain_vaccine_booster_efficacy)
+  dimnames(n_protected_strain_1)[[2]] <- regions
 
   # Output number of first, second and booster doses
 
@@ -841,16 +894,17 @@ simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
   n_doses <- abind_quiet(doses, doses_inc, along = 2)
 
   list(n_vaccinated = n_vaccinated,
-       n_protected = n_protected,
+       n_protected = list(strain_1 = n_protected_strain_1,
+                          strain_2 = n_protected_strain_2),
        n_doses = n_doses)
 }
 
 
 ## TODO: overlap considerably with calculate_n_protected
+## make R strain specific
 fixme_calculate_n_protected <- function(n_vaccinated, R, vaccine_efficacy,
                                         booster_efficacy) {
   vp <- get_vaccine_protection(vaccine_efficacy, booster_efficacy)
-
 
   # Methodology: calculate incidence of first / second doses,
   # number in each strata in total,
