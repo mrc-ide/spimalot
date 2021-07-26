@@ -300,6 +300,8 @@ spim_simulate_reset_cumulative_states <- function(res, state_names) {
 ##' to zero at the start of the simulation
 ##' @param rm.rtUK Logical, indicating if the aggregated UK trajectory should be
 ##' removed
+##' @param output_regions Character vector of regions to output, defaults to
+##' `combined_region`
 ##' @export
 spim_simulate_process_output <- function(obj, combined_region, regions,
                                          incidence_states,
@@ -307,7 +309,7 @@ spim_simulate_process_output <- function(obj, combined_region, regions,
                                          rm.rtUK = FALSE,
                                          output_region = NULL) {
 
-  output_region <- output_region %||% c(regions, combined_region)
+  output_region <- output_region %||% combined_region
   ret <- spim_simulate_combine_trajectories(obj, combined_region, regions,
                                             rm.rtUK)
   ret <- spim_simulate_simplify_rt(ret)

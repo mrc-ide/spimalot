@@ -10,7 +10,8 @@ spim_simulate_process_output(
   regions,
   incidence_states,
   reset_states = FALSE,
-  rm.rtUK = FALSE
+  rm.rtUK = FALSE,
+  output_region = NULL
 )
 }
 \arguments{
@@ -27,6 +28,9 @@ to zero at the start of the simulation}
 
 \item{rm.rtUK}{Logical, indicating if the aggregated UK trajectory should be
 removed}
+
+\item{output_regions}{Character vector of regions to output, defaults to
+\code{combined_region}}
 }
 \description{
 Process simulation output
