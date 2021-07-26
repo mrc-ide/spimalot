@@ -448,6 +448,7 @@ tidy_state_one <- function(x, common) {
     p <- aperm(abind_quiet(x$n_protected, along = 4), c(3, 2, 4, 1))
     dnp <- set_names(dimnames(p), c("date", "region", "strain", "state"))
     dnp$date <- sircovid::sircovid_date_as_date(x$date)
+    dnp$quantile <- "mean"
 
     ret_p <- do.call(expand.grid, dnp)[seq(length(dnp), 1)]
     ret_p$value <- c(p)
