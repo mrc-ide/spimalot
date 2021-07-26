@@ -457,6 +457,7 @@ tidy_state_one <- function(x, common) {
     d <- aperm(x$n_doses, c(4, 1, 3, 2))
     dn$group <- c(sircovid:::sircovid_age_bins()$start, "CHW", "CHR")
     dn$state <- colnames(x$n_doses)
+    dn$quantile <- "mean"
 
     ret_d <- do.call(expand.grid, dn)[seq(length(dn), 1)]
     ret_d$value <- c(d)
