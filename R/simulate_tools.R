@@ -173,6 +173,10 @@ spim_simulate_combine_trajectories <- function(res, name, regions = NULL, rm.rtU
     ret$state_by_age <- lapply(res$state_by_age, agg_regions)
   }
 
+  if ("n_vaccinated" %in% names(res)) {
+    ret$n_vaccinated <- agg_regions(res$n_vaccinated)
+  }
+
   ret
 }
 
@@ -322,8 +326,15 @@ spim_simulate_process_output <- function(obj, combined_region, regions,
   ret$multivariant_Rt_general <- NULL
   ret$multivariant_eff_Rt_general <- NULL
 
-  ret <- lapply(ret, dplyr::filter, region %in% output_region)
+  f <- function(x) x[, , output_region, , drop = FALSE]
 
+  ret$summary_state <- f(ret$summary_state)
+  ret$state <- f(ret$state)
+  ret$state_by_age <- lapply(ret$state_by_age, f)
+  ret$n_vaccinated <- f(ret$n_vaccinated)
+  ret$n_protected <- lapply(ret$n_protected,
+                            function(x) x[, output_region, , drop = FALSE])
+  ret$n_doses <- f(ret$n_doses)
   ret
 }
 
