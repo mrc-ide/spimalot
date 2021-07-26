@@ -60,7 +60,7 @@ Imports:
     stringr,
     tidyr,
     viridisLite,
-    writexl
+    writexl,
     ggthemes
 Suggests:
     digest,

@@ -304,8 +304,10 @@ spim_simulate_reset_cumulative_states <- function(res, state_names) {
 spim_simulate_process_output <- function(obj, combined_region, regions,
                                          incidence_states,
                                          reset_states = FALSE,
-                                         rm.rtUK = FALSE) {
+                                         rm.rtUK = FALSE,
+                                         output_region = NULL) {
 
+  output_region <- output_region %||% c(regions, combined_region)
   ret <- spim_simulate_combine_trajectories(obj, combined_region, regions,
                                             rm.rtUK)
   ret <- spim_simulate_simplify_rt(ret)
@@ -317,6 +319,8 @@ spim_simulate_process_output <- function(obj, combined_region, regions,
   }
   ret$multivariant_Rt_general <- NULL
   ret$multivariant_eff_Rt_general <- NULL
+
+  ret <- lapply(ret, dplyr::filter, region %in% output_region)
 
   ret
 }
