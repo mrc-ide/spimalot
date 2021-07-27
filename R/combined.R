@@ -104,24 +104,39 @@ spim_combined_onward_simulate <- function(dat) {
 
   state <- lapply(dat$samples, function(x)
     x$trajectories$state[rownames(simulate$state[[1]]), , idx_dates])
-  state <- aperm(abind::abind(state, along = 4), c(1, 2, 4, 3))
+  state <- aperm(abind_quiet(state, along = 4), c(1, 2, 4, 3))
 
-  state_by_age <- lapply(
-    list_transpose(simulate$state_by_age),
-    abind::abind, along = 3)
+  state_by_age <- lapply(list_transpose(simulate$state_by_age),
+                         abind_quiet, along = 3)
+  n_protected <- lapply(list_transpose(simulate$n_protected),
+                        abind_quiet, along = 2)
 
   ret <- list(date = dates,
               state = state,
               state_by_age = state_by_age,
-              n_protected = abind::abind(simulate$n_protected, along = 2),
-              n_doses = abind::abind(simulate$n_doses, along = 3))
+              n_protected = n_protected,
+              n_doses = abind_quiet(simulate$n_doses, along = 3))
 
   ## This is not terrible:
   rt <- list_transpose(dat$rt)[c("Rt_general", "eff_Rt_general")]
-  ## Rt_general and eff_Rt_general will have dimensions:
+    ## Rt_general and eff_Rt_general will have dimensions:
   ## [n particles x n regions x n dates]
   rt_combined <- lapply(rt, function(x)
-    aperm(abind::abind(x, along = 3), c(2, 3, 1))[, , idx_dates])
+    aperm(abind_quiet(x, along = 3), c(2, 3, 1))[, , idx_dates])
+
+  if (dat$info$multistrain) {
+    idx_variant_dates <- dat$variant_rt[[1]]$date[, 1] %in% dates
+
+    variant_rt <-
+      list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
+    variant_rt_combined <- lapply(variant_rt, function(x)
+      aperm(abind_quiet(x, along = 4), c(3, 4, 1, 2))[, , idx_variant_dates, ])
+
+    rt_combined <- Map(function(rt, weighted_rt) {
+      x <- abind_quiet(rt, weighted_rt, along = 4)
+      dimnames(x)[[4]] <- c("strain_1", "strain_2", "both")
+      x}, variant_rt_combined, rt_combined)
+  }
 
   ret <- c(ret, rt_combined)
 
@@ -136,7 +151,7 @@ spim_combined_onward_simulate <- function(dat) {
     mv_rt <-
       list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
     mv_rt_combined <- lapply(mv_rt, function(x)
-      aperm(abind::abind(x, along = 4), c(3, 4, 2, 1))[, , , idx_dates_mv_rt])
+      aperm(abind_quiet(x, along = 4), c(3, 4, 2, 1))[, , , idx_dates_mv_rt])
     names(mv_rt_combined) <- paste0("multivariant_", names(mv_rt_combined))
 
     ret <- c(ret, mv_rt_combined)
