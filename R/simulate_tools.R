@@ -481,5 +481,3 @@ tidy_state_one <- function(x, common) {
 
   lapply(res, function(x) cbind(common, x))
 }
-
-

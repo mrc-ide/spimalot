@@ -27,8 +27,8 @@ included as specified in \code{simulation_central_analysis}. This should rarely
 be \code{FALSE} as often required for basic checking plots.}
 
 \item{set_strain_params}{If \code{TRUE} automatically sets strain parameters
-\code{strain_cross_immunity} and \code{strain_severity_modifier}, which are
-currently equivalent to \code{strain_vaccine_efficacy}}
+\code{strain_cross_immunity}, \code{strain_severity_modifier} and
+\code{strain_waning_rate}, as equivalent to \code{strain_vaccine_efficacy}}
 
 \item{multistrain}{If \code{FALSE} then removes all columns related to a second
 strain}
