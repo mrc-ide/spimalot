@@ -139,7 +139,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     mu_gamma_H_date <- sircovid::sircovid_date(c("2020-12-01",
                                                  "2021-01-01",
                                                  "2021-03-01",
-                                                 "2021-06-01"))
+                                                 "2021-06-15"))
     mu_gamma_H_value <- c(1, 1 / mu_gamma_H, 1 / mu_gamma_H_2, 1 / mu_gamma_H_3)
 
     gamma_ICU_pre <- gammas$gamma_ICU_pre
