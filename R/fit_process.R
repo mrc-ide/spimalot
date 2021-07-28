@@ -11,9 +11,13 @@
 ##'
 ##' @param control The forecast control from [spimalot::spim_control]
 ##'
+##' @param random_sample Logical parameter, if `TRUE` will obtain the
+##'   posterior samples via random sampling, otherwise thinning will
+##'   be used
 ##'
 ##' @export
-spim_fit_process <- function(samples, parameters, data, control) {
+spim_fit_process <- function(samples, parameters, data, control,
+                             random_sample = TRUE) {
   region <- samples$info$region
 
   message("Computing restart information")
@@ -22,11 +26,14 @@ spim_fit_process <- function(samples, parameters, data, control) {
 
   message("Running forecasts")
   incidence_states <- "deaths"
+  ## Add 1 to burnin to account for removal of initial parameters
   forecast <- sircovid::carehomes_forecast(samples,
                                            control$n_sample,
-                                           control$burnin,
+                                           control$burnin + 1L,
                                            control$forecast_days,
-                                           incidence_states)
+                                           incidence_states,
+                                           random_sample = random_sample,
+                                           thin = control$thin)
 
   message("Computing Rt")
   rt <- calculate_Rt(forecast, samples$info$multistrain, TRUE) # TODO: very slow
