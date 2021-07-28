@@ -25,7 +25,7 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
   # Get relevant betas to current date and filter out school holidays
   betas <- data.frame(
     dates = as.Date(tail(spimalot:::spim_pars_beta(date,
-                                                   last_beta_days_ago), 9)),
+                                                   last_beta_days_ago), 10)),
     label = c(
       "End of 2nd Lockdown",
       "School Holidays",
@@ -35,7 +35,8 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
       "School Holidays",
       "Roadmap Step 2",
       "Roadmap Step 3",
-      "3 weeks ago")
+      "Date of Step 4 delay",
+      paste(last_beta_days_ago, "days ago"))
   ) %>% dplyr::filter(!stringr::str_detect(label, "School"))
 
   rt_plot <- NULL
