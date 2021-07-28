@@ -4,19 +4,28 @@
 \alias{spim_prepare_rt_future}
 \title{Prepare Rt future for simulation}
 \usage{
-spim_prepare_rt_future(path, npi_key, start_date, end_date)
+spim_prepare_rt_future(
+  npi_key,
+  start_date,
+  end_date,
+  path = NULL,
+  schedule = NULL
+)
 }
 \arguments{
-\item{path}{File path to a csv containing columns: nation
-(at least one of england, scotland, wales, northern ireland), scenario
-(scenario ID), year (YYYY), month (MM), (DD), npi
-(NPI ID to match npi_key$npi)}
-
 \item{start_date}{Start date of simulation, all changes in schedule before
 this date are removed.}
 
 \item{end_date}{End date of simulation, all changes in schedule after
 this date are removed.}
+
+\item{path}{File path to a csv containing columns: nation
+(at least one of england, scotland, wales, northern ireland), scenario
+(scenario ID), year (YYYY), month (MM), (DD), npi
+(NPI ID to match npi_key$npi)}
+
+\item{schedule}{data.frame alternative to csv in \code{path} except with
+\code{date} column already create (and not year, month, day columns)}
 }
 \value{
 tibble which is essentially a column binds of npi_key and

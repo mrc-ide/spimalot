@@ -221,9 +221,8 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
 
   ## Lots of updates to parameters to account for how vaccination
   ## changes over the future.
-
-  step_start <- combined$step
-  date_start <- sircovid::sircovid_date(combined$date)
+  date_start <- sircovid::sircovid_date(min(args$rt_future$date))
+  step_start <- date_start * combined$steps_per_day
   end_date <- sircovid::sircovid_date(args$end_date)
   dates <- seq(date_start, end_date)
   steps <- dates * combined$steps_per_day
@@ -1445,21 +1444,29 @@ spim_simulation_predictors <- function(summary) {
 ##' @return tibble for passing to [spim_prepare_rt_future]
 ##'
 ##' @export
-spim_prepare_npi_key <- function(path, schools, schools_modifier, country,
+spim_prepare_npi_key <- function(schools, schools_modifier, country,
+                                 path = NULL,
                                  gradual_start = NULL, gradual_end = NULL,
                                  gradual_steps = NULL,
                                  overwrite_central_adherence = NULL,
                                  overwrite_low_adherence = NULL,
-                                 overwrite_high_adherence = NULL) {
+                                 overwrite_high_adherence = NULL,
+                                 npi_key = NULL) {
 
   schools_modifier <- abs(schools_modifier)
 
   all_schools <- c("open", "closed")
   stopifnot(schools %in% all_schools)
-
   stopifnot(length(c(gradual_start, gradual_end, gradual_steps)) %in% c(0, 3))
+  stopifnot(sum(is.null(path), is.null(npi_key)) == 1)
 
-  npi_key <- read_csv(path) %>%
+  if (is.null(npi_key)) {
+    npi_key <- read_csv(path)
+  } else {
+    stopifnot(identical(colnames(npi_key),
+                        c("nation", "npi", "Rt", "Rt_sd", "adherence")))
+  }
+  npi_key <- npi_key %>%
     dplyr::filter(nation == case_when(country == "england" ~ "england",
                                       TRUE ~ nation)) %>%
     dplyr::mutate(npi = sprintf("%s_schools_%s", npi, schools))
@@ -1488,6 +1495,14 @@ spim_prepare_npi_key <- function(path, schools, schools_modifier, country,
     }
   }
 
+  npi_key <- dplyr::bind_rows(
+    npi_key,
+    npi_key %>%
+    dplyr::mutate(npi = gsub(schools, setdiff(all_schools, schools), npi),
+                  Rt = case_when(schools == "open" ~ Rt - schools_modifier,
+                                  schools == "closed" ~ Rt + schools_modifier))
+    )
+
   if (!is.null(gradual_start)) {
 
     gradualise <- function(start, end, steps, ad) {
@@ -1506,7 +1521,7 @@ spim_prepare_npi_key <- function(path, schools, schools_modifier, country,
           as.numeric()
         steps <- round(seq.int(from, to, length.out = steps + 1)[2:steps], 3)
 
-        data.frame(nation = nat, npi = sprintf("%s_p%d", end, seq_along(steps - 1)),
+        data.frame(nation = nat, npi = sprintf("p%d_%s", seq_along(steps - 1), end),
                   Rt = steps, Rt_sd = sd, adherence = ad)
       }) %>%
       dplyr::bind_rows()
@@ -1519,13 +1534,7 @@ spim_prepare_npi_key <- function(path, schools, schools_modifier, country,
     )
   }
 
-  dplyr::bind_rows(
-    npi_key,
-    npi_key %>%
-    dplyr::mutate(npi = gsub(schools, setdiff(all_schools, schools), npi),
-                  Rt = case_when(schools == "open" ~ Rt - schools_modifier,
-                                  schools == "closed" ~ Rt + schools_modifier))
-    ) %>%
+ npi_key %>%
     dplyr::arrange(adherence, nation, npi) %>%
     dplyr::mutate(Rt = round(Rt, 3)) %>%
     `rownames<-`(NULL)
@@ -1537,25 +1546,36 @@ spim_prepare_npi_key <- function(path, schools, schools_modifier, country,
 ##'
 ##' @title Prepare Rt future for simulation
 ##'
-##' @param path File path to a csv containing columns: nation
-##'  (at least one of england, scotland, wales, northern ireland), scenario
-##'  (scenario ID), year (YYYY), month (MM), (DD), npi
-##'  (NPI ID to match npi_key$npi)
-##'
 ##' @param start_date Start date of simulation, all changes in schedule before
 ##'  this date are removed.
 ##'
 ##' @param end_date End date of simulation, all changes in schedule after
 ##'  this date are removed.
 ##'
+##' @param path File path to a csv containing columns: nation
+##'  (at least one of england, scotland, wales, northern ireland), scenario
+##'  (scenario ID), year (YYYY), month (MM), (DD), npi
+##'  (NPI ID to match npi_key$npi)
+##'
+##' @param schedule data.frame alternative to csv in `path` except with
+##'  `date` column already create (and not year, month, day columns)
+##'
 ##' @return tibble which is essentially a column binds of npi_key and
 ##'  Rt_schedule datasets after cleaning
 ##'
 ##' @export
-spim_prepare_rt_future <- function(path, npi_key, start_date, end_date) {
-  res <-
-    read_csv(path) %>%
-    dplyr::mutate(date = as.Date(sprintf("%s-%s-%s", year, month, day))) %>%
+spim_prepare_rt_future <- function(npi_key, start_date, end_date,
+                                   path = NULL, schedule = NULL) {
+
+  stopifnot(sum(is.null(path), is.null(schedule)) == 1)
+  if (!is.null(path)) {
+    schedule <-
+      read_csv(path) %>%
+      dplyr::mutate(date = as.Date(sprintf("%s-%s-%s", year, month, day))) %>%
+      dplyr::select(-day, -month, -year)
+  }
+
+  schedule <- schedule %>%
     dplyr::filter(
       nation %in% unique(npi_key$nation),
       ## remove all dates after the end date and before the start date
@@ -1563,17 +1583,16 @@ spim_prepare_rt_future <- function(path, npi_key, start_date, end_date) {
       date <= as.Date(end_date)
     ) %>%
     dplyr::left_join(npi_key, by = c("nation", "npi")) %>%
-    dplyr::mutate(key = paste(scenario, adherence, sep = ": ")) %>%
-    dplyr::select(-day, -month, -year)
+    dplyr::mutate(key = paste(scenario, adherence, sep = ": "))
 
-  res_celtic <- res %>%
+  schedule_celtic <- schedule %>%
     dplyr::filter(nation != "england") %>%
     dplyr::mutate(region = nation)
 
-  res %>%
+  schedule %>%
     dplyr::filter(nation == "england") %>%
     tidyr::expand_grid(region = sircovid::regions("england")) %>%
-    dplyr::bind_rows(res_celtic)
+    dplyr::bind_rows(schedule_celtic)
 }
 
 
@@ -1648,4 +1667,51 @@ spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
   }
 
   out
+}
+
+
+#' Create a scenario for Rt schedule
+#'
+#' @title Create Rt schedule scenario
+#' @param path Path to a csv with school closure schedule. Expect
+#' columns: nation; year; month; day; schools ('open' if open on that day
+#' otherwise 'closed')
+#' @param region Region to filter csv by
+#' @param scenario Name of scenario to create
+#' @param schedule data.frame with columns: date (date of npi change),
+#' npi (name of corresponding npi in npi_key), nation
+#'
+#' @export
+spim_create_rt_scenario <- function(path, region, scenario, schedule) {
+  sched <- read.csv(path) %>%
+    dplyr::filter(nation %in% region) %>%
+    dplyr::mutate(date = as.Date(sprintf("%s-%s-%s", year, month, day))) %>%
+    dplyr::arrange(date)
+
+  start <- min(sched$date)
+  end <- max(sched$date)
+
+  ## create data.frame of all dates
+  out <- data.frame(nation = "england", scenario = scenario, date = seq.int(start, end, 1),
+             schools = NA, npi = NA)
+  ## fill schools
+  for (i in seq(nrow(sched))) {
+    out[seq(which(out$date %in% sched[i, "date"]), nrow(out)), "schools"] <-
+      sched[i, "schools"]
+  }
+
+  ## fill npi
+  schedule$date <- as.Date(schedule$date)
+  for (i in seq(nrow(schedule))) {
+    mtc <- match(schedule[i, "date"], out$date, 1)
+    out[seq(mtc, nrow(out)), "npi"] <- schedule[i, "npi"]
+  }
+
+  out <- out %>%
+    dplyr::mutate(npi = sprintf("%s_schools_%s", npi, schools)) %>%
+    dplyr::select(-schools)
+
+  ## de-duplicate
+  out[c(TRUE, rowSums(out[2:nrow(out), c(1, 2, 4)] == out[seq(nrow(out) - 1), c(1, 2, 4)]) < 3), ]
+
 }
