@@ -3,7 +3,8 @@ fit_process_restart <- function(samples, parameters, data, control) {
     return(NULL)
   }
 
-  samples <- mcstate::pmcmc_thin(samples, control$burnin, control$thin)
+  ## Add 1 to burnin to account for removal of initial parameters
+  samples <- mcstate::pmcmc_thin(samples, control$burnin + 1L, control$thin)
 
   pars <- spim_fit_parameters(samples, parameters)
   pars$prior <- fit_process_restart_priors(samples$pars, pars)
