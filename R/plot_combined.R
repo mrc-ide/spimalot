@@ -698,43 +698,14 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
     x <- x[!predicted]
   }
 
-
-  model_params <- sample$predict$transform(sample$pars[1, ])
-
-  if ("p_NC" %in% colnames(sample$pars)) {
-    p_NC <- sample$pars[, "p_NC"]
-  } else {
-    p_NC <- model_params$p_NC
-  }
-
-  if ("p_NC_weekend" %in% colnames(sample$pars)) {
-    p_NC_weekend <- sample$pars[, "p_NC_weekend"]
-  } else {
-    p_NC_weekend <- p_NC
-  }
-
   if (over25) {
-    pos <- trajectories["sympt_cases_over25_inc", , ]
-    neg <- (sum(model_params$N_tot[6:19]) - pos)
+    res <- trajectories["pillar2_positivity_over25", , ]
   } else {
-    pos <- trajectories["sympt_cases_inc", , ]
-    neg <- (sum(model_params$N_tot) - pos)
+    res <- trajectories["pillar2_positivity", , ]
   }
-
-  neg[, grepl("^S", weekdays(x))] <-
-    neg[, grepl("^S", weekdays(x))] * p_NC_weekend
-  neg[, !grepl("^S", weekdays(x))] <-
-    neg[, !grepl("^S", weekdays(x))] * p_NC
-
-  res <- (pos * model_params$pillar2_sensitivity +
-            neg * (1 - model_params$pillar2_specificity)) / (pos + neg) * 100
-
-
 
   ps <- seq(0.025, 0.975, 0.005)
   qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
-
-
 
   if (data_by == "rolling week") {
     npos <- stats::filter(npos, rep(1 / 7, 7))
