@@ -192,8 +192,13 @@ spim_simulate_simplify_rt <- function(x) {
 
   names_rt <- c("Rt_general", "eff_Rt_general")
   for (v in names_rt) {
-    x[[v]] <- aperm(x[[v]], c(4, 1, 2, 3))
-    rownames(x[[v]]) <- paste(v, rownames(x[[v]]), sep = "_")
+    if (length(dim(x[[v]])) == 3) {
+      x[[v]] <- array(x[[v]], c(1, dim(x[[v]])))
+    } else if (length(dim(x[[v]])) == 4) {
+      ## move strain to front
+      x[[v]] <- aperm(x[[v]], c(4, 1, 2, 3))
+      rownames(x[[v]]) <- paste(v, rownames(x[[v]]), sep = "_")
+    }
   }
 
   rt <- abind_quiet(x[names_rt], along = 1L)

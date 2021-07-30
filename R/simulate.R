@@ -298,7 +298,7 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
       state[names(index$R), , , ],
       state[names(index$prob_strain), , , ],
       ## TODO: I am not sure this is correct (single 0 evaluates to FALSE)
-      no_seeding = identical(args$strain_seed_rate[[1]], numeric(2)),
+      no_seeding = identical(args$strain_seed_rate[[1]], numeric(1)),
       prop_voc = args$strain_initial_proportion,
       weight_Rt = FALSE)
     if (args$output_weight_rt) {
@@ -1521,8 +1521,16 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
           as.numeric()
         steps <- round(seq.int(from, to, length.out = steps + 1)[2:steps], 3)
 
-        data.frame(nation = nat, npi = sprintf("p%d_%s", seq_along(steps - 1), end),
-                  Rt = steps, Rt_sd = sd, adherence = ad)
+        npi <- sprintf("p%d_%s", seq_along(steps - 1), end)
+        ## here we just copy the values in both open/closed scenarios as we
+        ##  don't actually care about true schools open/closed
+        if (grepl("open", end)) {
+          npi <- c(npi, gsub("open", "closed", npi))
+        } else {
+          npi <- c(npi, gsub("closed", "open", npi))
+        }
+        data.frame(nation = nat, npi = npi, Rt = steps, Rt_sd = sd,
+                   adherence = ad)
       }) %>%
       dplyr::bind_rows()
     }
