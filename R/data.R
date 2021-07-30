@@ -212,8 +212,8 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     ## date). We assume a 2 day reporting delay.
     data$pillar2_negatives <- c(data$negatives[-c(1, 2)], rep(NA_integer_, 2))
     data$pillar2_positives_over25 <- data$positives_over25
-    data$pillar2_negatives_over25 <-
-      c(data$negatives_over25[-c(1, 2)], rep(NA_integer_, 2))
+    ## We do not have any age breakdown for negatives for Scotland
+    data$pillar2_negatives_over25 <- NA_integer_
 
     data$phe_patients[data$date >= as.Date("2020-06-01") &
                       data$date <= as.Date("2020-09-10")] <- NA_integer_
