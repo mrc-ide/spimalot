@@ -109,8 +109,8 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     p_H_value <- c(p_H, p_H_2, p_H_3)
 
     p_star_date <- sircovid::sircovid_date(c("2020-03-15", "2020-07-01",
-                                             "2020-09-20", "2021-04-03"))
-    p_star_value <- c(0.1, 0.42, 0.2, 0.38)
+                                             "2020-09-20", "2021-06-27"))
+    p_star_value <- c(0.1, 0.42, 0.2, 0.45)
 
     severity <- sircovid::carehomes_parameters_severity(
       0.25,
