@@ -295,9 +295,9 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
       state[names(index$S), , , ],
       pars,
       sort(critical_dates),
+      args$voc_seeded,
       state[names(index$R), , , ],
       state[names(index$prob_strain), , , ],
-      ## TODO: I am not sure this is correct (single 0 evaluates to FALSE)
       no_seeding = identical(args$strain_seed_rate[[1]], numeric(1)),
       prop_voc = args$strain_initial_proportion,
       weight_Rt = FALSE)
@@ -307,10 +307,10 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
         state[names(index$S), , , ],
         pars,
         sort(critical_dates),
+        args$voc_seeded,
         state[names(index$R), , , ],
         state[names(index$prob_strain), , , ],
-        ## TODO: I am not sure this is correct (single 0 evaluates to FALSE)
-        no_seeding = identical(args$strain_seed_rate[[1]], numeric(2)),
+        no_seeding = identical(args$strain_seed_rate[[1]], numeric(1)),
         prop_voc = args$strain_initial_proportion,
         weight_Rt = TRUE)
 
@@ -771,8 +771,8 @@ create_summary_state <- function(state, keep, dates) {
 }
 
 
-simulate_rt <- function(steps, S, pars, critical_dates, R = NULL,
-                        prob_strain = NULL, no_seeding = FALSE,
+simulate_rt <- function(steps, S, pars, critical_dates, voc_seeded,
+                        R = NULL, prob_strain = NULL, no_seeding = FALSE,
                         prop_voc = NULL, weight_Rt = TRUE) {
   dim_S <- dim(S)
   region_names <- dimnames(S)[[3]]
@@ -785,7 +785,11 @@ simulate_rt <- function(steps, S, pars, critical_dates, R = NULL,
   }
 
   if (!is.null(prob_strain)) {
-    if (no_seeding && is.null(prop_voc)) {
+    ## Manually set prob strain to remove VOC if:
+    ##  1. No VOC seeded in the combined; and
+    ##  2. Not seeding in the simulation; and
+    ##  3. Not moving any proportion in the simulation
+    if (!voc_seeded && no_seeding && is.null(prop_voc)) {
       ## if not seeding second VOC then just manually set prob_strain
       ## to avoid NAs
       prob_strain[1, , , ] <- 1
