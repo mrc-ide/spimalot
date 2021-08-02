@@ -329,6 +329,21 @@ spim_population <- function(combined, ignore_uk = FALSE, by_age = TRUE,
   df
 }
 
+##' Get proportion infected from country population from a combined fits object
+##' @title Get proportion infected from combined
+##' @param combined Combined fits object
+##' @param population Population from [spim_population]
+##' @param regions Regions for which to get proportion infected
+##' @return data.frame of region/country proportion infected
+##' @export
+spim_prop_infected <- function(combined, population,
+                              regions = sircovid::regions("england")) {
+  idx_cum_infections <- combined$info[[1]]$info$index$cum_infections
+  prop_infected <- sapply(regions, function(r) {
+    mean_ci(combined$state[[r]][idx_cum_infections, ]) / sum(population[[r]])
+  })
+  t(prop_infected)
+}
 
 ## FIXME: this is basically a version of sircovid::reorder_rt_ifr that works
 ## for two variants. Ideally we would adapt that sircovid function so it can
