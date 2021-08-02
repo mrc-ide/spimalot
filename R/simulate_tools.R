@@ -19,7 +19,8 @@ simulation_central_analysis <- function(full_run = TRUE, multistrain = TRUE) {
     vaccine_uptake = "central",
     vaccine_eligibility = "min_18", vaccine_lag_groups = "no_delay",
     vaccine_lag_days = "no_delay", vaccine_booster_daily_doses = "no_booster",
-    vaccine_booster_efficacy = "central"
+    vaccine_booster_efficacy = "central",
+    waning_rate = "central", strain_cross_immunity = "central"
   )
 
   if (multistrain) {
@@ -192,8 +193,13 @@ spim_simulate_simplify_rt <- function(x) {
 
   names_rt <- c("Rt_general", "eff_Rt_general")
   for (v in names_rt) {
-    x[[v]] <- aperm(x[[v]], c(4, 1, 2, 3))
-    rownames(x[[v]]) <- paste(v, rownames(x[[v]]), sep = "_")
+    if (length(dim(x[[v]])) == 3) {
+      x[[v]] <- array(x[[v]], c(1, dim(x[[v]])))
+    } else if (length(dim(x[[v]])) == 4) {
+      ## move strain to front
+      x[[v]] <- aperm(x[[v]], c(4, 1, 2, 3))
+      rownames(x[[v]]) <- paste(v, rownames(x[[v]]), sep = "_")
+    }
   }
 
   rt <- abind_quiet(x[names_rt], along = 1L)
@@ -389,7 +395,7 @@ quantile_digest <- function(x, at) {
 ##' @param run_grid data.frame with same number of rows as `res` giving metadata
 ##' to attach to results
 ##' @export
-spim_simulate_tidy_states <- function(res, run_grid) {
+spim_simulate_tidy_states <- function(res, run_grid, combined) {
   stopifnot(length(res) == nrow(run_grid))
   ret <- lapply(seq_along(res), function(i)
     tidy_state_one(res[[i]], run_grid[i, ]))

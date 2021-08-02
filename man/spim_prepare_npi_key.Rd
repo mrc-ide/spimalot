@@ -5,24 +5,20 @@
 \title{Prepare NPI key csv for simulation}
 \usage{
 spim_prepare_npi_key(
-  path,
   schools,
   schools_modifier,
   country,
+  path = NULL,
   gradual_start = NULL,
   gradual_end = NULL,
   gradual_steps = NULL,
   overwrite_central_adherence = NULL,
   overwrite_low_adherence = NULL,
-  overwrite_high_adherence = NULL
+  overwrite_high_adherence = NULL,
+  npi_key = NULL
 )
 }
 \arguments{
-\item{path}{File path to a csv containing columns: nation
-(at least one of england, scotland, wales, northern ireland), npi
-(name of NPI step for associated schedule), Rt (mean value for Rt),
-Rt_sd (standard deviation for Rt), adherence (low, central, or high)}
-
 \item{schools}{Should be one of 'open' or 'closed' and specifies which
 state values in the csv correspond to}
 
@@ -33,6 +29,11 @@ added - \code{abs(schools_modifier)} is applied internally}
 
 \item{country}{If \code{"england"} then all other nations filtered, otherwise
 no filtering.}
+
+\item{path}{File path to a csv containing columns: nation
+(at least one of england, scotland, wales, northern ireland), npi
+(name of NPI step for associated schedule), Rt (mean value for Rt),
+Rt_sd (standard deviation for Rt), adherence (low, central, or high)}
 
 \item{gradual_start, gradual_end, gradual_steps}{If all three of these are
 non-NULL then creates a scenario of gradual transition from Rt in scenario

@@ -89,3 +89,6 @@ str_collapse <- function(str) {
 seq_rows <- function(x) {
   seq_len(nrow(x))
 }
+
+
+mean_ci <- function(x) c(mean = mean(x), quantile(x, c(0.025, 0.975)))

@@ -1,6 +1,6 @@
 Package: spimalot
 Title: Support for 'sircovid'
-Version: 0.2.41
+Version: 0.2.42
 Authors@R:
     c(person(given = "Marc",
            family = "Baguelin",
