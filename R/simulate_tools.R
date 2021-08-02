@@ -20,7 +20,7 @@ simulation_central_analysis <- function(full_run = TRUE, multistrain = TRUE) {
     vaccine_eligibility = "min_18", vaccine_lag_groups = "no_delay",
     vaccine_lag_days = "no_delay", vaccine_booster_daily_doses = "no_booster",
     vaccine_booster_efficacy = "central",
-    strain_waning_rate = "central", strain_cross_immunity = "central"
+    waning_rate = "central", strain_cross_immunity = "central"
   )
 
   if (multistrain) {

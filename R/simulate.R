@@ -191,7 +191,9 @@ simulate_args_names <- function(multistrain = TRUE) {
       "vaccine_daily_doses", "vaccine_booster_daily_doses",
       "vaccine_efficacy", "vaccine_booster_efficacy", "vaccine_eligibility",
       "vaccine_uptake", "vaccine_lag_groups", "vaccine_lag_days",
-      "vaccine_delay_multiplier"
+      "vaccine_delay_multiplier",
+      ## waning
+      "waning_rate"
     )
 
   if (multistrain) {
@@ -200,7 +202,7 @@ simulate_args_names <- function(multistrain = TRUE) {
         "strain_seed_date", "strain_transmission", "strain_seed_rate",
         "strain_vaccine_efficacy", "strain_initial_proportion",
         "strain_vaccine_booster_efficacy", "strain_cross_immunity",
-        "strain_severity_modifier", "strain_waning_rate")
+        "strain_severity_modifier")
   }
 
   args
@@ -571,7 +573,7 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
       args$strain_seed_rate[[region]],
       pars[[1]]$dt)
     strain_params$cross_immunity <- args$strain_cross_immunity
-    strain_params$waning_rate <- rep(args$strain_waning_rate, 19)
+    strain_params$waning_rate <- rep(args$waning_rate, 19)
     extra <- c(extra, strain_params)
   }
 
@@ -1038,6 +1040,10 @@ simulate_validate_args1 <- function(args, regions, multistrain) {
   validate_vaccine_doses(args$vaccine_daily_doses, regions,
                          "vaccine_daily_doses")
 
+  assert_numeric(args$waning_rate)
+  assert_length(args$waning_rate, 1)
+
+
   if (multistrain) {
     assert_is(args$strain_seed_date, "Date")
     validate_strain_seed_rate(args$strain_seed_rate, regions)
@@ -1045,8 +1051,6 @@ simulate_validate_args1 <- function(args, regions, multistrain) {
                               n_groups, n_vacc_strata)
     assert_length(args$strain_cross_immunity, 2)
     assert_numeric(args$strain_cross_immunity)
-    assert_numeric(args$strain_waning_rate)
-    assert_length(args$strain_waning_rate, 1)
     validate_strain_severity_modifier(
       args$strain_severity_modifier)
   } else {
@@ -1268,7 +1272,7 @@ spim_expand_grid <- function(..., full_run = FALSE, prefix = "Grid_") {
 ##'  be `FALSE` as often required for basic checking plots.
 ##' @param set_strain_params If `TRUE` automatically sets strain parameters
 ##'   `strain_cross_immunity`, `strain_severity_modifier` and
-##'   `strain_waning_rate`, as equivalent to `strain_vaccine_efficacy`
+##'   `waning_rate`, as equivalent to `strain_vaccine_efficacy`
 ##' @param multistrain If `FALSE` then removes all columns related to a second
 ##'   strain
 ##' @param analyses If not `NULL` then filters grid by given analyses
@@ -1305,7 +1309,7 @@ spim_run_grid <- function(scenarios, csv = NULL, expand_grid = NULL,
     run_grid <- run_grid %>%
       dplyr::mutate(strain_cross_immunity = strain_vaccine_efficacy,
                     strain_severity_modifier = strain_vaccine_efficacy,
-                    strain_waning_rate = strain_vaccine_efficacy)
+                    waning_rate = strain_vaccine_efficacy)
   }
 
   if (!is.null(analyses)) {

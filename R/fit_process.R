@@ -11,9 +11,13 @@
 ##'
 ##' @param control The forecast control from [spimalot::spim_control]
 ##'
+##' @param random_sample Logical parameter, if `TRUE` will obtain the
+##'   posterior samples via random sampling, otherwise thinning will
+##'   be used
 ##'
 ##' @export
-spim_fit_process <- function(samples, parameters, data, control) {
+spim_fit_process <- function(samples, parameters, data, control,
+                             random_sample = TRUE) {
   region <- samples$info$region
 
   message("Computing restart information")
@@ -22,11 +26,14 @@ spim_fit_process <- function(samples, parameters, data, control) {
 
   message("Running forecasts")
   incidence_states <- "deaths"
+  ## Add 1 to burnin to account for removal of initial parameters
   forecast <- sircovid::carehomes_forecast(samples,
                                            control$n_sample,
-                                           control$burnin,
+                                           control$burnin + 1L,
                                            control$forecast_days,
-                                           incidence_states)
+                                           incidence_states,
+                                           random_sample = random_sample,
+                                           thin = control$thin)
 
   message("Computing Rt")
   rt <- calculate_Rt(forecast, samples$info$multistrain, TRUE) # TODO: very slow
@@ -386,6 +393,19 @@ reduce_trajectories <- function(samples) {
   samples$trajectories$state <-
     abind1(state[setdiff(rownames(state), nms_S), , ], S)
 
+  ## Calculate Pillar 2 positivity
+  pillar2_positivity <- calculate_positivity(samples, FALSE)
+  pillar2_positivity <-
+    array(pillar2_positivity, c(1, dim(pillar2_positivity)))
+  pillar2_positivity_over25 <- calculate_positivity(samples, TRUE)
+  pillar2_positivity_over25 <-
+    array(pillar2_positivity_over25, c(1, dim(pillar2_positivity_over25)))
+  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_over25)
+  row.names(pillar2_positivity) <-
+    c("pillar2_positivity", "pillar2_positivity_over25")
+  samples$trajectories$state <-
+    abind1(samples$trajectories$state, pillar2_positivity)
+
   samples
 }
 
@@ -590,4 +610,43 @@ spim_fit_parameters <- function(samples, parameters) {
   list(info = info,
        prior = prior,
        proposal = proposal)
+}
+
+
+calculate_positivity <- function(samples, over25) {
+
+  x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
+
+  model_params <- samples$predict$transform(samples$pars[1, ])
+
+  if ("p_NC" %in% colnames(samples$pars)) {
+    p_NC <- samples$pars[, "p_NC"]
+  } else {
+    p_NC <- model_params$p_NC
+  }
+
+  if ("p_NC_weekend" %in% colnames(samples$pars)) {
+    p_NC_weekend <- samples$pars[, "p_NC_weekend"]
+  } else {
+    p_NC_weekend <- p_NC
+  }
+
+  if (over25) {
+    pos <- samples$trajectories$state["sympt_cases_over25_inc", , ]
+    neg <- (sum(model_params$N_tot[6:19]) - pos)
+  } else {
+    pos <- samples$trajectories$state["sympt_cases_inc", , ]
+    neg <- (sum(model_params$N_tot) - pos)
+  }
+
+  neg[, grepl("^S", weekdays(x))] <-
+    neg[, grepl("^S", weekdays(x))] * p_NC_weekend
+  neg[, !grepl("^S", weekdays(x))] <-
+    neg[, !grepl("^S", weekdays(x))] * p_NC
+
+  out <- (pos * model_params$pillar2_sensitivity +
+            neg * (1 - model_params$pillar2_specificity)) / (pos + neg) * 100
+
+  out
+
 }
