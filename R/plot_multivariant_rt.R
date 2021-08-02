@@ -34,7 +34,7 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
       "School Holidays",
       "Roadmap Step 2",
       "Roadmap Step 3",
-      "Date of Step 4 Delay Announcement",
+      "Original planned date of Step 4",
       "Euros 2021 Final")
   ) %>% dplyr::filter(!stringr::str_detect(label, "School"))
 
