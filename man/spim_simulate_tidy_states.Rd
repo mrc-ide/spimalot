@@ -4,7 +4,7 @@
 \alias{spim_simulate_tidy_states}
 \title{Create tidy (long) dataframe of simulated results}
 \usage{
-spim_simulate_tidy_states(res, run_grid)
+spim_simulate_tidy_states(res, run_grid, combined)
 }
 \arguments{
 \item{res}{A list of simulated objects}
