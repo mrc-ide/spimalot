@@ -196,7 +196,7 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
   }
 
   # Use VAM data available
-  if (region %in% c("scotland", "wales", "northern_ireland")){
+  if (region %in% c("scotland", "wales", "northern_ireland")) {
     data$strain_non_variant <- data$n_non_delta_variant
     data$strain_tot <- data$n_delta_variant + data$n_non_delta_variant
   } else {

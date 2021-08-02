@@ -21,7 +21,7 @@
 spim_multivariant_rt_plot <- function(dat, date, date_restart,
                                       last_beta_days_ago = 21,
                                       region = "england",
-                                      rt_type = "eff_Rt_general"){
+                                      rt_type = "eff_Rt_general") {
   # Get relevant betas to current date and filter out school holidays
   betas <- data.frame(
     dates = as.Date(tail(dat$samples[[1]]$info$beta_date, 10)),
@@ -73,21 +73,21 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
             variant_names] <- NA_integer_
 
   if (rt_type == "eff_Rt_general") {
-    ylim <- c(0,2)
+    ylim <- c(0, 2)
     ylab <- paste("Effective", expression(R[t]))
   } else if (rt_type == "Rt_general") {
-    ylim <- c(0,4)
+    ylim <- c(0, 4)
     ylab <- paste(expression(R[t]), "excluding immunity")
   }
 
   p <- ggplot2::ggplot(rt_region, ggplot2::aes(x = dates)) +
     ggplot2::annotate(geom = "rect",
-                      xmin = as.Date('2020-12-18'),
-                      xmax = as.Date('2021-01-05'),
+                      xmin = as.Date("2020-12-18"),
+                      xmax = as.Date("2021-01-05"),
                       ymin = -Inf, ymax = Inf, fill = "grey", alpha = 0.4) +
     ggplot2::annotate(geom = "rect",
-                      xmin = as.Date('2021-04-02'),
-                      xmax = as.Date('2021-04-18'),
+                      xmin = as.Date("2021-04-02"),
+                      xmax = as.Date("2021-04-18"),
                       ymin = -Inf, ymax = Inf, fill = "grey", alpha = 0.4) +
     ggplot2::geom_line(ggplot2::aes(y = rt_weighted, col = "Weighted")) +
     ggplot2::geom_ribbon(ggplot2::aes(ymin = lb_weighted, ymax = ub_weighted,
@@ -102,7 +102,7 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
                                       ymax = ub_non_variant, fill = "Alpha"),
                          alpha = 0.3, show.legend = FALSE) +
     ggplot2::geom_hline(yintercept = 1, lty = 2, col = "black") +
-    ggplot2::geom_vline(xintercept = as.Date(betas[ ,1]), lty = 3,
+    ggplot2::geom_vline(xintercept = as.Date(betas[, 1]), lty = 3,
                         col = "red4") +
     ggplot2::geom_text(ggplot2::aes(label = label, y = 0.25),
                        angle = 45, size = 3) +

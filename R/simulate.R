@@ -177,7 +177,7 @@ spim_simulate_rrq <- function(args, combined, rrq) {
 
 simulate_args_names <- function(multistrain = TRUE) {
   args <-
-    c( ## Core simulation parameters
+    c(## Core simulation parameters
       "end_date", "seed", "n_threads",
       ## Output control
       "output_keep", "output_rt", "output_time_series", "output_vaccination",
@@ -329,14 +329,15 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
 
   if (args$output_vaccination) {
 
-    ret <- c(ret,
-             simulate_calculate_vaccination(state, index,
-                                            args$vaccine_efficacy,
-                                            args$vaccine_booster_efficacy,
-                                            n_strain,
-                                            args$strain_vaccine_efficacy,
-                                            args$strain_vaccine_booster_efficacy,
-                                            args$strain_cross_immunity))
+    ret <-
+      c(ret,
+        simulate_calculate_vaccination(state, index,
+                                       args$vaccine_efficacy,
+                                       args$vaccine_booster_efficacy,
+                                       n_strain,
+                                       args$strain_vaccine_efficacy,
+                                       args$strain_vaccine_booster_efficacy,
+                                       args$strain_cross_immunity))
   }
 
   ret
@@ -739,7 +740,7 @@ move_strain_compartments <- function(state, info, compartment,
 
 
 create_summary_state <- function(state, keep, dates) {
-  summary_state <- state[keep , , , ]
+  summary_state <- state[keep, , , ]
   # aggregate over regions to get England peak hosp
   summary_state_england <-
     apply(summary_state[, , sircovid::regions("england"), ], c(1, 2, 4), sum)
@@ -750,7 +751,8 @@ create_summary_state <- function(state, keep, dates) {
   # calculate number and date of peak hospital bed occupancy
   peak_hosp <-
     list(peak_hosp = apply(summary_state["hosp", , , ], c(1, 2), max),
-         peak_hosp_date = apply(summary_state["hosp", , , ], c(1, 2), which.max))
+         peak_hosp_date =
+           apply(summary_state["hosp", , , ], c(1, 2), which.max))
   peak_hosp$peak_hosp_date[] <- dates[peak_hosp$peak_hosp_date]
   peak_hosp <- aperm(abind_quiet(peak_hosp, along = 3), c(3, 1, 2))
 
@@ -852,7 +854,8 @@ simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
   ## output the number recovered in each vaccine stratum / region / over time
   ## R_raw: [age, strain, vaccine, particle, region, time]
   R_raw <- mcstate::array_reshape(
-    state[names(index$R), , , , drop = FALSE], 1L, c(n_groups, n_strain, n_strata))
+    state[names(index$R), , , , drop = FALSE],
+    1L, c(n_groups, n_strain, n_strata))
 
   ## Take the sum over age
   R <- apply(R_raw, seq(2, 6), sum)
@@ -1184,7 +1187,7 @@ fixme_extract_age_class_state <- function(state, index) {
     x <- mcstate::array_reshape(array, 1L, c(n_groups, strata))
 
     ## aggregate partially immunised strata
-    x[ , 2L, , , ] <- x[ , 2L, , , ] + x[ , 3L, , , ]
+    x[, 2L, , , ] <- x[, 2L, , , ] + x[, 3L, , , ]
     x <- x[, -3L, , , ]
     ## TODO: fix this
     if (ncol(x) == 3) {
@@ -1514,7 +1517,7 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
   if (!is.null(gradual_start)) {
 
     gradualise <- function(start, end, steps, ad) {
-      lapply(unique(npi_key$nation), function (nat) {
+      lapply(unique(npi_key$nation), function(nat) {
         to <- npi_key %>%
           dplyr::filter(npi == end, adherence == ad, nation == nat) %>%
           dplyr::select(Rt) %>%
@@ -1667,7 +1670,7 @@ spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
                   scenario %in% scenarios)
 
   out <- apply(obj, 1, function(x) {
-    x <-vapply(as.numeric(c(x[["50%"]], x[["2.5%"]], x[["97.5%"]])), find_r_from_R, numeric(1))
+    x <- vapply(as.numeric(c(x[["50%"]], x[["2.5%"]], x[["97.5%"]])), find_r_from_R, numeric(1))
   }) %>%
   `rownames<-`(c("50%", "2.5%", "97.5%")) %>%
     t() %>%

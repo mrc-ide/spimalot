@@ -8,7 +8,7 @@ assert_has_names <- function(x, required, name = deparse(substitute(x))) {
 }
 
 
-assert_length <- function (x, len, name = deparse(substitute(x))) {
+assert_length <- function(x, len, name = deparse(substitute(x))) {
   if (length(x) != len) {
     stop(sprintf("'%s' must have length %d", name, len))
   }
@@ -84,13 +84,13 @@ assert_scalar_logical <- function(x, name = deparse(substitute(x))) {
 }
 
 
-assert_scalar_numeric <- function (x, name = deparse(substitute(x))) {
+assert_scalar_numeric <- function(x, name = deparse(substitute(x))) {
   assert_scalar(x, name)
   assert_numeric(x, name)
 }
 
 
-assert_numeric <- function (x, name = deparse(substitute(x))) {
+assert_numeric <- function(x, name = deparse(substitute(x))) {
   if (!is.numeric(x)) {
     stop(sprintf("'%s' must be numeric", name), call. = FALSE)
   }
