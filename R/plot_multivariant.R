@@ -119,3 +119,62 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
     ggthemes::scale_fill_colorblind()
   p
 }
+
+
+## Plotting function for fitted variant seeding date
+##'
+##' @title Create variant seeding date plot
+##'
+##' @param dat Main fitting outputs object
+##'
+##' @return A ggplot2 object for fitted seeding date by region
+##'
+##' @export
+spim_plot_seeding_date <- function(dat) {
+
+  x <- function(x) sircovid::sircovid_date_as_date(as.numeric(x))
+  y <- function(x) stringr::str_to_title(stringr::str_replace_all(x, "_", " "))
+
+  regions <- sircovid::regions("england")
+  samples <- dat$samples[regions]
+  seed_date <- NULL
+  for (i in names(samples)) {
+    out <- c(i,
+             round(mean(samples[[i]]$pars[, "strain_seed_date"])),
+             round(quantile(samples[[i]]$pars[, "strain_seed_date"], 0.025)),
+             round(quantile(samples[[i]]$pars[, "strain_seed_date"], 0.975))
+    )
+    seed_date <- rbind(seed_date, out)
+  }
+  seed_date <- as.data.frame(seed_date)
+  rownames(seed_date) <- NULL
+  colnames(seed_date) <- c("region", "mean", "lb", "ub")
+  seed_date <- seed_date[order(seed_date$mean, decreasing = TRUE), ]
+  ylabs <- y(seed_date$region)
+  seed_date$region <- factor(seed_date$region,
+                             levels = seed_date$region[order(as.numeric(
+                               seed_date$mean), decreasing = TRUE)])
+  title <- paste("Delta variant seeding date")
+  seed_date$mean <- x(seed_date$mean)
+  seed_date$lb <- x(seed_date$lb)
+  seed_date$ub <- x(seed_date$ub)
+
+  seed_date %>%
+    ggplot2::ggplot(ggplot2::aes(y = region, col = region)) +
+    ggplot2::geom_linerange(ggplot2::aes(xmin = lb, xmax = ub)) +
+    ggplot2::geom_point(ggplot2::aes(x = mean, col = region, fill = region),
+                        shape = 23, size = 3) +
+    ggplot2::labs(x = "", y = "", title = title) +
+    ggplot2::scale_y_discrete(labels = ylabs) +
+    ggplot2::scale_x_date(date_minor_breaks = "1 day",
+                          date_breaks = "3 days",
+                          date_labels = "%b %d") +
+    ggplot2::theme_bw() +
+    ggsci::scale_color_lancet() + ggsci::scale_fill_lancet() +
+    ggplot2::theme(panel.border = ggplot2::element_blank(),
+                   axis.line = ggplot2::element_line(),
+                   legend.position = "none",
+                   axis.text.x = ggplot2::element_text(angle = 45, hjust=1),
+                   plot.title = ggplot2::element_text(size = 10))
+}
+
