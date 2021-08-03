@@ -235,3 +235,88 @@ spim_plot_variant_transmission <- function(dat) {
                    text = ggplot2::element_text(family = "Times New Roman", size=10),
                    plot.title = ggplot2::element_text(size = 10))
 }
+
+
+## Plotting function for fit to VOC poportion data
+##'
+##' @title Create plot for fit to data on variant proportion
+##'
+##' @param dat Main fitting outputs object
+##'
+##' @param region A string name of the region to plot
+##'
+##' @return A ggplot2 object for fit to VOC proportion data
+##'
+##' @export
+spim_plot_voc_proportion <- function(dat, region) {
+  sample <- dat$samples[[region]]
+  data <- dat$data[[region]]
+  date <- dat$info$date
+
+  df <- NULL
+  df <- data.frame(
+    dates = data$fitted[, "date_string"],
+    region = region,
+    n_non_variant = data$fitted[, "strain_non_variant"],
+    ntot = data$fitted[, "strain_tot"]
+  ) %>%
+    mutate(npos = ntot - n_non_variant) %>%
+    mutate(npos = replace_na(npos, 0)) %>% mutate(ntot = replace_na(ntot, 0)) %>%
+    filter(dates >= date_restart)
+
+  cis <- Hmisc::binconf(x = df$npos, n = df$ntot) * 100
+  df$PointEst <- cis[, "PointEst"]
+  df$lower <- cis[, "Lower"]
+  df$upper <- cis[, "Upper"]
+  df$ntot[df$ntot == 0] <- NA
+
+  trajectories <- sample$trajectories$state
+
+  res <- data.frame(
+    dates = sircovid::sircovid_date_as_date(sample$trajectories$date[-1]),
+    tot_mean = colMeans(
+      trajectories["sympt_cases_inc", , -1], na.rm = TRUE),
+    tot_lb = matrixStats::colQuantiles(
+      trajectories["sympt_cases_inc", , -1], na.rm = TRUE, probs = 0.025),
+    tot_ub = matrixStats::colQuantiles(
+      trajectories["sympt_cases_inc", , -1], na.rm = TRUE, probs = 0.975),
+    neg_mean = colMeans(
+      trajectories["sympt_cases_non_variant_inc", , -1], na.rm = TRUE),
+    neg_lb = matrixStats::colQuantiles(
+      trajectories["sympt_cases_non_variant_inc", , -1],
+      na.rm = TRUE, probs = 0.025),
+    neg_ub = matrixStats::colQuantiles(
+      trajectories["sympt_cases_non_variant_inc", , -1],
+      na.rm = TRUE, probs = 0.975)
+  ) %>%
+    filter(dates >= min(df$dates) & dates <= max(df$dates)) %>%
+    mutate(pos_mean = (tot_mean - neg_mean) / tot_mean * 100) %>%
+    mutate(pos_lb = (tot_lb - neg_lb) / tot_mean * 100) %>%
+    mutate(pos_ub = (tot_ub - neg_ub) / tot_mean * 100) %>%
+    mutate(pos_lb = replace(pos_lb, which(pos_lb < 0), 0)) %>%
+    mutate(pos_ub = replace(pos_ub, which(pos_ub > 100), 100))
+
+  y <- function(x) stringr::str_to_title(stringr::str_replace_all(x, "_", " "))
+
+  g <- ggplot2::ggplot(df, ggplot2::aes(x = dates)) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = res$pos_lb, ymax = res$pos_ub),
+                         fill = "blue4", alpha = 0.4) +
+    ggplot2::geom_line(ggplot2::aes(y = res$pos_mean), color = "blue4") +
+    ggplot2::geom_point(ggplot2::aes(y = PointEst), color = "chocolate3", size = 1) +
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = lower, ymax = upper),
+                           color = "chocolate3", width = 1, size = 0.2) +
+    ggplot2::ylab("VOC proportion (%)") +
+    ggplot2::xlab("") +
+    ggplot2::ggtitle(paste(y(region))) +
+    ggplot2::scale_x_date(date_breaks = "months",
+                          date_labels = "%b") +
+    ggplot2::theme_bw() +
+    ggplot2::theme(panel.border = ggplot2::element_blank(),
+                   axis.line = ggplot2::element_line(),
+                   legend.title = ggplot2::element_blank(),
+                   plot.title = ggplot2::element_text(size = 10),
+                   axis.title.y = ggplot2::element_text(size = 10),
+                   text = ggplot2::element_text(family = "Times New Roman",
+                                                size=10))
+  g
+}
