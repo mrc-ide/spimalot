@@ -260,9 +260,10 @@ spim_plot_voc_proportion <- function(dat, region) {
     n_non_variant = data$fitted[, "strain_non_variant"],
     ntot = data$fitted[, "strain_tot"]
   ) %>%
-    mutate(npos = ntot - n_non_variant) %>%
-    mutate(npos = replace_na(npos, 0)) %>% mutate(ntot = replace_na(ntot, 0)) %>%
-    filter(dates >= date_restart)
+    dplyr::mutate(npos = ntot - n_non_variant) %>%
+    dplyr::mutate(npos = replace_na(npos, 0)) %>%
+    dplyr::mutate(ntot = replace_na(ntot, 0)) %>%
+    dplyr::filter(dates >= date_restart)
 
   cis <- Hmisc::binconf(x = df$npos, n = df$ntot) * 100
   df$PointEst <- cis[, "PointEst"]
@@ -289,12 +290,12 @@ spim_plot_voc_proportion <- function(dat, region) {
       trajectories["sympt_cases_non_variant_inc", , -1],
       na.rm = TRUE, probs = 0.975)
   ) %>%
-    filter(dates >= min(df$dates) & dates <= max(df$dates)) %>%
-    mutate(pos_mean = (tot_mean - neg_mean) / tot_mean * 100) %>%
-    mutate(pos_lb = (tot_lb - neg_lb) / tot_mean * 100) %>%
-    mutate(pos_ub = (tot_ub - neg_ub) / tot_mean * 100) %>%
-    mutate(pos_lb = replace(pos_lb, which(pos_lb < 0), 0)) %>%
-    mutate(pos_ub = replace(pos_ub, which(pos_ub > 100), 100))
+    dplyr::filter(dates >= min(df$dates) & dates <= max(df$dates)) %>%
+    dplyr::mutate(pos_mean = (tot_mean - neg_mean) / tot_mean * 100) %>%
+    dplyr::mutate(pos_lb = (tot_lb - neg_lb) / tot_mean * 100) %>%
+    dplyr::mutate(pos_ub = (tot_ub - neg_ub) / tot_mean * 100) %>%
+    dplyr::mutate(pos_lb = replace(pos_lb, which(pos_lb < 0), 0)) %>%
+    dplyr::mutate(pos_ub = replace(pos_ub, which(pos_ub > 100), 100))
 
   y <- function(x) stringr::str_to_title(stringr::str_replace_all(x, "_", " "))
 
@@ -302,7 +303,8 @@ spim_plot_voc_proportion <- function(dat, region) {
     ggplot2::geom_ribbon(ggplot2::aes(ymin = res$pos_lb, ymax = res$pos_ub),
                          fill = "blue4", alpha = 0.4) +
     ggplot2::geom_line(ggplot2::aes(y = res$pos_mean), color = "blue4") +
-    ggplot2::geom_point(ggplot2::aes(y = PointEst), color = "chocolate3", size = 1) +
+    ggplot2::geom_point(ggplot2::aes(y = PointEst),
+                        color = "chocolate3", size = 1) +
     ggplot2::geom_errorbar(ggplot2::aes(ymin = lower, ymax = upper),
                            color = "chocolate3", width = 1, size = 0.2) +
     ggplot2::ylab("VOC proportion (%)") +
