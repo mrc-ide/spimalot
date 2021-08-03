@@ -62,7 +62,8 @@ Imports:
     viridisLite,
     writexl,
     ggthemes,
-    extrafont
+    extrafont,
+    patchwork
 Suggests:
     digest,
     rrq,
