@@ -117,8 +117,8 @@ spim_mtp_age_vaccine_outputs <- function(res, region = "england") {
         dplyr::filter(state == w)  %>%
         dplyr::mutate(age = factor(group,
                                    levels = unique(group),
-                                   labels = c("Under 30s", "30 to 49", "50 to 74",
-                                              "75+")))
+                                   labels = c("Under 30s", "30 to 49",
+                                              "50 to 74", "75+")))
       plots_age_vacc[[w]] <- ggplot2::ggplot(
         plot_matrix,
         ggplot2::aes(date, value, fill = age)) +
@@ -138,8 +138,8 @@ spim_mtp_age_vaccine_outputs <- function(res, region = "england") {
         dplyr::group_by(date, vaccine_status, age) %>%
         dplyr::summarise(n = sum(value)) %>%
         dplyr::mutate(percentage = n / sum(n)) %>%
-        ggplot2::ggplot(., ggplot2::aes(x=date, y=percentage, fill=age)) +
-        ggplot2::geom_area(alpha=0.6 , size=1, colour="black") +
+        ggplot2::ggplot(., ggplot2::aes(x = date, y = percentage, fill = age)) +
+        ggplot2::geom_area(alpha = 0.6, size = 1, colour = "black") +
         ggplot2::ylab("") + ggplot2::xlab("") +
         ggplot2::geom_area() + ggplot2::theme_bw() +
         ggplot2::facet_wrap(vars(vaccine_status)) +
@@ -149,9 +149,10 @@ spim_mtp_age_vaccine_outputs <- function(res, region = "england") {
                        legend.title = element_blank(),
                        strip.text.x = element_text(size = rel(0.7)))
 
-      if (w != "diagnoses_admitted_inc"){
+      if (w != "diagnoses_admitted_inc") {
         plots_age_vacc_prop[[w]] <- plots_age_vacc_prop[[w]] +
-          ggplot2::theme(legend.position = "none")}
+          ggplot2::theme(legend.position = "none")
+        }
 
       scenario_matrices[[s]][[w]] <- plot_matrix
     }
@@ -159,8 +160,10 @@ spim_mtp_age_vaccine_outputs <- function(res, region = "england") {
     ## Save plot and matrix object into lists
 
     scenario_plots[[s]] <-
-      (plots_age_vacc[["infections_inc"]] + plots_age_vacc_prop[["infections_inc"]]) /
-      (plots_age_vacc[[ "diagnoses_admitted_inc"]] + plots_age_vacc_prop[[ "diagnoses_admitted_inc"]]) /
+      (plots_age_vacc[["infections_inc"]] +
+         plots_age_vacc_prop[["infections_inc"]]) /
+      (plots_age_vacc[[ "diagnoses_admitted_inc"]] +
+         plots_age_vacc_prop[[ "diagnoses_admitted_inc"]]) /
       (plots_age_vacc[["deaths_inc"]] + plots_age_vacc_prop[["deaths_inc"]]) /
       (plots_age_vacc[["deaths"]] + plots_age_vacc_prop[["deaths"]]) +
       plot_annotation(

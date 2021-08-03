@@ -51,7 +51,8 @@ simulation_central_analysis <- function(full_run = TRUE, multistrain = TRUE) {
 ##' removed
 ##'
 ##' @export
-spim_simulate_combine_trajectories <- function(res, name, regions = NULL, rm.rtUK = FALSE) {
+spim_simulate_combine_trajectories <- function(res, name, regions = NULL,
+                                               rm.rtUK = FALSE) {
 
   # return immediately for summary run
   if (!("state" %in% names(res))) {
@@ -239,7 +240,8 @@ spim_simulate_add_diagnoses_admitted <- function(obj) {
 ##' @param suffix Character giving suffix to add to names of new states, default
 ##' "_inc"
 ##' @export
-spim_simulate_add_trajectory_incidence <- function (obj, states, suffix = "_inc") {
+spim_simulate_add_trajectory_incidence <- function(obj, states,
+                                                   suffix = "_inc") {
 
   # return immediately for summary run
   if (!("state" %in% names(obj))) return(obj)
@@ -470,7 +472,8 @@ tidy_state_one <- function(x, common) {
 
 
     # date, [particle] = mean, group, vaccine_status, region, state
-    av <- unlist(lapply(x$state_by_age, aperm, c(4, 1, 2, 3)), use.names = FALSE)
+    av <-
+      unlist(lapply(x$state_by_age, aperm, c(4, 1, 2, 3)), use.names = FALSE)
     dn$group <- rownames(x$state_by_age[[1]])
     dn$vaccine_status <- colnames(x$state_by_age[[1]])
     dn$state <- names(x$state_by_age)

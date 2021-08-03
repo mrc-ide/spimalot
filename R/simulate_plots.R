@@ -28,14 +28,17 @@ spim_plot_rt_dist <- function(npi_key, xlim, ylim, cols, labels = NULL,
        las = 1)
 
   for (i in seq_rows(npi_key)) {
-    dist <- distr6::dstr("Lognormal", mean = npi_key$Rt[i], sd = npi_key$Rt_sd[i])
+    dist <- distr6::dstr("Lognormal", mean = npi_key$Rt[i],
+                         sd = npi_key$Rt_sd[i])
     lines(x * multiplier, dist$pdf(x) / multiplier, col = cols[i], lwd = 2)
     legend_lty <- rep(1, nrow(npi_key2))
   }
   if (!is.null(npi_key2)) {
     for (i in seq_rows(npi_key)) {
-      dist <- distr6::dstr("Lognormal", mean = npi_key2$Rt[i], sd = npi_key2$Rt_sd[i])
-      lines(x * multiplier, dist$pdf(x) / multiplier, col = cols[i], lwd = 2, lty = 2)
+      dist <- distr6::dstr("Lognormal", mean = npi_key2$Rt[i],
+                           sd = npi_key2$Rt_sd[i])
+      lines(x * multiplier, dist$pdf(x) / multiplier,
+            col = cols[i], lwd = 2, lty = 2)
     }
     legend_lty <- c(legend_lty, 1, 2)
     cols <- c(cols, 1, 1)
@@ -86,7 +89,8 @@ spim_plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
     )
 
     R2_range <- lapply(seq_along(R1_range), function(i) {
-        c(min(R1_range[[i]]) * min(epsilon_range), max(R1_range[[i]]) * max(epsilon_range))
+        c(min(R1_range[[i]]) * min(epsilon_range),
+          max(R1_range[[i]]) * max(epsilon_range))
     })
 
     data_frame(do.call(rbind, Map(rbind, R1_range, R2_range))) %>%

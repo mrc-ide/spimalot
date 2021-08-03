@@ -9,7 +9,7 @@ mix_cols <- function(a, b, weight = 0.5) {
   a_rgb <- vapply(a, grDevices::col2rgb, numeric(3))
   b_rgb <- vapply(b, grDevices::col2rgb, numeric(3))
   ret <- a_rgb * (1 - weight) + b_rgb * weight
-  grDevices::rgb(ret[1, ], ret[2 ,], ret[3, ], maxColorValue = 255)
+  grDevices::rgb(ret[1, ], ret[2, ], ret[3, ], maxColorValue = 255)
 }
 
 
