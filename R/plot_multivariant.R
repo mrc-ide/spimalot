@@ -178,3 +178,57 @@ spim_plot_seeding_date <- function(dat) {
                    plot.title = ggplot2::element_text(size = 10))
 }
 
+
+## Plotting function for fitted variant transmission advantage
+##'
+##' @title Create variant transmission advantage plot
+##'
+##' @param dat Main fitting outputs object
+##'
+##' @return A ggplot2 object for fitted seeding date by region
+##'
+##' @export
+spim_plot_variant_transmission <- function(dat) {
+
+  x <- function(x) as.numeric(x)
+  y <- function(x) stringr::str_to_title(stringr::str_replace_all(x, "_", " "))
+
+  regions <- sircovid::regions("england")
+  samples <- dat$samples[regions]
+  variant_trans <- NULL
+  for (i in names(samples)) {
+    out <- c(i,
+             mean(samples[[i]]$pars[, "strain_transmission_2"]),
+             quantile(samples[[i]]$pars[, "strain_transmission_2"], 0.025),
+             quantile(samples[[i]]$pars[, "strain_transmission_2"], 0.975)
+    )
+    variant_trans <- rbind(variant_trans, out)
+  }
+  variant_trans <- as.data.frame(variant_trans)
+  rownames(variant_trans) <- NULL
+  colnames(variant_trans) <- c("region", "mean", "lb", "ub")
+  variant_trans <- variant_trans[order(variant_trans$mean, decreasing = TRUE), ]
+  ylabs <- y(variant_trans$region)
+  variant_trans$region <- factor(variant_trans$region,
+                                 levels = variant_trans$region[order(as.numeric(
+                                   variant_trans$mean), decreasing = TRUE)])
+  title <- paste("Delta transmission advantage")
+  variant_trans$mean <- x(variant_trans$mean)
+  variant_trans$lb <- x(variant_trans$lb)
+  variant_trans$ub <- x(variant_trans$ub)
+
+  variant_trans %>%
+    ggplot2::ggplot(ggplot2::aes(y = region, col = region)) +
+    ggplot2::geom_linerange(ggplot2::aes(xmin = lb, xmax = ub)) +
+    ggplot2::geom_point(ggplot2::aes(x = mean, col = region, fill = region),
+                        shape = 23, size = 3) +
+    ggplot2::labs(x = "", y = "", title = title) +
+    ggplot2::scale_y_discrete(labels = ylabs) +
+    ggplot2::theme_bw() +
+    ggsci::scale_color_lancet() + ggsci::scale_fill_lancet() +
+    ggplot2::theme(panel.border = ggplot2::element_blank(),
+                   axis.line = ggplot2::element_line(),
+                   legend.position = "none",
+                   text = ggplot2::element_text(family = "Times New Roman", size=10),
+                   plot.title = ggplot2::element_text(size = 10))
+}
