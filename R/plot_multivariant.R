@@ -261,8 +261,8 @@ spim_plot_voc_proportion <- function(dat, region) {
     ntot = data$fitted[, "strain_tot"]
   ) %>%
     dplyr::mutate(npos = ntot - n_non_variant) %>%
-    dplyr::mutate(npos = replace_na(npos, 0)) %>%
-    dplyr::mutate(ntot = replace_na(ntot, 0)) %>%
+    dplyr::mutate(npos = tidyr::replace_na(npos, 0)) %>%
+    dplyr::mutate(ntot = tidyr::replace_na(ntot, 0)) %>%
     dplyr::filter(dates >= date_restart)
 
   cis <- Hmisc::binconf(x = df$npos, n = df$ntot) * 100
@@ -321,4 +321,31 @@ spim_plot_voc_proportion <- function(dat, region) {
                    text = ggplot2::element_text(family = "Times New Roman",
                                                 size=10))
   g
+}
+
+
+plot_vaccine_figure_1 <- function(dat, date, date_restart){
+
+  rt <- spim_multivariant_rt_plot(dat, date, date_restart,
+                                            last_beta_days_ago = 8,
+                                            rt_type = "eff_Rt_general")
+
+  sd <- spim_plot_seeding_date(dat)
+
+  library(patchwork)
+  row1 <- rt + sd + plot_layout(widths = c(3, 1))
+  row2 <- spim_plot_voc_proportion(dat, "south_east") +
+    spim_plot_voc_proportion(dat, "south_west") +
+    spim_plot_voc_proportion(dat, "london") +
+    spim_plot_voc_proportion(dat, "north_west") +
+    plot_layout(ncol = 4, nrow = 1)
+  row3 <- spim_plot_voc_proportion(dat, "midlands") +
+    spim_plot_voc_proportion(dat, "east_of_england") +
+    spim_plot_voc_proportion(dat, "north_east_and_yorkshire") +
+    plot_spacer() +
+    plot_layout(ncol = 4, nrow = 1)
+
+  g <- row1 / row2 / row3 +
+    plot_layout(heights = c(2, 1, 1)) +
+    plot_annotation(tag_levels = 'A')
 }
