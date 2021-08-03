@@ -105,7 +105,8 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
     ggplot2::geom_vline(xintercept = as.Date(betas[, 1]), lty = 3,
                         col = "red4") +
     ggplot2::geom_text(ggplot2::aes(label = label, y = 0.25),
-                       angle = 45, size = 3) +
+                       vjust = -0.1, hjust = 0.3,
+                       angle = 45, size = 3, family = "Times New Roman") +
     ggplot2::ylab(ylab) +
     ggplot2::xlab("") +
     ggplot2::ggtitle(paste(stringr::str_to_sentence(region))) +
@@ -114,6 +115,7 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
     ggplot2::theme_bw() + ggplot2::coord_cartesian(ylim = ylim) +
     ggplot2::theme(panel.border = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
+                   text = ggplot2::element_text(family = "Times New Roman", size=10),
                    legend.title = ggplot2::element_blank()) +
     ggthemes::scale_colour_colorblind() +
     ggthemes::scale_fill_colorblind()
@@ -175,6 +177,7 @@ spim_plot_seeding_date <- function(dat) {
                    axis.line = ggplot2::element_line(),
                    legend.position = "none",
                    axis.text.x = ggplot2::element_text(angle = 45, hjust=1),
+                   text = ggplot2::element_text(family = "Times New Roman", size=10),
                    plot.title = ggplot2::element_text(size = 10))
 }
 
