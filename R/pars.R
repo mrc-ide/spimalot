@@ -165,9 +165,10 @@ spim_pars_beta <- function(date, last_beta_days_ago = 21) {
   ## 19. 2021-04-19 - Step 2 of roadmap: outdoors hospitality (04-12)
   ##                  and schools return (04-19)
   ## 20. 2021-05-17 - Step 3 of roadmap: indoors hospitality
-  ## 21. 2021-06-21 - Step 3.5 - "freedom day" delayed
-  ## 22. 2021-07-11 - Euros 2020 final - peak in transmission
-  ## 22. Date - last_beta_days_ago
+  ## 21. 2021-06-21 - Step 3.5 - "freedom day" delayed / Euros last group match
+  ## 22. 2021-07-03 - Euros quarter final
+  ## 23. 2021-07-11 - Euros 2020 final - peak in transmission
+  ## 24. Date - last_beta_days_ago
   c("2020-03-16", "2020-03-23", "2020-03-25",
     "2020-05-11", "2020-06-15", "2020-07-04",
     "2020-08-01", "2020-09-01", "2020-09-14",
@@ -175,7 +176,7 @@ spim_pars_beta <- function(date, last_beta_days_ago = 21) {
     "2020-12-02", "2020-12-18", "2020-12-25",
     "2021-01-05", "2021-03-08", "2021-04-01",
     "2021-04-19", "2021-05-17", "2021-06-21",
-    "2021-07-11",
+    "2021-07-03", "2021-07-11",
     as.character(as.Date(date) - last_beta_days_ago))
 }
 
