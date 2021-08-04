@@ -1,3 +1,44 @@
+## Plotting function for vaccine paper figure 1
+##'
+##' @title Create plot for vaccine paper figure 1
+##'
+##' @param dat Main fitting outputs object
+##'
+##' @param date Date of the analysis
+##'
+##' @param date_restart Date for multivariant model restart
+##'
+##' @return A ggplot2 object for fit to VOC proportion data
+##'
+##' @export
+spim_plot_vaccine_figure_1 <- function(dat, date, date_restart){
+
+  rt <- spim_multivariant_rt_plot(dat, date, date_restart,
+                                  last_beta_days_ago = 8,
+                                  rt_type = "eff_Rt_general")
+
+  sd <- spim_plot_seeding_date(dat)
+
+  library(patchwork)
+  row1 <- rt + sd + plot_layout(widths = c(3, 1))
+  row2 <- spim_plot_voc_proportion(dat, "south_east") +
+    spim_plot_voc_proportion(dat, "south_west") +
+    spim_plot_voc_proportion(dat, "london") +
+    spim_plot_voc_proportion(dat, "north_west") +
+    plot_layout(ncol = 4, nrow = 1)
+  row3 <- spim_plot_voc_proportion(dat, "midlands") +
+    spim_plot_voc_proportion(dat, "east_of_england") +
+    spim_plot_voc_proportion(dat, "north_east_and_yorkshire") +
+    plot_spacer() +
+    plot_layout(ncol = 4, nrow = 1)
+
+  g <- row1 / row2 / row3 +
+    plot_layout(heights = c(2, 1, 1)) +
+    plot_annotation(tag_levels = 'A')
+  g
+}
+
+
 ## Plotting function for multivariant Rt
 ##'
 ##' @title Create multivariant Rt plot
@@ -123,15 +164,6 @@ spim_multivariant_rt_plot <- function(dat, date, date_restart,
 }
 
 
-## Plotting function for fitted variant seeding date
-##'
-##' @title Create variant seeding date plot
-##'
-##' @param dat Main fitting outputs object
-##'
-##' @return A ggplot2 object for fitted seeding date by region
-##'
-##' @export
 spim_plot_seeding_date <- function(dat) {
 
   x <- function(x) sircovid::sircovid_date_as_date(as.numeric(x))
@@ -182,15 +214,6 @@ spim_plot_seeding_date <- function(dat) {
 }
 
 
-## Plotting function for fitted variant transmission advantage
-##'
-##' @title Create variant transmission advantage plot
-##'
-##' @param dat Main fitting outputs object
-##'
-##' @return A ggplot2 object for fitted seeding date by region
-##'
-##' @export
 spim_plot_variant_transmission <- function(dat) {
 
   x <- function(x) as.numeric(x)
@@ -237,17 +260,6 @@ spim_plot_variant_transmission <- function(dat) {
 }
 
 
-## Plotting function for fit to VOC poportion data
-##'
-##' @title Create plot for fit to data on variant proportion
-##'
-##' @param dat Main fitting outputs object
-##'
-##' @param region A string name of the region to plot
-##'
-##' @return A ggplot2 object for fit to VOC proportion data
-##'
-##' @export
 spim_plot_voc_proportion <- function(dat, region) {
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
@@ -323,29 +335,3 @@ spim_plot_voc_proportion <- function(dat, region) {
   g
 }
 
-
-plot_vaccine_figure_1 <- function(dat, date, date_restart){
-
-  rt <- spim_multivariant_rt_plot(dat, date, date_restart,
-                                            last_beta_days_ago = 8,
-                                            rt_type = "eff_Rt_general")
-
-  sd <- spim_plot_seeding_date(dat)
-
-  library(patchwork)
-  row1 <- rt + sd + plot_layout(widths = c(3, 1))
-  row2 <- spim_plot_voc_proportion(dat, "south_east") +
-    spim_plot_voc_proportion(dat, "south_west") +
-    spim_plot_voc_proportion(dat, "london") +
-    spim_plot_voc_proportion(dat, "north_west") +
-    plot_layout(ncol = 4, nrow = 1)
-  row3 <- spim_plot_voc_proportion(dat, "midlands") +
-    spim_plot_voc_proportion(dat, "east_of_england") +
-    spim_plot_voc_proportion(dat, "north_east_and_yorkshire") +
-    plot_spacer() +
-    plot_layout(ncol = 4, nrow = 1)
-
-  g <- row1 / row2 / row3 +
-    plot_layout(heights = c(2, 1, 1)) +
-    plot_annotation(tag_levels = 'A')
-}
