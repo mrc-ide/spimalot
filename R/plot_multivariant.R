@@ -13,22 +13,21 @@
 ##' @export
 spim_plot_vaccine_figure_1 <- function(dat, date, date_restart){
 
-  rt <- spim_multivariant_rt_plot(dat, date, date_restart,
-                                  last_beta_days_ago = 8,
+  rt <- spim_multivariant_rt_plot(dat, date, last_beta_days_ago = 8,
                                   rt_type = "eff_Rt_general")
 
   sd <- spim_plot_seeding_date(dat)
 
   library(patchwork)
   row1 <- rt + sd + plot_layout(widths = c(3, 1))
-  row2 <- spim_plot_voc_proportion(dat, "south_east") +
-    spim_plot_voc_proportion(dat, "south_west") +
-    spim_plot_voc_proportion(dat, "london") +
-    spim_plot_voc_proportion(dat, "north_west") +
+  row2 <- spim_plot_voc_proportion(dat, date_restart, "south_east") +
+    spim_plot_voc_proportion(dat, date_restart, "south_west") +
+    spim_plot_voc_proportion(dat, date_restart, "london") +
+    spim_plot_voc_proportion(dat, date_restart, "north_west") +
     plot_layout(ncol = 4, nrow = 1)
-  row3 <- spim_plot_voc_proportion(dat, "midlands") +
-    spim_plot_voc_proportion(dat, "east_of_england") +
-    spim_plot_voc_proportion(dat, "north_east_and_yorkshire") +
+  row3 <- spim_plot_voc_proportion(dat, date_restart, "midlands") +
+    spim_plot_voc_proportion(dat, date_restart, "east_of_england") +
+    spim_plot_voc_proportion(dat, date_restart, "north_east_and_yorkshire") +
     plot_spacer() +
     plot_layout(ncol = 4, nrow = 1)
 
@@ -59,8 +58,7 @@ spim_plot_vaccine_figure_1 <- function(dat, date, date_restart){
 ##' @return A ggplot2 object for multivariant Rt
 ##'
 ##' @export
-spim_multivariant_rt_plot <- function(dat, date, date_restart,
-                                      last_beta_days_ago = 21,
+spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
                                       region = "england",
                                       rt_type = "eff_Rt_general") {
   # Get relevant betas to current date and filter out school holidays
@@ -260,7 +258,7 @@ spim_plot_variant_transmission <- function(dat) {
 }
 
 
-spim_plot_voc_proportion <- function(dat, region) {
+spim_plot_voc_proportion <- function(dat, date_restart, region) {
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
   date <- dat$info$date
