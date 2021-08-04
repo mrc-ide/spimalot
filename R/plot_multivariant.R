@@ -46,8 +46,6 @@ spim_plot_vaccine_figure_1 <- function(dat, date, date_restart){
 ##'
 ##' @param date Date of the analysis
 ##'
-##' @param date_restart Date for multivariant model restart
-##'
 ##' @param last_beta_days_ago Integer for setting last beta changepoint in
 ##'   relation to date of analysis
 ##'
