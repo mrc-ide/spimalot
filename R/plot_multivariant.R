@@ -14,26 +14,31 @@
 spim_plot_vaccine_figure_1 <- function(dat, date, date_restart){
 
   rt <- spim_multivariant_rt_plot(dat, date, last_beta_days_ago = 8,
-                                  rt_type = "eff_Rt_general")
+                                  rt_type = "eff_Rt_general") +
+    ggplot2::ggtitle(NULL)
 
-  sd <- spim_plot_seeding_date(dat)
+  sd <- spim_plot_seeding_date(dat) +
+    ggplot2::ggtitle(NULL)
 
   library(patchwork)
-  row1 <- rt + sd + plot_layout(widths = c(3, 1))
-  row2 <- spim_plot_voc_proportion(dat, date_restart, "south_east") +
+  row1 <- rt
+  row2 <- sd +
+    spim_plot_voc_proportion(dat, date_restart, "south_east") +
     spim_plot_voc_proportion(dat, date_restart, "south_west") +
     spim_plot_voc_proportion(dat, date_restart, "london") +
-    spim_plot_voc_proportion(dat, date_restart, "north_west") +
     plot_layout(ncol = 4, nrow = 1)
-  row3 <- spim_plot_voc_proportion(dat, date_restart, "midlands") +
+  row3 <-
+    spim_plot_voc_proportion(dat, date_restart, "north_west") +
+    spim_plot_voc_proportion(dat, date_restart, "midlands") +
     spim_plot_voc_proportion(dat, date_restart, "east_of_england") +
     spim_plot_voc_proportion(dat, date_restart, "north_east_and_yorkshire") +
-    plot_spacer() +
     plot_layout(ncol = 4, nrow = 1)
 
   g <- row1 / row2 / row3 +
-    plot_layout(heights = c(2, 1, 1)) +
+    plot_layout(heights = c(2, 1, 1), guides = "keep") +
     plot_annotation(tag_levels = 'A')
+
+  g <- g & ggplot2::theme(plot.margin = unit(rep(1, 4), units = "mm"))
   g
 }
 
@@ -65,15 +70,16 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
     label = c(
       "End of 2nd Lockdown",
       "School Holidays",
-      "End of December NPI Relaxation",
-      "Start of 3rd Lockdown",
-      "Roadmap Step 1",
+      "NPI Relaxation",
+      "Lockdown",
+      "Roadmap\nStep 1",
       "School Holidays",
-      "Roadmap Step 2",
-      "Roadmap Step 3",
-      "Original planned date of Step 4",
-      "Euro 2020 Final")
-  ) %>% dplyr::filter(!stringr::str_detect(label, "School"))
+      "Roadmap\nStep 2",
+      "Roadmap\nStep 3",
+      "Planned roadmap\nStep 4",
+      "Euro 2020\nFinal"),
+    label_y = c(NA, NA, 2, 1.8, 1.55, NA, 1.9, 1.55, 1.9, 1.8)) %>%
+    dplyr::filter(!stringr::str_detect(label, "School"))
 
   rt_plot <- NULL
 
@@ -111,10 +117,10 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
 
   if (rt_type == "eff_Rt_general") {
     ylim <- c(0, 2)
-    ylab <- paste("Effective", expression(R[t]))
+    ylab <- "Effective R(t)"
   } else if (rt_type == "Rt_general") {
     ylim <- c(0, 4)
-    ylab <- paste(expression(R[t]), "excluding immunity")
+    ylab <- "R(t) excluding immunity"
   }
 
   p <- ggplot2::ggplot(rt_region, ggplot2::aes(x = dates)) +
@@ -123,8 +129,8 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
                       xmax = as.Date("2021-01-05"),
                       ymin = -Inf, ymax = Inf, fill = "grey", alpha = 0.4) +
     ggplot2::annotate(geom = "rect",
-                      xmin = as.Date("2021-04-02"),
-                      xmax = as.Date("2021-04-18"),
+                      xmin = as.Date("2021-04-01"),
+                      xmax = as.Date("2021-04-19"),
                       ymin = -Inf, ymax = Inf, fill = "grey", alpha = 0.4) +
     ggplot2::geom_line(ggplot2::aes(y = rt_weighted, col = "Weighted")) +
     ggplot2::geom_ribbon(ggplot2::aes(ymin = lb_weighted, ymax = ub_weighted,
@@ -141,19 +147,25 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
     ggplot2::geom_hline(yintercept = 1, lty = 2, col = "black") +
     ggplot2::geom_vline(xintercept = as.Date(betas[, 1]), lty = 3,
                         col = "red4") +
-    ggplot2::geom_text(ggplot2::aes(label = label, y = 0.25),
-                       vjust = -0.1, hjust = 0.3,
-                       angle = 45, size = 3, family = "Times New Roman") +
+    ggplot2::geom_label(ggplot2::aes(label = label, y = label_y),
+                        hjust = 0.5, size = 2.5,
+                       vjust = 0.5, family = "Times New Roman",
+                       label.padding = unit(0.2, "lines")) +
     ggplot2::ylab(ylab) +
     ggplot2::xlab("") +
     ggplot2::ggtitle(paste(stringr::str_to_sentence(region))) +
     ggplot2::scale_x_date(date_breaks = "months",
                           date_labels = "%b") +
-    ggplot2::theme_bw() + ggplot2::coord_cartesian(ylim = ylim) +
+    ggplot2::theme_minimal() +
+    ggplot2::coord_cartesian(ylim = ylim) +
     ggplot2::theme(panel.border = ggplot2::element_blank(),
+                   panel.grid = element_blank(),
                    axis.line = ggplot2::element_line(),
                    text = ggplot2::element_text(family = "Times New Roman", size=10),
-                   legend.title = ggplot2::element_blank()) +
+                   legend.title = ggplot2::element_blank(),
+                   legend.position = "bottom",
+                   legend.box.margin = margin(-10, 0, 0, 0, unit = "mm"),
+                   plot.margin = unit(rep(0, 4), units = "cm")) +
     ggthemes::scale_colour_colorblind() +
     ggthemes::scale_fill_colorblind()
   p
@@ -162,46 +174,37 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
 
 spim_plot_seeding_date <- function(dat) {
 
-  x <- function(x) sircovid::sircovid_date_as_date(as.numeric(x))
-  y <- function(x) stringr::str_to_title(stringr::str_replace_all(x, "_", " "))
-
   regions <- sircovid::regions("england")
+  ylabs <- c("EE", "MID", "LON", "NEY", "NW", "SE", "SW")
   samples <- dat$samples[regions]
-  seed_date <- NULL
-  for (i in names(samples)) {
-    out <- c(i,
-             round(mean(samples[[i]]$pars[, "strain_seed_date"])),
-             round(quantile(samples[[i]]$pars[, "strain_seed_date"], 0.025)),
-             round(quantile(samples[[i]]$pars[, "strain_seed_date"], 0.975))
-    )
-    seed_date <- rbind(seed_date, out)
-  }
-  seed_date <- as.data.frame(seed_date)
-  rownames(seed_date) <- NULL
-  colnames(seed_date) <- c("region", "mean", "lb", "ub")
-  seed_date <- seed_date[order(seed_date$mean, decreasing = TRUE), ]
-  ylabs <- y(seed_date$region)
-  seed_date$region <- factor(seed_date$region,
-                             levels = seed_date$region[order(as.numeric(
-                               seed_date$mean), decreasing = TRUE)])
-  title <- paste("Delta variant seeding date")
-  seed_date$mean <- x(seed_date$mean)
-  seed_date$lb <- x(seed_date$lb)
-  seed_date$ub <- x(seed_date$ub)
+
+
+  strain_seed_date <- sapply(samples, function(x) x$pars[, "strain_seed_date"])
+
+  seed_date <- list(mean = colMeans(strain_seed_date),
+                    lb = apply(strain_seed_date, 2, quantile, 0.025),
+                    ub = apply(strain_seed_date, 2, quantile, 0.975))
+  seed_date <- as.data.frame(lapply(seed_date, sircovid::sircovid_date_as_date))
+  seed_date$regions <- regions
+
+  seed_date$region <- factor(ylabs,
+                            levels = ylabs[order(seed_date$mean,
+                                                 decreasing = TRUE)])
 
   seed_date %>%
     ggplot2::ggplot(ggplot2::aes(y = region, col = region)) +
     ggplot2::geom_linerange(ggplot2::aes(xmin = lb, xmax = ub)) +
     ggplot2::geom_point(ggplot2::aes(x = mean, col = region, fill = region),
-                        shape = 23, size = 3) +
-    ggplot2::labs(x = "", y = "", title = title) +
-    ggplot2::scale_y_discrete(labels = ylabs) +
+                        shape = 23, size = 1) +
+    ggplot2::labs(x = "", y = "", title = "Delta seeding date") +
+    ggplot2::scale_y_discrete() +
     ggplot2::scale_x_date(date_minor_breaks = "1 day",
                           date_breaks = "3 days",
                           date_labels = "%b %d") +
-    ggplot2::theme_bw() +
+    ggplot2::theme_minimal() +
     ggsci::scale_color_lancet() + ggsci::scale_fill_lancet() +
     ggplot2::theme(panel.border = ggplot2::element_blank(),
+                   panel.grid = element_blank(),
                    axis.line = ggplot2::element_line(),
                    legend.position = "none",
                    axis.text.x = ggplot2::element_text(angle = 45, hjust=1),
@@ -243,15 +246,16 @@ spim_plot_variant_transmission <- function(dat) {
     ggplot2::ggplot(ggplot2::aes(y = region, col = region)) +
     ggplot2::geom_linerange(ggplot2::aes(xmin = lb, xmax = ub)) +
     ggplot2::geom_point(ggplot2::aes(x = mean, col = region, fill = region),
-                        shape = 23, size = 3) +
+                        shape = 23, size = 1) +
     ggplot2::labs(x = "", y = "", title = title) +
     ggplot2::scale_y_discrete(labels = ylabs) +
-    ggplot2::theme_bw() +
+    ggplot2::theme_minimal() +
     ggsci::scale_color_lancet() + ggsci::scale_fill_lancet() +
     ggplot2::theme(panel.border = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
                    legend.position = "none",
-                   text = ggplot2::element_text(family = "Times New Roman", size=10),
+                   text = ggplot2::element_text(family = "Times New Roman",
+                                                size = 10),
                    plot.title = ggplot2::element_text(size = 10))
 }
 
@@ -260,6 +264,9 @@ spim_plot_voc_proportion <- function(dat, date_restart, region) {
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
   date <- dat$info$date
+
+  region_labs <- c("EE", "MID", "LON", "NEY", "NW", "SE", "SW")
+  names(region_labs) <- sircovid::regions("england")
 
   df <- NULL
   df <- data.frame(
@@ -280,54 +287,39 @@ spim_plot_voc_proportion <- function(dat, date_restart, region) {
   df$ntot[df$ntot == 0] <- NA
 
   trajectories <- sample$trajectories$state
+  prop_pos <- (1 - trajectories["sympt_cases_non_variant_inc", , -1] /
+    trajectories["sympt_cases_inc", , -1]) * 100
 
   res <- data.frame(
     dates = sircovid::sircovid_date_as_date(sample$trajectories$date[-1]),
-    tot_mean = colMeans(
-      trajectories["sympt_cases_inc", , -1], na.rm = TRUE),
-    tot_lb = matrixStats::colQuantiles(
-      trajectories["sympt_cases_inc", , -1], na.rm = TRUE, probs = 0.025),
-    tot_ub = matrixStats::colQuantiles(
-      trajectories["sympt_cases_inc", , -1], na.rm = TRUE, probs = 0.975),
-    neg_mean = colMeans(
-      trajectories["sympt_cases_non_variant_inc", , -1], na.rm = TRUE),
-    neg_lb = matrixStats::colQuantiles(
-      trajectories["sympt_cases_non_variant_inc", , -1],
-      na.rm = TRUE, probs = 0.025),
-    neg_ub = matrixStats::colQuantiles(
-      trajectories["sympt_cases_non_variant_inc", , -1],
-      na.rm = TRUE, probs = 0.975)
-  ) %>%
-    dplyr::filter(dates >= min(df$dates) & dates <= max(df$dates)) %>%
-    dplyr::mutate(pos_mean = (tot_mean - neg_mean) / tot_mean * 100) %>%
-    dplyr::mutate(pos_lb = (tot_lb - neg_lb) / tot_mean * 100) %>%
-    dplyr::mutate(pos_ub = (tot_ub - neg_ub) / tot_mean * 100) %>%
-    dplyr::mutate(pos_lb = replace(pos_lb, which(pos_lb < 0), 0)) %>%
-    dplyr::mutate(pos_ub = replace(pos_ub, which(pos_ub > 100), 100))
-
-  y <- function(x) stringr::str_to_title(stringr::str_replace_all(x, "_", " "))
+    pos_mean = colMeans(prop_pos, na.rm = TRUE),
+    pos_lb = apply(prop_pos, 2, quantile, probs = 0.025, na.rm = TRUE),
+    pos_ub = apply(prop_pos, 2, quantile, probs = 0.975, na.rm = TRUE)) %>%
+    dplyr::filter(dates >= min(df$dates), dates <= max(df$dates))
 
   g <- ggplot2::ggplot(df, ggplot2::aes(x = dates)) +
     ggplot2::geom_ribbon(ggplot2::aes(ymin = res$pos_lb, ymax = res$pos_ub),
                          fill = "blue4", alpha = 0.4) +
-    ggplot2::geom_line(ggplot2::aes(y = res$pos_mean), color = "blue4") +
+    ggplot2::geom_line(ggplot2::aes(y = res$pos_mean), color = "blue4",
+                       lwd = 0.5) +
     ggplot2::geom_point(ggplot2::aes(y = PointEst),
-                        color = "chocolate3", size = 1) +
+                        color = "grey30", size = 0.1, shape = 23) +
     ggplot2::geom_errorbar(ggplot2::aes(ymin = lower, ymax = upper),
-                           color = "chocolate3", width = 1, size = 0.2) +
+                           color = "grey30", width = 1, size = 0.1) +
     ggplot2::ylab("VOC proportion (%)") +
     ggplot2::xlab("") +
-    ggplot2::ggtitle(paste(y(region))) +
+    ggplot2::ggtitle(region_labs[region]) +
     ggplot2::scale_x_date(date_breaks = "months",
                           date_labels = "%b") +
-    ggplot2::theme_bw() +
+    ggplot2::theme_minimal() +
     ggplot2::theme(panel.border = ggplot2::element_blank(),
+                   panel.grid = element_blank(),
                    axis.line = ggplot2::element_line(),
                    legend.title = ggplot2::element_blank(),
                    plot.title = ggplot2::element_text(size = 10),
                    axis.title.y = ggplot2::element_text(size = 10),
                    text = ggplot2::element_text(family = "Times New Roman",
-                                                size=10))
+                                                size = 10))
   g
 }
 
