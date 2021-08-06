@@ -38,7 +38,7 @@ spim_plot_vaccine_figure_1 <- function(dat, date, date_restart){
     plot_layout(heights = c(2, 1, 1), guides = "keep") +
     plot_annotation(tag_levels = 'A')
 
-  g <- g & ggplot2::theme(plot.margin = unit(rep(1, 4), units = "mm"))
+  g <- g & ggplot2::theme(plot.margin = ggplot2::unit(rep(1, 4), units = "mm"))
   g
 }
 
@@ -152,7 +152,7 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
     ggplot2::geom_label(ggplot2::aes(label = label, y = label_y),
                         hjust = 0.5, size = 2.5,
                        vjust = 0.5, family = "Times New Roman",
-                       label.padding = unit(0.2, "lines")) +
+                       label.padding = ggplot2::unit(0.2, "lines")) +
     ggplot2::ylab(ylab) +
     ggplot2::xlab("") +
     ggplot2::ggtitle(paste(stringr::str_to_sentence(region))) +
@@ -161,13 +161,13 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
     ggplot2::theme_minimal() +
     ggplot2::coord_cartesian(ylim = ylim) +
     ggplot2::theme(panel.border = ggplot2::element_blank(),
-                   panel.grid = element_blank(),
+                   panel.grid = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
                    text = ggplot2::element_text(family = "Times New Roman", size=10),
                    legend.title = ggplot2::element_blank(),
                    legend.position = "bottom",
-                   legend.box.margin = margin(-10, 0, 0, 0, unit = "mm"),
-                   plot.margin = unit(rep(0, 4), units = "cm")) +
+                   legend.box.margin = ggplot2::margin(-10, 0, 0, 0, unit = "mm"),
+                   plot.margin = ggplot2::unit(rep(0, 4), units = "cm")) +
     ggthemes::scale_colour_colorblind() +
     ggthemes::scale_fill_colorblind()
   p
@@ -206,7 +206,7 @@ spim_plot_seeding_date <- function(dat) {
     ggplot2::theme_minimal() +
     ggsci::scale_color_lancet() + ggsci::scale_fill_lancet() +
     ggplot2::theme(panel.border = ggplot2::element_blank(),
-                   panel.grid = element_blank(),
+                   panel.grid = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
                    legend.position = "none",
                    axis.text.x = ggplot2::element_text(angle = 45, hjust=1),
@@ -315,7 +315,7 @@ spim_plot_voc_proportion <- function(dat, date_restart, region) {
                           date_labels = "%b") +
     ggplot2::theme_minimal() +
     ggplot2::theme(panel.border = ggplot2::element_blank(),
-                   panel.grid = element_blank(),
+                   panel.grid = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
                    legend.title = ggplot2::element_blank(),
                    plot.title = ggplot2::element_text(size = 10),
