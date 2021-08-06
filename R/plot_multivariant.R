@@ -76,7 +76,7 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
       "School Holidays",
       "Roadmap\nStep 2",
       "Roadmap\nStep 3",
-      "Planned roadmap\nStep 4",
+      "Planned Roadmap\nStep 4",
       "Euro 2020\nFinal"),
     label_y = c(NA, NA, 2, 1.8, 1.55, NA, 1.9, 1.55, 1.9, 1.8)) %>%
     dplyr::filter(!stringr::str_detect(label, "School"))
