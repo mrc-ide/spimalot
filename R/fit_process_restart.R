@@ -20,7 +20,7 @@ fit_process_restart <- function(samples, parameters, data, control) {
 
 fit_process_restart_priors <- function(values, parameters) {
   nms <- colnames(values)
-  stopifnot(setequal(nms, parameters$info$name))
+  stopifnot(all(nms %in% parameters$info$name))
 
   wrapper <- function(nm) {
     x <- values[, nm]
