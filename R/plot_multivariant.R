@@ -306,7 +306,7 @@ spim_plot_voc_proportion <- function(dat, date_restart, region) {
                         color = "grey30", size = 0.1, shape = 23) +
     ggplot2::geom_errorbar(ggplot2::aes(ymin = lower, ymax = upper),
                            color = "grey30", width = 1, size = 0.1) +
-    ggplot2::ylab("VOC proportion (%)") +
+    ggplot2::ylab("Delta (%)") +
     ggplot2::xlab("") +
     ggplot2::ggtitle(region_labs[region]) +
     ggplot2::scale_x_date(date_breaks = "months",
