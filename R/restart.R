@@ -30,8 +30,9 @@ spim_restart_initial <- function(state, date, multistrain) {
           new_state <- array(state[idx, ], c(dim, ncol(state)))
 
           if (length(dim) != 4) {
-            stop(sprintf("Unexpected dimensions (%d) in move_strain_compartment",
-                         length(dim)))
+            stop(sprintf(
+              "Unexpected dimensions (%d) in move_strain_compartment",
+              length(dim)))
           }
 
           n <- new_state[, 1, , , ]

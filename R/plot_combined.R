@@ -109,7 +109,7 @@ spim_plot_Rt <- function(dat, regions, rt_type, forecast_until = NULL,
     forecast_until <- dat$info$date
   }
   if (is.null(variant)) {
-    variant = "weighted"
+    variant <- "weighted"
   }
   for (r in regions) {
     spim_plot_Rt_region(r, dat, rt_type, forecast_until, variant, add_betas,
@@ -1243,7 +1243,8 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
   } else {
     if (variant == "delta") {
       sample_Rt <- dat$variant_rt[[region]][[rt_type]][-1L, 2, ]
-      x <- sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
+      x <-
+        sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
     } else if (variant == "all") {
       if (!multistrain) {
         sample_non_variant <- dat$rt[[region]][[rt_type]][-1L, ]
@@ -1252,11 +1253,13 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
       } else {
         sample_non_variant <- dat$variant_rt[[region]][[rt_type]][-1L, 1, ]
         sample_variant <- dat$variant_rt[[region]][[rt_type]][-1L, 2, ]
-        x <- sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
+        x <-
+          sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
       }
     } else {
       sample_Rt <- dat$variant_rt[[region]][[rt_type]][-1L, 1, ]
-      x <- sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
+      x <-
+        sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
     }
   }
 
@@ -1273,7 +1276,7 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
 
   ps <- seq(0.025, 0.975, 0.005)
 
-  if (variant != "all"){
+  if (variant != "all") {
     rownames(sample_Rt) <- as.character(x)
     qs <- apply(sample_Rt,  MARGIN = 1, FUN = quantile, ps, na.rm = TRUE)
     ## remove NAs for plotting purposes
@@ -1314,7 +1317,7 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
   cols <- c(mix_cols(col, "white", 0.7),
             mix_cols(col, "white", 0.495))
 
-  if (variant != "all"){
+  if (variant != "all") {
     ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = cols,
              horiz = FALSE, leg = FALSE)
     lines(x, qs["50.0%", ], col = col, lty = 1, lwd = 1.5, lend = 1)
