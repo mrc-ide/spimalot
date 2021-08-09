@@ -11,10 +11,12 @@
 ##' @return A ggplot2 object for fit to VOC proportion data
 ##'
 ##' @export
-spim_plot_vaccine_figure_1 <- function(dat, date, date_restart){
+spim_plot_vaccine_figure_1 <- function(dat, date, date_restart,
+                                       manuscript = TRUE){
 
   rt <- spim_multivariant_rt_plot(dat, date, last_beta_days_ago = 8,
-                                  rt_type = "eff_Rt_general") +
+                                  rt_type = "eff_Rt_general",
+                                  manuscript = manuscript) +
     ggplot2::ggtitle(NULL)
 
   sd <- spim_plot_seeding_date(dat) +
@@ -28,17 +30,17 @@ spim_plot_vaccine_figure_1 <- function(dat, date, date_restart){
     spim_plot_voc_proportion(dat, date_restart, "london") +
     plot_layout(ncol = 4, nrow = 1)
   row3 <-
-    spim_plot_voc_proportion(dat, date_restart, "north_west") +
-    spim_plot_voc_proportion(dat, date_restart, "midlands") +
     spim_plot_voc_proportion(dat, date_restart, "east_of_england") +
+    spim_plot_voc_proportion(dat, date_restart, "midlands") +
     spim_plot_voc_proportion(dat, date_restart, "north_east_and_yorkshire") +
+    spim_plot_voc_proportion(dat, date_restart, "north_west") +
     plot_layout(ncol = 4, nrow = 1)
 
   g <- row1 / row2 / row3 +
     plot_layout(heights = c(2, 1, 1), guides = "keep") +
     plot_annotation(tag_levels = 'A')
 
-  g <- g & ggplot2::theme(plot.margin = unit(rep(1, 4), units = "mm"))
+  g <- g & ggplot2::theme(plot.margin = ggplot2::unit(rep(1, 4), units = "mm"))
   g
 }
 
@@ -63,23 +65,32 @@ spim_plot_vaccine_figure_1 <- function(dat, date, date_restart){
 ##' @export
 spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
                                       region = "england",
-                                      rt_type = "eff_Rt_general") {
+                                      rt_type = "eff_Rt_general",
+                                      manuscript = FALSE) {
   # Get relevant betas to current date and filter out school holidays
   betas <- data.frame(
-    dates = as.Date(tail(dat$samples[[1]]$info$beta_date, 10)),
+    dates = as.Date(tail(dat$samples[[1]]$info$beta_date, 12)),
     label = c(
-      "End of 2nd Lockdown",
+      "End of 2nd\nLockdown",
       "School Holidays",
-      "NPI Relaxation",
-      "Lockdown",
+      "Holiday \nRestrictions",
+      "Start of 3rd\nLockdown",
       "Roadmap\nStep 1",
       "School Holidays",
       "Roadmap\nStep 2",
       "Roadmap\nStep 3",
-      "Planned Roadmap\nStep 4",
-      "Euro 2020\nFinal"),
-    label_y = c(NA, NA, 2, 1.8, 1.55, NA, 1.9, 1.55, 1.9, 1.8)) %>%
+      "Step 4\nDelayed",
+      "Euro 2020\nQtr Final",
+      "Euro 2020\nFinal",
+      "Roadmap\nStep 4"),
+    label_y = c(1.94, NA, 1.67, 1.94, 1.67, NA,
+                1.94, 1.67, 1.94, 1.67, 1.94, 1.67)
+    ) %>%
     dplyr::filter(!stringr::str_detect(label, "School"))
+
+  if (!manuscript) {
+    betas$label_y <- NA_integer_
+  }
 
   rt_plot <- NULL
 
@@ -148,9 +159,9 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
     ggplot2::geom_vline(xintercept = as.Date(betas[, 1]), lty = 3,
                         col = "red4") +
     ggplot2::geom_label(ggplot2::aes(label = label, y = label_y),
-                        hjust = 0.5, size = 2.5,
-                       vjust = 0.5, family = "Times New Roman",
-                       label.padding = unit(0.2, "lines")) +
+                        hjust = 0.5, size = 1.8,
+                        vjust = 0.5, family = "Times New Roman",
+                        label.padding = ggplot2::unit(0.15, "lines")) +
     ggplot2::ylab(ylab) +
     ggplot2::xlab("") +
     ggplot2::ggtitle(paste(stringr::str_to_sentence(region))) +
@@ -159,13 +170,13 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
     ggplot2::theme_minimal() +
     ggplot2::coord_cartesian(ylim = ylim) +
     ggplot2::theme(panel.border = ggplot2::element_blank(),
-                   panel.grid = element_blank(),
+                   panel.grid = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
                    text = ggplot2::element_text(family = "Times New Roman", size=10),
                    legend.title = ggplot2::element_blank(),
                    legend.position = "bottom",
-                   legend.box.margin = margin(-10, 0, 0, 0, unit = "mm"),
-                   plot.margin = unit(rep(0, 4), units = "cm")) +
+                   legend.box.margin = ggplot2::margin(-10, 0, 0, 0, unit = "mm"),
+                   plot.margin = ggplot2::unit(rep(0, 4), units = "cm")) +
     ggthemes::scale_colour_colorblind() +
     ggthemes::scale_fill_colorblind()
   p
@@ -188,8 +199,8 @@ spim_plot_seeding_date <- function(dat) {
   seed_date$regions <- regions
 
   seed_date$region <- factor(ylabs,
-                            levels = ylabs[order(seed_date$mean,
-                                                 decreasing = TRUE)])
+                             levels = ylabs[order(seed_date$mean,
+                                                  decreasing = TRUE)])
 
   seed_date %>%
     ggplot2::ggplot(ggplot2::aes(y = region, col = region)) +
@@ -204,7 +215,7 @@ spim_plot_seeding_date <- function(dat) {
     ggplot2::theme_minimal() +
     ggsci::scale_color_lancet() + ggsci::scale_fill_lancet() +
     ggplot2::theme(panel.border = ggplot2::element_blank(),
-                   panel.grid = element_blank(),
+                   panel.grid = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
                    legend.position = "none",
                    axis.text.x = ggplot2::element_text(angle = 45, hjust=1),
@@ -288,7 +299,7 @@ spim_plot_voc_proportion <- function(dat, date_restart, region) {
 
   trajectories <- sample$trajectories$state
   prop_pos <- (1 - trajectories["sympt_cases_non_variant_inc", , -1] /
-    trajectories["sympt_cases_inc", , -1]) * 100
+                 trajectories["sympt_cases_inc", , -1]) * 100
 
   res <- data.frame(
     dates = sircovid::sircovid_date_as_date(sample$trajectories$date[-1]),
@@ -313,7 +324,7 @@ spim_plot_voc_proportion <- function(dat, date_restart, region) {
                           date_labels = "%b") +
     ggplot2::theme_minimal() +
     ggplot2::theme(panel.border = ggplot2::element_blank(),
-                   panel.grid = element_blank(),
+                   panel.grid = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
                    legend.title = ggplot2::element_blank(),
                    plot.title = ggplot2::element_text(size = 10),
