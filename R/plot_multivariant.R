@@ -73,7 +73,7 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
     label = c(
       "End of 2nd\nLockdown",
       "School Holidays",
-      "End of\nNPI Relaxation",
+      "Holiday \nRestrictions",
       "Start of 3rd\nLockdown",
       "Roadmap\nStep 1",
       "School Holidays",
