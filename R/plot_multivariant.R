@@ -88,7 +88,6 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
     ) %>%
     dplyr::filter(!stringr::str_detect(label, "School"))
 
-  browser()
   if (!manuscript) {
     betas$label_y <- NA_integer_
   }
