@@ -28,10 +28,10 @@ spim_plot_vaccine_figure_1 <- function(dat, date, date_restart){
     spim_plot_voc_proportion(dat, date_restart, "london") +
     plot_layout(ncol = 4, nrow = 1)
   row3 <-
-    spim_plot_voc_proportion(dat, date_restart, "north_west") +
-    spim_plot_voc_proportion(dat, date_restart, "midlands") +
     spim_plot_voc_proportion(dat, date_restart, "east_of_england") +
+    spim_plot_voc_proportion(dat, date_restart, "midlands") +
     spim_plot_voc_proportion(dat, date_restart, "north_east_and_yorkshire") +
+    spim_plot_voc_proportion(dat, date_restart, "north_west") +
     plot_layout(ncol = 4, nrow = 1)
 
   g <- row1 / row2 / row3 +
@@ -68,19 +68,19 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
   betas <- data.frame(
     dates = as.Date(tail(dat$samples[[1]]$info$beta_date, 12)),
     label = c(
-      "End of 2nd Lockdown",
+      "End of 2nd\nLockdown",
       "School Holidays",
-      "NPI Relaxation",
-      "Lockdown",
+      "End of\nNPI Relaxation",
+      "Start of 3rd\nLockdown",
       "Roadmap\nStep 1",
       "School Holidays",
       "Roadmap\nStep 2",
       "Roadmap\nStep 3",
-      "Planned Roadmap\nStep 4",
-      "Euro 2020\nQuarter Final",
+      "Step 4\nDelayed",
+      "Euro 2020\nQtr Final",
       "Euro 2020\nFinal",
       "Roadmap\nStep 4"),
-    label_y = c(NA, NA, 2, 1.8, 1.55, NA, 1.9, 1.55, 1.9, 1.8, 1.55, 1.9)) %>%
+    label_y = c(1.99, NA, 1.7, 1.99, 1.7, NA, 1.99, 1.7, 1.99, 1.7, 1.99, 1.7)) %>%
     dplyr::filter(!stringr::str_detect(label, "School"))
 
   rt_plot <- NULL
