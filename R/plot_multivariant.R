@@ -11,10 +11,12 @@
 ##' @return A ggplot2 object for fit to VOC proportion data
 ##'
 ##' @export
-spim_plot_vaccine_figure_1 <- function(dat, date, date_restart){
+spim_plot_vaccine_figure_1 <- function(dat, date, date_restart,
+                                       manuscript = TRUE){
 
   rt <- spim_multivariant_rt_plot(dat, date, last_beta_days_ago = 8,
-                                  rt_type = "eff_Rt_general") +
+                                  rt_type = "eff_Rt_general",
+                                  manuscript = manuscript) +
     ggplot2::ggtitle(NULL)
 
   sd <- spim_plot_seeding_date(dat) +
@@ -63,7 +65,8 @@ spim_plot_vaccine_figure_1 <- function(dat, date, date_restart){
 ##' @export
 spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
                                       region = "england",
-                                      rt_type = "eff_Rt_general") {
+                                      rt_type = "eff_Rt_general",
+                                      manuscript = FALSE) {
   # Get relevant betas to current date and filter out school holidays
   betas <- data.frame(
     dates = as.Date(tail(dat$samples[[1]]$info$beta_date, 12)),
@@ -80,8 +83,15 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
       "Euro 2020\nQtr Final",
       "Euro 2020\nFinal",
       "Roadmap\nStep 4"),
-    label_y = c(1.99, NA, 1.7, 1.99, 1.7, NA, 1.99, 1.7, 1.99, 1.7, 1.99, 1.7)) %>%
+    label_y = c(1.94, NA, 1.67, 1.94, 1.67, NA,
+                1.94, 1.67, 1.94, 1.67, 1.94, 1.67)
+    ) %>%
     dplyr::filter(!stringr::str_detect(label, "School"))
+
+  browser()
+  if (!manuscript) {
+    betas$label_y <- NA_integer_
+  }
 
   rt_plot <- NULL
 
@@ -150,9 +160,9 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
     ggplot2::geom_vline(xintercept = as.Date(betas[, 1]), lty = 3,
                         col = "red4") +
     ggplot2::geom_label(ggplot2::aes(label = label, y = label_y),
-                        hjust = 0.5, size = 2.5,
-                       vjust = 0.5, family = "Times New Roman",
-                       label.padding = ggplot2::unit(0.2, "lines")) +
+                        hjust = 0.5, size = 1.8,
+                        vjust = 0.5, family = "Times New Roman",
+                        label.padding = ggplot2::unit(0.15, "lines")) +
     ggplot2::ylab(ylab) +
     ggplot2::xlab("") +
     ggplot2::ggtitle(paste(stringr::str_to_sentence(region))) +
@@ -190,8 +200,8 @@ spim_plot_seeding_date <- function(dat) {
   seed_date$regions <- regions
 
   seed_date$region <- factor(ylabs,
-                            levels = ylabs[order(seed_date$mean,
-                                                 decreasing = TRUE)])
+                             levels = ylabs[order(seed_date$mean,
+                                                  decreasing = TRUE)])
 
   seed_date %>%
     ggplot2::ggplot(ggplot2::aes(y = region, col = region)) +
@@ -290,7 +300,7 @@ spim_plot_voc_proportion <- function(dat, date_restart, region) {
 
   trajectories <- sample$trajectories$state
   prop_pos <- (1 - trajectories["sympt_cases_non_variant_inc", , -1] /
-    trajectories["sympt_cases_inc", , -1]) * 100
+                 trajectories["sympt_cases_inc", , -1]) * 100
 
   res <- data.frame(
     dates = sircovid::sircovid_date_as_date(sample$trajectories$date[-1]),
