@@ -106,6 +106,14 @@ spim_combined_onward_simulate <- function(dat) {
     x$trajectories$state[rownames(simulate$state[[1]]), , idx_dates])
   state <- aperm(abind_quiet(state, along = 4), c(1, 2, 4, 3))
 
+  if (!("deaths_hosp" %in% rownames(state))) {
+    deaths_hosp <- state["deaths", , , , drop = FALSE] -
+      state["deaths_comm", , , , drop = FALSE]
+    state_names <- c(rownames(state), "deaths_hosp")
+    state <- abind_quiet(state, deaths_hosp, along = 1L)
+    rownames(state) <- state_names
+  }
+
   state_by_age <- lapply(list_transpose(simulate$state_by_age),
                          abind_quiet, along = 3)
   n_protected <- lapply(list_transpose(simulate$n_protected),
