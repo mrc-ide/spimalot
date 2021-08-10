@@ -50,12 +50,14 @@ Imports:
     distr6,
     dplyr,
     dust,
+    ggnewscale,
     ggplot2,
     ggsci,
     khroma,
     lubridate,
     mcstate (>= 0.5.14),
     readxl,
+    reshape2,
     sircovid (>= 0.11.28),
     stringr,
     tidyr,
@@ -66,8 +68,10 @@ Imports:
     patchwork
 Suggests:
     digest,
+    mockery,
     rrq,
-    testthat
+    testthat,
+    withr
 Remotes:
     mrc-ide/dust,
     mrc-ide/mcstate,
