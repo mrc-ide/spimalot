@@ -4,7 +4,7 @@
 \alias{spim_plot_vaccine_figure_1}
 \title{Create plot for vaccine paper figure 1}
 \usage{
-spim_plot_vaccine_figure_1(dat, date, date_restart)
+spim_plot_vaccine_figure_1(dat, date, date_restart, manuscript = TRUE)
 }
 \arguments{
 \item{dat}{Main fitting outputs object}

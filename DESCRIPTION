@@ -1,6 +1,6 @@
 Package: spimalot
 Title: Support for 'sircovid'
-Version: 0.2.49
+Version: 0.2.50
 Authors@R:
     c(person(given = "Marc",
            family = "Baguelin",
@@ -68,8 +68,10 @@ Imports:
     patchwork
 Suggests:
     digest,
+    mockery,
     rrq,
-    testthat
+    testthat,
+    withr
 Remotes:
     mrc-ide/dust,
     mrc-ide/mcstate,
