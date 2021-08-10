@@ -12,7 +12,8 @@ spim_control(
   n_mcmc = 1500,
   burnin = 500,
   forecast_days = 57,
-  workers = TRUE
+  workers = TRUE,
+  n_threads = NULL
 )
 }
 \arguments{
@@ -36,6 +37,9 @@ PMCMC if \code{short_run = FALSE}}
 \item{workers}{Logical, indicating if we should enable workers. If
 \code{TRUE}, then a number of workers between 1 and 4 will be used
 depending on \code{n_chains} and the detected number of cores.}
+
+\item{n_threads}{Explicit number of threads, overriding detection
+by \link{spim_control_cores}}
 }
 \value{
 A list of options

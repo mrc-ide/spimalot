@@ -25,14 +25,18 @@
 ##'   `TRUE`, then a number of workers between 1 and 4 will be used
 ##'   depending on `n_chains` and the detected number of cores.
 ##'
+##' @param n_threads Explicit number of threads, overriding detection
+##'   by [spim_control_cores]
+##'
 ##' @return A list of options
 ##' @export
 spim_control <- function(short_run, n_chains, date_restart = NULL,
                          n_particles = 192, n_mcmc = 1500, burnin = 500,
-                         forecast_days = 57, workers = TRUE) {
+                         forecast_days = 57, workers = TRUE,
+                         n_threads = NULL) {
   if (short_run) {
-    n_particles <- 10
-    n_mcmc <- 20
+    n_particles <- min(10, n_particles)
+    n_mcmc <- min(20, n_mcmc)
     n_sample <- 10
     burnin <- 1
   } else {
@@ -49,7 +53,7 @@ spim_control <- function(short_run, n_chains, date_restart = NULL,
 
   forecast_days <- forecast_days
 
-  parallel <- spim_control_parallel(n_chains, workers)
+  parallel <- spim_control_parallel(n_chains, workers, n_threads)
 
   pmcmc <- mcstate::pmcmc_control(n_mcmc,
                                   n_chains = n_chains,
@@ -81,19 +85,31 @@ spim_control <- function(short_run, n_chains, date_restart = NULL,
 }
 
 
-spim_control_parallel <- function(n_chains, workers) {
-  nt <- spim_control_cores()
+## This is only going to be really useful with the single region fit,
+## as we don't really use workers otherwise.
+spim_control_parallel <- function(n_chains, workers, n_threads = NULL,
+                                  verbose = TRUE) {
+  n_threads <- n_threads %||% spim_control_cores()
   if (workers) {
     pos <- 1:4
-    nw <- max(pos[nt %% pos == 0 & pos <= n_chains])
+    n_workers <- max(pos[n_threads %% pos == 0 & pos <= n_chains])
   } else {
-    nw <- 1L
+    n_workers <- 1L
   }
-  message(sprintf("Running on %d workers with %d threads", nw, nt))
-  list(n_threads_total = nt, n_workers = nw)
+  if (verbose) {
+    message(sprintf("Running on %d workers with %d threads",
+                    n_workers, n_threads))
+  }
+  list(n_threads_total = n_threads, n_workers = n_workers)
 }
 
 
+##' Return the number of available cores, looking at `CONTEXT_CORES`,
+##' `MC_CORES` and `mc.cores` in turn
+##'
+##' @title Return the number of cores
+##' @return An integer
+##' @export
 spim_control_cores <- function() {
   as.integer(Sys.getenv("CONTEXT_CORES",
                         Sys.getenv("MC_CORES",

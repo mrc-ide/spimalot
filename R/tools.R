@@ -27,22 +27,22 @@ spim_region_name <- function(region, type = "name") {
       uk = "United Kingdom")
 
     if (type == "upper") {
-      map <- toupper(type)
+      map <- toupper(map)
     }
   } else if (type == "code") {
-  map <- c(
-    london = "LON",
-    east_of_england = "EE",
-    midlands = "MID",
-    north_east_and_yorkshire = "NE",
-    north_west = "NW",
-    south_east = "SE",
-    south_west = "SW",
-    scotland = "SCO",
-    wales = "WAL",
-    northern_ireland = "NI",
-    england = "ENG",
-    uk = "UK")
+    map <- c(
+      london = "LON",
+      east_of_england = "EE",
+      midlands = "MID",
+      north_east_and_yorkshire = "NE",
+      north_west = "NW",
+      south_east = "SE",
+      south_west = "SW",
+      scotland = "SCO",
+      wales = "WAL",
+      northern_ireland = "NI",
+      england = "ENG",
+      uk = "UK")
   } else {
     stop(sprintf("Unknown region name type '%s'", type))
   }

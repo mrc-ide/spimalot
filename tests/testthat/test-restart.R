@@ -1,7 +1,7 @@
 test_that("Can create restart function", {
   m <- matrix(1:50, 5)
   p <- list(steps_per_day = 4)
-  f <- spim_restart_initial(m, 100)
+  f <- spim_restart_initial(m, 100, FALSE)
   expect_true(is.function(f))
   res <- f(NULL, 3, p)
 
