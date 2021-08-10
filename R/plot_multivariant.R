@@ -10,6 +10,8 @@
 ##'
 ##' @return A ggplot2 object for fit to VOC proportion data
 ##'
+##' @param manuscript Logical indicating if plotting for manuscript
+##'
 ##' @export
 spim_plot_vaccine_figure_1 <- function(dat, date, date_restart,
                                        manuscript = TRUE){
@@ -59,6 +61,8 @@ spim_plot_vaccine_figure_1 <- function(dat, date, date_restart,
 ##' @param region A string for the name of the region to plot
 ##'
 ##' @param rt_type A string, must be one of eff_Rt_general or Rt_general
+##'
+##' @param manuscript Logical indicating if plotting for manuscript
 ##'
 ##' @return A ggplot2 object for multivariant Rt
 ##'
