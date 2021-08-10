@@ -182,23 +182,13 @@ spim_pars_beta <- function(date, last_beta_days_ago = 21) {
 }
 
 
-spim_pars_pmcmc <- function(region, info, prior, proposal) {
-  if (length(region) == 1) {
-    spim_pars_pmcmc_single(region, info, prior, proposal)
-  } else {
-    stop("writeme")
-  }
-}
-
-
-spim_pars_pmcmc_single <- function(region, info, prior, proposal) {
-
-  list(region = region, info = info, prior = prior, proposal = proposal)
-}
-
 
 spim_pars_info <- function(region, info) {
-  assert_has_names(info, c("name", "initial", "max", "discrete"))
+  assert_has_names(info, c("region", "include",
+                           "name", "initial", "max", "discrete"))
+  if (!(region %in% info$region)) {
+    stop(sprintf("Did not find region '%s' in parameter info", region))
+  }
   info <- info[info$region == region & info$include, ]
   info <- info[setdiff(names(info), c("region", "include"))]
   rownames(info) <- NULL
@@ -250,13 +240,6 @@ make_prior <- function(d) {
     stop("Unknown prior type")
   }
 }
-
-
-parameter_subset_region <- function(pars, region) {
-  assert_is(pars, "spim_pars_pmcmc")
-  lapply(pars, function(x) x[x$region == region, ])
-}
-
 
 
 ##' Add a parameter to a `spim_pars_mcmc` object

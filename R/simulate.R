@@ -223,8 +223,9 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
 
   ## Lots of updates to parameters to account for how vaccination
   ## changes over the future.
-  date_start <- sircovid::sircovid_date(min(args$rt_future$date))
-  step_start <- date_start * combined$steps_per_day
+
+  step_start <- combined$step
+  date_start <- sircovid::sircovid_date(combined$date)
   end_date <- sircovid::sircovid_date(args$end_date)
   dates <- seq(date_start, end_date)
   steps <- dates * combined$steps_per_day
@@ -1417,7 +1418,7 @@ spim_simulation_predictors <- function(summary) {
                           ## outcomes
                           "2.5%", "50%", "97.5%",
                           ## these two are identical to vaccine_efficacy_strain_2
-                          "strain_cross_immunity", "rel_strain_modifier"))
+                          "strain_severity_modifier", "rel_strain_modifier"))
 
   vars
 }

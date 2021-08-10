@@ -115,6 +115,7 @@ assert_character <- function(x, name = deparse(substitute(x))) {
 assert_scalar_positive_integer <- function(x, name = deparse(substitute(x))) {
   force(name)
   assert_scalar(x, name)
+  assert_nonmissing(x, name)
   x <- assert_integer(x, name)
   if (x < 1L) {
     stop(sprintf("'%s' must be at least 1", name), call. = FALSE)
@@ -144,4 +145,12 @@ match_value <- function(arg, choices, name = deparse(substitute(arg))) {
                  paste(squote(choices),  collapse = ", ")), call. = FALSE)
   }
   arg
+}
+
+
+assert_nonmissing <- function(x, name = deparse(substitite(x))) {
+  if (anyNA(x)) {
+    stop(sprintf("'%s' must be non-NA", name))
+  }
+  invisible(x)
 }
