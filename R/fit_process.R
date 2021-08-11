@@ -121,8 +121,9 @@ spim_fit_process <- function(samples, parameters, data, control,
 ##' Collect data sets for use with [spimalot::spim_fit_process]
 ##'
 ##' @title Collect data sets
-##' @param data_admissions The admissions data set from
-##'   [spimalot::spim_data_admissions]
+##' @param admissions The admissions data set from
+##'   [spimalot::spim_data_admissions]. Set to FALSE if not fitting or plotting
+##'   age-specific data
 ##'
 ##' @param rtm The rtm data set
 ##'
