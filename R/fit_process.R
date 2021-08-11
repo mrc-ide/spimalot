@@ -46,9 +46,13 @@ spim_fit_process <- function(samples, parameters, data, control,
   ifr_t <-
     calculate_ifr_t(forecast, samples$info$multistrain) # TODO: a bit slow
 
-  message("Summarising admissions")
-  admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
-  admissions[["data"]] <- data$admissions
+  if (is.null(data$admissions)) {
+    admissions = NULL
+  } else {
+    message("Summarising admissions")
+    admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
+    admissions[["data"]] <- data$admissions
+  }
 
   message("Summarising deaths")
   deaths <- extract_outputs_by_age(forecast, "D_hosp") # slow
@@ -133,11 +137,19 @@ spim_fit_process <- function(samples, parameters, data, control,
 ##'
 ##' @export
 spim_fit_process_data <- function(admissions, rtm, fitted, full, vaccination) {
-  list(admissions = admissions,
-       rtm = rtm,
-       full = full,
-       fitted = fitted,
-       vaccination = vaccination)
+  if (admissions) {
+    list(admissions = admissions,
+         rtm = rtm,
+         full = full,
+         fitted = fitted,
+         vaccination = vaccination)
+  } else {
+    list(admissions = NULL,
+         rtm = rtm,
+         full = full,
+         fitted = fitted,
+         vaccination = vaccination)
+  }
 }
 
 
