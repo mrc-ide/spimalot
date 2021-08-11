@@ -46,9 +46,13 @@ spim_fit_process <- function(samples, parameters, data, control,
   ifr_t <-
     calculate_ifr_t(forecast, samples$info$multistrain) # TODO: a bit slow
 
-  message("Summarising admissions")
-  admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
-  admissions[["data"]] <- data$admissions
+  if (is.null(data$admissions)) {
+    admissions = admissions
+  } else {
+    message("Summarising admissions")
+    admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
+    admissions[["data"]] <- data$admissions
+  }
 
   message("Summarising deaths")
   deaths <- extract_outputs_by_age(forecast, "D_hosp") # slow
@@ -117,8 +121,9 @@ spim_fit_process <- function(samples, parameters, data, control,
 ##' Collect data sets for use with [spimalot::spim_fit_process]
 ##'
 ##' @title Collect data sets
-##' @param data_admissions The admissions data set from
-##'   [spimalot::spim_data_admissions]
+##' @param admissions The admissions data set from
+##'   [spimalot::spim_data_admissions]. Set to NULL if not fitting or plotting
+##'   age-specific data
 ##'
 ##' @param rtm The rtm data set
 ##'
@@ -554,8 +559,8 @@ calculate_vaccination <- function(state, vaccine_efficacy, cross_immunity) {
   n_doses <- abind::abind(doses, doses_inc, along = 2)
 
   list(n_protected = lapply(n_protected, mcstate::array_reshape, i = 2,
-                                            d = c(1, ncol(n_protected[[1]]))),
-             n_doses = n_doses)
+                            d = c(1, ncol(n_protected[[1]]))),
+       n_doses = n_doses)
 }
 
 
@@ -608,8 +613,8 @@ spim_fit_parameters <- function(samples, parameters) {
   covariance <- cov(samples$pars)
   rownames(covariance) <- NULL
   proposal <- data_frame(region = samples$info$region,
-                           name = colnames(covariance),
-                           covariance)
+                         name = colnames(covariance),
+                         covariance)
 
   list(info = info,
        prior = prior,
