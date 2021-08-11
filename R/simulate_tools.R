@@ -241,6 +241,10 @@ spim_simulate_add_diagnoses_admitted <- function(obj) {
 ##' @param date If not `NULL` then the date to remove all results up
 ##'  to
 spim_simulate_remove_dates_to <- function(obj, date) {
+  if (is.null(date)) {
+    return(obj)
+  }
+
   id0 <- seq(which(sircovid::sircovid_date_as_date(obj$date) == date))
   obj$date <- obj$date[-id0]
   obj$state <- obj$state[, , , -id0, drop = FALSE]
