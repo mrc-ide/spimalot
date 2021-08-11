@@ -47,7 +47,7 @@ spim_fit_process <- function(samples, parameters, data, control,
     calculate_ifr_t(forecast, samples$info$multistrain) # TODO: a bit slow
 
   if (is.null(data$admissions)) {
-    admissions = NULL
+    admissions = admissions
   } else {
     message("Summarising admissions")
     admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
@@ -122,7 +122,7 @@ spim_fit_process <- function(samples, parameters, data, control,
 ##'
 ##' @title Collect data sets
 ##' @param admissions The admissions data set from
-##'   [spimalot::spim_data_admissions]. Set to FALSE if not fitting or plotting
+##'   [spimalot::spim_data_admissions]. Set to NULL if not fitting or plotting
 ##'   age-specific data
 ##'
 ##' @param rtm The rtm data set
@@ -138,19 +138,11 @@ spim_fit_process <- function(samples, parameters, data, control,
 ##'
 ##' @export
 spim_fit_process_data <- function(admissions, rtm, fitted, full, vaccination) {
-  if (admissions) {
-    list(admissions = admissions,
-         rtm = rtm,
-         full = full,
-         fitted = fitted,
-         vaccination = vaccination)
-  } else {
-    list(admissions = NULL,
-         rtm = rtm,
-         full = full,
-         fitted = fitted,
-         vaccination = vaccination)
-  }
+  list(admissions = admissions,
+       rtm = rtm,
+       full = full,
+       fitted = fitted,
+       vaccination = vaccination)
 }
 
 
@@ -567,8 +559,8 @@ calculate_vaccination <- function(state, vaccine_efficacy, cross_immunity) {
   n_doses <- abind::abind(doses, doses_inc, along = 2)
 
   list(n_protected = lapply(n_protected, mcstate::array_reshape, i = 2,
-                                            d = c(1, ncol(n_protected[[1]]))),
-             n_doses = n_doses)
+                            d = c(1, ncol(n_protected[[1]]))),
+       n_doses = n_doses)
 }
 
 
@@ -621,8 +613,8 @@ spim_fit_parameters <- function(samples, parameters) {
   covariance <- cov(samples$pars)
   rownames(covariance) <- NULL
   proposal <- data_frame(region = samples$info$region,
-                           name = colnames(covariance),
-                           covariance)
+                         name = colnames(covariance),
+                         covariance)
 
   list(info = info,
        prior = prior,
