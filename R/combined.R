@@ -108,7 +108,8 @@ spim_combined_onward_simulate <- function(dat) {
 
   if (!("deaths_hosp" %in% rownames(state))) {
     deaths_hosp <- state["deaths", , , , drop = FALSE] -
-      state["deaths_comm", , , , drop = FALSE]
+      state["deaths_comm", , , , drop = FALSE] -
+      state["deaths_carehomes", , , , drop = FALSE]
     state_names <- c(rownames(state), "deaths_hosp")
     state <- abind_quiet(state, deaths_hosp, along = 1L)
     rownames(state) <- state_names
