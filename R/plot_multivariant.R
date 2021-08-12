@@ -181,7 +181,7 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
                    panel.grid = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
                    text = ggplot2::element_text(
-                     family = "Times New Roman", size=10),
+                     family = "Times New Roman", size = 10),
                    legend.title = ggplot2::element_blank(),
                    legend.position = "bottom",
                    legend.box.margin = ggplot2::margin(
@@ -230,7 +230,7 @@ spim_plot_seeding_date <- function(dat) {
                    legend.position = "none",
                    axis.text.x = ggplot2::element_text(angle = 45, hjust=1),
                    text = ggplot2::element_text(
-                     family = "Times New Roman", size=10),
+                     family = "Times New Roman", size = 10),
                    plot.title = ggplot2::element_text(size = 10))
 }
 
