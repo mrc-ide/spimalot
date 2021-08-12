@@ -120,9 +120,15 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
       dat$rt[[region]][[rt_type]][-1, ], probs = 0.975)
   )
 
+  if (manuscript) {
+    date_end <- "2021-07-19"
+  } else {
+    date_end <- date
+  }
+
   rt_region <- dplyr::left_join(wt, mv) %>% dplyr::left_join(., betas)
   rt_region <- rt_region %>% dplyr::filter(dates >= as.Date("2020-12-01") &
-                                             dates <= as.Date(date))
+                                             dates <= as.Date(date_end))
 
   # Only plot variant after date of first reported cases on 2021-03-23
   variant_names <- c("rt_variant", "lb_variant", "ub_variant")
