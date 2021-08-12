@@ -12,6 +12,8 @@
 ##'
 ##' @return A ggplot2 object for fit to VOC proportion data
 ##'
+##' @param manuscript Logical indicating if plotting for manuscript
+##'
 ##' @export
 spim_plot_vaccine_figures <- function(dat, date, date_restart,
                                        manuscript = TRUE){
