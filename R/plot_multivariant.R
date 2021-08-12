@@ -16,8 +16,6 @@
 spim_plot_vaccine_figures <- function(dat, date, date_restart,
                                        manuscript = TRUE){
 
-  library(patchwork)
-
 
   out <- list()
   out$rt <- spim_multivariant_rt_plot(dat, date, last_beta_days_ago = 8,
@@ -32,12 +30,13 @@ spim_plot_vaccine_figures <- function(dat, date, date_restart,
   }
 
   row1 <- out$rt
-  row2 <- out$sd + out$london + plot_layout(ncol = 2, nrow = 1)
+  row2 <- out$sd + out$london +
+    patchwork::plot_layout(ncol = 2, nrow = 1)
 
 
   g <- row1 / row2 +
-    plot_layout(heights = c(2, 1), guides = "keep") +
-    plot_annotation(tag_levels = 'A')
+    patchwork::plot_layout(heights = c(2, 1), guides = "keep") +
+    patchwork::plot_annotation(tag_levels = 'A')
 
   out$fig_1 <-
     g & ggplot2::theme(plot.margin = ggplot2::unit(rep(1, 4), units = "mm"))
