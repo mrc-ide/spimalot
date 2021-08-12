@@ -101,18 +101,11 @@ spim_combined_onward_simulate <- function(dat) {
 
   dates <- dat$simulate[[1]]$date
   idx_dates <- dat$samples[[1]]$trajectories$date %in% dates
+  state_names <- unique(c(rownames(simulate$state[[1]]), "deaths_hosp"))
 
   state <- lapply(dat$samples, function(x)
-    x$trajectories$state[rownames(simulate$state[[1]]), , idx_dates])
+    x$trajectories$state[state_names, , idx_dates])
   state <- aperm(abind_quiet(state, along = 4), c(1, 2, 4, 3))
-
-  if (!("deaths_hosp" %in% rownames(state))) {
-    deaths_hosp <- state["deaths", , , , drop = FALSE] -
-      state["deaths_comm", , , , drop = FALSE]
-    state_names <- c(rownames(state), "deaths_hosp")
-    state <- abind_quiet(state, deaths_hosp, along = 1L)
-    rownames(state) <- state_names
-  }
 
   state_by_age <- lapply(list_transpose(simulate$state_by_age),
                          abind_quiet, along = 3)

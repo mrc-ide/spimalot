@@ -233,6 +233,29 @@ spim_simulate_add_diagnoses_admitted <- function(obj) {
   obj
 }
 
+
+##' Removes all results from a simulation object up to and including a
+##'  given date
+##' @title  Remove simulations up to given date
+##' @param obj A simulated object
+##' @param date If not `NULL` then the date to remove all results up
+##'  to
+spim_simulate_remove_dates_to <- function(obj, date) {
+  if (is.null(date)) {
+    return(obj)
+  }
+
+  id0 <- seq(which(sircovid::sircovid_date_as_date(obj$date) == date))
+  obj$date <- obj$date[-id0]
+  obj$state <- obj$state[, , , -id0, drop = FALSE]
+  obj$state_by_age <- lapply(obj$state_by_age, function(x) x[, , , -id0, drop = FALSE])
+  obj$n_vaccinated <- obj$n_vaccinated[, , , -id0, drop = FALSE]
+  obj$n_protected <- lapply(obj$n_protected, function(x) x[, , -id0, drop = FALSE])
+  obj$n_doses <- obj$n_doses[, , , -id0, drop = FALSE]
+  obj
+}
+
+
 ##' Calculate incidence trajectories for a simulated object
 ##' @title Calculate incidence trajectories for a simulated object
 ##' @param obj A simulated object
@@ -303,6 +326,7 @@ spim_simulate_reset_cumulative_states <- function(res, state_names) {
   res
 }
 
+
 ##' @title Process simulation output
 ##' @param obj A simulated object
 ##' @param combined_region The name of the aggregated region (e.g. 'england)
@@ -314,18 +338,22 @@ spim_simulate_reset_cumulative_states <- function(res, state_names) {
 ##' removed
 ##' @param output_regions Character vector of regions to output, defaults to
 ##' `combined_region`
+##' @param remove_dates_to If not `NULL` then the date to remove all results up
+##'  to
 ##' @export
 spim_simulate_process_output <- function(obj, combined_region, regions,
                                          incidence_states,
                                          reset_states = FALSE,
                                          rm.rtUK = FALSE,
-                                         output_region = NULL) {
+                                         output_region = NULL,
+                                         remove_dates_to = NULL) {
 
   output_region <- output_region %||% combined_region
   ret <- spim_simulate_combine_trajectories(obj, combined_region, regions,
                                             rm.rtUK)
   ret <- spim_simulate_simplify_rt(ret)
   ret <- spim_simulate_add_diagnoses_admitted(ret)
+  ret <- spim_simulate_remove_dates_to(ret, remove_dates_to)
   ret <- spim_simulate_add_trajectory_incidence(ret, incidence_states)
 
   if (reset_states) {
