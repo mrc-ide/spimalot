@@ -8,40 +8,40 @@
 ##'
 ##' @param date_restart Date for multivariant model restart
 ##'
+##' @param manuscript Logical indicating whether plots are for manuscript
+##'
 ##' @return A ggplot2 object for fit to VOC proportion data
 ##'
 ##' @export
-spim_plot_vaccine_figure_1 <- function(dat, date, date_restart,
+spim_plot_vaccine_figures <- function(dat, date, date_restart,
                                        manuscript = TRUE){
 
-  rt <- spim_multivariant_rt_plot(dat, date, last_beta_days_ago = 8,
-                                  rt_type = "eff_Rt_general",
-                                  manuscript = manuscript) +
+
+  out <- list()
+  out$rt <- spim_multivariant_rt_plot(dat, date, last_beta_days_ago = 8,
+                                      rt_type = "eff_Rt_general",
+                                      manuscript = manuscript) +
     ggplot2::ggtitle(NULL)
 
-  sd <- spim_plot_seeding_date(dat) +
-    ggplot2::ggtitle(NULL)
+  out$sd <- spim_plot_seeding_date(dat) + ggplot2::ggtitle(NULL)
 
-  library(patchwork)
-  row1 <- rt
-  row2 <- sd +
-    spim_plot_voc_proportion(dat, date_restart, "south_east") +
-    spim_plot_voc_proportion(dat, date_restart, "south_west") +
-    spim_plot_voc_proportion(dat, date_restart, "london") +
-    plot_layout(ncol = 4, nrow = 1)
-  row3 <-
-    spim_plot_voc_proportion(dat, date_restart, "east_of_england") +
-    spim_plot_voc_proportion(dat, date_restart, "midlands") +
-    spim_plot_voc_proportion(dat, date_restart, "north_east_and_yorkshire") +
-    spim_plot_voc_proportion(dat, date_restart, "north_west") +
-    plot_layout(ncol = 4, nrow = 1)
+  for (i in sircovid::regions("england")) {
+    out[[i]] <- spim_plot_voc_proportion(dat, date_restart, i)
+  }
 
-  g <- row1 / row2 / row3 +
-    plot_layout(heights = c(2, 1, 1), guides = "keep") +
-    plot_annotation(tag_levels = 'A')
+  row1 <- out$rt
+  row2 <- out$sd + out$london +
+    patchwork::plot_layout(ncol = 2, nrow = 1)
 
-  g <- g & ggplot2::theme(plot.margin = ggplot2::unit(rep(1, 4), units = "mm"))
-  g
+
+  g <- row1 / row2 +
+    patchwork::plot_layout(heights = c(2, 1), guides = "keep") +
+    patchwork::plot_annotation(tag_levels = 'A')
+
+  out$fig_1 <-
+    g & ggplot2::theme(plot.margin = ggplot2::unit(rep(1, 4), units = "mm"))
+
+  out
 }
 
 
@@ -59,6 +59,8 @@ spim_plot_vaccine_figure_1 <- function(dat, date, date_restart,
 ##' @param region A string for the name of the region to plot
 ##'
 ##' @param rt_type A string, must be one of eff_Rt_general or Rt_general
+##'
+##' @param manuscript Logical indicating whether plots are for manuscript
 ##'
 ##' @return A ggplot2 object for multivariant Rt
 ##'
@@ -85,7 +87,7 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
       "Roadmap\nStep 4"),
     label_y = c(1.94, NA, 1.67, 1.94, 1.67, NA,
                 1.94, 1.67, 1.94, 1.67, 1.94, 1.67)
-    ) %>%
+  ) %>%
     dplyr::filter(!stringr::str_detect(label, "School"))
 
   if (!manuscript) {
@@ -117,9 +119,15 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
       dat$rt[[region]][[rt_type]][-1, ], probs = 0.975)
   )
 
+  if (manuscript) {
+    date_end <- "2021-07-19"
+  } else {
+    date_end <- date
+  }
+
   rt_region <- dplyr::left_join(wt, mv) %>% dplyr::left_join(., betas)
   rt_region <- rt_region %>% dplyr::filter(dates >= as.Date("2020-12-01") &
-                                             dates <= as.Date(date))
+                                             dates <= as.Date(date_end))
 
   # Only plot variant after date of first reported cases on 2021-03-23
   variant_names <- c("rt_variant", "lb_variant", "ub_variant")
@@ -172,10 +180,12 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
     ggplot2::theme(panel.border = ggplot2::element_blank(),
                    panel.grid = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
-                   text = ggplot2::element_text(family = "Times New Roman", size=10),
+                   text = ggplot2::element_text(
+                     family = "Times New Roman", size = 10),
                    legend.title = ggplot2::element_blank(),
                    legend.position = "bottom",
-                   legend.box.margin = ggplot2::margin(-10, 0, 0, 0, unit = "mm"),
+                   legend.box.margin = ggplot2::margin(
+                     -10, 0, 0, 0, unit = "mm"),
                    plot.margin = ggplot2::unit(rep(0, 4), units = "cm")) +
     ggthemes::scale_colour_colorblind() +
     ggthemes::scale_fill_colorblind()
@@ -219,7 +229,8 @@ spim_plot_seeding_date <- function(dat) {
                    axis.line = ggplot2::element_line(),
                    legend.position = "none",
                    axis.text.x = ggplot2::element_text(angle = 45, hjust=1),
-                   text = ggplot2::element_text(family = "Times New Roman", size=10),
+                   text = ggplot2::element_text(
+                     family = "Times New Roman", size = 10),
                    plot.title = ggplot2::element_text(size = 10))
 }
 

@@ -24,6 +24,8 @@ relation to date of analysis}
 \item{region}{A string for the name of the region to plot}
 
 \item{rt_type}{A string, must be one of eff_Rt_general or Rt_general}
+
+\item{manuscript}{Logical indicating whether plots are for manuscript}
 }
 \value{
 A ggplot2 object for multivariant Rt
