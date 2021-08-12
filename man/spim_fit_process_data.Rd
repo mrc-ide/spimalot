@@ -7,10 +7,11 @@
 spim_fit_process_data(admissions, rtm, fitted, full, vaccination)
 }
 \arguments{
-\item{rtm}{The rtm data set}
+\item{admissions}{The admissions data set from
+\link{spim_data_admissions}. Set to NULL if not fitting or plotting
+age-specific data}
 
-\item{data_admissions}{The admissions data set from
-\link{spim_data_admissions}}
+\item{rtm}{The rtm data set}
 
 \item{data}{The data set as passed to
 \link{spim_particle_filter}}
