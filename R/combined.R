@@ -101,7 +101,10 @@ spim_combined_onward_simulate <- function(dat) {
 
   dates <- dat$simulate[[1]]$date
   idx_dates <- dat$samples[[1]]$trajectories$date %in% dates
-  state_names <- unique(c(rownames(simulate$state[[1]]), "deaths_hosp"))
+  state_names <- unique(c(rownames(simulate$state[[1]]), "deaths_hosp",
+                          "sero_pos_1", "sero_pos_2"))
+  state_names <- intersect(state_names,
+                           rownames(dat$samples[[1]]$trajectories$state))
 
   state <- lapply(dat$samples, function(x)
     x$trajectories$state[state_names, , idx_dates])
