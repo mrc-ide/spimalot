@@ -276,12 +276,14 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
   dimnames(state)[[3]] <- regions
 
   message("Adding summary statistics")
+
   ret <- list(
     date = dates,
     summary_state = create_summary_state(state, args$output_keep, dates))
 
   if (args$output_time_series) {
-    ret$state <- state[args$output_keep, , , ]
+    ret$state <- state[c(args$output_keep, "prob_strain_1",
+                         "prob_strain_2"), , , ]
   }
 
   if (args$output_state_by_age) {
@@ -914,6 +916,7 @@ simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
 ## make R strain specific
 fixme_calculate_n_protected <- function(n_vaccinated, R, vaccine_efficacy,
                                         booster_efficacy) {
+
   vp <- get_vaccine_protection(vaccine_efficacy, booster_efficacy)
 
   # Methodology: calculate incidence of first / second doses,
