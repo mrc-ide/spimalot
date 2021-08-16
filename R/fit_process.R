@@ -165,8 +165,9 @@ create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
     c(ret, calculate_vaccination(ret$state, vaccine_efficacy, cross_immunity))
 
   # thin trajectories
-  ret$state <- ret$state[c("deaths", "deaths_comm", "deaths_hosp", "admitted", "diagnoses",
-                           "infections", "hosp", "icu"), , ]
+  ret$state <- ret$state[c("deaths", "deaths_comm", "deaths_hosp", "admitted",
+                           "diagnoses", "infections", "hosp", "icu",
+                           "prob_strain_1", "prob_strain_2"), , ]
 
   # reshape to add a regional dimension
   ret$state <- mcstate::array_reshape(ret$state, i = 2, c(ncol(ret$state), 1))
