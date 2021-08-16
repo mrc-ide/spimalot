@@ -216,17 +216,64 @@ spim_simulate_simplify_rt <- function(x) {
 ##' Combine diagnoses and admitted trajectories in simulated object
 ##' @title  Combine diagnoses and admitted trajectories
 ##' @param obj A simulated object
+##'
+##' @param incidence Logical, whether you are combining incidence trajectories
+##'    or not
+##'
 ##' @export
-spim_simulate_add_diagnoses_admitted <- function(obj) {
+spim_simulate_add_diagnoses_admitted <- function(obj, incidence = FALSE) {
 
   # return immediately for summary run
   if (!("state" %in% names(obj))) return(obj)
 
   nms <- c("diagnoses", "admitted")
+  if (incidence) {
+    nms <- paste0(nms, "_inc")
+  }
+
   if (all(nms %in% rownames(obj$state))) {
     state <- apply(obj$state[nms, , , , drop = FALSE], c(2, 3, 4), sum)
     dim(state) <- c(1, dim(state))
-    rownames(state) <- paste0(nms, collapse = "_")
+    if (incidence) {
+      rownames(state) <- "diagnoses_admitted_inc"
+    } else {
+      rownames(state) <- "diagnoses_admitted"
+    }
+
+    obj$state <- abind::abind(obj$state, state, along = 1L)
+  }
+
+  obj
+}
+
+
+##' Combine all death trajectories in simulated object
+##' @title  Combine all death trajectories
+##' @param obj A simulated object
+##'
+##' @param incidence Logical, whether you are combining incidence trajectories
+##'    or not
+##'
+##' @export
+spim_simulate_add_all_deaths <- function(obj, incidence = FALSE) {
+
+  # return immediately for summary run
+  if (!("state" %in% names(obj))) return(obj)
+
+  nms <- c("deaths_hosp", "deaths_carehomes", "deaths_comm")
+  if (incidence) {
+    nms <- paste0(nms, "_inc")
+  }
+
+  if (all(nms %in% rownames(obj$state))) {
+    state <- apply(obj$state[nms, , , , drop = FALSE], c(2, 3, 4), sum)
+    dim(state) <- c(1, dim(state))
+    if (incidence) {
+      rownames(state) <- "deaths_inc"
+    } else {
+      rownames(state) <- "deaths"
+    }
+
     obj$state <- abind::abind(obj$state, state, along = 1L)
   }
 
