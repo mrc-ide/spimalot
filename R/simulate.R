@@ -281,8 +281,7 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
     summary_state = create_summary_state(state, args$output_keep, dates))
 
   if (args$output_time_series) {
-    ret$state <- state[c(args$output_keep, "sero_pos_1",
-                         "sero_pos_2"), , , ]
+    ret$state <- state[args$output_keep, , , ]
   }
 
   if (args$output_state_by_age) {
