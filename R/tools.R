@@ -68,6 +68,10 @@ spim_rrq_controller <- function(root = here::here()) {
   } else {
     message(sprintf("Found rrq controller for queue '%s'", queue_id))
     message(sprintf("Using root directory '%s'", root))
-    withr::with_dir(root, rrq::rrq_controller(queue_id))
+    if (packageVersion("rrq") < "0.5.0") {
+      withr::with_dir(root, rrq::rrq_controller(queue_id))
+    } else {
+      withr::with_dir(root, rrq::rrq_controller$new(queue_id))
+    }
   }
 }
