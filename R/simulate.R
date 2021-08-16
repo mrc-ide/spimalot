@@ -330,14 +330,20 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
 
   if (args$output_vaccination) {
 
+  rel_list <- pars[[1]][names(args$vaccine_efficacy)]
+  vaccine_efficacy_strain_1 <- lapply(rel_list, "[", , 1, -5)
+  vaccine_efficacy_strain_2 <- lapply(rel_list, "[", , 2, -5)
+  booster_efficacy_strain_1 <- lapply(rel_list, "[", , 1, 5)
+  booster_efficacy_strain_2 <- lapply(rel_list, "[", , 2, 5)
+
     ret <-
       c(ret,
         simulate_calculate_vaccination(state, index,
-                                       args$vaccine_efficacy,
-                                       args$vaccine_booster_efficacy,
+                                       vaccine_efficacy = vaccine_efficacy_strain_1,
+                                       booster_efficacy = booster_efficacy_strain_1,
                                        n_strain,
-                                       args$strain_vaccine_efficacy,
-                                       args$strain_vaccine_booster_efficacy,
+                                       strain_vaccine_efficacy = vaccine_efficacy_strain_2,
+                                       strain_vaccine_booster_efficacy = booster_efficacy_strain_2,
                                        args$strain_cross_immunity))
   }
 
@@ -867,7 +873,7 @@ simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
   ## need to allow for imperfect cross-strain immunity
   ## R_strain_1: 100% of strain-level 1, 3, 4 + args$cross_protection[2] * strain-level 2
   ## R_strain_2: 100% of strain-level 2, 3, 4 + args$cross_protection[1] * strain-level 1
-browser()
+
   calc_strain_immunity <- function(strain, R, strain_cross_immunity) {
     apply(R[-strain, , , ], seq(2, 4), sum) +
       R[strain, , , ] * strain_cross_immunity[strain]
