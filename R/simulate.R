@@ -867,15 +867,15 @@ simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
   ## need to allow for imperfect cross-strain immunity
   ## R_strain_1: 100% of strain-level 1, 3, 4 + args$cross_protection[2] * strain-level 2
   ## R_strain_2: 100% of strain-level 2, 3, 4 + args$cross_protection[1] * strain-level 1
-
+browser()
   calc_strain_immunity <- function(strain, R, strain_cross_immunity) {
     apply(R[-strain, , , ], seq(2, 4), sum) +
       R[strain, , , ] * strain_cross_immunity[strain]
   }
 
-  idx_strain <- c(1, 2)
-  R_strain <- lapply(idx_strain, calc_strain_immunity, R, strain_cross_immunity)
-  names(R_strain) <- paste0("strain_", idx_strain)
+  R_strain <- list(strain_1 = calc_strain_immunity(2, R, strain_cross_immunity),
+                   strain_2 = calc_strain_immunity(1, R, strain_cross_immunity))
+
 
   ## R_strain: [vaccine, region, time]
 
