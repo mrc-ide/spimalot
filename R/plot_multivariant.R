@@ -169,8 +169,8 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
     ggplot2::geom_vline(xintercept = as.Date(betas[, 1]), lty = 3,
                         col = "red4") +
     ggplot2::geom_label(ggplot2::aes(label = label, y = label_y),
-                        hjust = 0.5, size = 1.8,
-                        vjust = 0.5, family = "Times New Roman",
+                        hjust = 0.5, size = 3,
+                        vjust = 0.5, family = "serif",
                         label.padding = ggplot2::unit(0.15, "lines")) +
     ggplot2::ylab(ylab) +
     ggplot2::xlab("") +
@@ -183,7 +183,7 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
                    panel.grid = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
                    text = ggplot2::element_text(
-                     family = "Times New Roman", size = 10),
+                     family = "serif", size = 10),
                    legend.title = ggplot2::element_blank(),
                    legend.position = "bottom",
                    legend.box.margin = ggplot2::margin(
@@ -346,4 +346,3 @@ spim_plot_voc_proportion <- function(dat, date_restart, region) {
                                                 size = 10))
   g
 }
-
