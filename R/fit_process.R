@@ -47,7 +47,7 @@ spim_fit_process <- function(samples, parameters, data, control,
     calculate_ifr_t(forecast, samples$info$multistrain) # TODO: a bit slow
 
   if (is.null(data$admissions)) {
-    admissions <- admissions
+    admissions <- NULL
   } else {
     message("Summarising admissions")
     admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
