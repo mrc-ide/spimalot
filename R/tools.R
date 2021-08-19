@@ -5,7 +5,7 @@
 ##' @param region Vector of standard region names (london, scotland,
 ##'   england, uk)
 ##'
-##' @param type Convertion type. Current can be one of "name", "code" or
+##' @param type Conversion type. Current can be one of "name", "code" or
 ##'   "upper"
 ##'
 ##' @return A vector of new names

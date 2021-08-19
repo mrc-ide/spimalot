@@ -13,7 +13,7 @@ spim_plot_fit_traces(samples, region = NULL)
 spim_plot_fit_posteriors(samples, region = NULL)
 }
 \arguments{
-\item{samples}{The eamples}
+\item{samples}{The samples}
 
 \item{region}{The region. Leave this \code{NULL} except for
 multi-region fits}

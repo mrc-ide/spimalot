@@ -11,10 +11,10 @@
 ##'
 ##' @param regions Character vector of regions to use
 ##'
-##' @param inflate_strain Logical, inidicating if an empty second
+##' @param inflate_strain Logical, indicating if an empty second
 ##'   strain should be added
 ##'
-##' @param inflate_booster Logical, inidicating if an empty booster
+##' @param inflate_booster Logical, indicating if an empty booster
 ##'   dose should be added
 ##'
 ##' @export

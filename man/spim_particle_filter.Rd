@@ -2,7 +2,7 @@
 % Please edit documentation in R/fit.R
 \name{spim_particle_filter}
 \alias{spim_particle_filter}
-\title{Contruct a particle filter}
+\title{Construct a particle filter}
 \usage{
 spim_particle_filter(data, pars, control)
 }
@@ -11,7 +11,7 @@ spim_particle_filter(data, pars, control)
 
 \item{pars}{Parameters, from \link{spim_pars}}
 
-\item{control}{A list of control parmaeters including
+\item{control}{A list of control parameters including
 \code{n_particles}, \code{n_threads} and \code{compiled_compare}, typically the
 \code{particle_filter} element of the result of
 \code{\link[=spim_control]{spim_control()}}}

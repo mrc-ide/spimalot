@@ -312,7 +312,7 @@ combined_switch_levels <- function(x) {
 ##'
 ##' @param combined Combined fits object
 ##'
-##' @param ignore_uk If `TRUE` population of UK is retured as NA
+##' @param ignore_uk If `TRUE` population of UK is returned as NA
 ##'
 ##' @param by_age Logical, indicating if population should be returned by age
 ##'

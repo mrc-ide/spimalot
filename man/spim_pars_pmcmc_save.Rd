@@ -15,6 +15,6 @@ spim_pars_pmcmc_save(p, path)
 Nothing, called for side effects
 }
 \description{
-Write pmcmc paramters out after fitting and aggregation (inverse
+Write pmcmc parameters out after fitting and aggregation (inverse
 of \link{spim_pars_pmcmc_load})
 }

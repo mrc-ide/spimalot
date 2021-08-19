@@ -50,7 +50,7 @@ spim_plot_rt_dist <- function(npi_key, xlim, ylim, cols, labels = NULL,
 
 
 ##' Plot seasonality trends over time
-##' @title Plot sesonality over time
+##' @title Plot seasonality over time
 ##'
 ##' @param peak_date Date where seasonal multiplier is highest
 ##' @param seasonality Seasonal multiplier

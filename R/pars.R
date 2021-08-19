@@ -16,12 +16,12 @@
 ##' @inheritParams spim_data
 ##'
 ##' @param multistrain Logical, indicating if the model is a
-##'   "multistrain" model allowing for mulitiple competing strains.
+##'   "multistrain" model allowing for multiple competing strains.
 ##'
 ##' @param beta_date A vector of date (strings) for the beta
 ##'   parameters. Must align with parameters
 ##'
-##' @param vaccination Vacination data, from
+##' @param vaccination Vaccination data, from
 ##'   [spimalot::spim_vaccination_data]
 ##'
 ##' @param parameters Parameter information, from
@@ -83,7 +83,7 @@ spim_pars <- function(date, region, model_type, multistrain,
 
 
 ##' Load the pmcmc parameters from disk. We expect three files; one
-##' for the overal parameters (`info`), one with details of the priors
+##' for the overall parameters (`info`), one with details of the priors
 ##' (`prior`) and one describing the proposal kernel (`proposal`).
 ##'
 ##' @title Load a set of parameters for the pmcmc
@@ -115,7 +115,7 @@ spim_pars_pmcmc_load <- function(path, info = "info.csv", prior = "prior.csv",
 }
 
 
-##' Write pmcmc paramters out after fitting and aggregation (inverse
+##' Write pmcmc parameters out after fitting and aggregation (inverse
 ##' of [spimalot::spim_pars_pmcmc_load])
 ##'
 ##' @title Write out parameters
@@ -139,7 +139,7 @@ spim_pars_pmcmc_save <- function(p, path) {
 ##'
 ##' @title Create vector of beta dates
 ##'
-##' @param date Todays dates (last date is set to last_beta_days_ago)
+##' @param date Today's dates (last date is set to last_beta_days_ago)
 ##'
 ##' @param last_beta_days_ago Number of days in the past for last beta point
 ##'
