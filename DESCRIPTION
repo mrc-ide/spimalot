@@ -1,6 +1,6 @@
 Package: spimalot
 Title: Support for 'sircovid'
-Version: 0.2.57
+Version: 0.3.0
 Authors@R:
     c(person(given = "Marc",
            family = "Baguelin",
@@ -29,7 +29,9 @@ Authors@R:
       person(given = "Raphael",
            family = "Sonabend",
            role = c("aut"),
-           email = "r.sonabend@imperial.ac.uk"))
+           email = "r.sonabend@imperial.ac.uk"),
+      person("Imperial College of Science, Technology and Medicine",
+             role = "cph"))
 Description: Code that supports that use of sircovid for our regular
     workflows (weekly SPI-M analayses, medium term projections) and
     forward simulation. Unlike 'sircovid', this package is intended to
