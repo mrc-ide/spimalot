@@ -3,7 +3,7 @@ test_that("spim_pars_load throws useful error messages", {
   path <- tempfile()
   expect_error(
     spim_pars_pmcmc_load(path),
-    sprintf("File '%s' does not exist", path))
+    sprintf("File '.+' does not exist", path))
 
   dir.create(path, FALSE, TRUE)
   expect_error(
