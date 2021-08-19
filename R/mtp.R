@@ -86,7 +86,7 @@ mtp_population <- function(combined) {
 ##'
 ##' @title MTP simulation outputs by age and vaccination class
 ##'
-##' @param dat Output from MTP simulation
+##' @param res Output from MTP simulation
 ##'
 ##' @param region A string, region for which outputs will be plotted
 ##'

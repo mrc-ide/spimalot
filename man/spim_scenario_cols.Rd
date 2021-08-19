@@ -12,9 +12,9 @@ spim_scenario_cols(
 )
 }
 \arguments{
-\item{scenarios}{Unique scenario names. Scenarios with '\link{High R}' will
+\item{scenarios}{Unique scenario names. Scenarios with \verb{[High R]} will
 darken the colour for the corresponding central scenario and scenarios
-with '\link{Low R}' will brighten the colour for the corresponding
+with \verb{[Low R]} will brighten the colour for the corresponding
 central scenario.}
 
 \item{weight}{\code{weight} passed to \code{mix_cols} to darken/brighten colours for

@@ -59,6 +59,9 @@ spim_region_name <- function(region, type = "name") {
 ##'
 ##' @title Find rrq controller
 ##'
+##' @param root Root of the orderly project (used to anchor the rrq
+##'   file store).
+##'
 ##' @return Returns an rrq controller object if found, otherwise errors
 ##' @export
 spim_rrq_controller <- function(root = here::here()) {

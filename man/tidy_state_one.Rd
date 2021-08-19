@@ -7,9 +7,9 @@
 tidy_state_one(x, common)
 }
 \arguments{
-\item{common}{A one-row data.frame giving metadata to attach to results}
+\item{x}{A simulated object}
 
-\item{res}{A simulated object}
+\item{common}{A one-row data.frame giving metadata to attach to results}
 }
 \description{
 Create tidy (long) dataframe of simulated results

@@ -21,6 +21,8 @@
 ##' @param burnin number of steps out of `n_mcmc` to be used as a burn-in in
 ##'    PMCMC if `short_run = FALSE`
 ##'
+##' @param forecast_days number of days to forecast after the simulation
+##'
 ##' @param workers Logical, indicating if we should enable workers. If
 ##'   `TRUE`, then a number of workers between 1 and 4 will be used
 ##'   depending on `n_chains` and the detected number of cores.

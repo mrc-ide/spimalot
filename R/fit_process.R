@@ -127,13 +127,12 @@ spim_fit_process <- function(samples, parameters, data, control,
 ##'
 ##' @param rtm The rtm data set
 ##'
-##'
-##' @param data The data set as passed to
+##' @param fitted The data set as passed to
 ##'   [spimalot::spim_particle_filter]
 ##'
-##' @param data_full Full data set, before any right-censoring
+##' @param full Full data set, before any right-censoring
 ##'
-##' @param data_vaccination The vaccination data set as passed to
+##' @param vaccination The vaccination data set as passed to
 ##'   [spimalot::spim_pars]
 ##'
 ##' @export

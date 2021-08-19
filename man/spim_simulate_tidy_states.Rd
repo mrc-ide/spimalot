@@ -11,6 +11,8 @@ spim_simulate_tidy_states(res, run_grid, combined)
 
 \item{run_grid}{data.frame with same number of rows as \code{res} giving metadata
 to attach to results}
+
+\item{combined}{Ignored}
 }
 \description{
 Create tidy (long) dataframe of simulated results

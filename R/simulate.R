@@ -1459,6 +1459,8 @@ spim_simulation_predictors <- function(summary) {
 ##'  overwrite the csv in the central/low/high adherence scenario. This may be
 ##'  be useful if automating some, but not all, of the Rt values
 ##'
+##' @param npi_key Optional data.frame, instead of reading from `path`
+##'
 ##' @return tibble for passing to [spim_prepare_rt_future]
 ##'
 ##' @export
@@ -1571,6 +1573,8 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
 ##' Prepare Rt future grid for simulation task
 ##'
 ##' @title Prepare Rt future for simulation
+##'
+##' @param npi_key data.frame, rather than reading from `path`
 ##'
 ##' @param start_date Start date of simulation, all changes in schedule before
 ##'  this date are removed.

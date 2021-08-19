@@ -34,6 +34,8 @@
 ##'   values. Only has an effect if `multistrain` is `TRUE` and then
 ##'   must have a length of 2 if given.
 ##'
+##' @param waning_rate Rate of waning immunity
+##'
 ##' @return An [mcstate::pmcmc_parameters] object which can be used
 ##'   with [mcstate::pmcmc]
 ##'
