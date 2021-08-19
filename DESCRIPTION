@@ -54,13 +54,16 @@ Imports:
     dplyr,
     dust,
     epitrix,
+    extrafont,
     ggnewscale,
     ggplot2,
     ggsci,
+    ggthemes,
     khroma,
     lubridate,
     matrixStats,
     mcstate (>= 0.5.14),
+    patchwork,
     readxl,
     reshape2,
     sircovid (>= 0.11.28),
@@ -69,10 +72,7 @@ Imports:
     tibble,
     tidyr,
     viridisLite,
-    writexl,
-    ggthemes,
-    extrafont,
-    patchwork
+    writexl
 Suggests:
     digest,
     mockery,
