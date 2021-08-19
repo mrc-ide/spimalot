@@ -66,7 +66,8 @@ spim_control <- function(short_run, n_chains, date_restart = NULL,
                                   save_restart = date_restart,
                                   nested_step_ratio = 1, # ignored if single
                                   rerun_every = rerun_every,
-                                  rerun_random = TRUE)
+                                  rerun_random = TRUE,
+                                  filter_early_exit = TRUE)
 
   particle_filter <- list(n_particles = n_particles,
                           n_threads = parallel$n_threads_total,
