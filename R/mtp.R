@@ -73,7 +73,14 @@ mtp_template_common <- function(scenario, date, model_type) {
              "Creation Year" = lubridate::year(date))
 }
 
-
+##' Generate MTP population from combined
+##'
+##' @title Generate MTP population from combined
+##'
+##' @param combined Output from combined fitting task
+##'   rtm_inference_pmcmc_spim_fits2_combined
+##'
+##' @export
 mtp_population <- function(combined) {
   pop <- vnapply(combined$pars[1, ], function(x) sum(x$N_tot[2:18]))
   c(pop,

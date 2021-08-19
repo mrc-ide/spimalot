@@ -712,6 +712,16 @@ setup_future_betas <- function(pars, rt_future, S, rt_type,
 }
 
 
+##' Seasonality
+##'
+##'@title Seasonality
+##'
+#' @param date date in sircovid date format
+#' @param seasonality_date_peak date of peak in sircovid date format
+#' @param seasonality peak to annual average difference
+#' @return a value or vector of values with seasonal effect for each date
+#'
+#' @export
 calc_seasonality <- function(date, seasonality_date_peak, seasonality) {
   delta <- ((date - seasonality_date_peak) %% 365) / 365
   1 + cos(2 * pi * delta) * seasonality
