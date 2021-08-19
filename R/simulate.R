@@ -285,8 +285,8 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
   }
 
   if (args$output_state_by_age) {
-    ## TODO: collision here of two extract functions that are incompatible
-    ret$state_by_age <- fixme_extract_age_class_state(state, index)
+
+    ret$state_by_age <- simulate_extract_age_class_state(state, index)
   }
 
   if (args$output_rt) {
@@ -888,11 +888,11 @@ simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
   # calculate the proportion protected given strain-specific vaccine efficacy
   # and cross-strain immunity
 
-  n_protected_strain_1 <- fixme_calculate_n_protected(
+  n_protected_strain_1 <- calculate_n_protected(
     n_vaccinated, R_strain$strain_1, vaccine_efficacy, booster_efficacy)
   dimnames(n_protected_strain_1)[[2]] <- regions
 
-  n_protected_strain_2 <- fixme_calculate_n_protected(
+  n_protected_strain_2 <- calculate_n_protected(
     n_vaccinated, R_strain$strain_2, strain_vaccine_efficacy,
     strain_vaccine_booster_efficacy)
   dimnames(n_protected_strain_1)[[2]] <- regions
@@ -918,7 +918,7 @@ simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
 
 ## TODO: overlap considerably with calculate_n_protected
 ## make R strain specific
-fixme_calculate_n_protected <- function(n_vaccinated, R, vaccine_efficacy,
+calculate_n_protected <- function(n_vaccinated, R, vaccine_efficacy,
                                         booster_efficacy) {
   vp <- get_vaccine_protection(vaccine_efficacy, booster_efficacy)
 
@@ -1176,7 +1176,7 @@ validate_rt_future <- function(x, regions, name = deparse(substitute(x))) {
 }
 
 
-fixme_extract_age_class_state <- function(state, index) {
+simulate_extract_age_class_state <- function(state, index) {
   n_groups <- sircovid:::carehomes_n_groups()
 
   ## output cumulative states by
@@ -1196,7 +1196,7 @@ fixme_extract_age_class_state <- function(state, index) {
     ## aggregate partially immunised strata
     x[, 2L, , , ] <- x[, 2L, , , ] + x[, 3L, , , ]
     x <- x[, -3L, , , ]
-    ## TODO: fix this
+
     if (ncol(x) == 3) {
       colnames(x) <- c("unvaccinated", "partial_protection", "full_protection")
     } else  if (ncol(x) == 4) {
@@ -1491,7 +1491,6 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
 
   nations <- unique(npi_key$nation)
 
-  ## FIXME RS - This is terrible and needs fixing
   for (ad in unique(npi_key$adherence)) {
     for (n in unique(npi_key$npi)) {
       if (sum(npi_key$npi == n & npi_key$adherence == ad) == 0) {
@@ -1502,7 +1501,6 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
     }
   }
 
- ## FIXME RS - This also isn't great
   for (ad in unique(npi_key$adherence)) {
     obj <- get(sprintf("overwrite_%s_adherence", ad))
     if (!is.null(obj)) {

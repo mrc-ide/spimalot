@@ -148,8 +148,6 @@ spim_simulate_combine_trajectories <- function(res, name, regions = NULL,
   }
 
   if (is.list(res$n_protected)) {
-    ## TODO fix me - this will not be needed once fits also output n_protected
-    ## by strain
     n_protected <- lapply(res$n_protected, combine_n_protected, regions, name)
   } else {
     n_protected <-
