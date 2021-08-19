@@ -1464,7 +1464,7 @@ spim_simulation_predictors <- function(summary) {
 ##'  overwrite the csv in the central/low/high adherence scenario. This may be
 ##'  be useful if automating some, but not all, of the Rt values
 ##'
-##' @param ,overwrite_low_adherence,overwrite_high_adherence As for
+##' @param overwrite_low_adherence,overwrite_high_adherence As for
 ##'   `overwrite_central_adherence`
 ##'
 ##' @param npi_key Optional data.frame, instead of reading from `path`
