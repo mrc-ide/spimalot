@@ -230,3 +230,110 @@ spim_prepare_aggregated_data <- function(path) {
   agg_data$england[, what] <- vapply(what, f, numeric(nr))
   agg_data
 }
+
+
+##' Diagnostic plots for checking Rt from simulation
+##' @title Check Rt from simulation
+##' @param summary_state State from simulation summary object
+##' @param combined_state State from combined object
+##' @export
+spim_plot_check_rt <- function(summary_state, combined_state) {
+
+  summary_state <- summary_state %>%
+    dplyr::filter(region == "england",
+                  state %in% c("Rt_general_both", "eff_Rt_general_both")) %>%
+    dplyr::mutate(scenario = as.factor(scenario),
+                  analysis = as.factor(analysis)) %>%
+    tidyr::pivot_wider(names_from = quantile)
+
+  combined_state <- combined_state %>%
+      dplyr::filter(region == "england",
+                    state %in% c("Rt_general_both", "eff_Rt_general_both")) %>%
+      tidyr::pivot_wider(names_from = quantile)
+
+  summary_state %>%
+
+    ggplot(aes(x = date, y = `50%`, colour = scenario)) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    geom_ribbon(alpha = 0.3,
+                aes(ymin = `2.5%`,
+                    ymax = `97.5%`,
+                    fill = scenario)) +
+    geom_line() +
+
+    geom_ribbon(data = combined_state, alpha = 0.3,
+                aes(x = date,
+                    ymin = `2.5%`,
+                    ymax = `97.5%`), inherit.aes = FALSE) +
+    geom_line(data = combined_state, aes(x = date, y = `50%`), inherit.aes = FALSE) +
+    facet_grid(cols = vars(analysis), rows = vars(state),  labeller = label_wrap_gen(width=7)) +
+    scale_x_date(date_breaks = "1 month") +
+    geom_vline(xintercept = rt_schedule$date, lty = 2, color = "gray")
+}
+
+
+##' Diagnostic plots for checking states from simulation
+##' @title Check states from simulation
+##' @param summary_state State from simulation summary object
+##' @param combined_state State from combined object
+##' @export
+spim_plot_check_state <- function(summary_state, combined_state) {
+
+  summary_state <- summary_state %>%
+    dplyr::filter(region == "england") %>%
+    dplyr::mutate(scenario = as.factor(scenario),
+                  analysis = as.factor(analysis)) %>%
+    dplyr::filter(state %in% c("diagnoses_admitted_inc",
+                              "deaths_inc", "deaths_hosp_inc",
+                              "hosp"),
+                  group == "all") %>%
+    tidyr::pivot_wider(names_from = quantile)
+
+  combined_state <- dplyr::filter(combined_state, region == "england") %>%
+    dplyr::filter(state %in% c("diagnoses_admitted_inc",
+                              "deaths_inc", "deaths_hosp_inc",
+                              "hosp"),
+                  group == "all") %>%
+    tidyr::pivot_wider(names_from = quantile)
+
+  summary_state %>%
+    ggplot(aes(x = date)) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    geom_ribbon(alpha = 0.3,
+                aes(ymin = `2.5%`,
+                    ymax = `97.5%`,
+                    fill = scenario)) +
+
+    geom_line(aes(y = `50%`, color = scenario)) +
+    geom_ribbon(data = combined_state, alpha = 0.3,
+                aes(x = date,
+                    ymin = `2.5%`,
+                    ymax = `97.5%`), inherit.aes = FALSE) +
+    geom_line(data = combined_state, aes(x = date, y = `50%`),
+              inherit.aes = FALSE) +
+    facet_grid(rows = vars(state), cols = vars(analysis), scales = "free",
+              labeller = label_wrap_gen(width = 5))
+}
+
+
+##' Diagnostic plots for checking states by age from simulation
+##' @title Check states by age from simulation
+##' @param summary_agestate State by age from simulation summary object
+##' @param ana Analysis to check, usually central
+##' @param scen Scenario to check, usually central
+##' @export
+spim_plot_check_state_by_age <- function(summary_agestate, ana, scen) {
+  summary_agestate %>%
+      dplyr::filter(region == "england",
+                    analysis == central,
+                    scenario == scen,
+                    state %in% c("infections_inc", "diagnoses_admitted_inc",
+                                 "deaths_inc", "deaths")) %>%
+      ggplot(aes(x = date, y = value, fill = vaccine_status)) +
+      geom_area() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      facet_grid(vars(state), vars(group), scales = "free",
+                 labeller = label_wrap_gen(width=10))
+}

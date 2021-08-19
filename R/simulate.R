@@ -1741,3 +1741,22 @@ spim_create_rt_scenario <- function(path, region, scenario, schedule) {
   out[c(TRUE, rowSums(out[2:nrow(out), c(1, 2, 4)] == out[seq(nrow(out) - 1), c(1, 2, 4)]) < 3), ]
 
 }
+
+
+#' Calculate when all second doses given out
+#'
+#' @title Calculate final doses date
+#' @param summary Simulation summary object
+#'
+#' @export
+spim_simulate_complete_doses <- function(summary) {
+  summary_tidy$n_doses %>%
+    dplyr::filter(state == "second_dose_inc",
+                  region == "england") %>%
+    dplyr::group_by(across(-c(value, group))) %>%
+    dplyr::summarise(mean = sum(value)) %>%
+    dplyr::filter(mean < 5e3) %>%
+    dplyr::filter(date == min(date)) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(analysis, scenario, date, mean)
+}
