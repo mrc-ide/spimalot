@@ -248,9 +248,11 @@ spim_simulate_remove_dates_to <- function(obj, date) {
   id0 <- seq(which(sircovid::sircovid_date_as_date(obj$date) == date))
   obj$date <- obj$date[-id0]
   obj$state <- obj$state[, , , -id0, drop = FALSE]
-  obj$state_by_age <- lapply(obj$state_by_age, function(x) x[, , , -id0, drop = FALSE])
+  obj$state_by_age <- lapply(obj$state_by_age, function(x)
+    x[, , , -id0, drop = FALSE])
   obj$n_vaccinated <- obj$n_vaccinated[, , , -id0, drop = FALSE]
-  obj$n_protected <- lapply(obj$n_protected, function(x) x[, , -id0, drop = FALSE])
+  obj$n_protected <- lapply(obj$n_protected, function(x)
+    x[, , -id0, drop = FALSE])
   obj$n_doses <- obj$n_doses[, , , -id0, drop = FALSE]
   obj
 }

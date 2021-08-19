@@ -167,7 +167,9 @@ spim_mtp_age_vaccine_outputs <- function(res, region = "england") {
       (plots_age_vacc[["deaths_inc"]] + plots_age_vacc_prop[["deaths_inc"]]) /
       (plots_age_vacc[["deaths"]] + plots_age_vacc_prop[["deaths"]]) +
       plot_annotation(
-        caption = "Partial immunity includes those with either one or two doses that have not yet achieved full vaccine efficacy",
+        caption = paste("Partial immunity includes those with either one or",
+                        "two doses that have not yet achieved full vaccine",
+                        "efficacy"),
         title = paste(stringr::str_to_sentence(region)),
         subtitle = paste(stringr::str_to_sentence(sub("_", " ", s))))
 
