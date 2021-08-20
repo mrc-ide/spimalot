@@ -29,7 +29,7 @@ spim_summary_nowcast <- function(dat) {
 
 
 ##' @rdname spim_summary
-##' @param time_series_date The start date for the preceeding time series
+##' @param time_series_date The start date for the preceding time series
 ##' @export
 spim_summary_time_series <- function(dat, time_series_date) {
   message("Creating time series")

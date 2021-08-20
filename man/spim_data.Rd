@@ -32,7 +32,7 @@ this argument.}
 about deaths, positive test results, react serology, etc. TODO:
 DESCRIBE FORMAT; TODO: DESCRIBE ORIGIN}
 
-\item{serology}{The additional serology data. TODO: DESCRBE FORMAT}
+\item{serology}{The additional serology data. TODO: DESCRIBE FORMAT}
 
 \item{trim_deaths}{The number of days of deaths to trim to avoid
 back-fill issues. We typically use a value of 4 days.}

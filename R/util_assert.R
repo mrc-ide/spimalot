@@ -148,7 +148,7 @@ match_value <- function(arg, choices, name = deparse(substitute(arg))) {
 }
 
 
-assert_nonmissing <- function(x, name = deparse(substitite(x))) {
+assert_nonmissing <- function(x, name = deparse(substitute(x))) {
   if (anyNA(x)) {
     stop(sprintf("'%s' must be non-NA", name))
   }

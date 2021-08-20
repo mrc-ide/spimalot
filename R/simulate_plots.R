@@ -50,7 +50,7 @@ spim_plot_rt_dist <- function(npi_key, xlim, ylim, cols, labels = NULL,
 
 
 ##' Plot seasonality trends over time
-##' @title Plot sesonality over time
+##' @title Plot seasonality over time
 ##'
 ##' @param peak_date Date where seasonal multiplier is highest
 ##' @param seasonality Seasonal multiplier
@@ -121,9 +121,9 @@ spim_plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
 ##' Select colours for plotting simulation scenarios
 ##' @title Return accessible scenario colours
 ##'
-##' @param scenarios Unique scenario names. Scenarios with '[High R]' will
+##' @param scenarios Unique scenario names. Scenarios with `[High R]` will
 ##'   darken the colour for the corresponding central scenario and scenarios
-##'   with '[Low R]' will brighten the colour for the corresponding
+##'   with `[Low R]` will brighten the colour for the corresponding
 ##'   central scenario.
 ##' @param weight `weight` passed to `mix_cols` to darken/brighten colours for
 ##'   high/low R scenarios

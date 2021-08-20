@@ -47,7 +47,7 @@ spim_fit_process <- function(samples, parameters, data, control,
     calculate_ifr_t(forecast, samples$info$multistrain) # TODO: a bit slow
 
   if (is.null(data$admissions)) {
-    admissions = admissions
+    admissions <- NULL
   } else {
     message("Summarising admissions")
     admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
@@ -127,13 +127,12 @@ spim_fit_process <- function(samples, parameters, data, control,
 ##'
 ##' @param rtm The rtm data set
 ##'
-##'
-##' @param data The data set as passed to
+##' @param fitted The data set as passed to
 ##'   [spimalot::spim_particle_filter]
 ##'
-##' @param data_full Full data set, before any right-censoring
+##' @param full Full data set, before any right-censoring
 ##'
-##' @param data_vaccination The vaccination data set as passed to
+##' @param vaccination The vaccination data set as passed to
 ##'   [spimalot::spim_pars]
 ##'
 ##' @export
@@ -165,8 +164,8 @@ create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
     c(ret, calculate_vaccination(ret$state, vaccine_efficacy, cross_immunity))
 
   # thin trajectories
-  ret$state <- ret$state[c("deaths", "deaths_comm", "deaths_hosp", "admitted", "diagnoses",
-                           "infections", "hosp", "icu"), , ]
+  ret$state <- ret$state[c("deaths", "deaths_comm", "deaths_hosp", "admitted",
+                           "diagnoses", "infections", "hosp", "icu"), , ]
 
   # reshape to add a regional dimension
   ret$state <- mcstate::array_reshape(ret$state, i = 2, c(ncol(ret$state), 1))

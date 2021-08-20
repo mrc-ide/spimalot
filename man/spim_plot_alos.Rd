@@ -11,6 +11,8 @@ spim_plot_alos(dat, regions, ymin = NULL, ymax = NULL, forecast_until = NULL)
 
 \item{regions}{Vector of regions to plot}
 
+\item{ymin}{Minimum percentage on y-axis}
+
 \item{ymax}{Maximum percentage on y-axis}
 
 \item{forecast_until}{Optional date to forecast till}

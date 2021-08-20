@@ -309,12 +309,20 @@ combined_switch_levels <- function(x) {
 
 ##' Get region and country population from a combined fits object
 ##' @title Get population from combined
+##'
 ##' @param combined Combined fits object
-##' @param ignore_uk If `TRUE` population of UK is retured as NA
+##'
+##' @param ignore_uk If `TRUE` population of UK is returned as NA
+##'
+##' @param by_age Logical, indicating if population should be returned by age
+##'
+##' @param group Vector of group indices (for the carehomes model on
+##'   `1:19`)
+##'
 ##' @return data.frame of region/country populations
 ##' @export
 spim_population <- function(combined, ignore_uk = FALSE, by_age = TRUE,
-                           group = 1:19) {
+                            group = 1:19) {
   pop <- vapply(names(combined$pars), function(r)
     as.integer(combined$transform[[r]](combined$pars[[r]][1, ])$N_tot[group]),
     group)
