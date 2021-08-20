@@ -39,9 +39,14 @@ Rt_sd (standard deviation for Rt), adherence (low, central, or high)}
 non-NULL then creates a scenario of gradual transition from Rt in scenario
 \code{gradual_start} to Rt in \code{gradual_end} in \code{gradual_steps} number of steps}
 
-\item{overwrite_central_adherence, overwrite_low_adherence, overwrite_high_adherence}{If non-NULL then a list with names corresponding to \code{npi} and values to
+\item{overwrite_central_adherence}{If non-NULL then a list with names corresponding to \code{npi} and values to
 overwrite the csv in the central/low/high adherence scenario. This may be
 be useful if automating some, but not all, of the Rt values}
+
+\item{overwrite_low_adherence, overwrite_high_adherence}{As for
+\code{overwrite_central_adherence}}
+
+\item{npi_key}{Optional data.frame, instead of reading from \code{path}}
 }
 \value{
 tibble for passing to \link{spim_prepare_rt_future}

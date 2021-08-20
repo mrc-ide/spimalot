@@ -13,12 +13,12 @@ age-specific data}
 
 \item{rtm}{The rtm data set}
 
-\item{data}{The data set as passed to
+\item{fitted}{The data set as passed to
 \link{spim_particle_filter}}
 
-\item{data_full}{Full data set, before any right-censoring}
+\item{full}{Full data set, before any right-censoring}
 
-\item{data_vaccination}{The vaccination data set as passed to
+\item{vaccination}{The vaccination data set as passed to
 \link{spim_pars}}
 }
 \description{

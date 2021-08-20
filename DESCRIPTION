@@ -1,6 +1,6 @@
 Package: spimalot
 Title: Support for 'sircovid'
-Version: 0.2.57
+Version: 0.3.0
 Authors@R:
     c(person(given = "Marc",
            family = "Baguelin",
@@ -29,9 +29,11 @@ Authors@R:
       person(given = "Raphael",
            family = "Sonabend",
            role = c("aut"),
-           email = "r.sonabend@imperial.ac.uk"))
+           email = "r.sonabend@imperial.ac.uk"),
+      person("Imperial College of Science, Technology and Medicine",
+             role = "cph"))
 Description: Code that supports that use of sircovid for our regular
-    workflows (weekly SPI-M analayses, medium term projections) and
+    workflows (weekly SPI-M analyses, medium term projections) and
     forward simulation. Unlike 'sircovid', this package is intended to
     be more rapidly iterated, contains no compiled code, and will be
     significantly less tested because it must bend around
@@ -44,28 +46,33 @@ URL: https://github.com/mrc-ide/spimalot
 BugReports: https://github.com/mrc-ide/spimalot/issues
 Depends: R (>= 3.5.0)
 Imports:
+    EpiEstim,
     Hmisc,
     abind,
     coda,
     distr6,
     dplyr,
     dust,
+    epitrix,
+    extrafont,
     ggnewscale,
     ggplot2,
     ggsci,
+    ggthemes,
     khroma,
     lubridate,
-    mcstate (>= 0.5.14),
+    matrixStats,
+    mcstate (>= 0.6.6),
+    patchwork,
     readxl,
     reshape2,
-    sircovid (>= 0.11.28),
+    sircovid (>= 0.11.30),
     stringr,
+    tdigest,
+    tibble,
     tidyr,
     viridisLite,
-    writexl,
-    ggthemes,
-    extrafont,
-    patchwork
+    writexl
 Suggests:
     digest,
     mockery,
@@ -75,5 +82,7 @@ Suggests:
 Remotes:
     mrc-ide/dust,
     mrc-ide/mcstate,
+    mrc-ide/rrq,
     mrc-ide/sircovid
 Config/testthat/edition: 3
+Language: en-GB

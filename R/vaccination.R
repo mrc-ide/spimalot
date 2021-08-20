@@ -4,7 +4,7 @@
 ##'
 ##' @inheritParams spim_pars
 ##'
-##' @param uptake A vector of propotion update by age. Must be length 19
+##' @param uptake A vector of proportion update by age. Must be length 19
 ##'
 ##' @param end_date The final date of the simulation; we will expand
 ##'   out the vaccination schedule to this date (if the simulation
@@ -16,7 +16,7 @@
 ##'   elements `rel_susceptibility`, `rel_p_sympt`,
 ##'   `rel_p_hosp_if_sympt`, `rel_p_death`, `rel_infectivity` (relative effect
 ##'   of susceptibility, symptomatic disease, hospitalisation conditional
-##'   on symtomatic, death conditional on hospitalisation, and infectivity).
+##'   on symptomatic, death conditional on hospitalisation, and infectivity).
 ##'   Each of the list elements must
 ##'   be a `19 x n` matrix (where `n` is the number of vaccination
 ##'   classes and is shared across all elements). Every number in the

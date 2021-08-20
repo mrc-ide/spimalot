@@ -16,7 +16,7 @@ spim_summary_write(result, path_template, path_save)
 \item{dat}{A combined data object (loaded by
 \link{spim_combined_load}}
 
-\item{time_series_date}{The start date for the preceeding time series}
+\item{time_series_date}{The start date for the preceding time series}
 
 \item{result}{Result of \code{spim_summary_nowcast} or
 \code{spim_summary_time_series}}

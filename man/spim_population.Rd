@@ -9,7 +9,12 @@ spim_population(combined, ignore_uk = FALSE, by_age = TRUE, group = 1:19)
 \arguments{
 \item{combined}{Combined fits object}
 
-\item{ignore_uk}{If \code{TRUE} population of UK is retured as NA}
+\item{ignore_uk}{If \code{TRUE} population of UK is returned as NA}
+
+\item{by_age}{Logical, indicating if population should be returned by age}
+
+\item{group}{Vector of group indices (for the carehomes model on
+\code{1:19})}
 }
 \value{
 data.frame of region/country populations

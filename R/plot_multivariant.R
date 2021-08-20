@@ -16,7 +16,7 @@
 ##'
 ##' @export
 spim_plot_vaccine_figures <- function(dat, date, date_restart,
-                                       manuscript = TRUE){
+                                       manuscript = TRUE) {
 
 
   out <- list()
@@ -38,7 +38,7 @@ spim_plot_vaccine_figures <- function(dat, date, date_restart,
 
   g <- row1 / row2 +
     patchwork::plot_layout(heights = c(2, 1), guides = "keep") +
-    patchwork::plot_annotation(tag_levels = 'A')
+    patchwork::plot_annotation(tag_levels = "A")
 
   out$fig_1 <-
     g & ggplot2::theme(plot.margin = ggplot2::unit(rep(1, 4), units = "mm"))
@@ -230,7 +230,7 @@ spim_plot_seeding_date <- function(dat) {
                    panel.grid = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
                    legend.position = "none",
-                   axis.text.x = ggplot2::element_text(angle = 45, hjust=1),
+                   axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
                    text = ggplot2::element_text(
                      family = "Times New Roman", size = 10),
                    plot.title = ggplot2::element_text(size = 10))

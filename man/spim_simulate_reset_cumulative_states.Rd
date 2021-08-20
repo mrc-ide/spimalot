@@ -7,9 +7,9 @@
 spim_simulate_reset_cumulative_states(res, state_names)
 }
 \arguments{
-\item{state_names}{Character vector of states to reset}
+\item{res}{A simulated object}
 
-\item{obj}{A simulated object}
+\item{state_names}{Character vector of states to reset}
 }
 \description{
 Reset cumulative states to zero at start of simulation

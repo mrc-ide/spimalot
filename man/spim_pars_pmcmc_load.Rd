@@ -25,6 +25,6 @@ A spim_pars_pmcmc object
 }
 \description{
 Load the pmcmc parameters from disk. We expect three files; one
-for the overal parameters (\code{info}), one with details of the priors
+for the overall parameters (\code{info}), one with details of the priors
 (\code{prior}) and one describing the proposal kernel (\code{proposal}).
 }

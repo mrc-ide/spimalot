@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulate_plots.R
 \name{spim_plot_seasonality}
 \alias{spim_plot_seasonality}
-\title{Plot sesonality over time}
+\title{Plot seasonality over time}
 \usage{
 spim_plot_seasonality(peak_date = as.Date("2020-02-15"), seasonality = 0.1)
 }
