@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Seasonality — spim_calc_seasonality • spimalot</title>
+<title>Combine all death trajectories — spim_simulate_add_all_deaths • spimalot</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Seasonality — spim_calc_seasonality" />
-<meta property="og:description" content="Seasonality" />
+<meta property="og:title" content="Combine all death trajectories — spim_simulate_add_all_deaths" />
+<meta property="og:description" content="Combine all death trajectories in simulated object" />
 
 
 
@@ -108,37 +108,31 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Seasonality</h1>
-    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/spimalot/blob/master/R/simulate.R'><code>R/simulate.R</code></a></small>
-    <div class="hidden name"><code>spim_calc_seasonality.Rd</code></div>
+    <h1>Combine all death trajectories</h1>
+    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/spimalot/blob/master/R/simulate_tools.R'><code>R/simulate_tools.R</code></a></small>
+    <div class="hidden name"><code>spim_simulate_add_all_deaths.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Seasonality</p>
+    <p>Combine all death trajectories in simulated object</p>
     </div>
 
-    <pre class="usage"><span class='fu'>spim_calc_seasonality</span><span class='op'>(</span><span class='va'>date</span>, <span class='va'>seasonality_date_peak</span>, <span class='va'>seasonality</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>spim_simulate_add_all_deaths</span><span class='op'>(</span><span class='va'>obj</span>, incidence <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>date</th>
-      <td><p>date in sircovid date format</p></td>
+      <th>obj</th>
+      <td><p>A simulated object</p></td>
     </tr>
     <tr>
-      <th>seasonality_date_peak</th>
-      <td><p>date of peak in sircovid date format</p></td>
-    </tr>
-    <tr>
-      <th>seasonality</th>
-      <td><p>peak to annual average difference</p></td>
+      <th>incidence</th>
+      <td><p>Logical, whether you are combining incidence trajectories
+or not</p></td>
     </tr>
     </table>
 
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p>a value or vector of values with seasonal effect for each date</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
