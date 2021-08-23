@@ -50,7 +50,7 @@ spim_plot_rt_dist <- function(npi_key, xlim, ylim, cols, labels = NULL,
 
 
 ##' Plot seasonality trends over time
-##' @title Plot sesonality over time
+##' @title Plot seasonality over time
 ##'
 ##' @param peak_date Date where seasonal multiplier is highest
 ##' @param seasonality Seasonal multiplier
@@ -61,12 +61,14 @@ spim_plot_seasonality <- function(peak_date = as.Date("2020-02-15"),
   x <- seq_len(365)
   dx <- sircovid::sircovid_date_as_date(x)
   plot(dx,
-       calc_seasonality(x, sircovid::sircovid_date(peak_date), seasonality),
+       spim_calc_seasonality(x, sircovid::sircovid_date(peak_date),
+                             seasonality),
        type = "l", lwd = 2, ylim = c(0.9, 1.1),
        ylab = "Seasonal multiplier", xlab = "", xaxt = "n")
   axis.Date(1, dx, at = seq.Date(from = dx[1], to = as.Date("2021-01-01"),
                                  by = "1 month"))
-  abline(v = c(peak_date, round(peak_date + 365 / 2)), lty = 2, col = "grey30")
+  abline(v = c(peak_date, round(peak_date + 365 / 2)), lty = 2,
+         col = "grey30")
 }
 
 
@@ -121,9 +123,9 @@ spim_plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
 ##' Select colours for plotting simulation scenarios
 ##' @title Return accessible scenario colours
 ##'
-##' @param scenarios Unique scenario names. Scenarios with '[High R]' will
+##' @param scenarios Unique scenario names. Scenarios with `[High R]` will
 ##'   darken the colour for the corresponding central scenario and scenarios
-##'   with '[Low R]' will brighten the colour for the corresponding
+##'   with `[Low R]` will brighten the colour for the corresponding
 ##'   central scenario.
 ##' @param weight `weight` passed to `mix_cols` to darken/brighten colours for
 ##'   high/low R scenarios
@@ -266,8 +268,10 @@ spim_plot_check_rt <- function(summary_state, combined_state) {
                 aes(x = date,
                     ymin = `2.5%`,
                     ymax = `97.5%`), inherit.aes = FALSE) +
-    geom_line(data = combined_state, aes(x = date, y = `50%`), inherit.aes = FALSE) +
-    facet_grid(cols = vars(analysis), rows = vars(state),  labeller = label_wrap_gen(width=7)) +
+    geom_line(data = combined_state, aes(x = date, y = `50%`),
+              inherit.aes = FALSE) +
+    facet_grid(cols = vars(analysis), rows = vars(state),
+               labeller = label_wrap_gen(width = 7)) +
     scale_x_date(date_breaks = "1 month") +
     geom_vline(xintercept = rt_schedule$date, lty = 2, color = "gray")
 }
@@ -335,5 +339,5 @@ spim_plot_check_state_by_age <- function(summary_agestate, ana, scen) {
       geom_area() +
       theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
       facet_grid(vars(state), vars(group), scales = "free",
-                 labeller = label_wrap_gen(width=10))
+                 labeller = label_wrap_gen(width = 10))
 }

@@ -5,7 +5,7 @@
 ##' @param region Vector of standard region names (london, scotland,
 ##'   england, uk)
 ##'
-##' @param type Convertion type. Current can be one of "name", "code" or
+##' @param type Conversion type. Current can be one of "name", "code" or
 ##'   "upper"
 ##'
 ##' @return A vector of new names
@@ -58,6 +58,9 @@ spim_region_name <- function(region, type = "name") {
 ##' Finds an rrq controller if available
 ##'
 ##' @title Find rrq controller
+##'
+##' @param root Root of the orderly project (used to anchor the rrq
+##'   file store).
 ##'
 ##' @return Returns an rrq controller object if found, otherwise errors
 ##' @export

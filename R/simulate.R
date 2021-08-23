@@ -11,10 +11,10 @@
 ##'
 ##' @param regions Character vector of regions to use
 ##'
-##' @param inflate_strain Logical, inidicating if an empty second
+##' @param inflate_strain Logical, indicating if an empty second
 ##'   strain should be added
 ##'
-##' @param inflate_booster Logical, inidicating if an empty booster
+##' @param inflate_booster Logical, indicating if an empty booster
 ##'   dose should be added
 ##'
 ##' @export
@@ -338,13 +338,14 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
 
     ret <-
       c(ret,
-        simulate_calculate_vaccination(state, index,
-                                       vaccine_efficacy = vaccine_efficacy_strain_1,
-                                       booster_efficacy = booster_efficacy_strain_1,
-                                       n_strain,
-                                       strain_vaccine_efficacy = vaccine_efficacy_strain_2,
-                                       strain_vaccine_booster_efficacy = booster_efficacy_strain_2,
-                                       args$strain_cross_immunity))
+        simulate_calculate_vaccination(
+          state, index,
+          vaccine_efficacy = vaccine_efficacy_strain_1,
+          booster_efficacy = booster_efficacy_strain_1,
+          n_strain,
+          strain_vaccine_efficacy = vaccine_efficacy_strain_2,
+          strain_vaccine_booster_efficacy = booster_efficacy_strain_2,
+          args$strain_cross_immunity))
   }
 
   ret
@@ -543,16 +544,16 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
     boosters_prepend_zero = TRUE)
 
   ## check boosters
-  # par(mfrow = c(3, 1))
-  # image(t(vaccine_schedule$doses[, 1, ]))
-  # image(t(vaccine_schedule$doses[, 2, ]))
-  # image(t(vaccine_schedule$doses[, 3, ]))
+  # > par(mfrow = c(3, 1))
+  # > image(t(vaccine_schedule$doses[, 1, ]))
+  # > image(t(vaccine_schedule$doses[, 2, ]))
+  # > image(t(vaccine_schedule$doses[, 3, ]))
 
   ## TODO: potential placeholder for manually setting
   ## vaccine_schedule$doses[, 3, ] to zero if we don't want to give boosters
   ## to all age groups
   ## but probably better done inside sircovid::vaccine_schedule_scenario
-  # vaccine_schedule$doses[1:17, 3, 0] <- 0
+  # > vaccine_schedule$doses[1:17, 3, 0] <- 0
 
   rel_list <- sircovid::modify_severity(
     args$vaccine_efficacy,
@@ -699,7 +700,7 @@ setup_future_betas <- function(pars, rt_future, S, rt_type,
   ## step_current:step_end caused by simulating with new data.
   date <- seq(to = step_end, length.out = n_beta_add) * dt
   ## Relative distance between us and the peak date (on [0..1])
-  beta_mult <- calc_seasonality(date, seasonality_date_peak, seasonality)
+  beta_mult <- spim_calc_seasonality(date, seasonality_date_peak, seasonality)
 
   i <- seq(to = ncol(beta), length.out = n_beta_add)
   beta[, i] <- beta[, i] * rep(beta_mult, each = nrow(beta))
@@ -712,7 +713,17 @@ setup_future_betas <- function(pars, rt_future, S, rt_type,
 }
 
 
-calc_seasonality <- function(date, seasonality_date_peak, seasonality) {
+##' Seasonality
+##'
+##'@title Seasonality
+##'
+#' @param date date in sircovid date format
+#' @param seasonality_date_peak date of peak in sircovid date format
+#' @param seasonality peak to annual average difference
+#' @return a value or vector of values with seasonal effect for each date
+#'
+#' @export
+spim_calc_seasonality <- function(date, seasonality_date_peak, seasonality) {
   delta <- ((date - seasonality_date_peak) %% 365) / 365
   1 + cos(2 * pi * delta) * seasonality
 }
@@ -871,9 +882,10 @@ simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
   ## R: [strain, vaccine, region, time]
 
   ## need to allow for imperfect cross-strain immunity
-  ## R_strain_1: 100% of strain-level 1, 3, 4 + args$cross_protection[2] * strain-level 2
-  ## R_strain_2: 100% of strain-level 2, 3, 4 + args$cross_protection[1] * strain-level 1
-
+  ## R_strain_1: 100% of strain-level 1, 3, 4 +
+  ##   args$cross_protection[2] * strain-level 2
+  ## R_strain_2: 100% of strain-level 2, 3, 4 +
+  ##   args$cross_protection[1] * strain-level 1
   calc_strain_immunity <- function(strain, R, strain_cross_immunity) {
     apply(R[-strain, , , ], seq(2, 4), sum) +
       R[strain, , , ] * strain_cross_immunity[strain]
@@ -933,13 +945,13 @@ fixme_calculate_n_protected <- function(n_vaccinated, R, vaccine_efficacy,
   # from top to bottom of figure 1B
   # - number vaccinated sum_sr(V[s, r, t])
   # - number protected after vaccination against severe disease:
-  #   sum_asr(V[a, s, r, t] * eff_severe[a, s])
+  #   > sum_asr(V[a, s, r, t] * eff_severe[a, s])
   # - number protected after vaccination against infection
-  #   sum_asr(V[a, s, r, t] * eff_inf[a, s])
+  #   > sum_asr(V[a, s, r, t] * eff_inf[a, s])
   # - number protected after infection (this is added to all of the above):
-  #   sum_sr(R[s, r, t])
+  #   > sum_sr(R[s, r, t])
   # - number protected after infection only:
-  #   sum_r(R[1, r, t]
+  #   > sum_r(R[1, r, t]
 
 
   ## create array of number in each vaccine stratum
@@ -1145,7 +1157,8 @@ validate_vaccine_efficacy <- function(x, n_groups, n_vacc_strata,
 ## TODO: this data structure can be replaced by a single number
 ## ([[3]]$rep_p_hosp_if_sympt) and is generally horrific. Can we
 ## simplify this please?
-validate_strain_severity_modifier <- function(x, name = deparse(substitute(x))) {
+validate_strain_severity_modifier <- function(x,
+                                              name = deparse(substitute(x))) {
   assert_length(x, 4)
   for (i in seq_along(x)) {
     el <- x[[i]]
@@ -1416,14 +1429,16 @@ spim_simulation_shaps <- function(summary, feats = NULL) {
 ##'
 ##' @export
 spim_simulation_predictors <- function(summary) {
-  vars <- names(which(vapply(summary, function(i) length(unique(i)) > 1, logical(1))))
+  vars <- names(which(vapply(summary, function(i)
+    length(unique(i)) > 1, logical(1))))
   vars <- setdiff(vars, c(## not needed
                           "analysis", "full_run", "state", "rt_future",
                           ## taken into account in scenario
                           "adherence_to_baseline_npis",
                           ## outcomes
                           "2.5%", "50%", "97.5%",
-                          ## these two are identical to vaccine_efficacy_strain_2
+                          ## these two are identical to
+                          ## vaccine_efficacy_strain_2
                           "strain_severity_modifier", "rel_strain_modifier"))
 
   vars
@@ -1454,10 +1469,15 @@ spim_simulation_predictors <- function(summary) {
 ##'  non-NULL then creates a scenario of gradual transition from Rt in scenario
 ##'  `gradual_start` to Rt in `gradual_end` in `gradual_steps` number of steps
 ##'
-##' @param overwrite_central_adherence,overwrite_low_adherence,overwrite_high_adherence
+##' @param overwrite_central_adherence
 ##'  If non-NULL then a list with names corresponding to `npi` and values to
 ##'  overwrite the csv in the central/low/high adherence scenario. This may be
 ##'  be useful if automating some, but not all, of the Rt values
+##'
+##' @param overwrite_low_adherence,overwrite_high_adherence As for
+##'   `overwrite_central_adherence`
+##'
+##' @param npi_key Optional data.frame, instead of reading from `path`
 ##'
 ##' @return tibble for passing to [spim_prepare_rt_future]
 ##'
@@ -1507,8 +1527,8 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
     obj <- get(sprintf("overwrite_%s_adherence", ad))
     if (!is.null(obj)) {
       for (i in seq_along(obj)) {
-        npi_key[npi_key$npi == names(obj)[[i]] & npi_key$adherence == ad, "Rt"] <-
-          obj[[i]]
+        j <- npi_key$npi == names(obj)[[i]] & npi_key$adherence == ad
+        npi_key[j, "Rt"] <- obj[[i]]
       }
     }
   }
@@ -1553,11 +1573,13 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
       dplyr::bind_rows()
     }
 
-    npi_key <- npi_key %>% dplyr::bind_rows(
-      dplyr::bind_rows(lapply(npi_key[npi_key$npi == gradual_end, "adherence"], function(ad) {
-        gradualise(gradual_start, gradual_end, gradual_steps, ad)
-      }))
-    )
+    f <- function(ad) {
+      gradualise(gradual_start, gradual_end, gradual_steps, ad)
+    }
+    npi_key <- npi_key %>%
+      dplyr::bind_rows(
+        dplyr::bind_rows(
+          lapply(npi_key[npi_key$npi == gradual_end, "adherence"], f)))
   }
 
  npi_key %>%
@@ -1571,6 +1593,8 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
 ##' Prepare Rt future grid for simulation task
 ##'
 ##' @title Prepare Rt future for simulation
+##'
+##' @param npi_key data.frame, rather than reading from `path`
 ##'
 ##' @param start_date Start date of simulation, all changes in schedule before
 ##'  this date are removed.
@@ -1642,9 +1666,8 @@ spim_prepare_rt_future <- function(npi_key, start_date, end_date,
 ##' @export
 spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
                              reg = "england", wide = FALSE) {
-  ### generation time distribution from STM paper ###
-  # https://stm.sciencemag.org/content/scitransmed/suppl/2021/06/21/scitranslmed.abg4262.DC1/abg4262_SM.pdf
-
+  ## generation time distribution from STM paper
+  ## https://dx.doi.org/10.1126/scitranslmed.abg4262
   if (is.null(scenarios)) {
     scenarios <- unique(summary$state$scenario)
   }
@@ -1677,7 +1700,8 @@ spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
                   scenario %in% scenarios)
 
   out <- apply(obj, 1, function(x) {
-    x <- vapply(as.numeric(c(x[["50%"]], x[["2.5%"]], x[["97.5%"]])), find_r_from_R, numeric(1))
+    x <- vapply(as.numeric(c(x[["50%"]], x[["2.5%"]], x[["97.5%"]])),
+                find_r_from_R, numeric(1))
   }) %>%
   `rownames<-`(c("50%", "2.5%", "97.5%")) %>%
     t() %>%
@@ -1687,7 +1711,8 @@ spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
 
   if (wide) {
     out <- out %>%
-      dplyr::mutate(r = sprintf("%#.4f (%#.4f, %#.4f)", `50%`, `2.5%`, `97.5%`)) %>%
+      dplyr::mutate(r = sprintf("%#.4f (%#.4f, %#.4f)",
+                                `50%`, `2.5%`, `97.5%`)) %>%
       dplyr::select(date, scenario, analysis, r) %>%
       tidyr::pivot_wider(names_from = date, values_from = r)
   }
@@ -1718,8 +1743,11 @@ spim_create_rt_scenario <- function(path, region, scenario, schedule) {
   end <- max(sched$date)
 
   ## create data.frame of all dates
-  out <- data.frame(nation = "england", scenario = scenario, date = seq.int(start, end, 1),
-             schools = NA, npi = NA)
+  out <- data.frame(nation = "england",
+                    scenario = scenario,
+                    date = seq.int(start, end, 1),
+                    schools = NA,
+                    npi = NA)
   ## fill schools
   for (i in seq(nrow(sched))) {
     out[seq(which(out$date %in% sched[i, "date"]), nrow(out)), "schools"] <-
@@ -1738,8 +1766,9 @@ spim_create_rt_scenario <- function(path, region, scenario, schedule) {
     dplyr::select(-schools)
 
   ## de-duplicate
-  out[c(TRUE, rowSums(out[2:nrow(out), c(1, 2, 4)] == out[seq(nrow(out) - 1), c(1, 2, 4)]) < 3), ]
-
+  i <- 2:nrow(out)
+  j <- seq(nrow(out) - 1)
+  out[c(TRUE, rowSums(out[i, c(1, 2, 4)] == out[j, c(1, 2, 4)]) < 3), ]
 }
 
 

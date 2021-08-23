@@ -19,7 +19,7 @@
 ##'   about deaths, positive test results, react serology, etc. TODO:
 ##'   DESCRIBE FORMAT; TODO: DESCRIBE ORIGIN
 ##'
-##' @param serology The additional serology data. TODO: DESCRBE FORMAT
+##' @param serology The additional serology data. TODO: DESCRIBE FORMAT
 ##'
 ##' @param trim_deaths The number of days of deaths to trim to avoid
 ##'   back-fill issues. We typically use a value of 4 days.

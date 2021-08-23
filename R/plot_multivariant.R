@@ -12,11 +12,9 @@
 ##'
 ##' @return A ggplot2 object for fit to VOC proportion data
 ##'
-##' @param manuscript Logical indicating if plotting for manuscript
-##'
 ##' @export
 spim_plot_vaccine_figures <- function(dat, date, date_restart,
-                                       manuscript = TRUE){
+                                       manuscript = TRUE) {
 
 
   out <- list()
@@ -38,7 +36,7 @@ spim_plot_vaccine_figures <- function(dat, date, date_restart,
 
   g <- row1 / row2 +
     patchwork::plot_layout(heights = c(2, 1), guides = "keep") +
-    patchwork::plot_annotation(tag_levels = 'A')
+    patchwork::plot_annotation(tag_levels = "A")
 
   out$fig_1 <-
     g & ggplot2::theme(plot.margin = ggplot2::unit(rep(1, 4), units = "mm"))
@@ -194,7 +192,15 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
   p
 }
 
-
+## Plotting function for estimated seeding date
+##'
+##' @title Create plot for estimated seeding date
+##'
+##' @param dat Main fitting outputs object
+##'
+##' @return A ggplot2 object for plot of estimated seeding date
+##'
+##' @export
 spim_plot_seeding_date <- function(dat) {
 
   regions <- sircovid::regions("england")
@@ -230,7 +236,7 @@ spim_plot_seeding_date <- function(dat) {
                    panel.grid = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
                    legend.position = "none",
-                   axis.text.x = ggplot2::element_text(angle = 45, hjust=1),
+                   axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
                    text = ggplot2::element_text(
                      family = "Times New Roman", size = 10),
                    plot.title = ggplot2::element_text(size = 10))
@@ -283,7 +289,19 @@ spim_plot_variant_transmission <- function(dat) {
                    plot.title = ggplot2::element_text(size = 10))
 }
 
-
+## Plotting VOC proportion
+##'
+##' @title Create plot for VOC proportion
+##'
+##' @param dat Main fitting outputs object
+##'
+##' @param date_restart Date for multivariant model restart
+##'
+##' @param region A string for the name of the region to plot
+##'
+##' @return A ggplot2 object for fit to VOC proportion data
+##'
+##' @export
 spim_plot_voc_proportion <- function(dat, date_restart, region) {
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]

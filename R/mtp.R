@@ -17,7 +17,7 @@
 ##' @export
 spim_mtp_summary_to_template <- function(summary_tidy, date, run_grid,
                                          combined, spim_state_names) {
-  pop <- mtp_population(combined)
+  pop <- spim_mtp_population(combined)
 
   model_type <- combined$info[[1]]$model_type
   if (model_type == "BB") {
@@ -73,8 +73,15 @@ mtp_template_common <- function(scenario, date, model_type) {
              "Creation Year" = lubridate::year(date))
 }
 
-
-mtp_population <- function(combined) {
+##' Generate MTP population from combined
+##'
+##' @title Generate MTP population from combined
+##'
+##' @param combined Output from combined fitting task
+##'   rtm_inference_pmcmc_spim_fits2_combined
+##'
+##' @export
+spim_mtp_population <- function(combined) {
   pop <- vnapply(combined$pars[1, ], function(x) sum(x$N_tot[2:18]))
   c(pop,
     england = sum(unlist(pop[sircovid::regions("england")])),
@@ -86,7 +93,7 @@ mtp_population <- function(combined) {
 ##'
 ##' @title MTP simulation outputs by age and vaccination class
 ##'
-##' @param dat Output from MTP simulation
+##' @param res Output from MTP simulation
 ##'
 ##' @param region A string, region for which outputs will be plotted
 ##'
@@ -167,7 +174,9 @@ spim_mtp_age_vaccine_outputs <- function(res, region = "england") {
       (plots_age_vacc[["deaths_inc"]] + plots_age_vacc_prop[["deaths_inc"]]) /
       (plots_age_vacc[["deaths"]] + plots_age_vacc_prop[["deaths"]]) +
       plot_annotation(
-        caption = "Partial immunity includes those with either one or two doses that have not yet achieved full vaccine efficacy",
+        caption = paste("Partial immunity includes those with either one or",
+                        "two doses that have not yet achieved full vaccine",
+                        "efficacy"),
         title = paste(stringr::str_to_sentence(region)),
         subtitle = paste(stringr::str_to_sentence(sub("_", " ", s))))
 

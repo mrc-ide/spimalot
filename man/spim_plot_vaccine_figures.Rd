@@ -13,7 +13,7 @@ spim_plot_vaccine_figures(dat, date, date_restart, manuscript = TRUE)
 
 \item{date_restart}{Date for multivariant model restart}
 
-\item{manuscript}{Logical indicating if plotting for manuscript}
+\item{manuscript}{Logical indicating whether plots are for manuscript}
 }
 \value{
 A ggplot2 object for fit to VOC proportion data

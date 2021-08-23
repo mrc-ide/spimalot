@@ -13,6 +13,8 @@ spim_prepare_rt_future(
 )
 }
 \arguments{
+\item{npi_key}{data.frame, rather than reading from \code{path}}
+
 \item{start_date}{Start date of simulation, all changes in schedule before
 this date are removed.}
 

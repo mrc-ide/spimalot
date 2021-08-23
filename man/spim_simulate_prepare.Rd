@@ -19,10 +19,10 @@ spim_simulate_prepare(
 
 \item{regions}{Character vector of regions to use}
 
-\item{inflate_strain}{Logical, inidicating if an empty second
+\item{inflate_strain}{Logical, indicating if an empty second
 strain should be added}
 
-\item{inflate_booster}{Logical, inidicating if an empty booster
+\item{inflate_booster}{Logical, indicating if an empty booster
 dose should be added}
 }
 \description{
