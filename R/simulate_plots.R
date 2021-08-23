@@ -238,8 +238,9 @@ spim_prepare_aggregated_data <- function(path) {
 ##' @title Check Rt from simulation
 ##' @param summary_state State from simulation summary object
 ##' @param combined_state State from combined object
+##' @param dates Dates to plot vertical lines at
 ##' @export
-spim_plot_check_rt <- function(summary_state, combined_state) {
+spim_plot_check_rt <- function(summary_state, combined_state, dates) {
 
   summary_state <- summary_state %>%
     dplyr::filter(region == "england",
@@ -273,7 +274,7 @@ spim_plot_check_rt <- function(summary_state, combined_state) {
     facet_grid(cols = vars(analysis), rows = vars(state),
                labeller = label_wrap_gen(width = 7)) +
     scale_x_date(date_breaks = "1 month") +
-    geom_vline(xintercept = rt_schedule$date, lty = 2, color = "gray")
+    geom_vline(xintercept = dates, lty = 2, color = "gray")
 }
 
 
@@ -330,14 +331,101 @@ spim_plot_check_state <- function(summary_state, combined_state) {
 ##' @export
 spim_plot_check_state_by_age <- function(summary_agestate, ana, scen) {
   summary_agestate %>%
-      dplyr::filter(region == "england",
-                    analysis == central,
-                    scenario == scen,
-                    state %in% c("infections_inc", "diagnoses_admitted_inc",
-                                 "deaths_inc", "deaths")) %>%
-      ggplot(aes(x = date, y = value, fill = vaccine_status)) +
-      geom_area() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-      facet_grid(vars(state), vars(group), scales = "free",
-                 labeller = label_wrap_gen(width = 10))
+    dplyr::filter(
+      region == "england",
+      analysis == ana,
+      scenario == scen,
+      state %in% c(
+        "infections_inc", "diagnoses_admitted_inc",
+        "deaths_inc", "deaths"
+      )
+    ) %>%
+    ggplot(aes(x = date, y = value, fill = vaccine_status)) +
+    geom_area() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    facet_grid(vars(state), vars(group),
+      scales = "free",
+      labeller = label_wrap_gen(width = 10)
+    )
+}
+
+
+#' Calculate doses given out from simulation
+#' @title Calculate doses given out from simulation
+#' @param summary Output from [spim_simulate_tidy_states]
+#' @param population data.frame of population sizes where columns are regions
+#'  and rows are age groups
+#' @export
+spim_calculate_doses <- function(summary, population) {
+  doses_g <- summary$n_doses %>%
+    dplyr::filter(region == "england",
+                  scenario == "July-19") %>%
+    tidyr::pivot_wider(names_from = state, names_prefix = "state_") %>%
+    dplyr::mutate(state_total_dose_inc = state_first_dose_inc +
+                    state_second_dose_inc +
+                    state_booster_dose_inc) %>%
+    tidyr::pivot_longer(starts_with("state_"), names_to = "state") %>%
+    tidyr::pivot_wider(names_from = group, names_prefix = "group_") %>%
+    dplyr::mutate(group_total = rowSums(dplyr::across(starts_with("group")),
+                                        na.rm = TRUE)) %>%
+    tidyr::pivot_longer(starts_with("group_"), names_to = "group")
+
+  pop_df <- data.frame(group = unique(doses_g$group),
+                       pop = c(population$england,
+                               total = sum(population$england)))
+
+  doses_g %>%
+    dplyr::left_join(pop_df) %>%
+    dplyr::mutate(prop = value / pop)
+}
+
+
+#' Diagnostic plots for checking doses given out from simulation over
+#'  all analyses and age groups
+#' @title Check doses given out from simulation
+#' @param doses Output from [spim_calculate_doses]
+#' @export
+spim_plot_check_doses <- function(doses) {
+  doses %>%
+    ggplot(aes(x = date, y = value, colour = group)) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    geom_line() +
+    facet_grid(rows = vars(state), cols = vars(analysis), scales = "free",
+               labeller = label_wrap_gen(width = 10))
+}
+
+
+#' Diagnostic plots for checking total doses given out in simulation
+#' @title Check total doses given out from simulation
+#' @param doses Output from [spim_calculate_doses]
+#' @export
+spim_plot_check_total_doses <- function(doses) {
+  doses %>%
+    dplyr::filter(group == "group_total",
+                  state == "state_total_dose_inc",
+                  region == "england") %>%
+    ggplot(aes(x = date, y = value * 7, colour = group)) +
+    theme_bw() +
+    ylab("Weekly doses") +
+    geom_line() +
+    facet_wrap(vars(analysis)) +
+    theme(legend.position = "n")
+}
+
+
+#' Diagnostic plots for checking dose uptake from simulation
+#' @title Check dose uptake from simulation
+#' @param doses Output from [spim_calculate_doses]
+#' @export
+spim_plot_check_uptake <- function(doses) {
+  doses %>%
+    dplyr::filter(state %in% c("state_first_dose", "state_second_dose",
+                               "state_booster_dose")) %>%
+    ggplot(aes(x = date, y = prop, colour = group)) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    geom_line() +
+    facet_grid(rows = vars(state), cols = vars(analysis), scales = "free",
+               labeller = label_wrap_gen(width = 10))
 }

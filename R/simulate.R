@@ -1815,3 +1815,46 @@ spim_write_npi_key <- function(npi_key, filename) {
     dplyr::bind_rows() %>%
     write.csv(filename, row.names = FALSE)
 }
+
+
+#' Write first and second dose uptake at a given date
+#' @title Save dose uptake at a given date
+#' @param report_date Date to calculate uptake
+#' @param doses Output from [spim_calculate_doses]
+#' @param filename File to save uptake to
+#' @export
+spim_write_uptake <- function(report_date, doses, filename) {
+  doses %>%
+    dplyr::filter(state %in% c("state_first_dose", "state_second_dose"),
+                  date == report_date) %>%
+    dplyr::select(group, state, analysis, prop) %>%
+    arrange(state, analysis, group, prop) %>%
+    write.csv(filename, row.names = FALSE)
+}
+
+
+#' Get variables used in simulation tasks
+#' @title Get simulation variables
+#' @export
+spim_simulation_vars <- function() {
+  c(
+    "seasonality",
+    "rt_future",
+    "vaccine_daily_doses",
+    "vaccine_booster_daily_doses",
+    "vaccine_efficacy",
+    "vaccine_booster_efficacy",
+    "vaccine_eligibility",
+    "vaccine_uptake",
+    "vaccine_lag_groups",
+    "vaccine_lag_days",
+    "strain_transmission",
+    "strain_seed_rate",
+    "strain_vaccine_efficacy",
+    "strain_initial_proportion",
+    "strain_vaccine_booster_efficacy",
+    "strain_cross_immunity",
+    "strain_severity_modifier",
+    "waning_rate"
+  )
+}
