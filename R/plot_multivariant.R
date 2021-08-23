@@ -12,8 +12,6 @@
 ##'
 ##' @return A ggplot2 object for fit to VOC proportion data
 ##'
-##' @param manuscript Logical indicating if plotting for manuscript
-##'
 ##' @export
 spim_plot_vaccine_figures <- function(dat, date, date_restart,
                                        manuscript = TRUE) {
@@ -194,7 +192,15 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
   p
 }
 
-
+## Plotting function for estimated seeding date
+##'
+##' @title Create plot for estimated seeding date
+##'
+##' @param dat Main fitting outputs object
+##'
+##' @return A ggplot2 object for plot of estimated seeding date
+##'
+##' @export
 spim_plot_seeding_date <- function(dat) {
 
   regions <- sircovid::regions("england")
@@ -283,7 +289,19 @@ spim_plot_variant_transmission <- function(dat) {
                    plot.title = ggplot2::element_text(size = 10))
 }
 
-
+## Plotting VOC proportion
+##'
+##' @title Create plot for VOC proportion
+##'
+##' @param dat Main fitting outputs object
+##'
+##' @param date_restart Date for multivariant model restart
+##'
+##' @param region A string for the name of the region to plot
+##'
+##' @return A ggplot2 object for fit to VOC proportion data
+##'
+##' @export
 spim_plot_voc_proportion <- function(dat, date_restart, region) {
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
