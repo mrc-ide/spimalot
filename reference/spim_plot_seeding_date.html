@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Extract admissions by age — spim_extract_admissions_by_age • spimalot</title>
+<title>Create plot for estimated seeding date — spim_plot_seeding_date • spimalot</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Extract admissions by age — spim_extract_admissions_by_age" />
-<meta property="og:description" content="Extract admissions by age" />
+<meta property="og:title" content="Create plot for estimated seeding date — spim_plot_seeding_date" />
+<meta property="og:description" content="Create plot for estimated seeding date" />
 
 
 
@@ -108,26 +108,29 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Extract admissions by age</h1>
-    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/spimalot/blob/master/R/combined_spim.R'><code>R/combined_spim.R</code></a></small>
-    <div class="hidden name"><code>spim_extract_admissions_by_age.Rd</code></div>
+    <h1>Create plot for estimated seeding date</h1>
+    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/spimalot/blob/master/R/plot_multivariant.R'><code>R/plot_multivariant.R</code></a></small>
+    <div class="hidden name"><code>spim_plot_seeding_date.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Extract admissions by age</p>
+    <p>Create plot for estimated seeding date</p>
     </div>
 
-    <pre class="usage"><span class='fu'>spim_extract_admissions_by_age</span><span class='op'>(</span><span class='va'>dat</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>spim_plot_seeding_date</span><span class='op'>(</span><span class='va'>dat</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>dat</th>
-      <td><p>Combined data set</p></td>
+      <td><p>Main fitting outputs object</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>A ggplot2 object for plot of estimated seeding date</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

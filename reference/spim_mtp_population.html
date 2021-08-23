@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Extract admissions by age — spim_extract_admissions_by_age • spimalot</title>
+<title>Generate MTP population from combined — spim_mtp_population • spimalot</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Extract admissions by age — spim_extract_admissions_by_age" />
-<meta property="og:description" content="Extract admissions by age" />
+<meta property="og:title" content="Generate MTP population from combined — spim_mtp_population" />
+<meta property="og:description" content="Generate MTP population from combined" />
 
 
 
@@ -108,23 +108,24 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Extract admissions by age</h1>
-    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/spimalot/blob/master/R/combined_spim.R'><code>R/combined_spim.R</code></a></small>
-    <div class="hidden name"><code>spim_extract_admissions_by_age.Rd</code></div>
+    <h1>Generate MTP population from combined</h1>
+    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/spimalot/blob/master/R/mtp.R'><code>R/mtp.R</code></a></small>
+    <div class="hidden name"><code>spim_mtp_population.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Extract admissions by age</p>
+    <p>Generate MTP population from combined</p>
     </div>
 
-    <pre class="usage"><span class='fu'>spim_extract_admissions_by_age</span><span class='op'>(</span><span class='va'>dat</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>spim_mtp_population</span><span class='op'>(</span><span class='va'>combined</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>dat</th>
-      <td><p>Combined data set</p></td>
+      <th>combined</th>
+      <td><p>Output from combined fitting task
+rtm_inference_pmcmc_spim_fits2_combined</p></td>
     </tr>
     </table>
 
