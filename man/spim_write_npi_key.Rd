@@ -7,7 +7,7 @@
 spim_write_npi_key(npi_key, filename)
 }
 \arguments{
-\item{npi_key}{Output from \link{spim_prepapre_npi_key}}
+\item{npi_key}{Output from \link{spim_prepare_npi_key}}
 
 \item{filename}{File to save NPI key to}
 }

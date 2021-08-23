@@ -1791,7 +1791,7 @@ spim_simulate_complete_doses <- function(summary) {
 
 #' Save NPI key with quantiles, mean, and standard deviation
 #' @title Save NPI key
-#' @param npi_key Output from [spim_prepapre_npi_key]
+#' @param npi_key Output from [spim_prepare_npi_key]
 #' @param filename File to save NPI key to
 #' @export
 spim_write_npi_key <- function(npi_key, filename) {
