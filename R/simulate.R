@@ -1777,7 +1777,7 @@ spim_create_rt_scenario <- function(path, region, scenario, schedule) {
 #'
 #' @export
 spim_simulate_complete_doses <- function(summary) {
-  summary_tidy$n_doses %>%
+  summary$n_doses %>%
     dplyr::filter(state == "second_dose_inc",
                   region == "england") %>%
     dplyr::group_by(across(-c(value, group))) %>%
