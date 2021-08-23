@@ -1,12 +1,12 @@
 ##' Construct a particle filter
 ##'
-##' @title Contruct a particle filter
+##' @title Construct a particle filter
 ##'
 ##' @param data Data, from [spimalot::spim_data]
 ##'
 ##' @param pars Parameters, from [spimalot::spim_pars]
 ##'
-##' @param control A list of control parmaeters including
+##' @param control A list of control parameters including
 ##'   `n_particles`, `n_threads` and `compiled_compare`, typically the
 ##'   `particle_filter` element of the result of
 ##'   [spimalot::spim_control()]

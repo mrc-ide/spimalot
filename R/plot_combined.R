@@ -97,6 +97,12 @@ spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
 ##'
 ##' @param forecast_until Optional date to forecast till
 ##'
+##' @param variant Variant type (or `NULL`)
+##'
+##' @param add_betas Logical, indicating if betas should be added to the plot
+##'
+##' @param multistrain Logical, indicating if this is a multistrain fit
+##'
 ##' @export
 spim_plot_Rt <- function(dat, regions, rt_type, forecast_until = NULL,
                          variant = NULL, add_betas = FALSE,
@@ -153,6 +159,8 @@ spim_plot_ifr_t <- function(dat, regions, ifr_t_type, ymax = 2.5,
 ##' @param dat Combined data set
 ##'
 ##' @param regions Vector of regions to plot
+##'
+##' @param ymin Minimum percentage on y-axis
 ##'
 ##' @param ymax Maximum percentage on y-axis
 ##'

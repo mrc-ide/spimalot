@@ -295,9 +295,11 @@ spim_simulate_remove_dates_to <- function(obj, date) {
   id0 <- seq(which(sircovid::sircovid_date_as_date(obj$date) == date))
   obj$date <- obj$date[-id0]
   obj$state <- obj$state[, , , -id0, drop = FALSE]
-  obj$state_by_age <- lapply(obj$state_by_age, function(x) x[, , , -id0, drop = FALSE])
+  obj$state_by_age <- lapply(obj$state_by_age, function(x)
+    x[, , , -id0, drop = FALSE])
   obj$n_vaccinated <- obj$n_vaccinated[, , , -id0, drop = FALSE]
-  obj$n_protected <- lapply(obj$n_protected, function(x) x[, , -id0, drop = FALSE])
+  obj$n_protected <- lapply(obj$n_protected, function(x)
+    x[, , -id0, drop = FALSE])
   obj$n_doses <- obj$n_doses[, , , -id0, drop = FALSE]
   obj
 }
@@ -349,7 +351,7 @@ spim_simulate_add_trajectory_incidence <- function(obj, states,
 
 
 ##' @title Reset cumulative states to zero at start of simulation
-##' @param obj A simulated object
+##' @param res A simulated object
 ##' @param state_names Character vector of states to reset
 ##' @export
 spim_simulate_reset_cumulative_states <- function(res, state_names) {
@@ -383,7 +385,7 @@ spim_simulate_reset_cumulative_states <- function(res, state_names) {
 ##' to zero at the start of the simulation
 ##' @param rm.rtUK Logical, indicating if the aggregated UK trajectory should be
 ##' removed
-##' @param output_regions Character vector of regions to output, defaults to
+##' @param output_region Character vector of regions to output, defaults to
 ##' `combined_region`
 ##' @param remove_dates_to If not `NULL` then the date to remove all results up
 ##'  to
@@ -471,6 +473,7 @@ quantile_digest <- function(x, at) {
 ##' @param res A list of simulated objects
 ##' @param run_grid data.frame with same number of rows as `res` giving metadata
 ##' to attach to results
+##' @param combined Ignored
 ##' @export
 spim_simulate_tidy_states <- function(res, run_grid, combined) {
   stopifnot(length(res) == nrow(run_grid))
@@ -481,7 +484,7 @@ spim_simulate_tidy_states <- function(res, run_grid, combined) {
 }
 
 ##' @title Create tidy (long) dataframe of simulated results
-##' @param res A simulated object
+##' @param x A simulated object
 ##' @param common A one-row data.frame giving metadata to attach to results
 ##' @export
 tidy_state_one <- function(x, common) {

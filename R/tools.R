@@ -5,7 +5,7 @@
 ##' @param region Vector of standard region names (london, scotland,
 ##'   england, uk)
 ##'
-##' @param type Convertion type. Current can be one of "name", "code" or
+##' @param type Conversion type. Current can be one of "name", "code" or
 ##'   "upper"
 ##'
 ##' @return A vector of new names
@@ -59,6 +59,9 @@ spim_region_name <- function(region, type = "name") {
 ##'
 ##' @title Find rrq controller
 ##'
+##' @param root Root of the orderly project (used to anchor the rrq
+##'   file store).
+##'
 ##' @return Returns an rrq controller object if found, otherwise errors
 ##' @export
 spim_rrq_controller <- function(root = here::here()) {
@@ -68,6 +71,10 @@ spim_rrq_controller <- function(root = here::here()) {
   } else {
     message(sprintf("Found rrq controller for queue '%s'", queue_id))
     message(sprintf("Using root directory '%s'", root))
-    withr::with_dir(root, rrq::rrq_controller(queue_id))
+    if (packageVersion("rrq") < "0.5.0") {
+      withr::with_dir(root, rrq::rrq_controller(queue_id))
+    } else {
+      withr::with_dir(root, rrq::rrq_controller$new(queue_id))
+    }
   }
 }

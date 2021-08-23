@@ -30,11 +30,11 @@ to zero at the start of the simulation}
 \item{rm.rtUK}{Logical, indicating if the aggregated UK trajectory should be
 removed}
 
+\item{output_region}{Character vector of regions to output, defaults to
+\code{combined_region}}
+
 \item{remove_dates_to}{If not \code{NULL} then the date to remove all results up
 to}
-
-\item{output_regions}{Character vector of regions to output, defaults to
-\code{combined_region}}
 }
 \description{
 Process simulation output

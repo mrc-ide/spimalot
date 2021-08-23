@@ -16,7 +16,7 @@
 ##'
 ##' @export
 spim_plot_vaccine_figures <- function(dat, date, date_restart,
-                                       manuscript = TRUE){
+                                       manuscript = TRUE) {
 
 
   out <- list()
@@ -38,7 +38,7 @@ spim_plot_vaccine_figures <- function(dat, date, date_restart,
 
   g <- row1 / row2 +
     patchwork::plot_layout(heights = c(2, 1), guides = "keep") +
-    patchwork::plot_annotation(tag_levels = 'A')
+    patchwork::plot_annotation(tag_levels = "A")
 
   out$fig_1 <-
     g & ggplot2::theme(plot.margin = ggplot2::unit(rep(1, 4), units = "mm"))
@@ -169,8 +169,8 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
     ggplot2::geom_vline(xintercept = as.Date(betas[, 1]), lty = 3,
                         col = "red4") +
     ggplot2::geom_label(ggplot2::aes(label = label, y = label_y),
-                        hjust = 0.5, size = 1.8,
-                        vjust = 0.5, family = "Times New Roman",
+                        hjust = 0.5, size = 3,
+                        vjust = 0.5, family = "serif",
                         label.padding = ggplot2::unit(0.15, "lines")) +
     ggplot2::ylab(ylab) +
     ggplot2::xlab("") +
@@ -183,7 +183,7 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
                    panel.grid = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
                    text = ggplot2::element_text(
-                     family = "Times New Roman", size = 10),
+                     family = "serif", size = 10),
                    legend.title = ggplot2::element_blank(),
                    legend.position = "bottom",
                    legend.box.margin = ggplot2::margin(
@@ -230,7 +230,7 @@ spim_plot_seeding_date <- function(dat) {
                    panel.grid = ggplot2::element_blank(),
                    axis.line = ggplot2::element_line(),
                    legend.position = "none",
-                   axis.text.x = ggplot2::element_text(angle = 45, hjust=1),
+                   axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
                    text = ggplot2::element_text(
                      family = "Times New Roman", size = 10),
                    plot.title = ggplot2::element_text(size = 10))
@@ -346,4 +346,3 @@ spim_plot_voc_proportion <- function(dat, date_restart, region) {
                                                 size = 10))
   g
 }
-
