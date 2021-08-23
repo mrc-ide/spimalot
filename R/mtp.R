@@ -108,8 +108,8 @@ spim_mtp_age_vaccine_outputs <- function(res, region = "england") {
 
   res <- dplyr::filter(res, region == !!region,
                        group != "all",
-                       state %in% c("infections_inc", "diagnoses_admitted_inc",
-                                    "deaths_inc", "deaths"))
+                       state %in% c("infections", "diagnoses_admitted",
+                                    "deaths"))
 
   for (s in unique(res$scenario)) {
 
@@ -167,11 +167,10 @@ spim_mtp_age_vaccine_outputs <- function(res, region = "england") {
     ## Save plot and matrix object into lists
 
     scenario_plots[[s]] <-
-      (plots_age_vacc[["infections_inc"]] +
-         plots_age_vacc_prop[["infections_inc"]]) /
-      (plots_age_vacc[[ "diagnoses_admitted_inc"]] +
-         plots_age_vacc_prop[[ "diagnoses_admitted_inc"]]) /
-      (plots_age_vacc[["deaths_inc"]] + plots_age_vacc_prop[["deaths_inc"]]) /
+      (plots_age_vacc[["infections"]] +
+         plots_age_vacc_prop[["infections"]]) /
+      (plots_age_vacc[[ "diagnoses_admitted"]] +
+         plots_age_vacc_prop[[ "diagnoses_admitted"]]) /
       (plots_age_vacc[["deaths"]] + plots_age_vacc_prop[["deaths"]]) +
       plot_annotation(
         caption = paste("Partial immunity includes those with either one or",

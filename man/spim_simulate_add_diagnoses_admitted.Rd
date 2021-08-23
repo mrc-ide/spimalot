@@ -4,10 +4,13 @@
 \alias{spim_simulate_add_diagnoses_admitted}
 \title{Combine diagnoses and admitted trajectories}
 \usage{
-spim_simulate_add_diagnoses_admitted(obj)
+spim_simulate_add_diagnoses_admitted(obj, incidence = FALSE)
 }
 \arguments{
 \item{obj}{A simulated object}
+
+\item{incidence}{Logical, whether you are combining incidence trajectories
+or not}
 }
 \description{
 Combine diagnoses and admitted trajectories in simulated object

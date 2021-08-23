@@ -330,22 +330,37 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
 
   if (args$output_vaccination) {
 
-  rel_list <- pars[[1]][names(args$vaccine_efficacy)]
-  vaccine_efficacy_strain_1 <- lapply(rel_list, "[", , 1, -5)
-  vaccine_efficacy_strain_2 <- lapply(rel_list, "[", , 2, -5)
-  booster_efficacy_strain_1 <- lapply(rel_list, "[", , 1, 5)
-  booster_efficacy_strain_2 <- lapply(rel_list, "[", , 2, 5)
+    if (is.null(args$strain_vaccine_booster_efficacy)) {
 
-    ret <-
-      c(ret,
-        simulate_calculate_vaccination(
-          state, index,
-          vaccine_efficacy = vaccine_efficacy_strain_1,
-          booster_efficacy = booster_efficacy_strain_1,
-          n_strain,
-          strain_vaccine_efficacy = vaccine_efficacy_strain_2,
-          strain_vaccine_booster_efficacy = booster_efficacy_strain_2,
-          args$strain_cross_immunity))
+      ret <-
+        c(ret,
+          simulate_calculate_vaccination(state, index,
+                                         args$vaccine_efficacy,
+                                         args$vaccine_booster_efficacy,
+                                         n_strain,
+                                         args$strain_vaccine_efficacy,
+                                         args$strain_vaccine_booster_efficacy,
+                                         args$strain_cross_immunity))
+
+    } else {
+
+      rel_list <- pars[[1]][names(args$vaccine_efficacy)]
+      vaccine_efficacy_strain_1 <- lapply(rel_list, "[", , 1, -5)
+      vaccine_efficacy_strain_2 <- lapply(rel_list, "[", , 2, -5)
+      booster_efficacy_strain_1 <- lapply(rel_list, "[", , 1, 5)
+      booster_efficacy_strain_2 <- lapply(rel_list, "[", , 2, 5)
+
+      ret <-
+        c(ret,
+          simulate_calculate_vaccination(
+            state, index,
+            vaccine_efficacy = vaccine_efficacy_strain_1,
+            booster_efficacy = booster_efficacy_strain_1,
+            n_strain,
+            strain_vaccine_efficacy = vaccine_efficacy_strain_2,
+            strain_vaccine_booster_efficacy = booster_efficacy_strain_2,
+            args$strain_cross_immunity))
+    }
   }
 
   ret
