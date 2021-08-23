@@ -61,12 +61,14 @@ spim_plot_seasonality <- function(peak_date = as.Date("2020-02-15"),
   x <- seq_len(365)
   dx <- sircovid::sircovid_date_as_date(x)
   plot(dx,
-       calc_seasonality(x, sircovid::sircovid_date(peak_date), seasonality),
+       spim_calc_seasonality(x, sircovid::sircovid_date(peak_date),
+                             seasonality),
        type = "l", lwd = 2, ylim = c(0.9, 1.1),
        ylab = "Seasonal multiplier", xlab = "", xaxt = "n")
   axis.Date(1, dx, at = seq.Date(from = dx[1], to = as.Date("2021-01-01"),
                                  by = "1 month"))
-  abline(v = c(peak_date, round(peak_date + 365 / 2)), lty = 2, col = "grey30")
+  abline(v = c(peak_date, round(peak_date + 365 / 2)), lty = 2,
+         col = "grey30")
 }
 
 

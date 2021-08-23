@@ -700,7 +700,7 @@ setup_future_betas <- function(pars, rt_future, S, rt_type,
   ## step_current:step_end caused by simulating with new data.
   date <- seq(to = step_end, length.out = n_beta_add) * dt
   ## Relative distance between us and the peak date (on [0..1])
-  beta_mult <- calc_seasonality(date, seasonality_date_peak, seasonality)
+  beta_mult <- spim_calc_seasonality(date, seasonality_date_peak, seasonality)
 
   i <- seq(to = ncol(beta), length.out = n_beta_add)
   beta[, i] <- beta[, i] * rep(beta_mult, each = nrow(beta))
@@ -713,7 +713,17 @@ setup_future_betas <- function(pars, rt_future, S, rt_type,
 }
 
 
-calc_seasonality <- function(date, seasonality_date_peak, seasonality) {
+##' Seasonality
+##'
+##'@title Seasonality
+##'
+#' @param date date in sircovid date format
+#' @param seasonality_date_peak date of peak in sircovid date format
+#' @param seasonality peak to annual average difference
+#' @return a value or vector of values with seasonal effect for each date
+#'
+#' @export
+spim_calc_seasonality <- function(date, seasonality_date_peak, seasonality) {
   delta <- ((date - seasonality_date_peak) %% 365) / 365
   1 + cos(2 * pi * delta) * seasonality
 }
