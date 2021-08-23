@@ -1787,3 +1787,31 @@ spim_simulate_complete_doses <- function(summary) {
     dplyr::ungroup() %>%
     dplyr::select(analysis, scenario, date, mean)
 }
+
+
+#' Save NPI key with quantiles, mean, and standard deviation
+#' @title Save NPI key
+#' @param npi_key Output from [spim_prepapre_npi_key]
+#' @param filename File to save NPI key to
+#' @export
+spim_write_npi_key <- function(npi_key, filename) {
+  unique(npi_key$nation) %>%
+    lapply(function(i) {
+      key <- npi_key %>%
+        dplyr::filter(nation == i) %>%
+        dplyr::select(-nation)
+
+      npi_pars <- mapply(function(mean, sd) {
+        dist <- distr6::dstr("Lognormal", mean = mean, sd = sd)
+        unlist(c(q2.5 = dist$quantile(0.025),
+                q97.5 = dist$quantile(0.975),
+                meanlog = dist$parameters("meanlog")$value,
+                sdlog = dist$parameters("sdlog")$value))
+      }, mean = key$Rt, sd = key$Rt_sd)
+      npi_pars <- cbind(key, signif(t(npi_pars), 3))
+      npi_pars$region <- i
+      npi_pars
+    }) %>%
+    dplyr::bind_rows() %>%
+    write.csv(filename, row.names = FALSE)
+}

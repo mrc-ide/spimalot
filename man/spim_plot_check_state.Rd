@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulate_plots.R
 \name{spim_plot_check_state}
 \alias{spim_plot_check_state}
-\title{Check Rt from simulation}
+\title{Check states from simulation}
 \usage{
 spim_plot_check_state(summary_state, combined_state)
 }
@@ -12,5 +12,5 @@ spim_plot_check_state(summary_state, combined_state)
 \item{combined_state}{State from combined object}
 }
 \description{
-Diagnostic plots for checking Rt from simulation
+Diagnostic plots for checking states from simulation
 }
