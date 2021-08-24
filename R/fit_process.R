@@ -426,7 +426,7 @@ calc_unvacc_S_age <- function(S, nms_S) {
   rownames(out) <- paste0("S_unvacc_", seq(0, 80, 5))
 
 
-  for (a in 1:length(age)) {
+  for (a in seq_len(age)) {
     s <- S[age[a], , , drop = FALSE]
     out[a, , ] <- s
   }
