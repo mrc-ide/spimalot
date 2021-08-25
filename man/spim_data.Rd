@@ -10,8 +10,9 @@ spim_data(
   model_type,
   rtm,
   serology,
-  trim_deaths,
   data_admissions,
+  trim_deaths,
+  trim_pillar2,
   full_data = FALSE,
   fit_to_variants = FALSE
 )
@@ -32,12 +33,15 @@ this argument.}
 about deaths, positive test results, react serology, etc. TODO:
 DESCRIBE FORMAT; TODO: DESCRIBE ORIGIN}
 
-\item{serology}{The additional serology data. TODO: DESCRBE FORMAT}
+\item{serology}{The additional serology data. TODO: DESCRIBE FORMAT}
+
+\item{data_admissions}{A dataframe with age disaggregated admissions data}
 
 \item{trim_deaths}{The number of days of deaths to trim to avoid
 back-fill issues. We typically use a value of 4 days.}
 
-\item{data_admissions}{A dataframe with age disaggregated admissions data}
+\item{trim_pillar2}{The number of days of pillar 2 data to trim to avoid
+back-fill issues. We typically use a value of 7 days.}
 
 \item{full_data}{Not sure yet, we'll find out}
 

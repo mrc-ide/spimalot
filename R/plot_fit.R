@@ -6,7 +6,7 @@
 ##'
 ##' @title Plots for fit
 ##'
-##' @param samples The eamples
+##' @param samples The samples
 ##'
 ##' @param region The region. Leave this `NULL` except for
 ##'   multi-region fits

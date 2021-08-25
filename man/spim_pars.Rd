@@ -13,7 +13,8 @@ spim_pars(
   vaccination,
   parameters,
   kernel_scaling = 1,
-  cross_immunity = NULL
+  cross_immunity = NULL,
+  waning_rate
 )
 }
 \arguments{
@@ -29,12 +30,12 @@ binomial). We use and exclude different data types depending on
 this argument.}
 
 \item{multistrain}{Logical, indicating if the model is a
-"multistrain" model allowing for mulitiple competing strains.}
+"multistrain" model allowing for multiple competing strains.}
 
 \item{beta_date}{A vector of date (strings) for the beta
 parameters. Must align with parameters}
 
-\item{vaccination}{Vacination data, from
+\item{vaccination}{Vaccination data, from
 \link{spim_vaccination_data}}
 
 \item{parameters}{Parameter information, from
@@ -46,6 +47,8 @@ between 0 and 1 for scaling the proposal VCV}
 \item{cross_immunity}{Optional vector of cross immunity
 values. Only has an effect if \code{multistrain} is \code{TRUE} and then
 must have a length of 2 if given.}
+
+\item{waning_rate}{Rate of waning immunity}
 }
 \value{
 An \link[mcstate:pmcmc_parameters]{mcstate::pmcmc_parameters} object which can be used

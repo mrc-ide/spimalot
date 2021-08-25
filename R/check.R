@@ -12,7 +12,5 @@ spim_check_model_type <- function(model_type) {
 
 
 check_region <- function(region) {
-  if (region %in% sircovid::regions("all")) {
-    return()
-  }
+  match_value(region, sircovid::regions("all"))
 }

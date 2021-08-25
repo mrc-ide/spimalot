@@ -26,7 +26,7 @@ spim_plot_admissions_by_age <- function(dat, region) {
   ages <- seq(0, 75, 5)
   labels <- c(sprintf("[%s-%s)", ages, ages + 5), "80+", "CHW", "CHR")
   axis(side = 1, at = seq_len(19), labels = labels,
-                 mgp = c(1.7, 0.5, 0))
+       mgp = c(1.7, 0.5, 0))
 
   # plot over time
   y <- t(apply(res$mean_admissions_t, 1, cumsum))
@@ -97,8 +97,16 @@ spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
 ##'
 ##' @param forecast_until Optional date to forecast till
 ##'
+##' @param variant Variant type (or `NULL`)
+##'
+##' @param add_betas Logical, indicating if betas should be added to the plot
+##'
+##' @param multistrain Logical, indicating if this is a multistrain fit
+##'
 ##' @export
-spim_plot_Rt <- function(dat, regions, rt_type, forecast_until = NULL) {
+spim_plot_Rt <- function(dat, regions, rt_type, forecast_until = NULL,
+                         variant = NULL, add_betas = FALSE,
+                         multistrain = TRUE) {
 
   oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
             mar = c(3, 3, 3, 1))
@@ -106,8 +114,12 @@ spim_plot_Rt <- function(dat, regions, rt_type, forecast_until = NULL) {
   if (is.null(forecast_until)) {
     forecast_until <- dat$info$date
   }
+  if (is.null(variant)) {
+    variant <- "weighted"
+  }
   for (r in regions) {
-    spim_plot_Rt_region(r, dat, rt_type, forecast_until)
+    spim_plot_Rt_region(r, dat, rt_type, forecast_until, variant, add_betas,
+                        multistrain)
   }
 }
 
@@ -147,6 +159,8 @@ spim_plot_ifr_t <- function(dat, regions, ifr_t_type, ymax = 2.5,
 ##' @param dat Combined data set
 ##'
 ##' @param regions Vector of regions to plot
+##'
+##' @param ymin Minimum percentage on y-axis
 ##'
 ##' @param ymax Maximum percentage on y-axis
 ##'
@@ -454,7 +468,7 @@ spim_plot_variant_region <- function(region, dat, date_min) {
        xlab = "", ylab = "VOC proportion (%)")
 
   ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
-                      horiz = FALSE, leg = FALSE)
+           horiz = FALSE, leg = FALSE)
   lines(x, qs["50.0%", ], col = pos_col, lty = 1, lwd = 1.5, lend = 1)
   segments(x0 = dx, y0 = lower, y1 = upper, col = "grey60")
   points(dx, dy, pch = 23, bg = dcols[1], col = dcols[2], cex = 0.8, lwd = 0.6)
@@ -537,7 +551,7 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, what) {
 
 
 spim_plot_prop_susceptible_region <- function(region, dat, ymin,
-                                          plot_legend = FALSE) {
+                                              plot_legend = FALSE) {
 
   sample <- dat$samples[[region]]
   cols <- spim_colours()
@@ -690,32 +704,14 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
     x <- x[!predicted]
   }
 
-
-  model_params <- sample$predict$transform(sample$pars[1, ])
-
-  if ("p_NC" %in% colnames(sample$pars)) {
-    p_NC <- sample$pars[, "p_NC"]
-  } else {
-    p_NC <- model_params$p_NC
-  }
-
   if (over25) {
-    pos <- trajectories["sympt_cases_over25_inc", , ]
-    neg <- (sum(model_params$N_tot[6:19]) - pos) * p_NC
+    res <- trajectories["pillar2_positivity_over25", , ]
   } else {
-    pos <- trajectories["sympt_cases_inc", , ]
-    neg <- (sum(model_params$N_tot) - pos) * p_NC
+    res <- trajectories["pillar2_positivity", , ]
   }
-
-  res <- (pos * model_params$pillar2_sensitivity +
-            neg * (1 - model_params$pillar2_specificity)) / (pos + neg) * 100
-
-
 
   ps <- seq(0.025, 0.975, 0.005)
   qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
-
-
 
   if (data_by == "rolling week") {
     npos <- stats::filter(npos, rep(1 / 7, 7))
@@ -931,7 +927,7 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   agg_dates$npos <- rep(0, length(agg_dates$mid))
   agg_dates$ntot <- rep(0, length(agg_dates$mid))
   agg_dates[, c("npos", "ntot")] <- t(sapply(seq_len(length(agg_dates$mid)),
-                                            aggregate_react))
+                                             aggregate_react))
 
 
   cis <- Hmisc::binconf(x = agg_dates$npos, n = agg_dates$ntot) * 100
@@ -1243,32 +1239,70 @@ spim_plot_alos_region <- function(region, dat, ymin, ymax, forecast_until,
 
 }
 
-spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
-  sample_Rt <- dat$rt[[region]][[rt_type]][-1L, ]
+spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
+                                variant, add_betas, multistrain) {
+
+  beta_date <- dat$samples[[region]]$info$beta_date
+  if (variant == "weighted") {
+    sample_Rt <- dat$rt[[region]][[rt_type]][-1L, ]
+    x <- sircovid::sircovid_date_as_date(dat$rt[[region]]$date[-1L, 1])
+  } else {
+    if (variant == "delta") {
+      sample_Rt <- dat$variant_rt[[region]][[rt_type]][-1L, 2, ]
+      x <-
+        sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
+    } else if (variant == "all") {
+      if (!multistrain) {
+        sample_non_variant <- dat$rt[[region]][[rt_type]][-1L, ]
+        sample_variant <- dat$rt[[region]][[rt_type]][-1L, ]
+        x <- sircovid::sircovid_date_as_date(dat$rt[[region]]$date[-1L, 1])
+      } else {
+        sample_non_variant <- dat$variant_rt[[region]][[rt_type]][-1L, 1, ]
+        sample_variant <- dat$variant_rt[[region]][[rt_type]][-1L, 2, ]
+        x <-
+          sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
+      }
+    } else {
+      sample_Rt <- dat$variant_rt[[region]][[rt_type]][-1L, 1, ]
+      x <-
+        sircovid::sircovid_date_as_date(dat$variant_rt[[region]]$date[-1L, 1])
+    }
+  }
 
   if (rt_type == "beta") {
     ylab <- expression(beta[t])
   } else if (grepl("^eff_", rt_type)) {
     ## TODO: this is printing oddly on the graph
-    ylab <- paste("eff", expression(R[t]))
+    ylab <- paste("eff", expression(R[t]), variant)
   } else {
-    ylab <- expression(R[t])
+    ylab <- paste(expression(R[t]), variant)
   }
 
-  ## sample_Rt,
-  ## Rt_date,
   col <- spim_colours()$blue
 
-  x <- sircovid::sircovid_date_as_date(dat$rt[[region]]$date[-1L, 1])
-  rownames(sample_Rt) <- as.character(x)
-
   ps <- seq(0.025, 0.975, 0.005)
-  qs <- apply(sample_Rt,  MARGIN = 1, FUN = quantile, ps, na.rm = TRUE)
 
-  ## remove NAs for plotting purposes
-  idx_not_na <- which(!is.na(colSums(qs)))
-  x <- x[idx_not_na]
-  qs <- qs[, idx_not_na]
+  if (variant != "all") {
+    rownames(sample_Rt) <- as.character(x)
+    qs <- apply(sample_Rt,  MARGIN = 1, FUN = quantile, ps, na.rm = TRUE)
+    ## remove NAs for plotting purposes
+    idx_not_na <- which(!is.na(colSums(qs)))
+    x <- x[idx_not_na]
+    qs <- qs[, idx_not_na]
+  } else {
+    rownames(sample_non_variant) <- as.character(x)
+    rownames(sample_variant) <- as.character(x)
+    qs <- NULL
+    qs[["non_variant"]] <- apply(sample_non_variant,  MARGIN = 1,
+                                 FUN = quantile, ps, na.rm = TRUE)
+    qs[["variant"]] <- apply(sample_variant,  MARGIN = 1,
+                             FUN = quantile, ps, na.rm = TRUE)
+    ## remove NAs for plotting purposes
+    idx_not_na <- which(!is.na(colSums(qs[[1]])))
+    x <- x[idx_not_na]
+    qs[[1]] <- qs[[1]][, idx_not_na]
+    qs[[2]] <- qs[[2]][, idx_not_na]
+  }
 
   oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
   on.exit(par(oo))
@@ -1277,7 +1311,7 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
   if (rt_type == "beta") {
     ylim <- c(0, 0.15)
   } else {
-    ylim <- c(0, 4)
+    ylim <- c(0, 5)
   }
   plot(xlim[1], 0, type = "n",
        xlim = xlim,
@@ -1289,11 +1323,27 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until) {
   cols <- c(mix_cols(col, "white", 0.7),
             mix_cols(col, "white", 0.495))
 
-  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = cols,
-           horiz = FALSE, leg = FALSE)
-  lines(x, qs["50.0%", ], col = col, lty = 1, lwd = 1.5, lend = 1)
+  if (variant != "all") {
+    ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = cols,
+             horiz = FALSE, leg = FALSE)
+    lines(x, qs["50.0%", ], col = col, lty = 1, lwd = 1.5, lend = 1)
+  } else {
+    ci_bands(qs[[1]][c("2.5%", "25.0%", "75.0%", "97.5%"), ], x,
+             cols = c(spim_colours()$sky_blue, spim_colours()$sky_blue),
+             horiz = FALSE, leg = FALSE)
+    lines(x, qs[[1]]["50.0%", ], col = col, lty = 1, lwd = 1.5, lend = 1)
+
+    ci_bands(qs[[2]][c("2.5%", "25.0%", "75.0%", "97.5%"), ], x,
+             cols = c(spim_colours()$cyan, spim_colours()$cyan),
+             horiz = FALSE, leg = FALSE)
+    lines(x, qs[[2]]["50.0%", ], col = spim_colours()$blue, lty = 1,
+          lwd = 1.5, lend = 1)
+  }
   if (rt_type != "beta") {
     abline(h = 1, lty = 2)
+  }
+  if (add_betas) {
+    abline(v = as.Date(beta_date), lty = 2, col = spim_colours()$orange)
   }
 }
 

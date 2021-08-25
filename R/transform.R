@@ -1,5 +1,6 @@
 spim_transform <- function(region, model_type, multistrain, beta_date,
-                           vaccination, cross_immunity = NULL) {
+                           vaccination, cross_immunity = NULL,
+                           waning_rate) {
   beta_date <- sircovid::sircovid_date(beta_date)
   assert_is(vaccination, "spim_vaccination_data")
 
@@ -29,6 +30,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     mu_D_2 <- pars[["mu_D_2"]]
     mu_gamma_H <- pars[["mu_gamma_H"]]
     mu_gamma_H_2 <- pars[["mu_gamma_H_2"]]
+    mu_gamma_H_3 <- pars[["mu_gamma_H_3"]]
     p_H <- pars[["p_H"]]
     p_H_2 <- pars[["p_H_2"]]
     p_H_3 <- pars[["p_H_3"]]
@@ -44,7 +46,17 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     if ("prop_strain_2" %in% names(pars)) {
       prop_strain_2 <- pars[["prop_strain_2"]]
     } else {
-      prop_strain_2 <- NULL
+      prop_strain_2 <- 0
+    }
+
+    if ("strain_seed_date" %in% names(pars)) {
+      strain_seed_date <- pars[["strain_seed_date"]] + seq(0, 6)
+      strain_seed_pp <- 2 / 1e6
+      regional_pop <- sum(sircovid:::sircovid_population(region))
+      strain_seed_rate <- rep(strain_seed_pp * regional_pop, 7)
+    } else {
+      strain_seed_date <- NULL
+      strain_seed_rate <- NULL
     }
 
     beta_value <- unname(pars[paste0("beta", seq_along(beta_date))])
@@ -66,6 +78,12 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       ## Unused in NB fits so these are dummy values
       p_NC <- 0.002
       rho_pillar2_tests <- 0.01
+    }
+
+    if ("p_NC_weekend" %in% names(pars)) {
+      p_NC_weekend <- pars[["p_NC_weekend"]]
+    } else {
+      p_NC_weekend <- p_NC
     }
 
     ## Set severity parameters based on Bob's analysis and fitted parameters.
@@ -91,8 +109,8 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     p_H_value <- c(p_H, p_H_2, p_H_3)
 
     p_star_date <- sircovid::sircovid_date(c("2020-03-15", "2020-07-01",
-                                             "2020-09-20", "2021-04-03"))
-    p_star_value <- c(0.1, 0.42, 0.2, 0.38)
+                                             "2020-09-20", "2021-06-27"))
+    p_star_value <- c(0.1, 0.42, 0.2, 0.45)
 
     severity <- sircovid::carehomes_parameters_severity(
       0.25,
@@ -111,17 +129,18 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       progression[grep("^k_", progression$parameter), ]
     gammas <-
       progression[grep("^gamma_", progression$parameter),
-                          "value"]
+                  "value"]
     names(gammas) <-
       progression[grep("^gamma_", progression$parameter),
-                          "parameter"]
+                  "parameter"]
     gammas <- as.list(gammas)
 
     # Reduce length of stay; same dates apply
     mu_gamma_H_date <- sircovid::sircovid_date(c("2020-12-01",
                                                  "2021-01-01",
-                                                 "2021-03-01"))
-    mu_gamma_H_value <- c(1, 1 / mu_gamma_H, 1 / mu_gamma_H_2)
+                                                 "2021-03-01",
+                                                 "2021-06-15"))
+    mu_gamma_H_value <- c(1, 1 / mu_gamma_H, 1 / mu_gamma_H_2, 1 / mu_gamma_H_3)
 
     gamma_ICU_pre <- gammas$gamma_ICU_pre
     gamma_ICU_D <- gammas$gamma_ICU_D
@@ -159,9 +178,6 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     progression$gamma_sero_pos_2 <- 1 / 400
     # Time to diagnosis if admitted without test
     progression$gamma_U <- 1 / 3
-
-    ## Waning immunity rate (exponential)
-    waning_rate <- 1 / (3 * 365)
 
     observation <- sircovid::carehomes_parameters_observation()
 
@@ -237,6 +253,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       m_CHW = m_CHW,
       m_CHR = m_CHR,
       p_NC = p_NC,
+      p_NC_weekend = p_NC_weekend,
       rel_susceptibility = rel_efficacy$rel_susceptibility,
       rel_p_sympt = rel_efficacy$rel_p_sympt,
       rel_p_hosp_if_sympt = rel_efficacy$rel_p_hosp_if_sympt,
@@ -247,6 +264,8 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       vaccine_index_dose2 = 3L,
       ## Strains
       strain_transmission = strain_transmission,
+      strain_seed_date = strain_seed_date,
+      strain_seed_rate = strain_seed_rate,
       cross_immunity = cross_immunity)
 
     ## Could be moved to sircovid as a default

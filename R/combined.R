@@ -101,27 +101,46 @@ spim_combined_onward_simulate <- function(dat) {
 
   dates <- dat$simulate[[1]]$date
   idx_dates <- dat$samples[[1]]$trajectories$date %in% dates
+  state_names <- unique(c(rownames(simulate$state[[1]]), "deaths_hosp",
+                          "sero_pos_1", "sero_pos_2"))
+  state_names <- intersect(state_names,
+                           rownames(dat$samples[[1]]$trajectories$state))
 
   state <- lapply(dat$samples, function(x)
-    x$trajectories$state[rownames(simulate$state[[1]]), , idx_dates])
-  state <- aperm(abind::abind(state, along = 4), c(1, 2, 4, 3))
+    x$trajectories$state[state_names, , idx_dates])
+  state <- aperm(abind_quiet(state, along = 4), c(1, 2, 4, 3))
 
-  state_by_age <- lapply(
-    list_transpose(simulate$state_by_age),
-    abind::abind, along = 3)
+  state_by_age <- lapply(list_transpose(simulate$state_by_age),
+                         abind_quiet, along = 3)
+  n_protected <- lapply(list_transpose(simulate$n_protected),
+                        abind_quiet, along = 2)
 
   ret <- list(date = dates,
               state = state,
               state_by_age = state_by_age,
-              n_protected = abind::abind(simulate$n_protected, along = 2),
-              n_doses = abind::abind(simulate$n_doses, along = 3))
+              n_protected = n_protected,
+              n_doses = abind_quiet(simulate$n_doses, along = 3))
 
   ## This is not terrible:
   rt <- list_transpose(dat$rt)[c("Rt_general", "eff_Rt_general")]
-  ## Rt_general and eff_Rt_general will have dimensions:
+    ## Rt_general and eff_Rt_general will have dimensions:
   ## [n particles x n regions x n dates]
   rt_combined <- lapply(rt, function(x)
-    aperm(abind::abind(x, along = 3), c(2, 3, 1))[, , idx_dates])
+    aperm(abind_quiet(x, along = 3), c(2, 3, 1))[, , idx_dates])
+
+  if (dat$info$multistrain) {
+    idx_variant_dates <- dat$variant_rt[[1]]$date[, 1] %in% dates
+
+    variant_rt <-
+      list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
+    variant_rt_combined <- lapply(variant_rt, function(x)
+      aperm(abind_quiet(x, along = 4), c(3, 4, 1, 2))[, , idx_variant_dates, ])
+
+    rt_combined <- Map(function(rt, weighted_rt) {
+      x <- abind_quiet(rt, weighted_rt, along = 4)
+      dimnames(x)[[4]] <- c("strain_1", "strain_2", "both")
+      x}, variant_rt_combined, rt_combined)
+  }
 
   ret <- c(ret, rt_combined)
 
@@ -136,7 +155,7 @@ spim_combined_onward_simulate <- function(dat) {
     mv_rt <-
       list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
     mv_rt_combined <- lapply(mv_rt, function(x)
-      aperm(abind::abind(x, along = 4), c(3, 4, 2, 1))[, , , idx_dates_mv_rt])
+      aperm(abind_quiet(x, along = 4), c(3, 4, 2, 1))[, , , idx_dates_mv_rt])
     names(mv_rt_combined) <- paste0("multivariant_", names(mv_rt_combined))
 
     ret <- c(ret, mv_rt_combined)
@@ -290,12 +309,20 @@ combined_switch_levels <- function(x) {
 
 ##' Get region and country population from a combined fits object
 ##' @title Get population from combined
+##'
 ##' @param combined Combined fits object
-##' @param ignore_uk If `TRUE` population of UK is retured as NA
+##'
+##' @param ignore_uk If `TRUE` population of UK is returned as NA
+##'
+##' @param by_age Logical, indicating if population should be returned by age
+##'
+##' @param group Vector of group indices (for the carehomes model on
+##'   `1:19`)
+##'
 ##' @return data.frame of region/country populations
 ##' @export
 spim_population <- function(combined, ignore_uk = FALSE, by_age = TRUE,
-                           group = 1:19) {
+                            group = 1:19) {
   pop <- vapply(names(combined$pars), function(r)
     as.integer(combined$transform[[r]](combined$pars[[r]][1, ])$N_tot[group]),
     group)
@@ -314,6 +341,21 @@ spim_population <- function(combined, ignore_uk = FALSE, by_age = TRUE,
   df
 }
 
+##' Get proportion infected from country population from a combined fits object
+##' @title Get proportion infected from combined
+##' @param combined Combined fits object
+##' @param population Population from [spim_population]
+##' @param regions Regions for which to get proportion infected
+##' @return data.frame of region/country proportion infected
+##' @export
+spim_prop_infected <- function(combined, population,
+                              regions = sircovid::regions("england")) {
+  idx_cum_infections <- combined$info[[1]]$info$index$cum_infections
+  prop_infected <- sapply(regions, function(r) {
+    mean_ci(combined$state[[r]][idx_cum_infections, ]) / sum(population[[r]])
+  })
+  t(prop_infected)
+}
 
 ## FIXME: this is basically a version of sircovid::reorder_rt_ifr that works
 ## for two variants. Ideally we would adapt that sircovid function so it can

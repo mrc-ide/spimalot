@@ -62,9 +62,10 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
   par_max <- rep(NA, length(par_names))
   names(par_max) <- par_names
   par_max[c("m_CHW", "m_CHR")] <- 2e-5
-  par_max[beta_names] <- 0.15
+  par_max[beta_names] <- 0.25
   if (model_type == "BB") {
     par_max["p_NC"] <- 0.01
+    par_max["p_NC_weekend"] <- 0.01
     par_max["rho_pillar2_tests"] <- 0.02
   }
 
@@ -96,12 +97,14 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
     } else {
       par <- extract_sample(par_name)
 
+      par_info <- subset(pars_info, pars_info$name == par_name)
       if (is.na(par_max[[par_name]])) {
-        par_info <- subset(pars_info, pars_info$name == par_name)
         xmax <- max(par_info$max)
       } else {
         xmax <- par_max[[par_name]]
       }
+
+      xmin <- min(par_info$min)
 
       if (grepl("^beta", par_name)) {
         k <- as.numeric(gsub("beta", "", par_name))
@@ -113,7 +116,7 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
       plot(0, 0, type = "n",
            ylab = "",
            xlab = xlab,
-           xlim = c(0, xmax),
+           xlim = c(xmin, xmax),
            ylim = ylim,
            yaxt = "n"
       )

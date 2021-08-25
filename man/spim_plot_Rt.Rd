@@ -4,7 +4,15 @@
 \alias{spim_plot_Rt}
 \title{Plot Rt}
 \usage{
-spim_plot_Rt(dat, regions, rt_type, forecast_until = NULL)
+spim_plot_Rt(
+  dat,
+  regions,
+  rt_type,
+  forecast_until = NULL,
+  variant = NULL,
+  add_betas = FALSE,
+  multistrain = TRUE
+)
 }
 \arguments{
 \item{dat}{Combined data set}
@@ -14,6 +22,12 @@ spim_plot_Rt(dat, regions, rt_type, forecast_until = NULL)
 \item{rt_type}{One of the valid Rt types (e.g., eff_Rt_all)}
 
 \item{forecast_until}{Optional date to forecast till}
+
+\item{variant}{Variant type (or \code{NULL})}
+
+\item{add_betas}{Logical, indicating if betas should be added to the plot}
+
+\item{multistrain}{Logical, indicating if this is a multistrain fit}
 }
 \description{
 Plot Rt

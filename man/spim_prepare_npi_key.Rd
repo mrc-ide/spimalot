@@ -4,16 +4,49 @@
 \alias{spim_prepare_npi_key}
 \title{Prepare NPI key csv for simulation}
 \usage{
-spim_prepare_npi_key(path, country)
+spim_prepare_npi_key(
+  schools,
+  schools_modifier,
+  country,
+  path = NULL,
+  gradual_start = NULL,
+  gradual_end = NULL,
+  gradual_steps = NULL,
+  overwrite_central_adherence = NULL,
+  overwrite_low_adherence = NULL,
+  overwrite_high_adherence = NULL,
+  npi_key = NULL
+)
 }
 \arguments{
-\item{path}{File path to a csv containing columns: nation
-(at least one of england, scotland, wales, northern ireland), npi
-(name of NPI step for associated schedule), Rt (mean value for Rt),
-Rt_sd (standard deviation for Rt)}
+\item{schools}{Should be one of 'open' or 'closed' and specifies which
+state values in the csv correspond to}
+
+\item{schools_modifier}{Amount to modify first strain Rt (excl. immunity).
+If \code{schools = 'open'} then the modifier will be subtracted
+from the given csv to create \code{schools = "closed"} scenarios, otherwise
+added - \code{abs(schools_modifier)} is applied internally}
 
 \item{country}{If \code{"england"} then all other nations filtered, otherwise
 no filtering.}
+
+\item{path}{File path to a csv containing columns: nation
+(at least one of england, scotland, wales, northern ireland), npi
+(name of NPI step for associated schedule), Rt (mean value for Rt),
+Rt_sd (standard deviation for Rt), adherence (low, central, or high)}
+
+\item{gradual_start, gradual_end, gradual_steps}{If all three of these are
+non-NULL then creates a scenario of gradual transition from Rt in scenario
+\code{gradual_start} to Rt in \code{gradual_end} in \code{gradual_steps} number of steps}
+
+\item{overwrite_central_adherence}{If non-NULL then a list with names corresponding to \code{npi} and values to
+overwrite the csv in the central/low/high adherence scenario. This may be
+be useful if automating some, but not all, of the Rt values}
+
+\item{overwrite_low_adherence, overwrite_high_adherence}{As for
+\code{overwrite_central_adherence}}
+
+\item{npi_key}{Optional data.frame, instead of reading from \code{path}}
 }
 \value{
 tibble for passing to \link{spim_prepare_rt_future}

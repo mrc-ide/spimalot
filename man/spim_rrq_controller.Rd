@@ -4,7 +4,11 @@
 \alias{spim_rrq_controller}
 \title{Find rrq controller}
 \usage{
-spim_rrq_controller()
+spim_rrq_controller(root = here::here())
+}
+\arguments{
+\item{root}{Root of the orderly project (used to anchor the rrq
+file store).}
 }
 \value{
 Returns an rrq controller object if found, otherwise errors

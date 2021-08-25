@@ -5,46 +5,52 @@
 ##'   nations, npi (scenario), Rt (mean), Rt_sd
 ##' @param xlim Passed to `plot`
 ##' @param ylim Passed to `plot`
+##' @param cols Colours for plots, should be same for `npi_key2` if given
 ##' @param labels Passed to [legend] `legend` parameter
 ##' @param legend_ncol Passed to [legend] `ncol` parameter
 ##' @param npi_key2 Optional second npi_key that will be plotted with dashed
 ##'   lines
+##' @param multiplier Multiplier on the R values to plot - the distribution
+##' plotted will be that of multiplier * x where x is drawn from a lognormal
+##' with parameters specified in npi_key
 ##'
 ##' @export
-spim_plot_rt_dist <- function(npi_key, xlim, ylim, labels = NULL,
-                              legend_ncol = 1, npi_key2 = NULL) {
+spim_plot_rt_dist <- function(npi_key, xlim, ylim, cols, labels = NULL,
+                              legend_ncol = 1, npi_key2 = NULL,
+                              multiplier = 1) {
+
+  x <- seq(min(xlim), max(xlim), length.out = 1e3)
 
   labels <- labels %||% rownames(npi_key)
   plot(0, 0, xlim = xlim, ylim = ylim, type = "n",
        xlab = expression(R[excl_immunity]),
        ylab = "Density",
        las = 1)
-  cols <- viridis(nrow(npi_key))
+
   for (i in seq_rows(npi_key)) {
-    dist <- distr6::dstr("Lognormal", mean = npi_key$Rt[i], sd = npi_key$Rt_sd[i])
-    curve(dist$pdf(x), add = TRUE, col = cols[i], from = xlim[1], to = xlim[2],
-          n = 1e3, lwd = 2)
+    dist <- distr6::dstr("Lognormal", mean = npi_key$Rt[i],
+                         sd = npi_key$Rt_sd[i])
+    lines(x * multiplier, dist$pdf(x) / multiplier, col = cols[i], lwd = 2)
     legend_lty <- rep(1, nrow(npi_key2))
   }
   if (!is.null(npi_key2)) {
-    cols <- viridis(nrow(npi_key2))
     for (i in seq_rows(npi_key)) {
-      dist <- distr6::dstr("Lognormal", mean = npi_key2$Rt[i], sd = npi_key2$Rt_sd[i])
-      curve(dist$pdf(x),
-            add = TRUE, col = cols[i], from = xlim[1], to = xlim[2],
-            n = 1e3, lwd = 2, lty = 2
-      )
+      dist <- distr6::dstr("Lognormal", mean = npi_key2$Rt[i],
+                           sd = npi_key2$Rt_sd[i])
+      lines(x * multiplier, dist$pdf(x) / multiplier,
+            col = cols[i], lwd = 2, lty = 2)
     }
     legend_lty <- c(legend_lty, 1, 2)
     cols <- c(cols, 1, 1)
   }
+
   legend("topleft", legend = labels, ncol = legend_ncol, bty = "n",
          lty = legend_lty, lwd = 2, col = cols)
 }
 
 
 ##' Plot seasonality trends over time
-##' @title Plot sesonality over time
+##' @title Plot seasonality over time
 ##'
 ##' @param peak_date Date where seasonal multiplier is highest
 ##' @param seasonality Seasonal multiplier
@@ -55,12 +61,14 @@ spim_plot_seasonality <- function(peak_date = as.Date("2020-02-15"),
   x <- seq_len(365)
   dx <- sircovid::sircovid_date_as_date(x)
   plot(dx,
-       calc_seasonality(x, sircovid::sircovid_date(peak_date), seasonality),
+       spim_calc_seasonality(x, sircovid::sircovid_date(peak_date),
+                             seasonality),
        type = "l", lwd = 2, ylim = c(0.9, 1.1),
        ylab = "Seasonal multiplier", xlab = "", xaxt = "n")
   axis.Date(1, dx, at = seq.Date(from = dx[1], to = as.Date("2021-01-01"),
                                  by = "1 month"))
-  abline(v = c(peak_date, round(peak_date + 365 / 2)), lty = 2, col = "grey30")
+  abline(v = c(peak_date, round(peak_date + 365 / 2)), lty = 2,
+         col = "grey30")
 }
 
 
@@ -83,7 +91,8 @@ spim_plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
     )
 
     R2_range <- lapply(seq_along(R1_range), function(i) {
-        c(min(R1_range[[i]]) * min(epsilon_range), max(R1_range[[i]]) * max(epsilon_range))
+        c(min(R1_range[[i]]) * min(epsilon_range),
+          max(R1_range[[i]]) * max(epsilon_range))
     })
 
     data_frame(do.call(rbind, Map(rbind, R1_range, R2_range))) %>%
@@ -114,56 +123,112 @@ spim_plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
 ##' Select colours for plotting simulation scenarios
 ##' @title Return accessible scenario colours
 ##'
-##' @param scenarios Unique scenario names
-##' @param dark_scenarios Optional unique scenario names that should be same
-##'  length as `scenarios` as provided and will be the same colours but darker.
-##'  Useful if plotting scenarios and their High R counterparts.
-##' @param weight If `dark_scenarios` is not `NULL` then `weight` passed to
-##'  `mix_cols` to darken colours by mixing with "#000000" (black)
+##' @param scenarios Unique scenario names. Scenarios with `[High R]` will
+##'   darken the colour for the corresponding central scenario and scenarios
+##'   with `[Low R]` will brighten the colour for the corresponding
+##'   central scenario.
+##' @param weight `weight` passed to `mix_cols` to darken/brighten colours for
+##'   high/low R scenarios
 ##' @param palette Colour palette, passed to [khroma::colour]
-##' @param highR If `TRUE` then `dark_scenarios` is taken to be all scenarios
-##'   that contain "High R"; `dark_scenarios` should be `NULL` if `TRUE`
 ##' @param preview If `TRUE` then plots the final colour scheme with
 ##'   [khroma::plot_scheme]
 ##'
+##' @examples
+##' spim_scenario_cols(c("Step 4", "Step 4 [High R]", "Step 4 [Low R]"))
+##'
+##' spim_scenario_cols(c("Step 3", "Step 3 [High R]", "Step 4"))
+##'
 ##' @export
-spim_scenario_cols <- function(scenarios, dark_scenarios = NULL, weight = 0.3,
-                               palette = "bright", highR = TRUE,
+spim_scenario_cols <- function(scenarios, weight = 0.3, palette = "bright",
                                preview = FALSE) {
 
   stopifnot(all(table(scenarios)) == 1)
 
-  n_scens <- length(scenarios)
-
-  if (highR) {
-    if (!is.null(dark_scenarios)) {
-      stop("`dark_scenarios` must be `NULL` if `highR` is `TRUE`")
-    }
-    dark_scenarios <- grep("High R", scenarios, value = TRUE)
-    scenarios <- setdiff(scenarios, dark_scenarios)
-    n_scens <- length(scenarios)
-    if (length(dark_scenarios) == 0) {
-      dark_scenarios <- NULL
-    }
-  }
-
-  if (!is.null(dark_scenarios)) {
-    stopifnot(all(table(dark_scenarios)) == 1,
-              n_scens == length(dark_scenarios))
-  }
+  cen_scenarios <- scenarios[!grepl("(High|Low) R", scenarios)]
+  n_scens <- length(cen_scenarios)
 
   cols <- khroma::colour(palette)(n_scens)
-  names(cols) <- scenarios
+  names(cols) <- cen_scenarios
+  dark_cols <- light_cols <- character()
 
-  if (!is.null(dark_scenarios)) {
-    dark_cols <- mix_cols(cols, rep("#000000", length(cols)), 0.3)
+  dark_scenarios <- grep("[High R]", scenarios, fixed = TRUE, value = TRUE)
+  if (length(dark_scenarios) > 0) {
+    dark_cols <- match(gsub(" [High R]", "", dark_scenarios, fixed = TRUE),
+                       names(cols))
+
+    if (any(is.na(dark_cols))) {
+      stop("Unrecognised High R scenarios")
+    }
+
+    dark_cols <- mix_cols(cols[dark_cols],
+                          rep("#000000", length(dark_cols)), weight)
     names(dark_cols) <- dark_scenarios
-    cols <- c(cols, dark_cols)
   }
+
+  light_scenarios <- grep("[Low R]", scenarios, fixed = TRUE, value = TRUE)
+  if (length(light_scenarios) > 0) {
+    light_cols <- match(gsub(" [Low R]", "", light_scenarios, fixed = TRUE),
+                       names(cols))
+
+    if (any(is.na(light_cols))) {
+      stop("Unrecognised Low R scenarios")
+    }
+
+    light_cols <- mix_cols(cols[light_cols],
+                           rep("#FFFFFF", length(light_cols)), weight)
+    names(light_cols) <- light_scenarios
+  }
+
+  cols <- c(cols, dark_cols, light_cols)
 
   if (preview) {
     khroma::plot_scheme(cols)
   }
 
   cols
+}
+
+
+##' Prepare aggregated real data for plotting
+##' @title Prepare aggregated data for plotting
+##'
+##' @param path Path to aggregated rds object containing a named list where
+##'  names correspond to regions and each element is a list with `full` data
+##'  and `fitted` data
+##'
+##' @return Returns a list where elements correspond to regions and `fitted`
+##'  data is removed. Data processing includes: adding `deaths`
+##'  column as the sum over all death compartments; fixes when NAs converted to
+##'  0s erroneously; and fitted data removed.
+##'
+##' @export
+spim_prepare_aggregated_data <- function(path) {
+
+  agg_data <-
+    readRDS(path) %>%
+    lapply(function(x) {
+      x <- x$full
+
+      deaths <- cbind(x$deaths_hosp, x$deaths_comm,
+                      x$deaths_carehomes, x$deaths_non_hosp)
+
+      x$deaths <- rowSums(deaths, na.rm = TRUE)
+      x$deaths[apply(deaths, 1, function(x) all(is.na(x)))] <- NA
+      x
+    })
+
+  nr <- nrow(agg_data[[1]])
+
+  f <- function(what) {
+    mat <- vapply(agg_data[sircovid::regions("england")],
+                  function(x) x[[what]], integer(nr))
+    which <- apply(mat, 1, function(x) all(is.na(x)))
+    mat <- rowSums(mat, na.rm = TRUE)
+    mat[which] <- NA
+    mat
+  }
+
+  what <- c("icu", "general", "hosp",  "admitted", "diagnoses", "all_admission")
+  agg_data$england[, what] <- vapply(what, f, numeric(nr))
+  agg_data
 }

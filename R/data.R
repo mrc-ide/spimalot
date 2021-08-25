@@ -19,12 +19,16 @@
 ##'   about deaths, positive test results, react serology, etc. TODO:
 ##'   DESCRIBE FORMAT; TODO: DESCRIBE ORIGIN
 ##'
-##' @param serology The additional serology data. TODO: DESCRBE FORMAT
+##' @param serology The additional serology data. TODO: DESCRIBE FORMAT
 ##'
 ##' @param trim_deaths The number of days of deaths to trim to avoid
 ##'   back-fill issues. We typically use a value of 4 days.
 ##'
 ##' @param data_admissions A dataframe with age disaggregated admissions data
+##'
+##' @param trim_pillar2 The number of days of pillar 2 data to trim to avoid
+##'   back-fill issues. We typically use a value of 7 days.
+##'
 ##' @param full_data Not sure yet, we'll find out
 ##'
 ##' @param fit_to_variants Logical, whether to fit to variants data or not
@@ -32,8 +36,8 @@
 ##' @return A [data.frame()] TODO: describe columns
 ##'
 ##' @export
-spim_data <- function(date, region, model_type, rtm, serology, trim_deaths,
-                      data_admissions, full_data = FALSE,
+spim_data <- function(date, region, model_type, rtm, serology, data_admissions,
+                      trim_deaths, trim_pillar2, full_data = FALSE,
                       fit_to_variants = FALSE) {
   check_region(region)
   spim_check_model_type(model_type)
@@ -42,15 +46,15 @@ spim_data <- function(date, region, model_type, rtm, serology, trim_deaths,
     ## See the original task
     stop("Not yet supported")
   } else {
-    spim_data_single(date, region, model_type, rtm, serology, trim_deaths,
-                     data_admissions, full_data, fit_to_variants)
+    spim_data_single(date, region, model_type, rtm, serology, data_admissions,
+                     trim_deaths, trim_pillar2, full_data, fit_to_variants)
   }
 }
 
 
 spim_data_single <- function(date, region, model_type, rtm, serology,
-                             trim_deaths, data_admissions, full_data,
-                             fit_to_variants) {
+                             data_admissions, trim_deaths, trim_pillar2,
+                             full_data, fit_to_variants) {
   ## TODO: verify that rtm has consecutive days
   rtm <- spim_data_rtm(date, region, model_type, rtm, data_admissions,
                        full_data, fit_to_variants)
@@ -82,6 +86,14 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
   data[i, c("deaths", "deaths_hosp", "deaths_comm",
             "deaths_carehomes",  "deaths_non_hosp")] <- NA
 
+  ## Set last 'trim_pillar2' days with pillar 2 reported to NA, as these
+  ## are too likely to be back-filled to be reliable
+  i <- seq(to = nrow(data), length.out = trim_pillar2)
+  cols_pillar2 <- c("pillar2_tot", "pillar2_pos", "pillar2_cases",
+                    "pillar2_over25_tot", "pillar2_over25_pos",
+                    "pillar2_over25_cases")
+  data[i, cols_pillar2] <- NA_integer_
+
   data
 }
 
@@ -102,6 +114,7 @@ spim_data_rtm <- function(date, region, model_type, data, data_admissions,
             "positives_over25", "pillar2_positives_symp_pcr_only",
             "pillar2_positives_symp_pcr_only_over25",
             "pillar2_positives_pcr_all", "pillar2_positives_pcr_all_over25",
+            "n_delta_variant", "n_non_delta_variant",
             "n_symp_delta_variant", "n_symp_non_delta_variant")
   data <- data[c("region", "date", vars)]
 
@@ -195,13 +208,25 @@ spim_data_rtm <- function(date, region, model_type, data, data_admissions,
     }
   }
 
+  # Use VAM data available
+  if (region %in% c("scotland", "wales", "northern_ireland")) {
+    data$strain_non_variant <- data$n_non_delta_variant
+    data$strain_tot <- data$n_delta_variant + data$n_non_delta_variant
+  } else {
+    data$strain_non_variant <- data$n_symp_non_delta_variant
+    data$strain_tot <- data$n_symp_delta_variant + data$n_symp_non_delta_variant
+  }
+
   # Use positives/negatives as Pillar 2 for Scotland
   # Set data$phe_patients to NA between 2020-06-01 and 2020-09-09 (inclusive)
   if (region == "scotland") {
     data$pillar2_positives <- data$positives
-    data$pillar2_negatives <- data$negatives
+    ## Scotland negatives are by report date (while positives are by specimen
+    ## date). We assume a 2 day reporting delay.
+    data$pillar2_negatives <- c(data$negatives[-c(1, 2)], rep(NA_integer_, 2))
     data$pillar2_positives_over25 <- data$positives_over25
-    data$pillar2_negatives_over25 <- data$negatives_over25
+    ## We do not have any age breakdown for negatives for Scotland
+    data$pillar2_negatives_over25 <- NA_integer_
 
     data$phe_patients[data$date >= as.Date("2020-06-01") &
                         data$date <= as.Date("2020-09-10")] <- NA_integer_
@@ -248,16 +273,14 @@ spim_data_rtm <- function(date, region, model_type, data, data_admissions,
     data$final_hosp <- data$phe_patients
   }
 
-  # Remove last 7 days of Pillar 2 data
-  last_week <- seq(to = nrow(data), length.out = 7)
   cols_pillar2 <- c("pillar2_positives", "pillar2_negatives", "pillar2_cases",
                     "pillar2_positives_over25", "pillar2_negatives_over25",
                     "pillar2_cases_over25")
-  data[seq(to = nrow(data), length.out = 7), cols_pillar2] <- NA_integer_
 
-  ## ignore pillar 2 testing before 2020-06-18
+  # ignore pillar 2 testing before 2020-06-18
   data[which(data$date < "2020-06-18"), cols_pillar2] <- NA_integer_
 
+  last_week <- seq(to = nrow(data), length.out = 7)
   ## Remove last week admissions for Wales (due to backfill)
   if (region == "wales") {
     data[last_week, "final_admissions"] <- NA_integer_
@@ -321,8 +344,8 @@ spim_data_rtm <- function(date, region, model_type, data, data_admissions,
     pillar2_over25_cases = data$pillar2_cases_over25,
     react_pos = data$react_positive,
     react_tot = data$react_samples,
-    strain_non_variant = data$n_symp_non_delta_variant,
-    strain_tot = data$n_symp_delta_variant + data$n_symp_non_delta_variant,
+    strain_non_variant = data$strain_non_variant,
+    strain_tot = data$strain_tot,
     strain_over25_non_variant = NA_integer_,
     strain_over25_tot = NA_integer_)
 

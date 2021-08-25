@@ -11,9 +11,13 @@
 ##'
 ##' @param control The forecast control from [spimalot::spim_control]
 ##'
+##' @param random_sample Logical parameter, if `TRUE` will obtain the
+##'   posterior samples via random sampling, otherwise thinning will
+##'   be used
 ##'
 ##' @export
-spim_fit_process <- function(samples, parameters, data, control) {
+spim_fit_process <- function(samples, parameters, data, control,
+                             random_sample = TRUE) {
   region <- samples$info$region
 
   message("Computing restart information")
@@ -22,11 +26,14 @@ spim_fit_process <- function(samples, parameters, data, control) {
 
   message("Running forecasts")
   incidence_states <- "deaths"
+  ## Add 1 to burnin to account for removal of initial parameters
   forecast <- sircovid::carehomes_forecast(samples,
                                            control$n_sample,
-                                           control$burnin,
+                                           control$burnin + 1L,
                                            control$forecast_days,
-                                           incidence_states)
+                                           incidence_states,
+                                           random_sample = random_sample,
+                                           thin = control$thin)
 
   message("Computing Rt")
   rt <- calculate_Rt(forecast, samples$info$multistrain, TRUE) # TODO: very slow
@@ -39,9 +46,13 @@ spim_fit_process <- function(samples, parameters, data, control) {
   ifr_t <-
     calculate_ifr_t(forecast, samples$info$multistrain) # TODO: a bit slow
 
-  message("Summarising admissions")
-  # admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
-  # admissions[["data"]] <- data$admissions
+  if (is.null(data$admissions)) {
+    admissions <- NULL
+  } else {
+    message("Summarising admissions")
+    admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
+    admissions[["data"]] <- data$admissions
+  }
 
   message("Summarising deaths")
   # deaths <- extract_outputs_by_age(forecast, "D_hosp") # slow
@@ -81,11 +92,12 @@ spim_fit_process <- function(samples, parameters, data, control) {
     restart$parent <- list(
       trajectories = trajectories_filter_time(forecast$trajectories, i),
       rt = rt_filter_time(rt, i),
-      ifr_t = rt_filter_time(ifr_t, i)
-      # ,
-      # deaths = deaths_filter_time(deaths, restart_date),
-      # admissions = deaths_filter_time(deaths, restart_date)
-      )
+      ifr_t = rt_filter_time(ifr_t, i),
+      deaths = deaths_filter_time(deaths, restart_date),
+      admissions = deaths_filter_time(deaths, restart_date),
+      ## TODO: check to make sure that this is just the one region's
+      ## parameters at this point (see the region column)
+      prior = parameters$prior)
   }
 
   ## Drop the big objects from the output
@@ -109,18 +121,18 @@ spim_fit_process <- function(samples, parameters, data, control) {
 ##' Collect data sets for use with [spimalot::spim_fit_process]
 ##'
 ##' @title Collect data sets
-##' @param data_admissions The admissions data set from
-##'   [spimalot::spim_data_admissions]
+##' @param admissions The admissions data set from
+##'   [spimalot::spim_data_admissions]. Set to NULL if not fitting or plotting
+##'   age-specific data
 ##'
 ##' @param rtm The rtm data set
 ##'
-##'
-##' @param data The data set as passed to
+##' @param fitted The data set as passed to
 ##'   [spimalot::spim_particle_filter]
 ##'
-##' @param data_full Full data set, before any right-censoring
+##' @param full Full data set, before any right-censoring
 ##'
-##' @param data_vaccination The vaccination data set as passed to
+##' @param vaccination The vaccination data set as passed to
 ##'   [spimalot::spim_pars]
 ##'
 ##' @export
@@ -145,12 +157,15 @@ create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
               state = samples$trajectories$state[, , idx_dates])
   # add state_by_age
   ret$state_by_age <- extract_age_class_state(ret$state)
-  # add n_protected and n_doses2
-  ret <- c(ret, calculate_vaccination(ret$state, vaccine_efficacy))
+  # add n_protected and n_doses2s
+  cross_immunity <- samples$predict$transform(samples$pars[1, ])$cross_immunity
+
+  ret <-
+    c(ret, calculate_vaccination(ret$state, vaccine_efficacy, cross_immunity))
 
   # thin trajectories
-  ret$state <- ret$state[c("deaths", "deaths_comm", "admitted", "diagnoses",
-                           "infections", "hosp", "icu"), , ]
+  ret$state <- ret$state[c("deaths", "deaths_comm", "deaths_hosp", "admitted",
+                           "diagnoses", "infections", "hosp", "icu"), , ]
 
   # reshape to add a regional dimension
   ret$state <- mcstate::array_reshape(ret$state, i = 2, c(ncol(ret$state), 1))
@@ -383,6 +398,19 @@ reduce_trajectories <- function(samples) {
   samples$trajectories$state <-
     abind1(state[setdiff(rownames(state), nms_S), , ], S)
 
+  ## Calculate Pillar 2 positivity
+  pillar2_positivity <- calculate_positivity(samples, FALSE)
+  pillar2_positivity <-
+    array(pillar2_positivity, c(1, dim(pillar2_positivity)))
+  pillar2_positivity_over25 <- calculate_positivity(samples, TRUE)
+  pillar2_positivity_over25 <-
+    array(pillar2_positivity_over25, c(1, dim(pillar2_positivity_over25)))
+  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_over25)
+  row.names(pillar2_positivity) <-
+    c("pillar2_positivity", "pillar2_positivity_over25")
+  samples$trajectories$state <-
+    abind1(samples$trajectories$state, pillar2_positivity)
+
   samples
 }
 
@@ -414,7 +442,8 @@ deaths_filter_time <- function(x, restart_date) {
 }
 
 
-calculate_vaccination <- function(state, vaccine_efficacy) {
+calculate_vaccination <- function(state, vaccine_efficacy, cross_immunity) {
+
   de <- dim(vaccine_efficacy[[1]])
   if (length(de) == 2L) {
     n_groups <- de[[1]]
@@ -441,6 +470,7 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
 
   ## mean R by vaccine class / region == 1, time
   R <- get_mean_avt("^R_", state, TRUE)
+  ## sum out age
   R <- apply(R, c(2, 3, 4), sum)
 
   ## mean cumulative vaccinations by age / vaccine class / region == 1 / time
@@ -479,28 +509,40 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
   sum_asr <- function(x) c(apply(x, c(3, 4), sum))
 
   if (multistrain) {
-    n_vaccinated <- apply(n_vaccinated, c(1, 2, 4), sum)
-    dim(n_vaccinated) <- c(n_groups, n_vacc_classes, 1, n_days)
 
-    R <- apply(R, c(1, 3), sum)
-    dim(R) <- c(n_vacc_classes, 1, n_days)
+    ever_vaccinated <- colSums(n_vaccinated[, 1, , ])
+    R_strain_1 <- apply(R[, -2, ], c(1, 3), sum) + R[, 2, ] * cross_immunity[2]
+    R_strain_2 <-  apply(R[, -1, ], c(1, 3), sum) + R[, 1, ] * cross_immunity[1]
 
-    protected_against_infection <- rep(NA_real_, n_days)
-    protected_against_severe_disease <- rep(NA_real_, n_days)
-    protected_against_death <- rep(NA_real_, n_days)
+    n_protected <- list(
+      strain_1 = rbind(
+        ever_vaccinated = ever_vaccinated,
+        protected_against_infection = sum_asr(c(vp$infection[, 1, ]) * V),
+        protected_against_severe_disease =
+          sum_asr(c(vp$severe_disease[, 1, ]) * V),
+        protected_against_death = sum_asr(c(vp$death[, 1, ]) * V),
+        ever_infected = colSums(R_strain_1),
+        ever_infected_unvaccinated = R_strain_1[1, ]),
+      strain_2 = rbind(
+        ever_vaccinated = ever_vaccinated,
+        protected_against_infection = sum_asr(c(vp$infection[, 2, ]) * V),
+        protected_against_severe_disease =
+          sum_asr(c(vp$severe_disease[, 2, ]) * V),
+        protected_against_death = sum_asr(c(vp$death[, 2, ]) * V),
+        ever_infected = colSums(R_strain_2),
+        ever_infected_unvaccinated = R_strain_2[1, ]))
+
   } else {
-    protected_against_infection <- sum_asr(c(vp$infection) * V)
-    protected_against_severe_disease <- sum_asr(c(vp$severe_disease) * V)
-    protected_against_death <- sum_asr(c(vp$death) * V)
+
+    n_protected <- list(strain_1 = rbind(
+      ever_vaccinated = colSums(n_vaccinated[, 1, , ]),
+      protected_against_infection = sum_asr(c(vp$infection) * V),
+      protected_against_severe_disease = sum_asr(c(vp$severe_disease) * V),
+      protected_against_death = sum_asr(c(vp$death) * V),
+      ever_infected = sum_sr(R),
+      ever_infected_unvaccinated = R[1, , , drop = FALSE]))
   }
 
-  n_protected <- rbind(
-    ever_vaccinated = colSums(n_vaccinated[, 1, , ]),
-    protected_against_infection = protected_against_infection,
-    protected_against_severe_disease = protected_against_severe_disease,
-    protected_against_death = protected_against_death,
-    ever_infected = sum_sr(R),
-    ever_infected_unvaccinated = R[1, , , drop = FALSE])
 
   ## calculate n_doses
 
@@ -514,9 +556,9 @@ calculate_vaccination <- function(state, vaccine_efficacy) {
 
   n_doses <- abind::abind(doses, doses_inc, along = 2)
 
-  list(n_protected = mcstate::array_reshape(n_protected, i = 2,
-                                            d = c(1, ncol(n_protected))),
-             n_doses = n_doses)
+  list(n_protected = lapply(n_protected, mcstate::array_reshape, i = 2,
+                            d = c(1, ncol(n_protected[[1]]))),
+       n_doses = n_doses)
 }
 
 
@@ -569,10 +611,49 @@ spim_fit_parameters <- function(samples, parameters) {
   covariance <- cov(samples$pars)
   rownames(covariance) <- NULL
   proposal <- data_frame(region = samples$info$region,
-                           name = colnames(covariance),
-                           covariance)
+                         name = colnames(covariance),
+                         covariance)
 
   list(info = info,
        prior = prior,
        proposal = proposal)
+}
+
+
+calculate_positivity <- function(samples, over25) {
+
+  x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
+
+  model_params <- samples$predict$transform(samples$pars[1, ])
+
+  if ("p_NC" %in% colnames(samples$pars)) {
+    p_NC <- samples$pars[, "p_NC"]
+  } else {
+    p_NC <- model_params$p_NC
+  }
+
+  if ("p_NC_weekend" %in% colnames(samples$pars)) {
+    p_NC_weekend <- samples$pars[, "p_NC_weekend"]
+  } else {
+    p_NC_weekend <- p_NC
+  }
+
+  if (over25) {
+    pos <- samples$trajectories$state["sympt_cases_over25_inc", , ]
+    neg <- (sum(model_params$N_tot[6:19]) - pos)
+  } else {
+    pos <- samples$trajectories$state["sympt_cases_inc", , ]
+    neg <- (sum(model_params$N_tot) - pos)
+  }
+
+  neg[, grepl("^S", weekdays(x))] <-
+    neg[, grepl("^S", weekdays(x))] * p_NC_weekend
+  neg[, !grepl("^S", weekdays(x))] <-
+    neg[, !grepl("^S", weekdays(x))] * p_NC
+
+  out <- (pos * model_params$pillar2_sensitivity +
+            neg * (1 - model_params$pillar2_specificity)) / (pos + neg) * 100
+
+  out
+
 }

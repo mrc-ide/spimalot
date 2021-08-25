@@ -16,12 +16,12 @@
 ##' @inheritParams spim_data
 ##'
 ##' @param multistrain Logical, indicating if the model is a
-##'   "multistrain" model allowing for mulitiple competing strains.
+##'   "multistrain" model allowing for multiple competing strains.
 ##'
 ##' @param beta_date A vector of date (strings) for the beta
 ##'   parameters. Must align with parameters
 ##'
-##' @param vaccination Vacination data, from
+##' @param vaccination Vaccination data, from
 ##'   [spimalot::spim_vaccination_data]
 ##'
 ##' @param parameters Parameter information, from
@@ -34,13 +34,16 @@
 ##'   values. Only has an effect if `multistrain` is `TRUE` and then
 ##'   must have a length of 2 if given.
 ##'
+##' @param waning_rate Rate of waning immunity
+##'
 ##' @return An [mcstate::pmcmc_parameters] object which can be used
 ##'   with [mcstate::pmcmc]
 ##'
 ##' @export
 spim_pars <- function(date, region, model_type, multistrain,
                       beta_date, vaccination, parameters,
-                      kernel_scaling = 1, cross_immunity = NULL) {
+                      kernel_scaling = 1, cross_immunity = NULL,
+                      waning_rate) {
   assert_is(parameters, "spim_pars_pmcmc")
 
   ## We take 'info' as the canonical source of names, then check that
@@ -60,7 +63,7 @@ spim_pars <- function(date, region, model_type, multistrain,
     prior = lapply(split(prior, prior$name), make_prior))
 
   transform <- spim_transform(region, model_type, multistrain, beta_date,
-                              vaccination, cross_immunity)
+                              vaccination, cross_immunity, waning_rate)
 
   ret <- mcstate::pmcmc_parameters$new(pars, proposal, transform)
 
@@ -80,7 +83,7 @@ spim_pars <- function(date, region, model_type, multistrain,
 
 
 ##' Load the pmcmc parameters from disk. We expect three files; one
-##' for the overal parameters (`info`), one with details of the priors
+##' for the overall parameters (`info`), one with details of the priors
 ##' (`prior`) and one describing the proposal kernel (`proposal`).
 ##'
 ##' @title Load a set of parameters for the pmcmc
@@ -112,7 +115,7 @@ spim_pars_pmcmc_load <- function(path, info = "info.csv", prior = "prior.csv",
 }
 
 
-##' Write pmcmc paramters out after fitting and aggregation (inverse
+##' Write pmcmc parameters out after fitting and aggregation (inverse
 ##' of [spimalot::spim_pars_pmcmc_load])
 ##'
 ##' @title Write out parameters
@@ -136,10 +139,12 @@ spim_pars_pmcmc_save <- function(p, path) {
 ##'
 ##' @title Create vector of beta dates
 ##'
-##' @param date Todays dates (last date is set two weeks ago)
+##' @param date Today's dates (last date is set to last_beta_days_ago)
+##'
+##' @param last_beta_days_ago Number of days in the past for last beta point
 ##'
 ##' @export
-spim_pars_beta <- function(date) {
+spim_pars_beta <- function(date, last_beta_days_ago = 21) {
   ## Dates are as follows
   ##  1. 2020-03-16 - PM advises WFH, against non-essential travel etc
   ##  2. 2020-03-23 - PM announces full lockdown
@@ -155,39 +160,37 @@ spim_pars_beta <- function(date) {
   ## 12. 2020-11-05 - lockdown 2 starts
   ## 13. 2020-12-02 - lockdown 2 ends
   ## 14. 2020-12-18 - school Christmas holidays
-  ## 15. 2021-01-05 - Lockdown 3 starts
-  ## 16. 2021-03-08 - Step 1 of roadmap: schools reopen
-  ## 17. 2021-04-19 - Step 2 of roadmap: outdoors hospitality (04-12)
-  ##                  and shools return (04-19)
-  ## 18. 2021-05-17 - Step 3 of roadmap: indoors hospitality
-  ## 18. Three weeks ago
+  ## 15. 2020-12-25 - last day of holidays season relaxation
+  ## 16. 2021-01-05 - Lockdown 3 starts
+  ## 17. 2021-03-08 - Step 1 of roadmap: schools reopen
+  ## 18. 2021-04-01 - Semi-arbitrary - school holidays / restart date
+  ## 19. 2021-04-19 - Step 2 of roadmap: outdoors hospitality (04-12)
+  ##                  and schools return (04-19)
+  ## 20. 2021-05-17 - Step 3 of roadmap: indoors hospitality
+  ## 21. 2021-06-21 - Step 3.5 - "freedom day" delayed / Euros last group match
+  ## 22. 2021-07-03 - Euros quarter final
+  ## 23. 2021-07-11 - Euros 2020 final - peak in transmission
+  ## 24. 2021-07-19 - Step 4
+  ## 25. Date - last_beta_days_ago
   c("2020-03-16", "2020-03-23", "2020-03-25",
     "2020-05-11", "2020-06-15", "2020-07-04",
     "2020-08-01", "2020-09-01", "2020-09-14",
     "2020-10-14", "2020-10-31", "2020-11-05",
-    "2020-12-02", "2020-12-18", "2021-01-05",
-    "2021-03-08", "2021-04-19", "2021-05-17",
-    as.character(as.Date(date) - 21))
+    "2020-12-02", "2020-12-18", "2020-12-25",
+    "2021-01-05", "2021-03-08", "2021-04-01",
+    "2021-04-19", "2021-05-17", "2021-06-21",
+    "2021-07-03", "2021-07-11", "2021-07-19",
+    as.character(as.Date(date) - last_beta_days_ago))
 }
 
-
-spim_pars_pmcmc <- function(region, info, prior, proposal) {
-  if (length(region) == 1) {
-    spim_pars_pmcmc_single(region, info, prior, proposal)
-  } else {
-    stop("writeme")
-  }
-}
-
-
-spim_pars_pmcmc_single <- function(region, info, prior, proposal) {
-
-  list(region = region, info = info, prior = prior, proposal = proposal)
-}
 
 
 spim_pars_info <- function(region, info) {
-  assert_has_names(info, c("name", "initial", "max", "discrete"))
+  assert_has_names(info, c("region", "include",
+                           "name", "initial", "max", "discrete"))
+  if (!(region %in% info$region)) {
+    stop(sprintf("Did not find region '%s' in parameter info", region))
+  }
   info <- info[info$region == region & info$include, ]
   info <- info[setdiff(names(info), c("region", "include"))]
   rownames(info) <- NULL
@@ -239,13 +242,6 @@ make_prior <- function(d) {
     stop("Unknown prior type")
   }
 }
-
-
-parameter_subset_region <- function(pars, region) {
-  assert_is(pars, "spim_pars_pmcmc")
-  lapply(pars, function(x) x[x$region == region, ])
-}
-
 
 
 ##' Add a parameter to a `spim_pars_mcmc` object

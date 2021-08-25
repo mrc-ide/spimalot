@@ -6,31 +6,31 @@
 \usage{
 spim_scenario_cols(
   scenarios,
-  dark_scenarios = NULL,
   weight = 0.3,
   palette = "bright",
-  highR = TRUE,
   preview = FALSE
 )
 }
 \arguments{
-\item{scenarios}{Unique scenario names}
+\item{scenarios}{Unique scenario names. Scenarios with \verb{[High R]} will
+darken the colour for the corresponding central scenario and scenarios
+with \verb{[Low R]} will brighten the colour for the corresponding
+central scenario.}
 
-\item{dark_scenarios}{Optional unique scenario names that should be same
-length as \code{scenarios} as provided and will be the same colours but darker.
-Useful if plotting scenarios and their High R counterparts.}
-
-\item{weight}{If \code{dark_scenarios} is not \code{NULL} then \code{weight} passed to
-\code{mix_cols} to darken colours by mixing with "#000000" (black)}
+\item{weight}{\code{weight} passed to \code{mix_cols} to darken/brighten colours for
+high/low R scenarios}
 
 \item{palette}{Colour palette, passed to \link[khroma:colour]{khroma::colour}}
-
-\item{highR}{If \code{TRUE} then \code{dark_scenarios} is taken to be all scenarios
-that contain "High R"; \code{dark_scenarios} should be \code{NULL} if \code{TRUE}}
 
 \item{preview}{If \code{TRUE} then plots the final colour scheme with
 \link[khroma:plot]{khroma::plot_scheme}}
 }
 \description{
 Select colours for plotting simulation scenarios
+}
+\examples{
+spim_scenario_cols(c("Step 4", "Step 4 [High R]", "Step 4 [Low R]"))
+
+spim_scenario_cols(c("Step 3", "Step 3 [High R]", "Step 4"))
+
 }

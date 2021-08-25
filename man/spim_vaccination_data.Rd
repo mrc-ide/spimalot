@@ -22,7 +22,7 @@ be one of the 10 NHS regions (one of
 \code{sircovid::regions("all")}), or an argument to that function
 (e.g., \code{all})}
 
-\item{uptake}{A vector of propotion update by age. Must be length 19}
+\item{uptake}{A vector of proportion update by age. Must be length 19}
 
 \item{end_date}{The final date of the simulation; we will expand
 out the vaccination schedule to this date (if the simulation
@@ -34,7 +34,7 @@ continues beyond that date, it's fine)}
 elements \code{rel_susceptibility}, \code{rel_p_sympt},
 \code{rel_p_hosp_if_sympt}, \code{rel_p_death}, \code{rel_infectivity} (relative effect
 of susceptibility, symptomatic disease, hospitalisation conditional
-on symtomatic, death conditional on hospitalisation, and infectivity).
+on symptomatic, death conditional on hospitalisation, and infectivity).
 Each of the list elements must
 be a \verb{19 x n} matrix (where \code{n} is the number of vaccination
 classes and is shared across all elements). Every number in the

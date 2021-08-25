@@ -7,9 +7,9 @@
 spim_mtp_age_vaccine_outputs(res, region = "england")
 }
 \arguments{
-\item{region}{A string, region for which outputs will be plotted}
+\item{res}{Output from MTP simulation}
 
-\item{dat}{Output from MTP simulation}
+\item{region}{A string, region for which outputs will be plotted}
 }
 \description{
 Prepare outputs by age and vaccination class for plotting
