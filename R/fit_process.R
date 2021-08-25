@@ -381,10 +381,12 @@ reduce_trajectories <- function(samples) {
     apply(S[, i, ], 2, function(x) sum(x * c(rel_susceptibility)))
   }
 
+  unvacc_S_age <- calc_unvacc_S_age(S, nms_S)
   eff_S <- t(vapply(seq_len(dim(S)[2]), calc_eff_S, numeric(dim(S)[3])))
   eff_S <- array(eff_S, c(1, dim(eff_S)))
   row.names(eff_S) <- "eff_S"
   state <- abind1(state, eff_S)
+  state <- abind1(state, unvacc_S_age)
 
   samples$trajectories$state <- abind1(samples$trajectories$state, eff_S)
   ## sum across vaccine stages for S
@@ -414,6 +416,21 @@ reduce_trajectories <- function(samples) {
   samples
 }
 
+## extract number of unvaccinated susceptibles by age
+calc_unvacc_S_age <- function(S, nms_S) {
+
+  age <- matrix(nms_S, nrow = 19)
+  age <- age[1:17, 1]
+
+  out <- array(0, dim = c(17, dim(S)[2], dim(S)[3]))
+  rownames(out) <- paste0("susc_unvacc_", seq(0, 80, 5))
+
+  for (a in seq_len(length(age))) {
+    s <- S[age[a], , , drop = FALSE]
+    out[a, , ] <- s
+  }
+  out
+}
 
 trajectories_filter_time <- function(trajectories, i) {
   trajectories$step <- trajectories$step[i]
