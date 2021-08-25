@@ -423,7 +423,7 @@ calc_unvacc_S_age <- function(S, nms_S) {
   age <- age[1:17, 1]
 
   out <- array(0, dim = c(17, dim(S)[2], dim(S)[3]))
-  rownames(out) <- paste0("S_unvacc_", seq(0, 80, 5))
+  rownames(out) <- paste0("susc_unvacc_", seq(0, 80, 5))
 
   for (a in seq_len(length(age))) {
     s <- S[age[a], , , drop = FALSE]

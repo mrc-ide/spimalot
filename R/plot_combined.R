@@ -427,7 +427,7 @@ spim_plot_unvaccinated_susceptible <- function(dat, regions, date) {
 
     trajectories <- sample$trajectories$state
 
-    index_S_age <- grep("^S_unvacc_", rownames(sample$trajectories$state))
+    index_S_age <- grep("^susc_unvacc_", rownames(sample$trajectories$state))
     index_date <- which(sample$trajectories$date[-1] ==
                           sircovid::sircovid_date(date))
 
