@@ -406,6 +406,67 @@ spim_plot_variant <- function(dat, regions, date_min = NULL) {
 }
 
 
+##' Plot susceptible unvaccinated proportion
+##'
+##' @title Plot susceptible
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param date Current date for extracting susceptible proportion
+##'
+##' @export
+spim_plot_unvaccinated_susceptible <- function(dat, regions, date) {
+
+  df <- NULL
+  for (r in regions) {
+    sample <- dat$samples[[r]]
+
+    N0 <- sircovid::carehomes_parameters(1, r)$population
+
+    trajectories <- sample$trajectories$state
+
+    index_S_age <- grep("^S_unvacc_", rownames(sample$trajectories$state))
+    index_date <- which(sample$trajectories$date[-1] ==
+                          sircovid::sircovid_date(date))
+
+    tmp <- NULL
+    for (i in 1:17) {
+      ret <- trajectories[index_S_age[i], , index_date]
+      ret <- c(r, mean(ret) / N0[i], quantile(ret, c(0.025, 0.975)) / N0[i])
+      tmp <- rbind(tmp, ret)
+    }
+    rownames(tmp) <- rownames(sample$trajectories$state[index_S_age, , ])
+    colnames(tmp) <- c("region", "mean", "lb", "ub")
+
+    levels <- rownames(trajectories[index_S_age, , ])
+    tmp <- tmp %>% as.data.frame() %>%
+      tibble::rownames_to_column() %>%
+      dplyr::mutate(mean = as.numeric(mean)) %>%
+      dplyr::mutate(lb = as.numeric(lb)) %>%
+      dplyr::mutate(ub = as.numeric(ub)) %>%
+      dplyr::mutate(age_band = factor(rowname,
+                                      levels = levels,
+                                      labels = paste0("S_", seq(0, 80, 5))))
+
+    df <- rbind(df, tmp)
+  }
+
+  p <-
+    ggplot2::ggplot(df, ggplot2::aes(x = age_band, y = mean, color = region)) +
+    ggplot2::geom_point() +
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = lb, ymax = ub)) +
+    ggplot2::labs(x = "", y = "") +
+    ggplot2::scale_y_continuous(labels = scales::percent) +
+    ggplot2::facet_wrap(~region) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(legend.position = "none",
+                   axis.text.x = ggplot2::element_text(
+                     angle = 45, vjust = 0.5, hjust=1))
+  p
+}
+
 spim_plot_variant_region <- function(region, dat, date_min) {
 
   sample <- dat$samples[[region]]
