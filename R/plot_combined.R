@@ -441,7 +441,8 @@ spim_plot_unvaccinated_susceptible <- function(dat, regions, date) {
     colnames(tmp) <- c("region", "mean", "lb", "ub")
 
     levels <- rownames(trajectories[index_S_age, , ])
-    tmp <- tmp %>% as.data.frame() %>%
+    tmp <- tmp %>%
+      as.data.frame() %>%
       tibble::rownames_to_column() %>%
       dplyr::mutate(mean = as.numeric(mean)) %>%
       dplyr::mutate(lb = as.numeric(lb)) %>%
@@ -463,7 +464,7 @@ spim_plot_unvaccinated_susceptible <- function(dat, regions, date) {
     ggplot2::theme_bw() +
     ggplot2::theme(legend.position = "none",
                    axis.text.x = ggplot2::element_text(
-                     angle = 45, vjust = 0.5, hjust=1))
+                     angle = 45, vjust = 0.5, hjust = 1))
   p
 }
 
