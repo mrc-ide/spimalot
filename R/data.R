@@ -301,11 +301,11 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
 
   ## Use PCR all for positives by age where available
   if (!all(is.na(c(data$pillar2_positives_pcr_all_under15,
-                 data$pillar2_positives_pcr_all_15_25,
-                 data$pillar2_positives_pcr_all_25_50,
-                 data$pillar2_positives_pcr_all_50_65,
-                 data$pillar2_positives_pcr_all_65_80,
-                 data$pillar2_positives_pcr_all_80_plus)))) {
+                   data$pillar2_positives_pcr_all_15_25,
+                   data$pillar2_positives_pcr_all_25_50,
+                   data$pillar2_positives_pcr_all_50_65,
+                   data$pillar2_positives_pcr_all_65_80,
+                   data$pillar2_positives_pcr_all_80_plus)))) {
     data$pillar2_positives_over25 <- NA_integer_
     data$pillar2_positives_under15 <- data$pillar2_positives_pcr_all_under15
     data$pillar2_positives_15_25 <- data$pillar2_positives_pcr_all_15_25
@@ -325,11 +325,11 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
 
   ## Use total PCR for negatives by age where available
   if (!all(is.na(c(data$pillar2_negatives_total_pcr_under15,
-                 data$pillar2_negatives_total_pcr_15_25,
-                 data$pillar2_negatives_total_pcr_25_50,
-                 data$pillar2_negatives_total_pcr_50_65,
-                 data$pillar2_negatives_total_pcr_65_80,
-                 data$pillar2_negatives_total_pcr_80_plus)))) {
+                   data$pillar2_negatives_total_pcr_15_25,
+                   data$pillar2_negatives_total_pcr_25_50,
+                   data$pillar2_negatives_total_pcr_50_65,
+                   data$pillar2_negatives_total_pcr_65_80,
+                   data$pillar2_negatives_total_pcr_80_plus)))) {
     data$pillar2_negatives_over25 <- NA_integer_
     data$pillar2_negatives_under15 <- data$pillar2_negatives_total_pcr_under15
     data$pillar2_negatives_15_25 <- data$pillar2_negatives_total_pcr_15_25
