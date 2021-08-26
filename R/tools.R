@@ -87,10 +87,10 @@ spim_rrq_controller <- function(root = here::here()) {
 ##' @export
 ##' @examples
 ##'  # Round to nearest 100
-##'  round(146, 100)
+##'  spim_round_to(146, 100)
 ##'  # Round to nearest 1000
-##'  round(7849, 1000)
-round_to <- function(x, y) {
+##'  spim_round_to(7849, 1000)
+spim_round_to <- function(x, y) {
   stopifnot(y >= 1)
   round(x / y) * y
 }
