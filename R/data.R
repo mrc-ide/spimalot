@@ -104,15 +104,45 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
             "admitted", "new", "phe_admissions", "all_admission",
             "death2", "death3", "death_chr", "death_comm",
             "ons_death_carehome", "ons_death_noncarehome",
-            "pillar2_positives", "pillar2_negatives",
-            "positives", "negatives", "react_positive", "react_samples",
-            "pillar2_negatives_total_pcr_over25", "pillar2_negatives_total_pcr",
-            "pillar2_positives_over25", "pillar2_negatives_over25",
-            "positives_over25", "pillar2_positives_symp_pcr_only",
+            "react_positive", "react_samples", "n_delta_variant",
+            "n_non_delta_variant", "n_symp_delta_variant",
+            "n_symp_non_delta_variant",
+            # Positives
+            "positives", "positives_over25", "pillar2_positives",
+            "pillar2_positives_over25",
+            "pillar2_positives_under15", "pillar2_positives_15_25",
+            "pillar2_positives_25_50", "pillar2_positives_50_65",
+            "pillar2_positives_65_80", "pillar2_positives_80_plus",
+            # Pillar 2 positives symptomatic PCR only
+            "pillar2_positives_symp_pcr_only",
             "pillar2_positives_symp_pcr_only_over25",
+            "pillar2_positives_symp_pcr_only_under15",
+            "pillar2_positives_symp_pcr_only_15_25",
+            "pillar2_positives_symp_pcr_only_25_50",
+            "pillar2_positives_symp_pcr_only_50_65",
+            "pillar2_positives_symp_pcr_only_65_80",
+            "pillar2_positives_symp_pcr_only_80_plus",
+            # Pillar 2 positive PRC all (includes LFT+PCR and PCR only)
             "pillar2_positives_pcr_all", "pillar2_positives_pcr_all_over25",
-            "n_delta_variant", "n_non_delta_variant",
-            "n_symp_delta_variant", "n_symp_non_delta_variant")
+            "pillar2_positives_pcr_all_under15",
+            "pillar2_positives_pcr_all_15_25",
+            "pillar2_positives_pcr_all_25_50",
+            "pillar2_positives_pcr_all_50_65",
+            "pillar2_positives_pcr_all_65_80",
+            "pillar2_positives_pcr_all_80_plus",
+            # Pillar 2 negatives
+            "negatives", "pillar2_negatives", "pillar2_negatives_over25",
+            "pillar2_negatives_under15", "pillar2_negatives_15_25",
+            "pillar2_negatives_25_50", "pillar2_negatives_50_65",
+            "pillar2_negatives_65_80", "pillar2_negatives_80_plus",
+            # Pillar 2 negative PCR
+            "pillar2_negatives_total_pcr_over25", "pillar2_negatives_total_pcr",
+            "pillar2_negatives_total_pcr_under15",
+            "pillar2_negatives_total_pcr_15_25",
+            "pillar2_negatives_total_pcr_25_50",
+            "pillar2_negatives_total_pcr_50_65",
+            "pillar2_negatives_total_pcr_65_80",
+            "pillar2_negatives_total_pcr_80_plus")
   data <- data[c("region", "date", vars)]
 
   ## Remove any data after the date parameter
@@ -214,6 +244,12 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     data$pillar2_positives_over25 <- data$positives_over25
     ## We do not have any age breakdown for negatives for Scotland
     data$pillar2_negatives_over25 <- NA_integer_
+    data$pillar2_negatives_under15 <- NA_integer_
+    data$pillar2_negatives_15_25 <- NA_integer_
+    data$pillar2_negatives_25_50 <- NA_integer_
+    data$pillar2_negatives_50_65 <- NA_integer_
+    data$pillar2_negatives_65_80 <- NA_integer_
+    data$pillar2_negatives_80_plus <- NA_integer_
 
     data$phe_patients[data$date >= as.Date("2020-06-01") &
                       data$date <= as.Date("2020-09-10")] <- NA_integer_
@@ -229,6 +265,24 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
   if (!all(is.na(data$pillar2_positives_symp_pcr_only_over25))) {
     data$pillar2_cases_over25 <- data$pillar2_positives_symp_pcr_only_over25
   }
+  if (!all(is.na(data$pillar2_positives_symp_pcr_only_under15))) {
+    data$pillar2_cases_under15 <- data$pillar2_positives_symp_pcr_only_under15
+  }
+  if (!all(is.na(data$pillar2_positives_symp_pcr_only_15_25))) {
+    data$pillar2_cases_15_25 <- data$pillar2_positives_symp_pcr_only_15_25
+  }
+  if (!all(is.na(data$pillar2_positives_symp_pcr_only_25_50))) {
+    data$pillar2_cases_25_50 <- data$pillar2_positives_symp_pcr_only_25_50
+  }
+  if (!all(is.na(data$pillar2_positives_symp_pcr_only_50_65))) {
+    data$pillar2_cases_50_65 <- data$pillar2_positives_symp_pcr_only_50_65
+  }
+  if (!all(is.na(data$pillar2_positives_symp_pcr_only_65_80))) {
+    data$pillar2_cases_65_80 <- data$pillar2_positives_symp_pcr_only_65_80
+  }
+  if (!all(is.na(data$pillar2_positives_symp_pcr_only_80_plus))) {
+    data$pillar2_cases_80_plus <- data$pillar2_positives_symp_pcr_only_80_plus
+  }
 
   ## Use PCR all for positives where available
   if (!all(is.na(data$pillar2_positives_pcr_all))) {
@@ -237,10 +291,46 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
   if (!all(is.na(data$pillar2_positives_pcr_all_over25))) {
     data$pillar2_positives_over25 <- data$pillar2_positives_pcr_all_over25
   }
+  if (!all(is.na(data$pillar2_positives_pcr_all_under15))) {
+    data$pillar2_positives_under15 <- data$pillar2_positives_pcr_all_under15
+  }
+  if (!all(is.na(data$pillar2_positives_pcr_all_15_25))) {
+    data$pillar2_positives_15_25 <- data$pillar2_positives_pcr_all_15_25
+  }
+  if (!all(is.na(data$pillar2_positives_pcr_all_25_50))) {
+    data$pillar2_positives_25_50 <- data$pillar2_positives_pcr_all_25_50
+  }
+  if (!all(is.na(data$pillar2_positives_pcr_all_50_65))) {
+    data$pillar2_positives_50_65 <- data$pillar2_positives_pcr_all_50_65
+  }
+  if (!all(is.na(data$pillar2_positives_pcr_all_65_80))) {
+    data$pillar2_positives_65_80 <- data$pillar2_positives_pcr_all_65_80
+  }
+  if (!all(is.na(data$pillar2_positives_pcr_all_80_plus))) {
+    data$pillar2_positives_80_plus <- data$pillar2_positives_pcr_all_80_plus
+  }
 
   ## Use total PCR for negatives where available
   if (!all(is.na(data$pillar2_negatives_total_pcr))) {
     data$pillar2_negatives <- data$pillar2_negatives_total_pcr
+  }
+  if (!all(is.na(data$pillar2_negatives_total_pcr_under15))) {
+    data$pillar2_negatives_under15 <- data$pillar2_negatives_total_pcr_under15
+  }
+  if (!all(is.na(data$pillar2_negatives_total_pcr_15_25))) {
+    data$pillar2_negatives_15_25 <- data$pillar2_negatives_total_pcr_15_25
+  }
+  if (!all(is.na(data$pillar2_negatives_total_pcr_25_50))) {
+    data$pillar2_negatives_25_50 <- data$pillar2_negatives_total_pcr_25_50
+  }
+  if (!all(is.na(data$pillar2_negatives_total_pcr_50_65))) {
+    data$pillar2_negatives_50_65 <- data$pillar2_negatives_total_pcr_50_65
+  }
+  if (!all(is.na(data$pillar2_negatives_total_pcr_65_80))) {
+    data$pillar2_negatives_65_80 <- data$pillar2_negatives_total_pcr_65_80
+  }
+  if (!all(is.na(data$pillar2_negatives_total_pcr_80_plus))) {
+    data$pillar2_negatives_80_plus <- data$pillar2_negatives_total_pcr_80_plus
   }
   if (!all(is.na(data$pillar2_negatives_total_pcr_over25))) {
     data$pillar2_negatives_over25 <- data$pillar2_negatives_total_pcr_over25
@@ -262,7 +352,16 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
 
   cols_pillar2 <- c("pillar2_positives", "pillar2_negatives", "pillar2_cases",
                     "pillar2_positives_over25", "pillar2_negatives_over25",
-                    "pillar2_cases_over25")
+                    "pillar2_positives_under15", "pillar2_positives_15_25",
+                    "pillar2_positives_25_50", "pillar2_positives_50_65",
+                    "pillar2_positives_65_80", "pillar2_positives_80_plus",
+                    "pillar2_negatives_under15", "pillar2_negatives_15_25",
+                    "pillar2_negatives_25_50", "pillar2_negatives_50_65",
+                    "pillar2_negatives_65_80", "pillar2_negatives_80_plus",
+                    "pillar2_cases_over25", "pillar2_cases_under15",
+                    "pillar2_cases_15_25", "pillar2_cases_25_50",
+                    "pillar2_cases_50_65", "pillar2_cases_65_80",
+                    "pillar2_cases_80_plus")
 
   # ignore pillar 2 testing before 2020-06-18
   data[which(data$date < "2020-06-18"), cols_pillar2] <- NA_integer_
@@ -283,14 +382,43 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
   data[which(data$pillar2_negatives < 0), "pillar2_negatives"] <- NA_integer_
   data[which(data$pillar2_negatives_over25 < 0), "pillar2_negatives_over25"] <-
     NA_integer_
+  data[which(data$pillar2_negatives_under15 < 0),
+       "pillar2_negatives_under15"] <- NA_integer_
+  data[which(data$pillar2_negatives_15_25 < 0), "pillar2_negatives_15_25"] <-
+    NA_integer_
+  data[which(data$pillar2_negatives_25_50 < 0), "pillar2_negatives_25_50"] <-
+    NA_integer_
+  data[which(data$pillar2_negatives_50_65 < 0), "pillar2_negatives_50_65"] <-
+    NA_integer_
+  data[which(data$pillar2_negatives_65_80 < 0), "pillar2_negatives_65_80"] <-
+    NA_integer_
+  data[which(data$pillar2_negatives_80_plus < 0),
+       "pillar2_negatives_80_plus"] <- NA_integer_
 
   stopifnot(
     all(data$pillar2_negatives >= 0, na.rm = TRUE),
     all(data$pillar2_positives >= 0, na.rm = TRUE),
     all(data$pillar2_cases >= 0, na.rm = TRUE),
+    all(data$pillar2_cases_over25 >= 0, na.rm = TRUE),
+    all(data$pillar2_cases_under15 >= 0, na.rm = TRUE),
+    all(data$pillar2_cases_15_25 >= 0, na.rm = TRUE),
+    all(data$pillar2_cases_25_50 >= 0, na.rm = TRUE),
+    all(data$pillar2_cases_50_65 >= 0, na.rm = TRUE),
+    all(data$pillar2_cases_65_80 >= 0, na.rm = TRUE),
+    all(data$pillar2_cases_80_plus >= 0, na.rm = TRUE),
     all(data$pillar2_negatives_over25 >= 0, na.rm = TRUE),
+    all(data$pillar2_negatives_under15 >= 0, na.rm = TRUE),
+    all(data$pillar2_negatives_15_25 >= 0, na.rm = TRUE),
+    all(data$pillar2_negatives_50_65 >= 0, na.rm = TRUE),
+    all(data$pillar2_negatives_65_80 >= 0, na.rm = TRUE),
+    all(data$pillar2_negatives_80_plus >= 0, na.rm = TRUE),
     all(data$pillar2_positives_over25 >= 0, na.rm = TRUE),
-    all(data$pillar2_cases_over25 >= 0, na.rm = TRUE))
+    all(data$pillar2_positives_under15 >= 0, na.rm = TRUE),
+    all(data$pillar2_positives_15_25 >= 0, na.rm = TRUE),
+    all(data$pillar2_positives_25_50 >= 0, na.rm = TRUE),
+    all(data$pillar2_positives_50_65 >= 0, na.rm = TRUE),
+    all(data$pillar2_positives_65_80 >= 0, na.rm = TRUE),
+    all(data$pillar2_positives_80_plus >= 0, na.rm = TRUE))
 
   ## TODO: with a stripped down compare function wee could drop the NA
   ## columns here.
@@ -312,8 +440,35 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     pillar2_cases = data$pillar2_cases,
     pillar2_over25_tot = data$pillar2_positives_over25 +
       data$pillar2_negatives_over25,
+    pillar2_under15_tot = data$pillar2_positives_under15 +
+      data$pillar2_negatives_under15,
+    pillar2_15_25_tot = data$pillar2_positives_15_25 +
+      data$pillar2_negatives_15_25,
+    pillar2_25_50_tot = data$pillar2_positives_25_50 +
+      data$pillar2_negatives_25_50,
+    pillar2_50_65_tot = data$pillar2_positives_50_65 +
+      data$pillar2_negatives_50_65,
+    pillar2_65_80_tot = data$pillar2_positives_65_80 +
+      data$pillar2_negatives_65_80,
+    pillar2_80_plus_tot = data$pillar2_positives_80_plus +
+      data$pillar2_negatives_80_plus,
+
     pillar2_over25_pos = data$pillar2_positives_over25,
+    pillar2_under15_pos = data$pillar2_positives_under15,
+    pillar2_15_25_pos = data$pillar2_positives_15_25,
+    pillar2_25_50_pos = data$pillar2_positives_25_50,
+    pillar2_50_65_pos = data$pillar2_positives_50_65,
+    pillar2_65_80_pos = data$pillar2_positives_65_80,
+    pillar2_80_plus_pos = data$pillar2_positives_80_plus,
+
     pillar2_over25_cases = data$pillar2_cases_over25,
+    pillar2_under15_cases = data$pillar2_cases_under15,
+    pillar2_15_25_cases = data$pillar2_cases_15_25,
+    pillar2_25_50_cases = data$pillar2_cases_25_50,
+    pillar2_50_65_cases = data$pillar2_cases_50_65,
+    pillar2_65_80_cases = data$pillar2_cases_65_80,
+    pillar2_80_plus_cases = data$pillar2_cases_80_plus,
+
     react_pos = data$react_positive,
     react_tot = data$react_samples,
     strain_non_variant = data$strain_non_variant,
@@ -335,7 +490,10 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
 
     if (model_type == "BB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
-                "pillar2_cases", "pillar2_over25_cases")
+                "pillar2_cases", "pillar2_over25_cases",
+                "pillar2_under15_cases", "pillar2_15_25_cases",
+                "pillar2_25_50_cases", "pillar2_50_65_cases",
+                "pillar2_65_80_cases", "pillar2_80_plus_cases")
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
@@ -348,7 +506,9 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     }
     if (model_type == "NB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
-                "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos")
+                "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos",
+                "pillar2_under15_pos", "pillar2_15_25_pos", "pillar2_25_50_pos",
+                "pillar2_50_65_pos", "pillar2_65_80_pos", "pillar2_80_plus_pos")
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
