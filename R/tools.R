@@ -78,19 +78,3 @@ spim_rrq_controller <- function(root = here::here()) {
     }
   }
 }
-
-
-##' Round to nearest given number
-##' @title Round to given number
-##' @param x Number to round
-##' @param y Number to round to
-##' @export
-##' @examples
-##'  # Round to nearest 100
-##'  spim_round_to(146, 100)
-##'  # Round to nearest 1000
-##'  spim_round_to(7849, 1000)
-spim_round_to <- function(x, y) {
-  stopifnot(y >= 1)
-  round(x / y) * y
-}
