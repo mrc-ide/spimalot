@@ -399,12 +399,33 @@ reduce_trajectories <- function(samples) {
     abind1(state[setdiff(rownames(state), nms_S), , ], S)
 
   ## Calculate Pillar 2 positivity
-  pillar2_positivity <- calculate_positivity(samples, FALSE)
+  pillar2_positivity <- calculate_positivity(samples, FALSE, NULL)
   pillar2_positivity <-
     array(pillar2_positivity, c(1, dim(pillar2_positivity)))
-  pillar2_positivity_over25 <- calculate_positivity(samples, TRUE)
+  pillar2_positivity_over25 <- calculate_positivity(samples, TRUE, NULL)
   pillar2_positivity_over25 <-
     array(pillar2_positivity_over25, c(1, dim(pillar2_positivity_over25)))
+
+  pillar2_positivity_under15 <- calculate_positivity(samples, FALSE, "under15")
+  pillar2_positivity_under15 <-
+    array(pillar2_positivity_under15, c(1, dim(pillar2_positivity_under15)))
+  pillar2_positivity_15_25 <- calculate_positivity(samples, FALSE, "15_25")
+  pillar2_positivity_15_25 <-
+    array(pillar2_positivity_15_25, c(1, dim(pillar2_positivity_15_25)))
+  pillar2_positivity_25_50 <- calculate_positivity(samples, FALSE, "25_50")
+  pillar2_positivity_25_50 <-
+    array(pillar2_positivity_25_50, c(1, dim(pillar2_positivity_25_50)))
+  pillar2_positivity_50_65 <- calculate_positivity(samples, FALSE, "50_65")
+  pillar2_positivity_50_65 <-
+    array(pillar2_positivity_50_65, c(1, dim(pillar2_positivity_50_65)))
+  pillar2_positivity_65_80 <- calculate_positivity(samples, FALSE, "65_80")
+  pillar2_positivity_65_80 <-
+    array(pillar2_positivity_65_80, c(1, dim(pillar2_positivity_65_80)))
+  pillar2_positivity_80_plus <- calculate_positivity(samples, FALSE, "80_plus")
+  pillar2_positivity_80_plus <-
+    array(pillar2_positivity_80_plus, c(1, dim(pillar2_positivity_80_plus)))
+
+
   pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_over25)
   row.names(pillar2_positivity) <-
     c("pillar2_positivity", "pillar2_positivity_over25")
@@ -620,7 +641,7 @@ spim_fit_parameters <- function(samples, parameters) {
 }
 
 
-calculate_positivity <- function(samples, over25) {
+calculate_positivity <- function(samples, over25, age_band) {
 
   x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
 
@@ -642,8 +663,15 @@ calculate_positivity <- function(samples, over25) {
     pos <- samples$trajectories$state["sympt_cases_over25_inc", , ]
     neg <- (sum(model_params$N_tot[6:19]) - pos)
   } else {
-    pos <- samples$trajectories$state["sympt_cases_inc", , ]
-    neg <- (sum(model_params$N_tot) - pos)
+    if (is.null(age_band)) {
+      state <- "sympt_cases_inc"
+      n <- "N_tot"
+    } else {
+      state <- paste0("sympt_cases_", age_band ,"_inc")
+      n <- paste0("N_tot_", age_band)
+    }
+    pos <- samples$trajectories$state[state, , ]
+    neg <- (sum(model_params[[n]]) - pos)
   }
 
   neg[, grepl("^S", weekdays(x))] <-
