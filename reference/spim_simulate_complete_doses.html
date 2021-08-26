@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Calculate SHAPs over predicted states — spim_simulation_shaps • spimalot</title>
+<title>Calculate final doses date — spim_simulate_complete_doses • spimalot</title>
 
 
 <!-- jquery -->
@@ -39,10 +39,8 @@
 
 
 
-<meta property="og:title" content="Calculate SHAPs over predicted states — spim_simulation_shaps" />
-<meta property="og:description" content="Calculate SHAPs from a tidy summary of predictions over various features.
-SHAPs calculated as the expected difference in predicted states with and
-without the given feature of interest (over all feature levels)." />
+<meta property="og:title" content="Calculate final doses date — spim_simulate_complete_doses" />
+<meta property="og:description" content="Calculate when all second doses given out" />
 
 
 
@@ -110,31 +108,23 @@ without the given feature of interest (over all feature levels)." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Calculate SHAPs over predicted states</h1>
+    <h1>Calculate final doses date</h1>
     <small class="dont-index">Source: <a href='https://github.com/mrc-ide/spimalot/blob/master/R/simulate.R'><code>R/simulate.R</code></a></small>
-    <div class="hidden name"><code>spim_simulation_shaps.Rd</code></div>
+    <div class="hidden name"><code>spim_simulate_complete_doses.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Calculate SHAPs from a tidy summary of predictions over various features.
-SHAPs calculated as the expected difference in predicted states with and
-without the given feature of interest (over all feature levels).</p>
+    <p>Calculate when all second doses given out</p>
     </div>
 
-    <pre class="usage"><span class='fu'>spim_simulation_shaps</span><span class='op'>(</span><span class='va'>summary</span>, feats <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>spim_simulate_complete_doses</span><span class='op'>(</span><span class='va'>summary</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>summary</th>
-      <td><p>A tidy summary object such as that returned by
-<code>create_summary</code></p></td>
-    </tr>
-    <tr>
-      <th>feats</th>
-      <td><p>Features to calculate SHAPS for. If NULL then uses default
-selection returned by <code>spim_simulation_predictors</code></p></td>
+      <td><p>Simulation summary object</p></td>
     </tr>
     </table>
 
