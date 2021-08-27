@@ -677,7 +677,7 @@ calculate_positivity <- function(samples, over25, age_band) {
       state <- "sympt_cases_inc"
       n <- "N_tot"
     } else {
-      state <- paste0("sympt_cases_", age_band ,"_inc")
+      state <- paste0("sympt_cases_", age_band, "_inc")
       n <- paste0("N_tot_", age_band)
     }
     pos <- samples$trajectories$state[state, , ]
