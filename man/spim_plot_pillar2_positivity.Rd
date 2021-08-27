@@ -4,7 +4,14 @@
 \alias{spim_plot_pillar2_positivity}
 \title{Plot Pillar 2 positivity}
 \usage{
-spim_plot_pillar2_positivity(dat, regions, date_min, ymax, add_betas = FALSE)
+spim_plot_pillar2_positivity(
+  dat,
+  regions,
+  date_min,
+  ymax,
+  age_band = NULL,
+  add_betas = FALSE
+)
 }
 \arguments{
 \item{dat}{Combined data set}
