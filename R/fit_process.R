@@ -427,8 +427,18 @@ reduce_trajectories <- function(samples) {
 
 
   pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_over25)
+
+  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_under15)
+  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_15_25)
+  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_25_50)
+  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_50_65)
+  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_65_80)
+  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_80_plus)
   row.names(pillar2_positivity) <-
-    c("pillar2_positivity", "pillar2_positivity_over25")
+    c("pillar2_positivity", "pillar2_positivity_over25",
+      "pillar2_positivity_under15", "pillar2_positivity_15_25",
+      "pillar2_positivity_25_50", "pillar2_positivity_50_65",
+      "pillar2_positivity_65_80", "pillar2_positivity_80_plus")
   samples$trajectories$state <-
     abind1(samples$trajectories$state, pillar2_positivity)
 
