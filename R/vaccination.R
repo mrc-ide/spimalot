@@ -33,6 +33,11 @@
 spim_vaccination_data <- function(date, region, uptake, end_date,
                                   mean_days_between_doses, efficacy,
                                   data) {
+  if (length(region) > 1) {
+    return(lapply(region, function(x) spim_vaccination_data(
+      date, x, uptake, end_date, mean_days_between_doses, efficacy, data)))
+  }
+
   if (region == "scotland") {
     data$age_band_min[data$age_band_min == 16] <- 15
   }

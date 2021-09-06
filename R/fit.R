@@ -15,10 +15,19 @@
 ##'
 ##' @export
 spim_particle_filter <- function(data, pars, control) {
-  steps_per_day <- pars$model(pars$initial())$steps_per_day
+
   initial_step <- 1 # replaced later
-  data <- mcstate::particle_filter_data(data, "date", steps_per_day,
-                                        initial_step)
+
+  if (inherits(pars, "pmcmc_parameters_nested")) {
+    steps_per_day <- pars$model(pars$initial())[[1]]$steps_per_day
+    data <- mcstate::particle_filter_data(data, "date", steps_per_day,
+                                          initial_step, "population")
+  } else {
+    steps_per_day <- pars$model(pars$initial())$steps_per_day
+    data <- mcstate::particle_filter_data(data, "date", steps_per_day,
+                                          initial_step)
+  }
+
   sircovid::carehomes_particle_filter(data, control$n_particles,
                                       control$n_threads, control$seed,
                                       control$compiled_compare)
@@ -42,7 +51,14 @@ spim_particle_filter <- function(data, pars, control) {
 ##' @export
 spim_pmcmc <- function(pars, filter, control) {
   message("Running chains - this will take a while!")
-  initial <- replicate(control$n_chains, pars$propose(pars$initial(), 1))
+
+  if (inherits(pars, "pmcmc_parameters_nested")) {
+    initial <- replicate(control$n_chains,
+                    pars$propose(pars$initial(), "both", 1))
+  } else {
+    initial <- replicate(control$n_chains, pars$propose(pars$initial(), 1))
+  }
+
   ret <- mcstate::pmcmc(pars, filter, initial = initial, control = control)
 
   ## Later on, we'll need to access a number of inputs

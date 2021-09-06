@@ -36,6 +36,15 @@
 ##'
 ##' @param waning_rate Rate of waning immunity
 ##'
+##'
+##' @param fixed character vector of parameters to be 'fixed' (not shared)
+##'  in a multi-region model, ignored if `length(region) = 1`. If NULL
+##'  then taken to be all parameters not in `varied`.
+##'
+##' @param varied character vector of parameters to be 'varied' (shared)
+##'  in a multi-region model, ignored if `length(region) = 1`. If NULL
+##'  then taken to be all parameters not in `fixed`.
+##'
 ##' @return An [mcstate::pmcmc_parameters] object which can be used
 ##'   with [mcstate::pmcmc]
 ##'
@@ -43,8 +52,14 @@
 spim_pars <- function(date, region, model_type, multistrain,
                       beta_date, vaccination, parameters,
                       kernel_scaling = 1, cross_immunity = NULL,
-                      waning_rate) {
+                      waning_rate, fixed = NULL, varied = NULL) {
   assert_is(parameters, "spim_pars_pmcmc")
+
+  if (length(region) > 1) {
+    return(multiregion_pars(date, region, model_type, multistrain, beta_date,
+                     vaccination, parameters, kernel_scaling, cross_immunity,
+                     waning_rate, fixed, varied))
+  }
 
   ## We take 'info' as the canonical source of names, then check that
   ## prior and proposal align correctly.
@@ -79,6 +94,133 @@ spim_pars <- function(date, region, model_type, multistrain,
   attr(ret, "inputs") <- inputs
 
   ret
+}
+
+
+multiregion_pars <- function(date, regions, model_type, multistrain,
+                      beta_date, vaccination, parameters,
+                      kernel_scaling, cross_immunity, waning_rate,
+                      fixed, varied) {
+
+  parameters <- set_nested_pars(parameters, fixed, varied)
+  fixed <- parameters$fixed
+  varied <- parameters$varied
+  parameters <- parameters$parameters
+
+  info <- lapply(regions, spim_pars_info, parameters$info)
+  prior <- Map(function(x, y) spim_pars_prior(x, y, parameters$prior), regions,
+               info)
+  proposal <- Map(function(x, y) spim_pars_proposal(x, y, parameters$proposal,
+                  kernel_scaling), regions, info)
+
+  parameters <- Map(function(x, y, z) list(info = x, prior = y, proposal = z),
+                    info, prior, proposal)
+
+  lapply(parameters, function(x) {
+    stopifnot(
+      identical(x$info$name, x$prior$name),
+      identical(x$info$name, rownames(x$proposal)))
+  })
+
+  stopifnot(identical(unname(regions), names(parameters)))
+
+  fixed_pars <- varied_pars <- list()
+  proposal_fixed <- proposal_varied <- NULL
+
+  if (length(fixed) > 1) {
+    which <- match(fixed, parameters[[1]]$info$name)
+    cols <- c("name", "initial", "min", "max", "discrete")
+    check <- parameters[[1]]$info[which, cols]
+    ok <- vapply(parameters[-1],
+                 function(x) identical(x$info[which, cols], check),
+                 logical(1))
+    if (!all(ok)) {
+      stop("Fixed parameter info not equal across all regions.")
+    }
+    check <- parameters[[1]]$prior[which, ]
+    ok <- vapply(parameters[-1],
+                 function(x) identical(x$prior[which, ], check),
+                 logical(1))
+    if (!all(ok)) {
+      stop("Fixed parameter priors not equal across all regions.")
+    }
+    check <- parameters[[1]]$proposal[which, which]
+    ok <- vapply(parameters[-1],
+                 function(x) identical(x$proposal[which, which], check),
+                 logical(1))
+    if (!all(ok)) {
+      stop("Fixed parameter proposals not equal across all regions.")
+    }
+    proposal_fixed <- check
+
+    prior <- lapply(split(parameters[[1]]$prior[which, ],
+                          parameters[[1]]$prior[which, "name"]),
+                    make_prior)
+
+    fixed_pars <- Map(
+      mcstate::pmcmc_parameter,
+      name = parameters[[1]]$info[which, "name"],
+      initial = parameters[[1]]$info[which, "initial"],
+      min = parameters[[1]]$info[which, "min"],
+      max = parameters[[1]]$info[which, "max"],
+      discrete = parameters[[1]]$info[which, "discrete"],
+      prior = prior)
+  }
+
+  if (length(varied) > 1) {
+    which <- match(varied, parameters[[1]]$info$name)
+    check <- parameters[[1]]$info[which, c("name", "discrete")]
+    ok <- vapply(parameters[-1],
+                 function(x) identical(x$info[which, c("name", "discrete")],
+                                       check),
+                 logical(1))
+    if (!all(ok)) {
+      stop("'name' and 'discrete' must be the same for varied parameters across
+           regions")
+    }
+
+    prior <- lapply(parameters, function(x) {
+      lapply(split(x$prior[which, ], x$prior[which, "name"]), make_prior)
+    })
+    prior <- list_transpose(prior)
+
+    initial <- apply(
+      simplify2array(lapply(parameters, function(x) x$info[which, "initial"])),
+      1, as.list)
+    min <- apply(
+      simplify2array(lapply(parameters, function(x) x$info[which, "min"])),
+      1, as.list)
+    max <- apply(
+      simplify2array(lapply(parameters, function(x) x$info[which, "max"])),
+      1, as.list)
+    names(initial) <- names(min) <- names(max) <- varied
+
+    varied_pars <- Map(
+      mcstate::pmcmc_varied_parameter,
+      name = parameters[[1]]$info[which, "name"],
+      populations = rep(list(regions), length(initial)),
+      initial = initial,
+      min = min,
+      max = max,
+      discrete = parameters[[1]]$info[which, "discrete"],
+      prior = prior)
+
+    proposal_varied <- simplify2array(
+      lapply(parameters,
+             function(x) x$proposal[which, which]))
+  }
+
+  pars <- c(fixed_pars, varied_pars)
+
+  transform <- spim_transform(regions, model_type, multistrain, beta_date,
+                              vaccination, cross_immunity, waning_rate)
+
+  mcstate::pmcmc_parameters_nested$new(
+    pars,
+    proposal_varied,
+    proposal_fixed,
+    unname(regions),
+    transform)
 }
 
 

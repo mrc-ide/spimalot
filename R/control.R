@@ -30,12 +30,15 @@
 ##' @param n_threads Explicit number of threads, overriding detection
 ##'   by [spim_control_cores]
 ##'
+##' @param nested_step_ratio Ratio of fixed to varied steps in the multi-region
+##'  task, default is one fixed step for every varied step
+##'
 ##' @return A list of options
 ##' @export
 spim_control <- function(short_run, n_chains, date_restart = NULL,
                          n_particles = 192, n_mcmc = 1500, burnin = 500,
                          forecast_days = 57, workers = TRUE,
-                         n_threads = NULL) {
+                         n_threads = NULL, nested_step_ratio = 1) {
   if (short_run) {
     n_particles <- min(10, n_particles)
     n_mcmc <- min(20, n_mcmc)
@@ -66,7 +69,7 @@ spim_control <- function(short_run, n_chains, date_restart = NULL,
                                   use_parallel_seed = TRUE,
                                   progress = interactive(),
                                   save_restart = date_restart,
-                                  nested_step_ratio = 1, # ignored if single
+                                  nested_step_ratio = nested_step_ratio,
                                   rerun_every = rerun_every,
                                   rerun_random = TRUE,
                                   filter_early_exit = TRUE)
