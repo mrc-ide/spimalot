@@ -14,7 +14,9 @@ spim_pars(
   parameters,
   kernel_scaling = 1,
   cross_immunity = NULL,
-  waning_rate
+  waning_rate,
+  fixed = NULL,
+  varied = NULL
 )
 }
 \arguments{
@@ -49,6 +51,14 @@ values. Only has an effect if \code{multistrain} is \code{TRUE} and then
 must have a length of 2 if given.}
 
 \item{waning_rate}{Rate of waning immunity}
+
+\item{fixed}{character vector of parameters to be 'fixed' (not shared)
+in a multi-region model, ignored if \code{length(region) = 1}. If NULL
+then taken to be all parameters not in \code{varied}.}
+
+\item{varied}{character vector of parameters to be 'varied' (shared)
+in a multi-region model, ignored if \code{length(region) = 1}. If NULL
+then taken to be all parameters not in \code{fixed}.}
 }
 \value{
 An \link[mcstate:pmcmc_parameters]{mcstate::pmcmc_parameters} object which can be used

@@ -13,7 +13,8 @@ spim_control(
   burnin = 500,
   forecast_days = 57,
   workers = TRUE,
-  n_threads = NULL
+  n_threads = NULL,
+  nested_step_ratio = 1
 )
 }
 \arguments{
@@ -42,6 +43,9 @@ depending on \code{n_chains} and the detected number of cores.}
 
 \item{n_threads}{Explicit number of threads, overriding detection
 by \link{spim_control_cores}}
+
+\item{nested_step_ratio}{Ratio of fixed to varied steps in the multi-region
+task, default is one fixed step for every varied step}
 }
 \value{
 A list of options
