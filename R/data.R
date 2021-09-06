@@ -222,7 +222,7 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
   # Use positives/negatives as Pillar 2 for NI
   if (region == "northern_ireland") {
     data$pillar2_positives <- data$positives
-    data$pillar2_negatives <- data$negatives[-c(1, 2)]
+    data$pillar2_negatives <- data$negatives
   }
 
   data$pillar2_cases <- data$pillar2_positives
