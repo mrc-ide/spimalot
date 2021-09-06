@@ -825,14 +825,14 @@ spim_plot_pillar2_cases_region <- function(region, dat, date_min,
 
   if (over25) {
     pos <- trajectories["sympt_cases_over25_inc", , ] * phi_pillar2_cases
-    if (region == "scotland") {
+    if (region %in%  c("scotland", "northern_ireland")) {
       ylab <- "Pillar 1 & 2 over 25 cases"
     } else {
       ylab <- "Pillar 2 over 25 cases"
     }
   } else {
     pos <- trajectories["sympt_cases_inc", , ] * phi_pillar2_cases
-    if (region == "scotland") {
+    if (region %in% c("scotland", "northern_ireland")) {
       ylab <- "Pillar 1 & 2 cases"
     } else {
       ylab <- "Pillar 2 cases"
