@@ -743,13 +743,13 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
                 mix_cols(pos_col, "white", 0.495))
 
   if (over25) {
-    if (region == "scotland") {
+    if (region %in% c("scotland", "northern_ireland")) {
       ylab <- "Pillar 1 & 2 over 25 proportion positive (%)"
     } else {
       ylab <- "Pillar 2 over 25 proportion positive (%)"
     }
   } else {
-    if (region == "scotland") {
+    if (region %in% c("scotland", "northern_ireland")) {
       ylab <- "Pillar 1 & 2 proportion positive (%)"
     } else {
       ylab <- "Pillar 2 proportion positive (%)"
@@ -825,14 +825,14 @@ spim_plot_pillar2_cases_region <- function(region, dat, date_min,
 
   if (over25) {
     pos <- trajectories["sympt_cases_over25_inc", , ] * phi_pillar2_cases
-    if (region == "scotland") {
+    if (region %in%  c("scotland", "northern_ireland")) {
       ylab <- "Pillar 1 & 2 over 25 cases"
     } else {
       ylab <- "Pillar 2 over 25 cases"
     }
   } else {
     pos <- trajectories["sympt_cases_inc", , ] * phi_pillar2_cases
-    if (region == "scotland") {
+    if (region %in% c("scotland", "northern_ireland")) {
       ylab <- "Pillar 1 & 2 cases"
     } else {
       ylab <- "Pillar 2 cases"
