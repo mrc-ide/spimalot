@@ -36,7 +36,7 @@
 ##' @export
 spim_data <- function(date, region, model_type, rtm, serology,
                       trim_deaths, trim_pillar2, full_data = FALSE,
-                      fit_to_variants = FALSE) {
+                      fit_to_variants = FALSE, fit_to_under25 = FALSE) {
   check_region(region)
   spim_check_model_type(model_type)
 
@@ -45,17 +45,18 @@ spim_data <- function(date, region, model_type, rtm, serology,
     stop("Not yet supported")
   } else {
     spim_data_single(date, region, model_type, rtm, serology,
-                     trim_deaths, trim_pillar2, full_data, fit_to_variants)
+                     trim_deaths, trim_pillar2, full_data, fit_to_variants,
+                     fit_to_under25)
   }
 }
 
 
 spim_data_single <- function(date, region, model_type, rtm, serology,
                              trim_deaths, trim_pillar2, full_data,
-                             fit_to_variants) {
+                             fit_to_variants, fit_to_under25) {
   ## TODO: verify that rtm has consecutive days
   rtm <- spim_data_rtm(date, region, model_type, rtm, full_data,
-                       fit_to_variants)
+                       fit_to_variants, fit_to_under25)
   serology <- spim_data_serology(date, region, serology)
 
   ## Merge the two datasets on date
@@ -107,7 +108,7 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 
 ##' @importFrom dplyr %>%
 spim_data_rtm <- function(date, region, model_type, data, full_data,
-                          fit_to_variants) {
+                          fit_to_variants, fit_to_under25) {
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
@@ -507,6 +508,8 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     if (model_type == "NB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
                 "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos",
+                "pillar2_under15_tot", "pillar2_15_25_tot", "pillar2_25_50_tot",
+                "pillar2_50_65_tot", "pillar2_65_80_tot", "pillar2_80_plus_tot",
                 "pillar2_under15_pos", "pillar2_15_25_pos", "pillar2_25_50_pos",
                 "pillar2_50_65_pos", "pillar2_65_80_pos", "pillar2_80_plus_pos")
       for (i in omit) {
@@ -514,6 +517,14 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
       }
       if (all(is.na(ret$pillar2_over25_cases))) {
         ret$pillar2_cases <- data$pillar2_positives
+      }
+    }
+    if (!fit_to_under25) {
+      omit <- c("pillar2_under15_tot", "pillar2_15_25_tot",
+                "pillar2_under15_pos", "pillar2_15_25_pos",
+                "pillar2_under15_cases", "pillar2_15_25_cases")
+      for (i in omit) {
+        ret[[i]] <- NA_integer_
       }
     }
   }
