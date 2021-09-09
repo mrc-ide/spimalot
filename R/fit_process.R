@@ -409,18 +409,18 @@ reduce_trajectories <- function(samples) {
   pillar2_positivity_under15 <- calculate_positivity(samples, FALSE, "under15")
   pillar2_positivity_under15 <-
     array(pillar2_positivity_under15, c(1, dim(pillar2_positivity_under15)))
-  pillar2_positivity_15_25 <- calculate_positivity(samples, FALSE, "15_25")
-  pillar2_positivity_15_25 <-
-    array(pillar2_positivity_15_25, c(1, dim(pillar2_positivity_15_25)))
-  pillar2_positivity_25_50 <- calculate_positivity(samples, FALSE, "25_50")
-  pillar2_positivity_25_50 <-
-    array(pillar2_positivity_25_50, c(1, dim(pillar2_positivity_25_50)))
-  pillar2_positivity_50_65 <- calculate_positivity(samples, FALSE, "50_65")
-  pillar2_positivity_50_65 <-
-    array(pillar2_positivity_50_65, c(1, dim(pillar2_positivity_50_65)))
-  pillar2_positivity_65_80 <- calculate_positivity(samples, FALSE, "65_80")
-  pillar2_positivity_65_80 <-
-    array(pillar2_positivity_65_80, c(1, dim(pillar2_positivity_65_80)))
+  pillar2_positivity_15_24 <- calculate_positivity(samples, FALSE, "15_24")
+  pillar2_positivity_15_24 <-
+    array(pillar2_positivity_15_24, c(1, dim(pillar2_positivity_15_24)))
+  pillar2_positivity_25_49 <- calculate_positivity(samples, FALSE, "25_49")
+  pillar2_positivity_25_49 <-
+    array(pillar2_positivity_25_49, c(1, dim(pillar2_positivity_25_49)))
+  pillar2_positivity_50_64 <- calculate_positivity(samples, FALSE, "50_64")
+  pillar2_positivity_50_64 <-
+    array(pillar2_positivity_50_64, c(1, dim(pillar2_positivity_50_64)))
+  pillar2_positivity_65_79 <- calculate_positivity(samples, FALSE, "65_79")
+  pillar2_positivity_65_79 <-
+    array(pillar2_positivity_65_79, c(1, dim(pillar2_positivity_65_79)))
   pillar2_positivity_80_plus <- calculate_positivity(samples, FALSE, "80_plus")
   pillar2_positivity_80_plus <-
     array(pillar2_positivity_80_plus, c(1, dim(pillar2_positivity_80_plus)))
@@ -429,16 +429,16 @@ reduce_trajectories <- function(samples) {
   pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_over25)
 
   pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_under15)
-  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_15_25)
-  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_25_50)
-  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_50_65)
-  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_65_80)
+  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_15_24)
+  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_25_49)
+  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_50_64)
+  pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_65_79)
   pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_80_plus)
   row.names(pillar2_positivity) <-
     c("pillar2_positivity", "pillar2_positivity_over25",
-      "pillar2_positivity_under15", "pillar2_positivity_15_25",
-      "pillar2_positivity_25_50", "pillar2_positivity_50_65",
-      "pillar2_positivity_65_80", "pillar2_positivity_80_plus")
+      "pillar2_positivity_under15", "pillar2_positivity_15_24",
+      "pillar2_positivity_25_49", "pillar2_positivity_50_64",
+      "pillar2_positivity_65_79", "pillar2_positivity_80_plus")
   samples$trajectories$state <-
     abind1(samples$trajectories$state, pillar2_positivity)
 
