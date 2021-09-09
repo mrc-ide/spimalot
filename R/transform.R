@@ -63,8 +63,9 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
     if (model_type == "BB") {
       p_NC <- pars[["p_NC"]]
-      rho_pillar2_tests <- pars[["rho_pillar2_tests"]]
-      ## Total: 40 fitted parameters
+      rho_pillar2_tests_under65 <- pars[["rho_pillar2_tests_under65"]]
+      rho_pillar2_tests_65plus <- pars[["rho_pillar2_tests_65plus"]]
+      ## Total: 41 fitted parameters
 
       ## Unused in BB fits so these are dummy values
       phi_pillar2_cases <- 0.5
@@ -77,7 +78,8 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
       ## Unused in NB fits so these are dummy values
       p_NC <- 0.002
-      rho_pillar2_tests <- 0.01
+      rho_pillar2_tests_under65 <- 0.01
+      rho_pillar2_tests_65plus <- 0.1
     }
 
     if ("p_NC_weekend" %in% names(pars)) {
@@ -181,7 +183,8 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
     observation <- sircovid::carehomes_parameters_observation()
 
-    observation$rho_pillar2_tests <- rho_pillar2_tests
+    observation$rho_pillar2_tests_under65 <- rho_pillar2_tests_under65
+    observation$rho_pillar2_tests_65plus <- rho_pillar2_tests_65plus
     observation$phi_pillar2_cases <- phi_pillar2_cases
     observation$kappa_pillar2_cases <- kappa_pillar2_cases
 
