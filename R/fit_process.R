@@ -683,7 +683,7 @@ calculate_cases <- function(samples, over25) {
   if ("phi_pillar2_cases_weekend" %in% colnames(samples$pars)) {
     phi_pillar2_cases_weekend <- samples$pars[, "phi_pillar2_cases_weekend"]
   } else {
-    phi_pillar2_cases_weekend <- model_params$phi_pillar2_cases_weekend
+    phi_pillar2_cases_weekend <- phi_pillar2_cases
   }
 
   if (over25) {
