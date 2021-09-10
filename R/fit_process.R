@@ -819,7 +819,7 @@ deflate_samples <- function(s) {
   region <- s$info$region
   if (length(region) == 1) {
     s$pars <- t(drop_dimension(s$pars, 2))
-    s$probabilities <- drop_dimension(s$probabilities, 2)
+    s$probabilities <- t(drop_dimension(s$probabilities, 2))
     s$state <- drop_dimension(s$state, 2)
     s$trajectories$state <- drop_dimension(s$trajectories$state, 3)
     s$restart$state <- drop_dimension(s$restart$state, 3)
