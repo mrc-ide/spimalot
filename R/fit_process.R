@@ -99,7 +99,6 @@ spim_fit_process <- function(samples, parameters, data, control,
     ## to the last date in the restart
     restart_date <- max(restart$state$time)
     i <- forecast$trajectories$date <= restart_date
-    restart$trajectories <- trajectories_filter_time(forecast$trajectories, i)
 
     if (single_region) {
       restart_rt <- rt_filter_time(rt, i)
@@ -807,7 +806,9 @@ inflate_samples <- function(s) {
     s$probabilities <- add_dimension(t(s$probabilities), 2, region)
     s$state <- add_dimension(s$state, 2, region)
     s$trajectories$state <- add_dimension(s$trajectories$state, 3, region)
-    s$restart$state <- add_dimension(s$restart$state, 3, region)
+    if (!is.null(s$restart)) {
+      s$restart$state <- add_dimension(s$restart$state, 3, region)
+    }
     s$vaccine <- setNames(list(s$vaccine), region)
   }
 
@@ -822,7 +823,9 @@ deflate_samples <- function(s) {
     s$probabilities <- t(drop_dimension(s$probabilities, 2))
     s$state <- drop_dimension(s$state, 2)
     s$trajectories$state <- drop_dimension(s$trajectories$state, 3)
-    s$restart$state <- drop_dimension(s$restart$state, 3)
+    if (!is.null(s$restart)) {
+      s$restart$state <- drop_dimension(s$restart$state, 3)
+    }
     s$vaccine <- s$vaccine[[1L]]
   }
 

@@ -505,9 +505,9 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, what) {
   dcols <- c(cols$orange, cols$green2)
 
   # Get model results
-  res <- data.frame(count = samples$output_t[-1L, what],
-                    lb = samples$lower_bound[-1L, what],
-                    ub = samples$upper_bound[-1L, what])
+  res <- data.frame(count = samples$output_t[-1L, what, 1L],
+                    lb = samples$lower_bound[-1L, what, 1L],
+                    ub = samples$upper_bound[-1L, what, 1L])
 
   date_res <- dat$samples[[region]]$trajectories$date[-c(1, 2)]
   date_res <- sircovid::sircovid_date_as_date(date_res)
