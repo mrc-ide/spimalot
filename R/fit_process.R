@@ -657,16 +657,20 @@ calculate_positivity <- function(samples, over25, age_band) {
 
   model_params <- samples$predict$transform(samples$pars[1, ])
 
-  if ("p_NC" %in% colnames(samples$pars)) {
-    p_NC <- samples$pars[, "p_NC"]
+  if ("p_NC_under65" %in% colnames(samples$pars)) {
+    p_NC_under65 <- samples$pars[, "p_NC_under65"]
+    p_NC_65plus <- samples$pars[, "p_NC_65plus"]
   } else {
-    p_NC <- model_params$p_NC
+    p_NC_under65 <- model_params$p_NC_under65
+    p_NC_65plus <- model_params$p_NC_65plus
   }
 
-  if ("p_NC_weekend" %in% colnames(samples$pars)) {
-    p_NC_weekend <- samples$pars[, "p_NC_weekend"]
+  if ("p_NC_weekend_under65" %in% colnames(samples$pars)) {
+    p_NC_weekend_under65 <- samples$pars[, "p_NC_weekend_under65"]
+    p_NC_weekend_65plus <- samples$pars[, "p_NC_weekend_65plus"]
   } else {
-    p_NC_weekend <- p_NC
+    p_NC_weekend_under65 <- p_NC_under65
+    p_NC_weekend_65plus <- p_NC_65plus
   }
 
   if (over25) {
@@ -684,10 +688,18 @@ calculate_positivity <- function(samples, over25, age_band) {
     neg <- (sum(model_params[[n]]) - pos)
   }
 
-  neg[, grepl("^S", weekdays(x))] <-
-    neg[, grepl("^S", weekdays(x))] * p_NC_weekend
-  neg[, !grepl("^S", weekdays(x))] <-
-    neg[, !grepl("^S", weekdays(x))] * p_NC
+  if (is.null(age_band) ||
+      age_band %in% c("under15", "15_24", "25_49", "50_64")) {
+    neg[, grepl("^S", weekdays(x))] <-
+      neg[, grepl("^S", weekdays(x))] * p_NC_weekend_under65
+    neg[, !grepl("^S", weekdays(x))] <-
+      neg[, !grepl("^S", weekdays(x))] * p_NC_under65
+  } else {
+    neg[, grepl("^S", weekdays(x))] <-
+      neg[, grepl("^S", weekdays(x))] * p_NC_weekend_65plus
+    neg[, !grepl("^S", weekdays(x))] <-
+      neg[, !grepl("^S", weekdays(x))] * p_NC_65plus
+  }
 
   out <- (pos * model_params$pillar2_sensitivity +
             neg * (1 - model_params$pillar2_specificity)) / (pos + neg) * 100

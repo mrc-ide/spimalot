@@ -62,9 +62,9 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     beta_value <- unname(pars[paste0("beta", seq_along(beta_date))])
 
     if (model_type == "BB") {
-      p_NC <- pars[["p_NC"]]
-      rho_pillar2_tests_under65 <- pars[["rho_pillar2_tests_under65"]]
-      rho_pillar2_tests_65plus <- pars[["rho_pillar2_tests_65plus"]]
+      p_NC_under65 <- pars[["p_NC_under65"]]
+      p_NC_65plus <- pars[["p_NC_65plus"]]
+      rho_pillar2_tests <- pars[["rho_pillar2_tests"]]
       ## Total: 41 fitted parameters
 
       ## Unused in BB fits so these are dummy values
@@ -74,18 +74,20 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     if (model_type == "NB") {
       phi_pillar2_cases <- pars[["phi_pillar2_cases"]]
       kappa_pillar2_cases <- 1 / pars[["alpha_pillar2_cases"]]
-      ## Total: 40 fitted parameters
+      ## Total: 41 fitted parameters
 
       ## Unused in NB fits so these are dummy values
-      p_NC <- 0.002
-      rho_pillar2_tests_under65 <- 0.01
-      rho_pillar2_tests_65plus <- 0.1
+      p_NC_under65 <- 0.002
+      p_NC_65plus <- 0.002
+      rho_pillar2_tests <- 0.01
     }
 
-    if ("p_NC_weekend" %in% names(pars)) {
-      p_NC_weekend <- pars[["p_NC_weekend"]]
+    if ("p_NC_weekend_under65" %in% names(pars)) {
+      p_NC_weekend_under65 <- pars[["p_NC_weekend_under65"]]
+      p_NC_weekend_65plus <- pars[["p_NC_weekend_65plus"]]
     } else {
-      p_NC_weekend <- p_NC
+      p_NC_weekend_under65 <- p_NC_under65
+      p_NC_weekend_65plus <- p_NC_65plus
     }
 
     ## Set severity parameters based on Bob's analysis and fitted parameters.
@@ -183,8 +185,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
     observation <- sircovid::carehomes_parameters_observation()
 
-    observation$rho_pillar2_tests_under65 <- rho_pillar2_tests_under65
-    observation$rho_pillar2_tests_65plus <- rho_pillar2_tests_65plus
+    observation$rho_pillar2_tests <- rho_pillar2_tests
     observation$phi_pillar2_cases <- phi_pillar2_cases
     observation$kappa_pillar2_cases <- kappa_pillar2_cases
 
@@ -255,8 +256,10 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       eps = eps,
       m_CHW = m_CHW,
       m_CHR = m_CHR,
-      p_NC = p_NC,
-      p_NC_weekend = p_NC_weekend,
+      p_NC_under65 = p_NC_under65,
+      p_NC_65plus = p_NC_65plus,
+      p_NC_weekend_under65 = p_NC_weekend_under65,
+      p_NC_weekend_65plus = p_NC_weekend_65plus,
       rel_susceptibility = rel_efficacy$rel_susceptibility,
       rel_p_sympt = rel_efficacy$rel_p_sympt,
       rel_p_hosp_if_sympt = rel_efficacy$rel_p_hosp_if_sympt,
