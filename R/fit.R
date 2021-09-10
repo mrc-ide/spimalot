@@ -67,8 +67,17 @@ spim_pmcmc <- function(pars, filter, control) {
   ## Add some additional version information, which will make the
   ## vaccination projection more robust by preventing us mis-aligning
   ## the updated variables. This will propagate through the forecasts
-  data <- ret$predict$transform(ret$pars[1, ])
-  info <- ret$predict$filter$model$new(data, 0, 1)$info()
+  if (length(dim(ret$pars)) == 3) {
+    data <- ret$predict$transform(t(ret$pars[, , 1]))
+    info <- lapply(
+      data,
+      function(x) ret$predict$filter$model$new(x, 0, 1)$info()
+    )
+  } else {
+    data <- ret$predict$transform(ret$pars[1, ])
+    info <- ret$predict$filter$model$new(data, 0, 1)$info()
+  }
+
   ret$info <- list(version = packageVersion("sircovid"),
                    info = info,
                    data = data,
@@ -85,7 +94,12 @@ spim_pmcmc <- function(pars, filter, control) {
 
   vaccination_copy <- c("schedule_real", "priority_population",
                         "mean_days_between_doses", "efficacy")
-  ret$vaccine <- pars_inputs$vaccination[vaccination_copy]
+  vaccination <- pars_inputs$vaccination
+  if (inherits(vaccination, "spim_vaccination_data")) {
+    ret$vaccine <- vaccination[vaccination_copy]
+  } else {
+    ret$vaccine <- lapply(vaccination, "[", vaccination_copy)
+  }
 
   ret
 }

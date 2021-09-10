@@ -215,12 +215,23 @@ multiregion_pars <- function(date, regions, model_type, multistrain,
   transform <- spim_transform(regions, model_type, multistrain, beta_date,
                               vaccination, cross_immunity, waning_rate)
 
-  mcstate::pmcmc_parameters_nested$new(
+  ret <- mcstate::pmcmc_parameters_nested$new(
     pars,
     proposal_varied,
     proposal_fixed,
     unname(regions),
     transform)
+
+  inputs <- list(date = date,
+                 region = unname(regions),
+                 model_type = model_type,
+                 multistrain = multistrain,
+                 beta_date = beta_date,
+                 vaccination = vaccination,
+                 parameters = parameters)
+
+  attr(ret, "inputs") <- inputs
+  ret
 }
 
 

@@ -8,8 +8,11 @@ fit_process_restart <- function(samples, parameters, data, control) {
 
   pars <- spim_fit_parameters(samples, parameters)
   pars$prior <- fit_process_restart_priors(samples$pars, pars)
-  pars$sample <- samples$pars
+
+  pars$sample <- drop(samples$pars)
   class(pars) <- "spim_pars_pmcmc"
+
+  samples$restart$state <- drop(samples$restart$state)
 
   list(state = samples$restart,
        info = samples$info,
@@ -19,18 +22,24 @@ fit_process_restart <- function(samples, parameters, data, control) {
 
 
 fit_process_restart_priors <- function(values, parameters) {
-  nms <- colnames(values)
+  nms <- unique(rownames(values))
   stopifnot(all(nms %in% parameters$info$name))
 
-  wrapper <- function(nm) {
-    x <- values[, nm]
-    info <- parameters$info[parameters$info$name == nm, ]
-    prior <- parameters$prior[parameters$prior$name == nm, ]
+  wrapper <- function(nm, reg) {
+    x <- values[nm, reg, ]
+    info <- parameters$info[parameters$info$region == reg &
+                              parameters$info$name == nm, ]
+    prior <- parameters$prior[parameters$prior$region == reg &
+                              parameters$prior$name == nm, ]
     fit_prior(x, info, prior)
   }
 
-  res <- lapply(nms, wrapper)
-  do.call("rbind", res)
+  res <- lapply(colnames(values), function(x) {
+    out <- lapply(nms, wrapper, x)
+    do.call(rbind, out)
+  })
+
+  do.call(rbind, res)
 }
 
 

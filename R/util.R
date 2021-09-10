@@ -92,3 +92,39 @@ seq_rows <- function(x) {
 
 
 mean_ci <- function(x) c(mean = mean(x), quantile(x, c(0.025, 0.975)))
+
+
+add_dimension <- function(x, d, nm = list(NULL)) {
+  old_dim <- dim(x)
+  old_nms <- dimnames(x)
+  if (is.null(old_nms)) {
+    old_nms <- rep(list(NULL), length(old_dim))
+  }
+
+  if (d < 1) {
+    stop("d < 1")
+  } else if (d > length(old_dim) + 1) {
+    stop("d > dim(x) + 1")
+  } else if (d > length(old_dim)) {
+    new_dim <- c(old_dim, 1)
+    new_nms <- c(old_nms, nm)
+  } else if (d == 1) {
+    new_dim <- c(1, old_dim)
+    new_nms <- c(nm, old_nms)
+  } else {
+    new_dim <- c(old_dim[seq(d - 1)], 1, old_dim[seq(d, length(old_dim))])
+    new_nms <- c(old_nms[seq(d - 1)], nm, old_nms[seq(d, length(old_nms))])
+  }
+
+  if (all(vlapply(new_nms, is.null))) {
+    new_nms <- NULL
+  }
+
+  array(x, new_dim, new_nms)
+}
+
+
+drop_dimension <- function(x, i) {
+  dim(x) <- dim(x)[-i]
+  x
+}

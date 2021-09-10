@@ -18,6 +18,10 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     assert_is(vaccination, "spim_vaccination_data")
 
     function(pars) {
+      ## Case: single region inflated
+      if (!is.null(dim(pars))) {
+        pars <- drop(pars)
+      }
       start_date <- pars[["start_date"]]
       p_G_D <- pars[["p_G_D"]] # death in *community*
       p_G_D_CHR <- pars[["p_G_D_CHR"]] # death in *care home*
@@ -280,12 +284,12 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     }
   }
 
-  ## now the function returned is either the original transform function or
-  ##  one that loops over it
+  ## Case: single region
   if (length(region) == 1) {
     fun(region, vaccination)
   } else {
     function(pars) {
+      ## Case: multi region
       lapply(seq_along(region), function(i) {
         rpar <- pars[i, ]
         x <- region[[i]]
@@ -294,5 +298,4 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       })
     }
   }
-
 }
