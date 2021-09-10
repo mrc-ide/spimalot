@@ -125,6 +125,5 @@ add_dimension <- function(x, d, nm = list(NULL)) {
 
 
 drop_dimension <- function(x, i) {
-  dim(x) <- dim(x)[-i]
-  x
+  array(x, dim(x)[-i], dimnames(x)[-i])
 }

@@ -15,6 +15,7 @@
 ##' @rdname spim_plot_fit
 ##' @export
 spim_plot_fit_forecasts <- function(samples, region = NULL) {
+
   data_date <- samples$info$date
   ## NOTE: The first date will include the whole pre-data counts, so
   ## drop here.
@@ -39,6 +40,7 @@ spim_plot_fit_forecasts <- function(samples, region = NULL) {
          lag = TRUE))
 
   plot1 <- function(x, region = NULL) {
+
     if (is.null(region)) {
       y <- t(samples$trajectories$state[x$index, , -1])
     } else {
