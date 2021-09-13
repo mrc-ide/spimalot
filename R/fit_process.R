@@ -251,7 +251,7 @@ calculate_Rt_ifr_t <- function(samples, multistrain, weight_Rt, what) {
         initial_step_from_parameters = TRUE,
         shared_parameters = FALSE, R = R[, , i, ],
         prob_strain = prob_strain[, , i, ],
-        weight_Rt = TRUE
+        weight_Rt = weight_Rt
       )
     } else if (what == "ifr_t") {
       sircovid::carehomes_ifr_t_trajectories(
@@ -280,7 +280,7 @@ calculate_Rt <- function(samples, multistrain, weight_Rt) {
 
 
 calculate_ifr_t <- function(samples, multistrain) {
-  calculate_Rt_ifr_t(samples, multistrain, weight_Rt, "ifr_t")
+  calculate_Rt_ifr_t(samples, multistrain, NULL, "ifr_t")
 }
 
 
