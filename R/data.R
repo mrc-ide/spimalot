@@ -498,7 +498,8 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
-      if (all(is.na(ret$pillar2_over25_tot))) {
+      if (all(is.na(ret$pillar2_over25_tot)) &&
+          region %in% c("scotland", "northern_ireland", "wales")) {
         ret$pillar2_tot <- data$pillar2_positives + data$pillar2_negatives
         ret$pillar2_pos <- data$pillar2_positives
         ret$pillar2_over25_tot <- NA_integer_

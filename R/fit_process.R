@@ -400,8 +400,7 @@ reduce_trajectories <- function(samples) {
 
   ## Calculate Pillar 2 positivity
   pillar2_positivity <- calculate_positivity(samples, FALSE, NULL)
-  pillar2_positivity <-
-    array(pillar2_positivity, c(1, dim(pillar2_positivity)))
+  pillar2_positivity <- array(pillar2_positivity, c(1, dim(pillar2_positivity)))
   pillar2_positivity_over25 <- calculate_positivity(samples, TRUE, NULL)
   pillar2_positivity_over25 <-
     array(pillar2_positivity_over25, c(1, dim(pillar2_positivity_over25)))
