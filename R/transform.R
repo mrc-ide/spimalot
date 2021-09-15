@@ -61,11 +61,24 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
     beta_value <- unname(pars[paste0("beta", seq_along(beta_date))])
 
+    names_p_NC_age <- c("p_NC", "p_NC_weekend",
+                        "p_NC_under15", "p_NC_15_24", "p_NC_25_49",
+                        "p_NC_50_64", "p_NC_65_79", "p_NC_80plus",
+                        "p_NC_weekend_under15", "p_NC_weekend_15_24",
+                        "p_NC_weekend_25_49", "p_NC_weekend_50_64",
+                        "p_NC_weekend_65_79", "p_NC_weekend_80plus")
+    for (i in names_p_NC_age) {
+      if (i %in% names(pars)) {
+        assign(i, pars[[i]])
+      } else {
+        assign(i, 0.002)
+      }
+    }
+
     if (model_type == "BB") {
-      p_NC_under65 <- pars[["p_NC_under65"]]
-      p_NC_65plus <- pars[["p_NC_65plus"]]
+
       rho_pillar2_tests <- pars[["rho_pillar2_tests"]]
-      ## Total: 41 fitted parameters
+      ## Total: variable, 41-46 fitted parameters whether fitting by age or not
 
       ## Unused in BB fits so these are dummy values
       phi_pillar2_cases <- 0.5
@@ -77,17 +90,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       ## Total: 41 fitted parameters
 
       ## Unused in NB fits so these are dummy values
-      p_NC_under65 <- 0.002
-      p_NC_65plus <- 0.002
       rho_pillar2_tests <- 0.01
-    }
-
-    if ("p_NC_weekend_under65" %in% names(pars)) {
-      p_NC_weekend_under65 <- pars[["p_NC_weekend_under65"]]
-      p_NC_weekend_65plus <- pars[["p_NC_weekend_65plus"]]
-    } else {
-      p_NC_weekend_under65 <- p_NC_under65
-      p_NC_weekend_65plus <- p_NC_65plus
     }
 
     ## Set severity parameters based on Bob's analysis and fitted parameters.
@@ -256,10 +259,6 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       eps = eps,
       m_CHW = m_CHW,
       m_CHR = m_CHR,
-      p_NC_under65 = p_NC_under65,
-      p_NC_65plus = p_NC_65plus,
-      p_NC_weekend_under65 = p_NC_weekend_under65,
-      p_NC_weekend_65plus = p_NC_weekend_65plus,
       rel_susceptibility = rel_efficacy$rel_susceptibility,
       rel_p_sympt = rel_efficacy$rel_p_sympt,
       rel_p_hosp_if_sympt = rel_efficacy$rel_p_hosp_if_sympt,
@@ -268,6 +267,21 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       vaccine_progression_rate = c(0, 1 / 21, 0, 0),
       vaccine_schedule = vaccination$schedule,
       vaccine_index_dose2 = 3L,
+      ## Pillar 2 by age (p_NC / p_NC_weekend)
+      p_NC = p_NC,
+      p_NC_weekend = p_NC_weekend,
+      p_NC_under15 = p_NC_under15,
+      p_NC_15_24 = p_NC_15_24,
+      p_NC_25_49 = p_NC_25_49,
+      p_NC_50_64 = p_NC_50_64,
+      p_NC_65_79 = p_NC_65_79,
+      p_NC_80plus = p_NC_80plus,
+      p_NC_weekend_under15 = p_NC_weekend_under15,
+      p_NC_weekend_15_24 = p_NC_weekend_15_24,
+      p_NC_weekend_25_49 = p_NC_weekend_25_49,
+      p_NC_weekend_50_64 = p_NC_weekend_50_64,
+      p_NC_weekend_65_79 = p_NC_weekend_65_79,
+      p_NC_weekend_80plus = p_NC_weekend_80plus,
       ## Strains
       strain_transmission = strain_transmission,
       strain_seed_date = strain_seed_date,
