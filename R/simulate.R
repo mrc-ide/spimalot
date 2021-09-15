@@ -556,7 +556,7 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
     lag_groups = args$vaccine_lag_groups,
     lag_days = args$vaccine_lag_days,
     boosters_future = args$vaccine_booster_daily_doses[[region]],
-    boosters_prepend_zero = TRUE)
+    boosters_prepend_zero = FALSE)
 
   ## check boosters
   # > par(mfrow = c(3, 1))
