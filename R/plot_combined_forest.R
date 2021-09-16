@@ -64,8 +64,8 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
   par_max[c("m_CHW", "m_CHR")] <- 2e-5
   par_max[beta_names] <- 0.25
   if (model_type == "BB") {
-    p_NC_pars <- grep("p_NC", par_max)
-    par_max[p_NC_pars] <- 0.02
+    p_NC_pars <- grep("p_NC", names(par_max))
+    par_max[p_NC_pars] <- 0.015
   }
 
   n_regions <- length(samples)
