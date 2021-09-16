@@ -433,13 +433,15 @@ reduce_trajectories <- function(samples) {
   pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_50_64)
   pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_65_79)
   pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_80_plus)
+
   row.names(pillar2_positivity) <-
     c("pillar2_positivity", "pillar2_positivity_over25",
       "pillar2_positivity_under15", "pillar2_positivity_15_24",
       "pillar2_positivity_25_49", "pillar2_positivity_50_64",
       "pillar2_positivity_65_79", "pillar2_positivity_80_plus")
+
   samples$trajectories$state <-
-    abind1(samples$trajectories$state, pillar2_positivity)
+    abind1(samples$trajectories$state, pillar2)
 
   samples
 }
@@ -704,5 +706,39 @@ calculate_positivity <- function(samples, over25, age_band) {
             neg * (1 - model_params$pillar2_specificity)) / (pos + neg) * 100
 
   out
+
+}
+
+
+calculate_cases <- function(samples, over25) {
+
+  x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
+
+  model_params <- samples$predict$transform(samples$pars[1, ])
+
+  if ("phi_pillar2_cases" %in% colnames(samples$pars)) {
+    phi_pillar2_cases <- samples$pars[, "phi_pillar2_cases"]
+  } else {
+    phi_pillar2_cases <- model_params$phi_pillar2_cases
+  }
+
+  if ("phi_pillar2_cases_weekend" %in% colnames(samples$pars)) {
+    phi_pillar2_cases_weekend <- samples$pars[, "phi_pillar2_cases_weekend"]
+  } else {
+    phi_pillar2_cases_weekend <- phi_pillar2_cases
+  }
+
+  if (over25) {
+    pos <- samples$trajectories$state["sympt_cases_over25_inc", , ]
+  } else {
+    pos <- samples$trajectories$state["sympt_cases_inc", , ]
+  }
+
+  pos[, grepl("^S", weekdays(x))] <-
+    pos[, grepl("^S", weekdays(x))] * phi_pillar2_cases_weekend
+  pos[, !grepl("^S", weekdays(x))] <-
+    pos[, !grepl("^S", weekdays(x))] * phi_pillar2_cases
+
+  pos
 
 }

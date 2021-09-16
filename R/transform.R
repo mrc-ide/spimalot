@@ -93,6 +93,18 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       rho_pillar2_tests <- 0.01
     }
 
+    if ("p_NC_weekend" %in% names(pars)) {
+      p_NC_weekend <- pars[["p_NC_weekend"]]
+    } else {
+      p_NC_weekend <- p_NC
+    }
+
+    if ("phi_pillar2_cases_weekend" %in% names(pars)) {
+      phi_pillar2_cases_weekend <- pars[["phi_pillar2_cases_weekend"]]
+    } else {
+      phi_pillar2_cases_weekend <- phi_pillar2_cases
+    }
+
     ## Set severity parameters based on Bob's analysis and fitted parameters.
     severity[severity$Name == "p_sero_pos_1", 2:18] <- 0.85
     severity[severity$Name == "p_sero_pos_2", 2:18] <- 0.85
@@ -190,6 +202,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
     observation$rho_pillar2_tests <- rho_pillar2_tests
     observation$phi_pillar2_cases <- phi_pillar2_cases
+    observation$phi_pillar2_cases_weekend <- phi_pillar2_cases_weekend
     observation$kappa_pillar2_cases <- kappa_pillar2_cases
 
     ## kappa for hospital data streams (not all will actually be used)
