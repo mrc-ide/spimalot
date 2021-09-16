@@ -424,9 +424,7 @@ reduce_trajectories <- function(samples) {
   pillar2_positivity_80_plus <-
     array(pillar2_positivity_80_plus, c(1, dim(pillar2_positivity_80_plus)))
 
-
   pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_over25)
-
   pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_under15)
   pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_15_24)
   pillar2_positivity <- abind1(pillar2_positivity, pillar2_positivity_25_49)
@@ -441,7 +439,7 @@ reduce_trajectories <- function(samples) {
       "pillar2_positivity_65_79", "pillar2_positivity_80_plus")
 
   samples$trajectories$state <-
-    abind1(samples$trajectories$state, pillar2)
+    abind1(samples$trajectories$state, pillar2_positivity)
 
   samples
 }
@@ -658,20 +656,19 @@ calculate_positivity <- function(samples, over25, age_band) {
 
   model_params <- samples$predict$transform(samples$pars[1, ])
 
-  if ("p_NC_under65" %in% colnames(samples$pars)) {
-    p_NC_under65 <- samples$pars[, "p_NC_under65"]
-    p_NC_65plus <- samples$pars[, "p_NC_65plus"]
+  if ("p_NC" %in% colnames(samples$pars)) {
+    p_NC <- samples$pars[, "p_NC"]
+    p_NC_weekend <- samples$pars[, "p_NC_weekend"]
   } else {
-    p_NC_under65 <- model_params$p_NC_under65
-    p_NC_65plus <- model_params$p_NC_65plus
-  }
-
-  if ("p_NC_weekend_under65" %in% colnames(samples$pars)) {
-    p_NC_weekend_under65 <- samples$pars[, "p_NC_weekend_under65"]
-    p_NC_weekend_65plus <- samples$pars[, "p_NC_weekend_65plus"]
-  } else {
-    p_NC_weekend_under65 <- p_NC_under65
-    p_NC_weekend_65plus <- p_NC_65plus
+    if (is.null(age_band)) {
+      p_NC <- model_params$p_NC
+      p_NC_weekend <- model_params$p_NC_weekend
+    } else {
+      p <- paste0("p_NC_", age_band)
+      p_weekend  <- paste0("p_NC_weekend_", age_band)
+      p_NC <- model_params[[p]]
+      p_NC_weekend <- model_params[[p_weekend]]
+    }
   }
 
   if (over25) {
@@ -689,24 +686,14 @@ calculate_positivity <- function(samples, over25, age_band) {
     neg <- (sum(model_params[[n]]) - pos)
   }
 
-  if (is.null(age_band) ||
-      age_band %in% c("under15", "15_24", "25_49", "50_64")) {
-    neg[, grepl("^S", weekdays(x))] <-
-      neg[, grepl("^S", weekdays(x))] * p_NC_weekend_under65
-    neg[, !grepl("^S", weekdays(x))] <-
-      neg[, !grepl("^S", weekdays(x))] * p_NC_under65
-  } else {
-    neg[, grepl("^S", weekdays(x))] <-
-      neg[, grepl("^S", weekdays(x))] * p_NC_weekend_65plus
-    neg[, !grepl("^S", weekdays(x))] <-
-      neg[, !grepl("^S", weekdays(x))] * p_NC_65plus
-  }
+  neg[, grepl("^S", weekdays(x))] <- neg[, grepl("^S", weekdays(x))] *
+    p_NC_weekend
+  neg[, !grepl("^S", weekdays(x))] <- neg[, !grepl("^S", weekdays(x))] * p_NC
 
   out <- (pos * model_params$pillar2_sensitivity +
             neg * (1 - model_params$pillar2_specificity)) / (pos + neg) * 100
 
   out
-
 }
 
 

@@ -63,10 +63,10 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
     names_p_NC_age <- c("p_NC", "p_NC_weekend",
                         "p_NC_under15", "p_NC_15_24", "p_NC_25_49",
-                        "p_NC_50_64", "p_NC_65_79", "p_NC_80plus",
+                        "p_NC_50_64", "p_NC_65_79", "p_NC_80_plus",
                         "p_NC_weekend_under15", "p_NC_weekend_15_24",
                         "p_NC_weekend_25_49", "p_NC_weekend_50_64",
-                        "p_NC_weekend_65_79", "p_NC_weekend_80plus")
+                        "p_NC_weekend_65_79", "p_NC_weekend_80_plus")
     for (i in names_p_NC_age) {
       if (i %in% names(pars)) {
         assign(i, pars[[i]])
@@ -288,13 +288,13 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       p_NC_25_49 = p_NC_25_49,
       p_NC_50_64 = p_NC_50_64,
       p_NC_65_79 = p_NC_65_79,
-      p_NC_80plus = p_NC_80plus,
+      p_NC_80_plus = p_NC_80_plus,
       p_NC_weekend_under15 = p_NC_weekend_under15,
       p_NC_weekend_15_24 = p_NC_weekend_15_24,
       p_NC_weekend_25_49 = p_NC_weekend_25_49,
       p_NC_weekend_50_64 = p_NC_weekend_50_64,
       p_NC_weekend_65_79 = p_NC_weekend_65_79,
-      p_NC_weekend_80plus = p_NC_weekend_80plus,
+      p_NC_weekend_80_plus = p_NC_weekend_80_plus,
       ## Strains
       strain_transmission = strain_transmission,
       strain_seed_date = strain_seed_date,
