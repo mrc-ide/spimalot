@@ -661,8 +661,12 @@ calculate_positivity <- function(samples, over25, age_band) {
     p_NC_weekend <- samples$pars[, "p_NC_weekend"]
   } else {
     if (is.null(age_band)) {
-      p_NC <- model_params$p_NC
-      p_NC_weekend <- model_params$p_NC_weekend
+      p <- grep("p_NC", names(model_params), value = TRUE)
+      p_weekend <- grep("weekend", p, value = TRUE)
+      p <- setdiff(p, p_weekend)
+      p_NC <- mean(unlist(model_params[p][model_params[p] != 0.002]))
+      p_NC_weekend <- mean(
+        unlist(model_params[p_weekend][model_params[p_weekend] != 0.002]))
     } else {
       p <- paste0("p_NC_", age_band)
       p_weekend  <- paste0("p_NC_weekend_", age_band)
