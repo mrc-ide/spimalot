@@ -230,7 +230,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       f <- function(x) {
         ## TODO check this, and see if we can instead use mcstate's
         ## array functions.
-        dim(x) <- c(19, 1, 4)
+        dim(x) <- c(19, 1, 5)
         x
       }
       rel_efficacy <- lapply(vaccination$efficacy, f)

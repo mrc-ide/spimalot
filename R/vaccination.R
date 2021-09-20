@@ -120,7 +120,7 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
     schedule <- sircovid::vaccine_schedule_data_future(data, region, uptake,
                                                        end_date,
                                                        mean_days_between_doses,
-                                                  booster_daily_doses_value = boosters)
+                                                       boosters)
   }
 
   i <- seq_len(sircovid::sircovid_date(date) - schedule$date + 1)
