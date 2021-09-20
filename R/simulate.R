@@ -590,6 +590,18 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
     n_strains = n_strain,
     n_doses = pars[[1]]$n_doses)
 
+    n_group <- nrow(rel_list$rel_p_sympt)
+    n_vacc_class <- extra$n_vacc_classes
+
+    rel_severity <- build_rel_param(extra$rel_p_death, n_strain,
+                                    n_vacc_class, "rel_p_death")
+
+    extra$rel_p_ICU <- extra$rel_p_R <-
+      array(1, c(n_group, n_strain, n_vacc_class))
+
+    extra$rel_p_ICU_D <- extra$rel_p_H_D <- extra$rel_p_W_D <-
+      extra$rel_p_G_D <- rel_severity
+
   if (!is.null(args$strain_transmission)) {
     strain_params <- sircovid:::carehomes_parameters_strain(
       args$strain_transmission,

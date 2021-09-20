@@ -171,6 +171,7 @@ spim_pars_beta <- function(date, last_beta_days_ago = 21) {
   ## 22. 2021-07-03 - Euros quarter final
   ## 23. 2021-07-11 - Euros 2020 final - peak in transmission
   ## 24. 2021-07-19 - Step 4
+  ## 25. 2021-08-15 - Summer festivals / holidays
   ## 25. Date - last_beta_days_ago
   c("2020-03-16", "2020-03-23", "2020-03-25",
     "2020-05-11", "2020-06-15", "2020-07-04",
@@ -180,7 +181,7 @@ spim_pars_beta <- function(date, last_beta_days_ago = 21) {
     "2021-01-05", "2021-03-08", "2021-04-01",
     "2021-04-19", "2021-05-17", "2021-06-21",
     "2021-07-03", "2021-07-11", "2021-07-19",
-    as.character(as.Date(date) - last_beta_days_ago))
+    "2021-08-15", as.character(as.Date(date) - last_beta_days_ago))
 }
 
 
