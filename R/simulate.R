@@ -1506,6 +1506,9 @@ spim_simulation_predictors <- function(summary) {
 ##'
 ##' @param npi_key Optional data.frame, instead of reading from `path`
 ##'
+##' @param modify_gradual Logical, stating whether to adjust gradual `npi`
+##'   values accounting for schools open/close effect
+##'
 ##' @return tibble for passing to [spim_prepare_rt_future]
 ##'
 ##' @export

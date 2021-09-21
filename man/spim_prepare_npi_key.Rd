@@ -15,7 +15,8 @@ spim_prepare_npi_key(
   overwrite_central_adherence = NULL,
   overwrite_low_adherence = NULL,
   overwrite_high_adherence = NULL,
-  npi_key = NULL
+  npi_key = NULL,
+  modify_gradual = FALSE
 )
 }
 \arguments{
@@ -47,6 +48,9 @@ be useful if automating some, but not all, of the Rt values}
 \code{overwrite_central_adherence}}
 
 \item{npi_key}{Optional data.frame, instead of reading from \code{path}}
+
+\item{modify_gradual}{Logical, stating whether to adjust gradual \code{npi}
+values accounting for schools open/close effect}
 }
 \value{
 tibble for passing to \link{spim_prepare_rt_future}
