@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.8</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.9</span>
       </span>
     </div>
 
@@ -128,7 +128,8 @@
   overwrite_central_adherence <span class='op'>=</span> <span class='cn'>NULL</span>,
   overwrite_low_adherence <span class='op'>=</span> <span class='cn'>NULL</span>,
   overwrite_high_adherence <span class='op'>=</span> <span class='cn'>NULL</span>,
-  npi_key <span class='op'>=</span> <span class='cn'>NULL</span>
+  npi_key <span class='op'>=</span> <span class='cn'>NULL</span>,
+  modify_gradual <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -178,6 +179,11 @@ be useful if automating some, but not all, of the Rt values</p></td>
     <tr>
       <th>npi_key</th>
       <td><p>Optional data.frame, instead of reading from <code>path</code></p></td>
+    </tr>
+    <tr>
+      <th>modify_gradual</th>
+      <td><p>Logical, stating whether to adjust gradual <code>npi</code>
+values accounting for schools open/close effect</p></td>
     </tr>
     </table>
 
