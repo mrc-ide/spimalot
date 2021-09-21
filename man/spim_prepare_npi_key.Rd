@@ -15,7 +15,8 @@ spim_prepare_npi_key(
   overwrite_central_adherence = NULL,
   overwrite_low_adherence = NULL,
   overwrite_high_adherence = NULL,
-  npi_key = NULL
+  npi_key = NULL,
+  modify_gradual = FALSE
 )
 }
 \arguments{
