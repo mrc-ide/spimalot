@@ -13,7 +13,8 @@ spim_data(
   trim_deaths,
   trim_pillar2,
   full_data = FALSE,
-  fit_to_variants = FALSE
+  fit_to_variants = FALSE,
+  fit_to_under25 = FALSE
 )
 }
 \arguments{
