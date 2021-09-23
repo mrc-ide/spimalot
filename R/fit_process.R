@@ -701,7 +701,7 @@ calculate_positivity <- function(samples, over25, age_band) {
 }
 
 
-calculate_cases <- function(samples, over25) {
+calculate_cases <- function(samples, over25, age_band) {
 
   x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
 
@@ -709,20 +709,33 @@ calculate_cases <- function(samples, over25) {
 
   if ("phi_pillar2_cases" %in% colnames(samples$pars)) {
     phi_pillar2_cases <- samples$pars[, "phi_pillar2_cases"]
-  } else {
-    phi_pillar2_cases <- model_params$phi_pillar2_cases
-  }
-
-  if ("phi_pillar2_cases_weekend" %in% colnames(samples$pars)) {
     phi_pillar2_cases_weekend <- samples$pars[, "phi_pillar2_cases_weekend"]
   } else {
-    phi_pillar2_cases_weekend <- phi_pillar2_cases
+    if (is.null(age_band)) {
+      p <- grep("phi_pillar2_cases", names(model_params), value = TRUE)
+      p_weekend <- grep("weekend", p, value = TRUE)
+      p <- setdiff(p, p_weekend)
+      phi_pillar2_cases <- mean(unlist(
+        model_params[p][model_params[p] != 0.002]))
+      phi_pillar2_cases_weekend <- mean(
+        unlist(model_params[p_weekend][model_params[p_weekend] != 0.002]))
+    } else {
+      p <- paste0("phi_pillar2_cases_", age_band)
+      p_weekend  <- paste0("phi_pillar2_cases_weekend_", age_band)
+      phi_pillar2_cases <- model_params[[p]]
+      phi_pillar2_cases_weekend <- model_params[[p_weekend]]
+    }
   }
 
   if (over25) {
     pos <- samples$trajectories$state["sympt_cases_over25_inc", , ]
   } else {
-    pos <- samples$trajectories$state["sympt_cases_inc", , ]
+    if (is.null(age_band)) {
+      state <- "sympt_cases_inc"
+    } else {
+      state <- paste0("sympt_cases_", age_band, "_inc")
+    }
+    pos <- samples$trajectories$state[state, , ]
   }
 
   pos[, grepl("^S", weekdays(x))] <-
@@ -731,5 +744,4 @@ calculate_cases <- function(samples, over25) {
     pos[, !grepl("^S", weekdays(x))] * phi_pillar2_cases
 
   pos
-
 }

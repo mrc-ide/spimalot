@@ -61,17 +61,31 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
     beta_value <- unname(pars[paste0("beta", seq_along(beta_date))])
 
-    names_p_NC_age <- c("p_NC", "p_NC_weekend",
-                        "p_NC_under15", "p_NC_15_24", "p_NC_25_49",
-                        "p_NC_50_64", "p_NC_65_79", "p_NC_80_plus",
-                        "p_NC_weekend_under15", "p_NC_weekend_15_24",
-                        "p_NC_weekend_25_49", "p_NC_weekend_50_64",
-                        "p_NC_weekend_65_79", "p_NC_weekend_80_plus")
-    for (i in names_p_NC_age) {
-      if (i %in% names(pars)) {
-        assign(i, pars[[i]])
+    names_pillar2_age <- c("", "_under15", "_15_24", "_25_49",
+                        "_50_64", "_65_79", "_80_plus")
+
+    for (i in names_pillar2_age) {
+      if (paste0("p_NC", i) %in% names(pars)) {
+        assign(paste0("p_NC", i), pars[[paste0("p_NC", i)]])
       } else {
-        assign(i, 0.002)
+        assign(paste0("p_NC", i), 0.002)
+      }
+      if (paste0("p_NC_weekend", i) %in% names(pars)) {
+        assign(paste0("p_NC_weekend", i), pars[[paste0("p_NC_weekend", i)]])
+      } else {
+        assign(paste0("p_NC_weekend", i), 0.002)
+      }
+      if (paste0("phi_pillar2_cases", i) %in% names(pars)) {
+        assign(paste0("phi_pillar2_cases", i),
+               pars[[paste0("phi_pillar2_cases", i)]])
+      } else {
+        assign(paste0("phi_pillar2_cases", i), 0.002)
+      }
+      if (paste0("phi_pillar2_cases_weekend", i) %in% names(pars)) {
+        assign(paste0("phi_pillar2_cases_weekend", i),
+               pars[[paste0("phi_pillar2_cases_weekend", i)]])
+      } else {
+        assign(paste0("phi_pillar2_cases_weekend", i), 0.002)
       }
     }
 
@@ -85,24 +99,10 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       kappa_pillar2_cases <- 2
     }
     if (model_type == "NB") {
-      phi_pillar2_cases <- pars[["phi_pillar2_cases"]]
-      kappa_pillar2_cases <- 1 / pars[["alpha_pillar2_cases"]]
-      ## Total: 41 fitted parameters
 
+      ## Total: 41-46 fitted parameters whether fitting by age or not
       ## Unused in NB fits so these are dummy values
       rho_pillar2_tests <- 0.01
-    }
-
-    if ("p_NC_weekend" %in% names(pars)) {
-      p_NC_weekend <- pars[["p_NC_weekend"]]
-    } else {
-      p_NC_weekend <- p_NC
-    }
-
-    if ("phi_pillar2_cases_weekend" %in% names(pars)) {
-      phi_pillar2_cases_weekend <- pars[["phi_pillar2_cases_weekend"]]
-    } else {
-      phi_pillar2_cases_weekend <- phi_pillar2_cases
     }
 
     ## Set severity parameters based on Bob's analysis and fitted parameters.
@@ -201,9 +201,27 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     observation <- sircovid::carehomes_parameters_observation()
 
     observation$rho_pillar2_tests <- rho_pillar2_tests
+    observation$kappa_pillar2_cases <- kappa_pillar2_cases
     observation$phi_pillar2_cases <- phi_pillar2_cases
     observation$phi_pillar2_cases_weekend <- phi_pillar2_cases_weekend
-    observation$kappa_pillar2_cases <- kappa_pillar2_cases
+    observation$phi_pillar2_cases_under15 <- phi_pillar2_cases_under15
+    observation$phi_pillar2_cases_weekend_under15 <-
+      phi_pillar2_cases_weekend_under15
+    observation$phi_pillar2_cases_15_24 <- phi_pillar2_cases_15_24
+    observation$phi_pillar2_cases_weekend_15_24 <-
+      phi_pillar2_cases_weekend_15_24
+    observation$phi_pillar2_cases_25_49 <- phi_pillar2_cases_25_49
+    observation$phi_pillar2_cases_weekend_25_49 <-
+      phi_pillar2_cases_weekend_25_49
+    observation$phi_pillar2_cases_50_64 <- phi_pillar2_cases_50_64
+    observation$phi_pillar2_cases_weekend_50_64 <-
+      phi_pillar2_cases_weekend_50_64
+    observation$phi_pillar2_cases_65_79 <- phi_pillar2_cases_65_79
+    observation$phi_pillar2_cases_weekend_65_79 <-
+      phi_pillar2_cases_weekend_65_79
+    observation$phi_pillar2_cases_80_plus <- phi_pillar2_cases_80_plus
+    observation$phi_pillar2_cases_weekend_80_plus <-
+      phi_pillar2_cases_weekend_80_plus
 
     ## kappa for hospital data streams (not all will actually be used)
     observation$kappa_ICU <- 1 / alpha_H
