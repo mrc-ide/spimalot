@@ -317,7 +317,8 @@ extract_age_class_state <- function(state) {
     ## aggregate partially immunised strata
     x[, 2L, , ] <- x[, 2L, , ] + x[, 3L, , ]
     x <- x[, -3L, , ]
-    colnames(x) <- c("unvaccinated", "partial_protection", "full_protection")
+    colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
+                     "booster_protection")
 
     ## aggregate age groups
     groups <- list(age_0 = 1:6, # 0-4, 5-9, 10-14, 15-19, 20-24, 25-29
