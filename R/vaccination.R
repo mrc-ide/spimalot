@@ -32,7 +32,7 @@
 ##' @export
 spim_vaccination_data <- function(date, region, uptake, end_date,
                                   mean_days_between_doses, efficacy,
-                                  data, boosters) {
+                                  data, boosters = NULL) {
   if (region == "scotland") {
     data$age_band_min[data$age_band_min == 16] <- 15
   }
@@ -79,10 +79,9 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
       data$doses,
       rep(mean(tail(data$doses, 7)), end_date - (date_start + nrow(data))))
 
-    schedule <- sircovid::vaccine_schedule_future(date_start, doses,
-                                                  mean_days_between_doses,
-                                                  priority_population,
-                                                  booster_daily_doses_value = boosters)
+    schedule <- sircovid::vaccine_schedule_future(
+      date_start, doses, mean_days_between_doses,
+      priority_population, booster_daily_doses_value = boosters)
   } else {
     # A number of vaccines have unexpectedly been allocoated to an NA age-group
     # in Scotland, let's filter them out for the time being
