@@ -593,8 +593,8 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
     n_group <- nrow(rel_list$rel_p_sympt)
     n_vacc_class <- extra$n_vacc_classes
 
-    rel_severity <- build_rel_param(extra$rel_p_death, n_strain,
-                                    n_vacc_class, "rel_p_death")
+    rel_severity <- sircovid:::build_rel_param(extra$rel_p_death, n_strain,
+                                               n_vacc_class, "rel_p_death")
 
     extra$rel_p_ICU <- extra$rel_p_R <-
       array(1, c(n_group, n_strain, n_vacc_class))
