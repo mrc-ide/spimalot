@@ -31,12 +31,18 @@
 ##'
 ##' @param fit_to_variants Logical, whether to fit to variants data or not
 ##'
+##' @param fit_by_age Logical, whether to fit to age-specific data or not
+##'
+##' @param fit_to_under25 Logical, whether to include data on under 25s when
+##'   fitting by age
+##'
 ##' @return A [data.frame()] TODO: describe columns
 ##'
 ##' @export
 spim_data <- function(date, region, model_type, rtm, serology,
                       trim_deaths, trim_pillar2, full_data = FALSE,
-                      fit_to_variants = FALSE, fit_to_under25 = FALSE) {
+                      fit_to_variants = FALSE, fit_by_age = FALSE,
+                      fit_to_under25 = FALSE) {
   check_region(region)
   spim_check_model_type(model_type)
 
@@ -46,17 +52,17 @@ spim_data <- function(date, region, model_type, rtm, serology,
   } else {
     spim_data_single(date, region, model_type, rtm, serology,
                      trim_deaths, trim_pillar2, full_data, fit_to_variants,
-                     fit_to_under25)
+                     fit_by_age, fit_to_under25)
   }
 }
 
 
 spim_data_single <- function(date, region, model_type, rtm, serology,
                              trim_deaths, trim_pillar2, full_data,
-                             fit_to_variants, fit_to_under25) {
+                             fit_to_variants, fit_by_age, fit_to_under25) {
   ## TODO: verify that rtm has consecutive days
   rtm <- spim_data_rtm(date, region, model_type, rtm, full_data,
-                       fit_to_variants, fit_to_under25)
+                       fit_to_variants, fit_by_age, fit_to_under25)
   serology <- spim_data_serology(date, region, serology)
 
   ## Merge the two datasets on date
@@ -108,7 +114,7 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 
 ##' @importFrom dplyr %>%
 spim_data_rtm <- function(date, region, model_type, data, full_data,
-                          fit_to_variants, fit_to_under25) {
+                          fit_to_variants, fit_by_age, fit_to_under25) {
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
@@ -496,18 +502,28 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     ret$strain_over25_tot <- NA_integer_
 
     if (model_type == "BB") {
-      omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
-                "pillar2_cases", "pillar2_over25_cases",
-                "pillar2_under15_cases", "pillar2_15_24_cases",
-                "pillar2_25_49_cases", "pillar2_50_64_cases",
-                "pillar2_65_79_cases", "pillar2_80_plus_cases")
+      omit <- c("hosp", "admitted", "diagnoses", "pillar2_cases",
+                "pillar2_over25_cases", "pillar2_under15_cases",
+                "pillar2_15_24_cases", "pillar2_25_49_cases",
+                "pillar2_50_64_cases", "pillar2_65_79_cases",
+                "pillar2_80_plus_cases")
+
+      if (!(region %in% c("scotland", "northern_ireland"))) {
+        omit <- c(omit, "pillar2_tot", "pillar2_pos")
+      }
+
+      if (!fit_by_age) {
+        omit <- c(omit, "pillar2_under15_tot", "pillar2_15_24_tot",
+                  "pillar2_25_49_tot", "pillar2_50_64_tot", "pillar2_65_79_tot",
+                  "pillar2_80_plus_tot", "pillar2_under15_pos",
+                  "pillar2_15_24_pos", "pillar2_25_49_pos", "pillar2_50_64_pos",
+                  "pillar2_65_79_pos", "pillar2_80_plus_pos")}
+
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
       if (all(is.na(ret$pillar2_over25_tot)) &&
-          region %in% c("scotland", "northern_ireland", "wales")) {
-        ret$pillar2_tot <- data$pillar2_positives + data$pillar2_negatives
-        ret$pillar2_pos <- data$pillar2_positives
+          region %in% c("northern_ireland", "wales")) {
         ret$pillar2_over25_tot <- NA_integer_
         ret$pillar2_over25_pos <- NA_integer_
       }
@@ -519,6 +535,12 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
                 "pillar2_50_64_tot", "pillar2_65_79_tot", "pillar2_80_plus_tot",
                 "pillar2_under15_pos", "pillar2_15_24_pos", "pillar2_25_49_pos",
                 "pillar2_50_64_pos", "pillar2_65_79_pos", "pillar2_80_plus_pos")
+
+      if (!fit_by_age) {
+        omity <- c(omit, "pillar2_under15_cases", "pillar2_15_24_cases",
+                   "pillar2_25_49_cases", "pillar2_50_64_cases",
+                   "pillar2_65_79_cases", "pillar2_80_plus_cases")}
+
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
