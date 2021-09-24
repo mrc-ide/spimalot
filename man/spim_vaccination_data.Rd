@@ -11,7 +11,8 @@ spim_vaccination_data(
   end_date,
   mean_days_between_doses,
   efficacy,
-  data
+  data,
+  boosters = NULL
 )
 }
 \arguments{
