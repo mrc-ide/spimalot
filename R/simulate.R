@@ -593,8 +593,8 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
     n_group <- nrow(rel_list$rel_p_sympt)
     n_vacc_class <- extra$n_vacc_classes
 
-    rel_severity <- build_rel_param(extra$rel_p_death, n_strain,
-                                    n_vacc_class, "rel_p_death")
+    rel_severity <- sircovid:::build_rel_param(extra$rel_p_death, n_strain,
+                                               n_vacc_class, "rel_p_death")
 
     extra$rel_p_ICU <- extra$rel_p_R <-
       array(1, c(n_group, n_strain, n_vacc_class))
@@ -1506,6 +1506,9 @@ spim_simulation_predictors <- function(summary) {
 ##'
 ##' @param npi_key Optional data.frame, instead of reading from `path`
 ##'
+##' @param modify_gradual Logical, stating whether to adjust gradual `npi`
+##'   values accounting for schools open/close effect
+##'
 ##' @return tibble for passing to [spim_prepare_rt_future]
 ##'
 ##' @export
@@ -1516,7 +1519,7 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
                                  overwrite_central_adherence = NULL,
                                  overwrite_low_adherence = NULL,
                                  overwrite_high_adherence = NULL,
-                                 npi_key = NULL) {
+                                 npi_key = NULL, modify_gradual = FALSE) {
 
   schools_modifier <- abs(schools_modifier)
 
@@ -1585,13 +1588,26 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
         steps <- round(seq.int(from, to, length.out = steps + 1)[2:steps], 3)
 
         npi <- sprintf("p%d_%s", seq_along(steps - 1), end)
-        ## here we just copy the values in both open/closed scenarios as we
-        ##  don't actually care about true schools open/closed
-        if (grepl("open", end)) {
+
+        ## check if we've accounted for open or closed
+        end_open <- grepl("open", end)
+
+        if (end_open) {
           npi <- c(npi, gsub("open", "closed", npi))
         } else {
           npi <- c(npi, gsub("closed", "open", npi))
         }
+
+        ## if modifying gradual then adjust with schools_modifier else
+        ##  use same values
+        if (modify_gradual) {
+          if (end_open) {
+            steps <- c(steps, steps - schools_modifier)
+          } else {
+            steps <- c(steps, steps + schools_modifier)
+          }
+        }
+
         data.frame(nation = nat, npi = npi, Rt = steps, Rt_sd = sd,
                    adherence = ad)
       }) %>%
