@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.10</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.3.11</span>
       </span>
     </div>
 
@@ -124,7 +124,8 @@
   <span class='va'>end_date</span>,
   <span class='va'>mean_days_between_doses</span>,
   <span class='va'>efficacy</span>,
-  <span class='va'>data</span>
+  <span class='va'>data</span>,
+  boosters <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -170,6 +171,12 @@ matrix must be a proportion and decrease across columns.</p></td>
     <tr>
       <th>data</th>
       <td><p>Vaccination data (TODO: DESCRIBE CONTENTS)</p></td>
+    </tr>
+    <tr>
+      <th>boosters</th>
+      <td><p>Boosters daily doses value passed to
+<a href='https://rdrr.io/pkg/sircovid/man/vaccine_schedule_future.html'>sircovid::vaccine_schedule_future</a> or
+<a href='https://rdrr.io/pkg/sircovid/man/vaccine_schedule_data_future.html'>sircovid::vaccine_schedule_data_future</a></p></td>
     </tr>
     </table>
 
