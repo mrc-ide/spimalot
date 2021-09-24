@@ -24,6 +24,10 @@
 ##'
 ##' @param data Vaccination data (TODO: DESCRIBE CONTENTS)
 ##'
+##' @param boosters Boosters daily doses value passed to
+##'  [sircovid::vaccine_schedule_future] or
+##'  [sircovid::vaccine_schedule_data_future]
+##'
 ##' @return A list suitable for passing to `spim_pars` as
 ##'   `vaccination`, containing the new vaccination schedule
 ##'   (important bits are `efficacy` and `schedule`, but other

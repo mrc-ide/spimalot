@@ -42,6 +42,10 @@ classes and is shared across all elements). Every number in the
 matrix must be a proportion and decrease across columns.}
 
 \item{data}{Vaccination data (TODO: DESCRIBE CONTENTS)}
+
+\item{boosters}{Boosters daily doses value passed to
+\link[sircovid:vaccine_schedule_future]{sircovid::vaccine_schedule_future} or
+\link[sircovid:vaccine_schedule_data_future]{sircovid::vaccine_schedule_data_future}}
 }
 \value{
 A list suitable for passing to \code{spim_pars} as
