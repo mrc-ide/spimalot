@@ -404,29 +404,30 @@ reduce_trajectories <- function(samples) {
   samples$trajectories$state <-
     abind1(state[setdiff(rownames(state), nms_S), , ], S)
 
+  region <- samples$info$region
   ## Calculate Pillar 2 positivity
-  pillar2_positivity <- calculate_positivity(samples, FALSE, NULL)
+  pillar2_positivity <- calculate_positivity(samples, region, FALSE, NULL)
   pillar2_positivity <- array(pillar2_positivity, c(1, dim(pillar2_positivity)))
-  pillar2_positivity_over25 <- calculate_positivity(samples, TRUE, NULL)
+  pillar2_positivity_over25 <- calculate_positivity(samples, region, TRUE, NULL)
   pillar2_positivity_over25 <-
     array(pillar2_positivity_over25, c(1, dim(pillar2_positivity_over25)))
 
-  pillar2_positivity_under15 <- calculate_positivity(samples, FALSE, "under15")
+  pillar2_positivity_under15 <- calculate_positivity(samples, region, FALSE, "under15")
   pillar2_positivity_under15 <-
     array(pillar2_positivity_under15, c(1, dim(pillar2_positivity_under15)))
-  pillar2_positivity_15_24 <- calculate_positivity(samples, FALSE, "15_24")
+  pillar2_positivity_15_24 <- calculate_positivity(samples, region, FALSE, "15_24")
   pillar2_positivity_15_24 <-
     array(pillar2_positivity_15_24, c(1, dim(pillar2_positivity_15_24)))
-  pillar2_positivity_25_49 <- calculate_positivity(samples, FALSE, "25_49")
+  pillar2_positivity_25_49 <- calculate_positivity(samples, region, FALSE, "25_49")
   pillar2_positivity_25_49 <-
     array(pillar2_positivity_25_49, c(1, dim(pillar2_positivity_25_49)))
-  pillar2_positivity_50_64 <- calculate_positivity(samples, FALSE, "50_64")
+  pillar2_positivity_50_64 <- calculate_positivity(samples, region, FALSE, "50_64")
   pillar2_positivity_50_64 <-
     array(pillar2_positivity_50_64, c(1, dim(pillar2_positivity_50_64)))
-  pillar2_positivity_65_79 <- calculate_positivity(samples, FALSE, "65_79")
+  pillar2_positivity_65_79 <- calculate_positivity(samples, region, FALSE, "65_79")
   pillar2_positivity_65_79 <-
     array(pillar2_positivity_65_79, c(1, dim(pillar2_positivity_65_79)))
-  pillar2_positivity_80_plus <- calculate_positivity(samples, FALSE, "80_plus")
+  pillar2_positivity_80_plus <- calculate_positivity(samples, region, FALSE, "80_plus")
   pillar2_positivity_80_plus <-
     array(pillar2_positivity_80_plus, c(1, dim(pillar2_positivity_80_plus)))
 
@@ -656,13 +657,13 @@ spim_fit_parameters <- function(samples, parameters) {
 }
 
 
-calculate_positivity <- function(samples, over25, age_band) {
+calculate_positivity <- function(samples, region, over25, age_band) {
 
   x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
 
   model_params <- samples$predict$transform(samples$pars[1, ])
 
-  if ("p_NC" %in% colnames(samples$pars)) {
+  if (region %in% c("northern_ireland", "wales", "scotland")) {
     p_NC <- samples$pars[, "p_NC"]
     p_NC_weekend <- samples$pars[, "p_NC_weekend"]
   } else {
