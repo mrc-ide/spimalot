@@ -257,8 +257,8 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
     ## Scotland negatives are by report date (while positives are by specimen
     ## date). We assume a 2 day reporting delay.
     data$pillar2_negatives <- c(data$negatives[-c(1, 2)], rep(NA_integer_, 2))
-    data$pillar2_positives_over25 <- data$positives_over25
     ## We do not have any age breakdown for negatives for Scotland
+    data$pillar2_positives_over25 <- NA_integer_
     data$pillar2_negatives_over25 <- NA_integer_
     data$pillar2_negatives_under15 <- NA_integer_
     data$pillar2_negatives_15_24 <- NA_integer_
