@@ -270,12 +270,24 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       f <- function(x) {
         ## TODO check this, and see if we can instead use mcstate's
         ## array functions.
-        dim(x) <- c(19, 1, 4)
+        dim(x) <- c(19, 1, ncol(x))
         x
       }
       rel_efficacy <- lapply(vaccination$efficacy, f)
       strain_transmission <- 1
     }
+
+    n_doses <- vaccination$schedule$n_doses
+    if (n_doses == 2) {
+      vaccine_progression_rate <- c(0, 1 / 21, 0, 0)
+      vaccine_index_booster <- NULL
+    } else if (n_doses == 3) {
+      vaccine_progression_rate <- c(0, 1 / 21, 0, 0, 0)
+      vaccine_index_booster <- 4L
+    } else {
+      stop("Expected 2 or 3 n_doses")
+    }
+
 
     ret <- sircovid::carehomes_parameters(
       ## Core
@@ -304,9 +316,11 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       rel_p_hosp_if_sympt = rel_efficacy$rel_p_hosp_if_sympt,
       rel_p_death = rel_efficacy$rel_p_death,
       rel_infectivity = rel_efficacy$rel_infectivity,
-      vaccine_progression_rate = c(0, 1 / 21, 0, 0),
+      vaccine_progression_rate = vaccine_progression_rate,
       vaccine_schedule = vaccination$schedule,
       vaccine_index_dose2 = 3L,
+      vaccine_index_booster = vaccine_index_booster,
+      n_doses = n_doses,
       ## Pillar 2 by age (p_NC / p_NC_weekend)
       p_NC = pars_by_age[["p_NC"]],
       p_NC_weekend = pars_by_age[["p_NC_weekend"]],
