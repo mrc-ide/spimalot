@@ -102,6 +102,7 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     }
     if (model_type == "NB") {
 
+      kappa_pillar2_cases <- 1 / pars[["alpha_pillar2_cases"]]
       ## Total: 41-46 fitted parameters whether fitting by age or not
       ## Unused in NB fits so these are dummy values
       rho_pillar2_tests <- 0.01

@@ -846,12 +846,6 @@ spim_plot_pillar2_cases_region <- function(region, dat, date_min, age_band,
   trajectories <- sample$trajectories$state
   model_params <- sample$predict$transform(sample$pars[1, ])
 
-  if ("phi_pillar2_cases" %in% colnames(sample$pars)) {
-    phi_pillar2_cases <- sample$pars[, "phi_pillar2_cases"]
-  } else {
-    phi_pillar2_cases <- model_params$phi_pillar2_cases
-  }
-
   if (over25) {
     res <- trajectories["pillar2_cases_over25", , ]
     if (region %in%  c("scotland", "northern_ireland")) {
@@ -861,15 +855,14 @@ spim_plot_pillar2_cases_region <- function(region, dat, date_min, age_band,
     }
   } else {
     if (is.null(age_band)) {
-      pos <- trajectories["sympt_cases_inc", , ] * phi_pillar2_cases
+      res <- trajectories["sympt_cases_inc", , ]# * phi_pillar2_cases
       if (region == "scotland") {
         ylab <- "Pillar 1 & 2 cases"
       } else {
         ylab <- "Pillar 2 cases"
       }
     } else {
-      pos <- trajectories[paste0("sympt_cases_", age_band, "_inc"), , ] *
-        phi_pillar2_cases
+      res <- trajectories[paste0("sympt_cases_", age_band, "_inc"), , ]# * phi_pillar2_cases
       if (region == "scotland") {
         ylab <- "Pillar 1 & 2 cases"
       } else {
