@@ -15,9 +15,12 @@
 ##'   posterior samples via random sampling, otherwise thinning will
 ##'   be used
 ##'
+##' @param fit_by_age Logical parameter, indicating whether fitting by age to
+##'   pillar 2 has been done and therefore trajectories need calculating
+##'
 ##' @export
 spim_fit_process <- function(samples, parameters, data, control,
-                             random_sample = TRUE) {
+                             random_sample = TRUE, fit_by_age = FALSE) {
   region <- samples$info$region
 
   message("Computing restart information")
@@ -71,7 +74,7 @@ spim_fit_process <- function(samples, parameters, data, control,
 
   ## Reduce trajectories in forecast before saving
   message("Reducing trajectories")
-  forecast <- reduce_trajectories(forecast)
+  forecast <- reduce_trajectories(forecast, fit_by_age)
 
   if (!is.null(restart)) {
     ## When adding the trajectories, we might as well strip them down
@@ -358,7 +361,7 @@ extract_age_class_state <- function(state) {
 }
 
 
-reduce_trajectories <- function(samples) {
+reduce_trajectories <- function(samples, fit_by_age) {
   ## Remove unused trajectories for predict function in combined
   remove_strings <- c("prob_strain", "^R_", "I_weighted_", "D_hosp_", "D_all_",
                       "diagnoses_admitted_", "cum_infections_disag_",
@@ -404,27 +407,35 @@ reduce_trajectories <- function(samples) {
   samples$trajectories$state <-
     abind1(state[setdiff(rownames(state), nms_S), , ], S)
 
-  ## Calculate Pillar 2 positivity and cases
-  pillar2_positivity <- calculate_positivity(samples, FALSE)
-  pillar2_positivity <-
-    array(pillar2_positivity, c(1, dim(pillar2_positivity)))
-  pillar2_positivity_over25 <- calculate_positivity(samples, TRUE)
-  pillar2_positivity_over25 <-
-    array(pillar2_positivity_over25, c(1, dim(pillar2_positivity_over25)))
-  pillar2_cases <- calculate_cases(samples, FALSE)
-  pillar2_cases <-
-    array(pillar2_cases, c(1, dim(pillar2_cases)))
-  pillar2_cases_over25 <- calculate_cases(samples, TRUE)
-  pillar2_cases_over25 <-
-    array(pillar2_cases_over25, c(1, dim(pillar2_cases_over25)))
-  pillar2 <- abind1(pillar2_positivity, pillar2_positivity_over25)
-  pillar2 <- abind1(pillar2, pillar2_cases)
-  pillar2 <- abind1(pillar2, pillar2_cases_over25)
-  row.names(pillar2) <-
-    c("pillar2_positivity", "pillar2_positivity_over25",
-      "pillar2_cases", "pillar2_cases_over25")
+  ## Calculate pillar 2 positivity or cases
+  if (!fit_by_age) {
+    ages_vector <- c("", "_over25")
+  } else {
+    ages_vector <- c("", "_over25", "_25_49", "_50_64", "_65_79", "_80_plus")
+  }
+  model_type <- samples$info$model_type
+  pillar2_calculated <- NULL
+
+  for (i in ages_vector) {
+    if (model_type == "BB") {
+      pillar2_calculated[[paste0("pillar2_positivity", i)]] <-
+        calculate_positivity(samples, sub('.', '', i))
+    } else if (model_type == "NB") {
+      pillar2_calculated[[paste0("pillar2_cases", i)]] <-
+        calculate_cases(samples, sub('.', '', i))
+    } else {
+      stop(message("Model type not supported"))
+    }
+  }
+
+  for (i in 2:length(pillar2_calculated)) {
+    pillar2_calculated[[1]] <- abind1(pillar2_calculated[[1]],
+                                      pillar2_calculated[[i]])
+  }
+  row.names(pillar2_calculated[[1]]) <- names(pillar2_calculated)
+
   samples$trajectories$state <-
-    abind1(samples$trajectories$state, pillar2)
+    abind1(samples$trajectories$state, pillar2_calculated[[1]])
 
   samples
 }
@@ -635,67 +646,132 @@ spim_fit_parameters <- function(samples, parameters) {
 }
 
 
-calculate_positivity <- function(samples, over25) {
+calculate_positivity <- function(samples, age_band) {
+
+  if (age_band == "over25") {
+    over25 <- TRUE
+    age_band <- NULL
+  } else {
+    over25 <- FALSE
+    if (age_band == ""){age_band <- NULL}
+  }
+
+  region <- samples$info$region
 
   x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
 
   model_params <- samples$predict$transform(samples$pars[1, ])
 
-  if ("p_NC" %in% colnames(samples$pars)) {
-    p_NC <- samples$pars[, "p_NC"]
+  if (region %in% c("northern_ireland", "wales", "scotland")) {
+    if ("p_NC" %in% colnames(samples$pars)) {
+      p_NC <- samples$pars[, "p_NC"]
+      p_NC_weekend <- samples$pars[, "p_NC_weekend"]
+    } else {
+      p_NC <- 0.002
+      p_NC_weekend <- 0.002
+    }
   } else {
-    p_NC <- model_params$p_NC
-  }
-
-  if ("p_NC_weekend" %in% colnames(samples$pars)) {
-    p_NC_weekend <- samples$pars[, "p_NC_weekend"]
-  } else {
-    p_NC_weekend <- p_NC
+    if (is.null(age_band)) {
+      p <- grep("p_NC", colnames(samples$pars), value = TRUE)
+      p_weekend <- grep("weekend", p, value = TRUE)
+      p <- setdiff(p, p_weekend)
+      if (length(p) > 1) {
+        p <- p[-1]
+        p_weekend <- p_weekend[-1]
+      }
+      p_NC <- mean(unlist(model_params[p][model_params[p] != 0.002]))
+      p_NC_weekend <- mean(
+        unlist(model_params[p_weekend][model_params[p_weekend] != 0.002]))
+    } else {
+      p <- paste0("p_NC_", age_band)
+      p_weekend  <- paste0("p_NC_weekend_", age_band)
+      p_NC <- model_params[[p]]
+      p_NC_weekend <- model_params[[p_weekend]]
+    }
   }
 
   if (over25) {
     pos <- samples$trajectories$state["sympt_cases_over25_inc", , ]
     neg <- (sum(model_params$N_tot[6:19]) - pos)
   } else {
-    pos <- samples$trajectories$state["sympt_cases_inc", , ]
-    neg <- (sum(model_params$N_tot) - pos)
+    if (is.null(age_band)) {
+      state <- "sympt_cases_inc"
+      n <- "N_tot"
+    } else {
+      state <- paste0("sympt_cases_", age_band, "_inc")
+      n <- paste0("N_tot_", age_band)
+    }
+    pos <- samples$trajectories$state[state, , ]
+    neg <- (sum(model_params[[n]]) - pos)
   }
 
-  neg[, grepl("^S", weekdays(x))] <-
-    neg[, grepl("^S", weekdays(x))] * p_NC_weekend
-  neg[, !grepl("^S", weekdays(x))] <-
-    neg[, !grepl("^S", weekdays(x))] * p_NC
+  neg[, grepl("^S", weekdays(x))] <- neg[, grepl("^S", weekdays(x))] *
+    p_NC_weekend
+  neg[, !grepl("^S", weekdays(x))] <- neg[, !grepl("^S", weekdays(x))] * p_NC
 
   out <- (pos * model_params$pillar2_sensitivity +
             neg * (1 - model_params$pillar2_specificity)) / (pos + neg) * 100
 
-  out
+  out <- array(out, c(1, dim(out)))
 
+  out
 }
 
 
-calculate_cases <- function(samples, over25) {
+calculate_cases <- function(samples, age_band) {
+
+  if (age_band == "over25") {
+    over25 <- TRUE
+    age_band <- NULL
+  } else {
+    over25 <- FALSE
+    if (age_band == ""){age_band <- NULL}
+  }
+
+  region <- samples$info$region
 
   x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
 
   model_params <- samples$predict$transform(samples$pars[1, ])
 
-  if ("phi_pillar2_cases" %in% colnames(samples$pars)) {
-    phi_pillar2_cases <- samples$pars[, "phi_pillar2_cases"]
+  if (region %in% c("northern_ireland", "wales", "scotland")) {
+    if ("phi_pillar2_cases" %in% colnames(samples$pars)) {
+      phi_pillar2_cases <- samples$pars[, "phi_pillar2_cases"]
+      phi_pillar2_cases_weekend <- samples$pars[, "phi_pillar2_cases_weekend"]
+    } else {
+      phi_pillar2_cases <- 0.002
+      phi_pillar2_cases_weekend <- 0.002
+    }
   } else {
-    phi_pillar2_cases <- model_params$phi_pillar2_cases
-  }
-
-  if ("phi_pillar2_cases_weekend" %in% colnames(samples$pars)) {
-    phi_pillar2_cases_weekend <- samples$pars[, "phi_pillar2_cases_weekend"]
-  } else {
-    phi_pillar2_cases_weekend <- phi_pillar2_cases
+    if (is.null(age_band)) {
+      p <- grep("phi_pillar2_cases", colnames(samples$pars), value = TRUE)
+      p_weekend <- grep("weekend", p, value = TRUE)
+      p <- setdiff(p, p_weekend)
+      if (length(p) > 1) {
+        p <- p[-1]
+        p_weekend <- p_weekend[-1]
+      }
+      phi_pillar2_cases <- mean(unlist(
+        model_params[p][model_params[p] != 0.002]))
+      phi_pillar2_cases_weekend <- mean(
+        unlist(model_params[p_weekend][model_params[p_weekend] != 0.002]))
+    } else {
+      p <- paste0("phi_pillar2_cases_", age_band)
+      p_weekend  <- paste0("phi_pillar2_cases_weekend_", age_band)
+      phi_pillar2_cases <- model_params[[p]]
+      phi_pillar2_cases_weekend <- model_params[[p_weekend]]
+    }
   }
 
   if (over25) {
     pos <- samples$trajectories$state["sympt_cases_over25_inc", , ]
   } else {
-    pos <- samples$trajectories$state["sympt_cases_inc", , ]
+    if (is.null(age_band)) {
+      state <- "sympt_cases_inc"
+    } else {
+      state <- paste0("sympt_cases_", age_band, "_inc")
+    }
+    pos <- samples$trajectories$state[state, , ]
   }
 
   pos[, grepl("^S", weekdays(x))] <-
@@ -703,6 +779,7 @@ calculate_cases <- function(samples, over25) {
   pos[, !grepl("^S", weekdays(x))] <-
     pos[, !grepl("^S", weekdays(x))] * phi_pillar2_cases
 
-  pos
+  pos <- array(pos, c(1, dim(pos)))
 
+  pos
 }

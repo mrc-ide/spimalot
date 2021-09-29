@@ -226,14 +226,15 @@ spim_plot_serology <- function(dat, regions, sero_flow, ymax) {
 ##'
 ##' @export
 spim_plot_pillar2_positivity <- function(dat, regions, date_min, ymax,
-                                         add_betas = FALSE) {
+                                         age_band = NULL, add_betas = FALSE) {
 
   oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
             mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
   for (r in regions) {
-    spim_plot_pillar2_positivity_region(r, dat, date_min, ymax, add_betas)
+    spim_plot_pillar2_positivity_region(r, dat, date_min, ymax,
+                                        age_band, add_betas)
   }
 }
 
@@ -251,14 +252,15 @@ spim_plot_pillar2_positivity <- function(dat, regions, date_min, ymax,
 ##' @param add_betas Logical, indicating if we should add betas
 ##'
 ##' @export
-spim_plot_pillar2_cases <- function(dat, regions, date_min, add_betas = FALSE) {
+spim_plot_pillar2_cases <- function(dat, regions, date_min,
+                                    age_band = NULL, add_betas = FALSE) {
 
   oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
             mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
   for (r in regions) {
-    spim_plot_pillar2_cases_region(r, dat, date_min, add_betas)
+    spim_plot_pillar2_cases_region(r, dat, date_min, age_band, add_betas)
   }
 }
 
@@ -658,6 +660,7 @@ spim_plot_incidence_region <- function(region, dat, per_1000 = FALSE) {
 
 
 spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
+                                                age_band,
                                                 add_betas = FALSE,
                                                 hard_xlim = FALSE,
                                                 data_by = NULL) {
@@ -676,8 +679,15 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
   npos <- data$fitted[, "pillar2_over25_pos"]
   ntot <- data$fitted[, "pillar2_over25_tot"]
   if (all(is.na(ntot))) {
-    npos <- data$full[, "pillar2_over25_pos"]
-    ntot <- data$full[, "pillar2_over25_tot"]
+
+    if (is.null(age_band)) {
+      npos <- data$full[, "pillar2_over25_pos"]
+      ntot <- data$full[, "pillar2_over25_tot"]
+    } else {
+      npos <- data$fitted[, paste0("pillar2_", age_band, "_pos")]
+      ntot <- data$fitted[, paste0("pillar2_", age_band, "_tot")]
+      over25 <- FALSE
+    }
 
     ## if still na, switch to all ages
     if (all(is.na(ntot))) {
@@ -709,7 +719,11 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
   if (over25) {
     res <- trajectories["pillar2_positivity_over25", , ]
   } else {
-    res <- trajectories["pillar2_positivity", , ]
+    if (is.null(age_band)) {
+      res <- trajectories["pillar2_positivity", , ]
+    } else {
+      res <- trajectories[paste0("pillar2_positivity_", age_band), , ]
+    }
   }
 
   ps <- seq(0.025, 0.975, 0.005)
@@ -749,10 +763,19 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
       ylab <- "Pillar 2 over 25 proportion positive (%)"
     }
   } else {
-    if (region %in% c("scotland", "northern_ireland")) {
-      ylab <- "Pillar 1 & 2 proportion positive (%)"
+    if (is.null(age_band)) {
+      if (region == "scotland") {
+        ylab <- "Pillar 1 & 2 proportion positive (%)"
+      } else {
+        ylab <- "Pillar 2 proportion positive (%)"
+      }
     } else {
-      ylab <- "Pillar 2 proportion positive (%)"
+      if (region == "scotland") {
+        ylab <- "Pillar 1 & 2 over 25 proportion positive (%)"
+      } else {
+        ylab <- paste("Pillar 2",
+                      gsub("_", " to ", age_band), "proportion positive (%)")
+      }
     }
   }
 
@@ -786,7 +809,7 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
 }
 
 
-spim_plot_pillar2_cases_region <- function(region, dat, date_min,
+spim_plot_pillar2_cases_region <- function(region, dat, date_min, age_band,
                                            add_betas = FALSE) {
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
@@ -799,29 +822,29 @@ spim_plot_pillar2_cases_region <- function(region, dat, date_min,
 
   dy <- data$fitted[, "pillar2_over25_cases"]
   if (all(is.na(dy))) {
-    dy <- data$full[, "pillar2_over25_cases"]
 
-    ## if still na, switch to all ages
-    if (all(is.na(dy))) {
-      dy <- data$fitted[, "pillar2_cases"]
+    if (is.null(age_band)) {
+      dy <- data$full[, "pillar2_over25_cases"]
+
+      ## if still na, switch to all ages
       if (all(is.na(dy))) {
-        dy <- data$full[, "pillar2_cases"]
+        dy <- data$fitted[, "pillar2_cases"]
+        if (all(is.na(dy))) {
+          dy <- data$full[, "pillar2_cases"]
+          dcols[1] <- cols$green2
+        }
+        over25 <- FALSE
+      } else {
         dcols[1] <- cols$green2
       }
-      over25 <- FALSE
     } else {
-      dcols[1] <- cols$green2
+      dy <- data$fitted[, paste0("pillar2_", age_band, "_cases")]
+      over25 <- FALSE
     }
   }
 
   trajectories <- sample$trajectories$state
   model_params <- sample$predict$transform(sample$pars[1, ])
-
-  if ("phi_pillar2_cases" %in% colnames(sample$pars)) {
-    phi_pillar2_cases <- sample$pars[, "phi_pillar2_cases"]
-  } else {
-    phi_pillar2_cases <- model_params$phi_pillar2_cases
-  }
 
   if (over25) {
     res <- trajectories["pillar2_cases_over25", , ]
@@ -831,11 +854,20 @@ spim_plot_pillar2_cases_region <- function(region, dat, date_min,
       ylab <- "Pillar 2 over 25 cases"
     }
   } else {
-    res <- trajectories["pillar2_cases", , ]
-    if (region %in% c("scotland", "northern_ireland")) {
-      ylab <- "Pillar 1 & 2 cases"
+    if (is.null(age_band)) {
+      res <- trajectories["sympt_cases_inc", , ]# * phi_pillar2_cases
+      if (region == "scotland") {
+        ylab <- "Pillar 1 & 2 cases"
+      } else {
+        ylab <- "Pillar 2 cases"
+      }
     } else {
-      ylab <- "Pillar 2 cases"
+      res <- trajectories[paste0("sympt_cases_", age_band, "_inc"), , ]# * phi_pillar2_cases
+      if (region == "scotland") {
+        ylab <- "Pillar 1 & 2 cases"
+      } else {
+        ylab <- paste("Pillar 2 cases", gsub("_", " to ", age_band))
+      }
     }
   }
 

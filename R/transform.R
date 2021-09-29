@@ -61,35 +61,51 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
 
     beta_value <- unname(pars[paste0("beta", seq_along(beta_date))])
 
+    names_pillar2_age <- c("", "_under15", "_15_24", "_25_49",
+                        "_50_64", "_65_79", "_80_plus")
+
+    pars_by_age <- NULL
+    for (i in names_pillar2_age) {
+      if (paste0("p_NC", i) %in% names(pars)) {
+        pars_by_age[[paste0("p_NC", i)]] <- pars[[paste0("p_NC", i)]]
+      } else {
+        pars_by_age[[paste0("p_NC", i)]] <- 0.002
+      }
+      if (paste0("p_NC_weekend", i) %in% names(pars)) {
+        pars_by_age[[paste0("p_NC_weekend", i)]] <-
+          pars[[paste0("p_NC_weekend", i)]]
+      } else {
+        pars_by_age[[paste0("p_NC_weekend", i)]] <- 0.002
+      }
+      if (paste0("phi_pillar2_cases", i) %in% names(pars)) {
+        pars_by_age[[paste0("phi_pillar2_cases", i)]] <-
+               pars[[paste0("phi_pillar2_cases", i)]]
+      } else {
+        pars_by_age[[paste0("phi_pillar2_cases", i)]] <- 0.002
+      }
+      if (paste0("phi_pillar2_cases_weekend", i) %in% names(pars)) {
+        pars_by_age[[paste0("phi_pillar2_cases_weekend", i)]] <-
+               pars[[paste0("phi_pillar2_cases_weekend", i)]]
+      } else {
+        pars_by_age[[paste0("phi_pillar2_cases_weekend", i)]] <- 0.002
+      }
+    }
+
     if (model_type == "BB") {
-      p_NC <- pars[["p_NC"]]
+
       rho_pillar2_tests <- pars[["rho_pillar2_tests"]]
-      ## Total: 40 fitted parameters
+      ## Total: variable, 41-46 fitted parameters whether fitting by age or not
 
       ## Unused in BB fits so these are dummy values
       phi_pillar2_cases <- 0.5
       kappa_pillar2_cases <- 2
     }
     if (model_type == "NB") {
-      phi_pillar2_cases <- pars[["phi_pillar2_cases"]]
+
       kappa_pillar2_cases <- 1 / pars[["alpha_pillar2_cases"]]
-      ## Total: 40 fitted parameters
-
+      ## Total: 41-46 fitted parameters whether fitting by age or not
       ## Unused in NB fits so these are dummy values
-      p_NC <- 0.002
       rho_pillar2_tests <- 0.01
-    }
-
-    if ("p_NC_weekend" %in% names(pars)) {
-      p_NC_weekend <- pars[["p_NC_weekend"]]
-    } else {
-      p_NC_weekend <- p_NC
-    }
-
-    if ("phi_pillar2_cases_weekend" %in% names(pars)) {
-      phi_pillar2_cases_weekend <- pars[["phi_pillar2_cases_weekend"]]
-    } else {
-      phi_pillar2_cases_weekend <- phi_pillar2_cases
     }
 
     ## Set severity parameters based on Bob's analysis and fitted parameters.
@@ -188,9 +204,34 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
     observation <- sircovid::carehomes_parameters_observation()
 
     observation$rho_pillar2_tests <- rho_pillar2_tests
-    observation$phi_pillar2_cases <- phi_pillar2_cases
-    observation$phi_pillar2_cases_weekend <- phi_pillar2_cases_weekend
     observation$kappa_pillar2_cases <- kappa_pillar2_cases
+    observation$phi_pillar2_cases <- pars_by_age[["phi_pillar2_cases"]]
+    observation$phi_pillar2_cases_weekend <-
+      pars_by_age[["phi_pillar2_cases_weekend"]]
+    observation$phi_pillar2_cases_under15 <-
+      pars_by_age[["phi_pillar2_cases_under15"]]
+    observation$phi_pillar2_cases_weekend_under15 <-
+      pars_by_age[["phi_pillar2_cases_weekend_under15"]]
+    observation$phi_pillar2_cases_15_24 <-
+      pars_by_age[["phi_pillar2_cases_15_24"]]
+    observation$phi_pillar2_cases_weekend_15_24 <-
+      pars_by_age[["phi_pillar2_cases_weekend_15_24"]]
+    observation$phi_pillar2_cases_25_49 <-
+      pars_by_age[["phi_pillar2_cases_25_49"]]
+    observation$phi_pillar2_cases_weekend_25_49 <-
+      pars_by_age[["phi_pillar2_cases_weekend_25_49"]]
+    observation$phi_pillar2_cases_50_64 <-
+      pars_by_age[["phi_pillar2_cases_50_64"]]
+    observation$phi_pillar2_cases_weekend_50_64 <-
+      pars_by_age[["phi_pillar2_cases_weekend_50_64"]]
+    observation$phi_pillar2_cases_65_79 <-
+      pars_by_age[["phi_pillar2_cases_65_79"]]
+    observation$phi_pillar2_cases_weekend_65_79 <-
+      pars_by_age[["phi_pillar2_cases_weekend_65_79"]]
+    observation$phi_pillar2_cases_80_plus <-
+      pars_by_age[["phi_pillar2_cases_80_plus"]]
+    observation$phi_pillar2_cases_weekend_80_plus <-
+      pars_by_age[["phi_pillar2_cases_weekend_80_plus"]]
 
     ## kappa for hospital data streams (not all will actually be used)
     observation$kappa_ICU <- 1 / alpha_H
@@ -271,8 +312,6 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       eps = eps,
       m_CHW = m_CHW,
       m_CHR = m_CHR,
-      p_NC = p_NC,
-      p_NC_weekend = p_NC_weekend,
       rel_susceptibility = rel_efficacy$rel_susceptibility,
       rel_p_sympt = rel_efficacy$rel_p_sympt,
       rel_p_hosp_if_sympt = rel_efficacy$rel_p_hosp_if_sympt,
@@ -283,6 +322,21 @@ spim_transform <- function(region, model_type, multistrain, beta_date,
       vaccine_index_dose2 = 3L,
       vaccine_index_booster = vaccine_index_booster,
       n_doses = n_doses,
+      ## Pillar 2 by age (p_NC / p_NC_weekend)
+      p_NC = pars_by_age[["p_NC"]],
+      p_NC_weekend = pars_by_age[["p_NC_weekend"]],
+      p_NC_under15 = pars_by_age[["p_NC_under15"]],
+      p_NC_15_24 = pars_by_age[["p_NC_15_24"]],
+      p_NC_25_49 = pars_by_age[["p_NC_25_49"]],
+      p_NC_50_64 = pars_by_age[["p_NC_50_64"]],
+      p_NC_65_79 = pars_by_age[["p_NC_65_79"]],
+      p_NC_80_plus = pars_by_age[["p_NC_80_plus"]],
+      p_NC_weekend_under15 = pars_by_age[["p_NC_weekend_under15"]],
+      p_NC_weekend_15_24 = pars_by_age[["p_NC_weekend_15_24"]],
+      p_NC_weekend_25_49 = pars_by_age[["p_NC_weekend_25_49"]],
+      p_NC_weekend_50_64 = pars_by_age[["p_NC_weekend_50_64"]],
+      p_NC_weekend_65_79 = pars_by_age[["p_NC_weekend_65_79"]],
+      p_NC_weekend_80_plus = pars_by_age[["p_NC_weekend_80_plus"]],
       ## Strains
       strain_transmission = strain_transmission,
       strain_seed_date = strain_seed_date,
