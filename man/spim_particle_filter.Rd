@@ -4,7 +4,7 @@
 \alias{spim_particle_filter}
 \title{Construct a particle filter}
 \usage{
-spim_particle_filter(data, pars, control)
+spim_particle_filter(data, pars, control, model = "carehomes")
 }
 \arguments{
 \item{data}{Data, from \link{spim_data}}
@@ -15,6 +15,8 @@ spim_particle_filter(data, pars, control)
 \code{n_particles}, \code{n_threads} and \code{compiled_compare}, typically the
 \code{particle_filter} element of the result of
 \code{\link[=spim_control]{spim_control()}}}
+
+\item{model}{The name of the sircovid model used. Default is \code{"carehomes"}}
 }
 \value{
 A \link[mcstate:particle_filter]{mcstate::particle_filter} object

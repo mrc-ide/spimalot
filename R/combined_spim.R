@@ -5,11 +5,15 @@
 ##' @param dat A combined data object (loaded by
 ##'   [spimalot::spim_combined_load]
 ##'
+##' @param sircovid_model The name of the sircovid model used.
+##'   Default is `"carehomes"`
+##'
 ##' @return A [data.frame] of results
 ##'
 ##' @rdname spim_summary
 ##' @export
-spim_summary_nowcast <- function(dat) {
+spim_summary_nowcast <- function(dat, sircovid_model = "carehomes") {
+  spim_check_sircovid_model(sircovid_model)
   message("Creating time series")
   f <- function(region) {
     message(paste("  -", region))
@@ -17,8 +21,8 @@ spim_summary_nowcast <- function(dat) {
       spim_summary_region_rt(region, dat, NULL),
       spim_summary_region_growth_rate(region, dat, NULL),
       spim_summary_region_incidence(region, dat, NULL),
-      spim_summary_region_prevalence(region, dat, NULL),
-      spim_summary_region_forecast(region, dat))
+      spim_summary_region_prevalence(region, dat, NULL, sircovid_model),
+      spim_summary_region_forecast(region, dat, sircovid_model))
   }
 
   regions <- names(dat$samples)
@@ -263,7 +267,8 @@ spim_summary_region_incidence <-  function(region, dat, time_series_date) {
 }
 
 
-spim_summary_region_prevalence <-  function(region, dat, time_series_date) {
+spim_summary_region_prevalence <-  function(region, dat, time_series_date,
+                                            sircovid_model) {
   date <- dat$info$date
   model_type <- dat$info$model_type
   qs <- spim_summary_quantiles()
@@ -287,7 +292,12 @@ spim_summary_region_prevalence <-  function(region, dat, time_series_date) {
   colnames(d) <- names(qs)
 
   ## Scale by total population
-  pop_size <- sum(sircovid::carehomes_parameters(1, region)$N_tot[2:18])
+  if (sircovid_model == "carehomes") {
+    pop_size <- sum(sircovid::carehomes_parameters(1, region)$N_tot[2:18])
+  } else if (sircovid_model == "lancelot") {
+    pop_size <- sum(sircovid::lancelot_parameters(1, region)$N_tot[2:18])
+  }
+
   d <- d / pop_size * 100
 
   spim_template(
@@ -295,22 +305,23 @@ spim_summary_region_prevalence <-  function(region, dat, time_series_date) {
 }
 
 
-spim_summary_region_forecast <- function(region, dat) {
+spim_summary_region_forecast <- function(region, dat, sircovid_model) {
   rbind(
     spim_summary_region_forecast_trajectory(
-      region, dat, "deaths_inc", "type28_death_inc_line"),
+      region, dat, "deaths_inc", "type28_death_inc_line", sircovid_model),
     spim_summary_region_forecast_trajectory(
-      region, dat, "infections_inc", "infections_inc"),
+      region, dat, "infections_inc", "infections_inc", sircovid_model),
     spim_summary_region_forecast_trajectory(
-      region, dat, "react_pos", "prevalence_mtp"),
+      region, dat, "react_pos", "prevalence_mtp", sircovid_model),
     spim_summary_region_forecast_trajectory(
-      region, dat, "all_admission_inc", "hospital_inc"),
+      region, dat, "all_admission_inc", "hospital_inc", sircovid_model),
     spim_summary_region_forecast_trajectory(
-      region, dat, "hosp", "hospital_prev"))
+      region, dat, "hosp", "hospital_prev", sircovid_model))
 }
 
 
-spim_summary_region_forecast_trajectory <- function(region, dat, name, as) {
+spim_summary_region_forecast_trajectory <- function(region, dat, name, as,
+                                                    sircovid_model) {
   date <- dat$info$date
   model_type <- dat$info$model_type
   qs <- spim_summary_quantiles()
@@ -337,7 +348,11 @@ spim_summary_region_forecast_trajectory <- function(region, dat, name, as) {
   sample_date <- sircovid::sircovid_date_as_date(trajectories$date[i])
 
   if (name == "react_pos") {
-    pop_size <- sum(sircovid::carehomes_parameters(1, region)$N_tot[2:18])
+    if (sircovid_model == "carehomes") {
+      pop_size <- sum(sircovid::carehomes_parameters(1, region)$N_tot[2:18])
+    } else if (sircovid_model == "lancelot") {
+      pop_size <- sum(sircovid::lancelot_parameters(1, region)$N_tot[2:18])
+    }
     d <- d / pop_size * 100
   }
 

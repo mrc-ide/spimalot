@@ -13,7 +13,8 @@ spim_data(
   trim_deaths,
   trim_pillar2,
   full_data = FALSE,
-  fit_to_variants = FALSE
+  fit_to_variants = FALSE,
+  sircovid_model = "carehomes"
 )
 }
 \arguments{
@@ -43,6 +44,9 @@ back-fill issues. We typically use a value of 7 days.}
 \item{full_data}{Not sure yet, we'll find out}
 
 \item{fit_to_variants}{Logical, whether to fit to variants data or not}
+
+\item{sircovid_model}{The name of the sircovid model used.
+Default is \code{"carehomes"}}
 }
 \value{
 A \code{\link[=data.frame]{data.frame()}} TODO: describe columns

@@ -11,17 +11,26 @@
 ##'   `particle_filter` element of the result of
 ##'   [spimalot::spim_control()]
 ##'
+##' @param model The name of the sircovid model used. Default is `"carehomes"`
+##'
 ##' @return A [mcstate::particle_filter] object
 ##'
 ##' @export
-spim_particle_filter <- function(data, pars, control) {
+spim_particle_filter <- function(data, pars, control, model = "carehomes") {
   steps_per_day <- pars$model(pars$initial())$steps_per_day
   initial_step <- 1 # replaced later
   data <- mcstate::particle_filter_data(data, "date", steps_per_day,
                                         initial_step)
-  sircovid::carehomes_particle_filter(data, control$n_particles,
-                                      control$n_threads, control$seed,
-                                      control$compiled_compare)
+  if (model == "carehomes") {
+    sircovid::carehomes_particle_filter(data, control$n_particles,
+                                        control$n_threads, control$seed,
+                                        control$compiled_compare)
+  } else if (model == "lancelot") {
+    sircovid::lancelot_particle_filter(data, control$n_particles,
+                                       control$n_threads, control$seed,
+                                       control$compiled_compare)
+  }
+
 }
 
 

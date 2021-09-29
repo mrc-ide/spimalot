@@ -1,6 +1,6 @@
-##' Process fit data
+##' Process fit data for `carehomes` model
 ##'
-##' @title Process a fit
+##' @title Process a fit for `carehomes` model
 ##' @param samples The pmcmc_samples object from [mcstate::pmcmc]
 ##'
 ##' @param parameters The parameter specification
@@ -36,15 +36,139 @@ spim_fit_process <- function(samples, parameters, data, control,
                                            thin = control$thin)
 
   message("Computing Rt")
-  rt <- calculate_Rt(forecast, samples$info$multistrain, TRUE) # TODO: very slow
+  rt <- calculate_carehomes_Rt(forecast, samples$info$multistrain, TRUE)
+  # TODO: very slow
   if (samples$info$multistrain) {
-    variant_rt <- calculate_Rt(forecast, samples$info$multistrain, FALSE)
+    variant_rt <-
+      calculate_carehomes_Rt(forecast, samples$info$multistrain, FALSE)
   } else {
     variant_rt <- NULL
   }
   message("Computing IFR")
   ifr_t <-
-    calculate_ifr_t(forecast, samples$info$multistrain) # TODO: a bit slow
+    calculate_carehomes_ifr_t(forecast, samples$info$multistrain) # a bit slow
+
+  if (is.null(data$admissions)) {
+    admissions <- NULL
+  } else {
+    message("Summarising admissions")
+    admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
+    admissions[["data"]] <- data$admissions
+  }
+
+  message("Summarising deaths")
+  deaths <- extract_outputs_by_age(forecast, "D_hosp") # slow
+  i_deaths_data <- colnames(deaths$output_t)
+  deaths$data <- data$rtm[data$rtm$region == region,
+                          c("date", "region", i_deaths_data)]
+  deaths$data[is.na(deaths$data)] <- 0
+
+  ## TODO: someone needs to document what this date is for (appears to
+  ## filter trajectories to start at this date) and when we might
+  ## change it.
+  message("Preparing onward simulation object")
+  start_date_sim <- "2021-01-01"
+  simulate <- create_simulate_object(
+    forecast, samples$vaccine$efficacy, start_date_sim, samples$info$date)
+
+  ## Reduce trajectories in forecast before saving
+  message("Reducing trajectories")
+  forecast <- reduce_trajectories(forecast)
+
+  if (!is.null(restart)) {
+    ## When adding the trajectories, we might as well strip them down
+    ## to the last date in the restart
+    i <- forecast$trajectories$date <= max(restart$state$time)
+    restart$trajectories <- trajectories_filter_time(forecast$trajectories, i)
+  }
+
+  message("Computing parameter MLE and covariance matrix")
+  parameters <- spim_fit_parameters(samples, parameters)
+
+  if (!is.null(restart)) {
+    ## When adding the trajectories, we might as well strip them down
+    ## to the last date in the restart
+    restart_date <- max(restart$state$time)
+    i <- forecast$trajectories$date <= restart_date
+
+    restart$parent <- list(
+      trajectories = trajectories_filter_time(forecast$trajectories, i),
+      rt = rt_filter_time(rt, i),
+      ifr_t = rt_filter_time(ifr_t, i),
+      deaths = deaths_filter_time(deaths, restart_date),
+      admissions = deaths_filter_time(deaths, restart_date),
+      ## TODO: check to make sure that this is just the one region's
+      ## parameters at this point (see the region column)
+      prior = parameters$prior)
+  }
+
+  ## Drop the big objects from the output
+  samples[c("state", "trajectories", "predict")] <- list(NULL)
+
+  list(samples = forecast, # note complicated naming change here
+       pmcmc = samples,
+       rt = rt,
+       variant_rt = variant_rt,
+       ifr_t = ifr_t,
+       admissions = admissions,
+       deaths = deaths,
+       simulate = simulate,
+       parameters = parameters,
+       restart = restart,
+       vaccination = data$vaccination,
+       data = list(fitted = data$fitted, full = data$full))
+}
+
+
+##' Process fit data for `lancelot` model
+##'
+##' @title Process a fit for `lancelot` model
+##' @param samples The pmcmc_samples object from [mcstate::pmcmc]
+##'
+##' @param parameters The parameter specification
+##'   ([spimalot::spim_pars_pmcmc_load])
+##'
+##' @param data Data sets used in fitting, via
+##'   [spimalot::spim_fit_process_data]
+##'
+##' @param control The forecast control from [spimalot::spim_control]
+##'
+##' @param random_sample Logical parameter, if `TRUE` will obtain the
+##'   posterior samples via random sampling, otherwise thinning will
+##'   be used
+##'
+##' @export
+spim_lancelot_fit_process <- function(samples, parameters, data, control,
+                                      random_sample = TRUE) {
+  region <- samples$info$region
+
+  message("Computing restart information")
+  restart <- fit_process_restart(samples, parameters, data, control)
+  samples$restart <- NULL
+
+  message("Running forecasts")
+  incidence_states <- "deaths"
+  ## Add 1 to burnin to account for removal of initial parameters
+  forecast <- sircovid::lancelot_forecast(samples,
+                                          control$n_sample,
+                                          control$burnin + 1L,
+                                          control$forecast_days,
+                                          incidence_states,
+                                          random_sample = random_sample,
+                                          thin = control$thin)
+
+  message("Computing Rt")
+  rt <- calculate_lancelot_Rt(forecast, samples$info$multistrain, TRUE)
+  # TODO: very slow
+  if (samples$info$multistrain) {
+    variant_rt <-
+      calculate_lancelot_Rt(forecast, samples$info$multistrain, FALSE)
+  } else {
+    variant_rt <- NULL
+  }
+  message("Computing IFR")
+  ifr_t <-
+    calculate_lancelot_ifr_t(forecast, samples$info$multistrain) # a bit slow
 
   if (is.null(data$admissions)) {
     admissions <- NULL
@@ -174,7 +298,7 @@ create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
 }
 
 
-calculate_Rt <- function(samples, multistrain, weight_Rt) {
+calculate_carehomes_Rt <- function(samples, multistrain, weight_Rt) {
   step <- samples$trajectories$step
 
   index_S <- grep("^S_", names(samples$predict$index))
@@ -202,7 +326,35 @@ calculate_Rt <- function(samples, multistrain, weight_Rt) {
 }
 
 
-calculate_ifr_t <- function(samples, multistrain) {
+calculate_lancelot_Rt <- function(samples, multistrain, weight_Rt) {
+  step <- samples$trajectories$step
+
+  index_S <- grep("^S_", names(samples$predict$index))
+  index_R <- grep("^R_", names(samples$predict$index))
+  index_ps <- grep("^prob_strain", names(samples$predict$index))
+
+  if (multistrain) {
+    R <- samples$trajectories$state[index_R, , , drop = FALSE]
+    prob_strain <- samples$trajectories$state[index_ps, , , drop = FALSE]
+  } else {
+    R <- NULL
+    prob_strain <- NULL
+  }
+
+  S <- samples$trajectories$state[index_S, , , drop = FALSE]
+
+  pars <- lapply(seq_rows(samples$pars), function(i)
+    samples$predict$transform(samples$pars[i, ]))
+
+  sircovid::lancelot_Rt_trajectories(
+    step, S, pars,
+    initial_step_from_parameters = TRUE,
+    shared_parameters = FALSE, R = R, prob_strain = prob_strain,
+    weight_Rt = weight_Rt)
+}
+
+
+calculate_carehomes_ifr_t <- function(samples, multistrain) {
   step <- samples$trajectories$step
 
   index_S <- grep("^S_", names(samples$predict$index))
@@ -221,6 +373,31 @@ calculate_ifr_t <- function(samples, multistrain) {
     samples$predict$transform(samples$pars[i, ]))
 
   sircovid::carehomes_ifr_t_trajectories(
+    step, S, I_weighted, pars, R = R,
+    initial_step_from_parameters = TRUE,
+    shared_parameters = FALSE)
+}
+
+
+calculate_lancelot_ifr_t <- function(samples, multistrain) {
+  step <- samples$trajectories$step
+
+  index_S <- grep("^S_", names(samples$predict$index))
+  index_I_weighted <- grep("^I_weighted_", names(samples$predict$index))
+  index_R <- grep("^R_", names(samples$predict$index))
+
+  S <- samples$trajectories$state[index_S, , , drop = FALSE]
+  I_weighted <- samples$trajectories$state[index_I_weighted, , , drop = FALSE]
+  if (multistrain) {
+    R <- samples$trajectories$state[index_R, , , drop = FALSE]
+  } else {
+    R <- NULL
+  }
+
+  pars <- lapply(seq_rows(samples$pars), function(i)
+    samples$predict$transform(samples$pars[i, ]))
+
+  sircovid::lancelot_ifr_t_trajectories(
     step, S, I_weighted, pars, R = R,
     initial_step_from_parameters = TRUE,
     shared_parameters = FALSE)
