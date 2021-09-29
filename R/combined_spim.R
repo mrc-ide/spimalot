@@ -34,8 +34,13 @@ spim_summary_nowcast <- function(dat, sircovid_model = "carehomes") {
 
 ##' @rdname spim_summary
 ##' @param time_series_date The start date for the preceding time series
+##'
+##' @param sircovid_model The name of the sircovid model used.
+##'   Default is `"carehomes"`
+##'
 ##' @export
-spim_summary_time_series <- function(dat, time_series_date) {
+spim_summary_time_series <- function(dat, time_series_date,
+                                     sircovid_model = "carehomes") {
   message("Creating time series")
   f <- function(region) {
     message(paste("  -", region))
@@ -43,7 +48,8 @@ spim_summary_time_series <- function(dat, time_series_date) {
       spim_summary_region_rt(region, dat, time_series_date),
       spim_summary_region_growth_rate(region, dat, time_series_date),
       spim_summary_region_incidence(region, dat, time_series_date),
-      spim_summary_region_prevalence(region, dat, time_series_date))
+      spim_summary_region_prevalence(region, dat, time_series_date,
+                                     sircovid_model))
   }
 
   regions <- names(dat$samples)

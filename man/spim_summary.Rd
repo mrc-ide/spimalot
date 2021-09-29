@@ -8,7 +8,7 @@
 \usage{
 spim_summary_nowcast(dat, sircovid_model = "carehomes")
 
-spim_summary_time_series(dat, time_series_date)
+spim_summary_time_series(dat, time_series_date, sircovid_model = "carehomes")
 
 spim_summary_write(result, path_template, path_save)
 }
