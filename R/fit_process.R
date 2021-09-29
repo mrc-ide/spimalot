@@ -15,9 +15,12 @@
 ##'   posterior samples via random sampling, otherwise thinning will
 ##'   be used
 ##'
+##' @param fit_by_age Logical parameter, indicating whether fitting by age to
+##'   pillar 2 has been done and therefore trajectories need calculating
+##'
 ##' @export
 spim_fit_process <- function(samples, parameters, data, control,
-                             random_sample = TRUE) {
+                             random_sample = TRUE, fit_by_age = FALSE) {
   region <- samples$info$region
 
   message("Computing restart information")
@@ -71,7 +74,7 @@ spim_fit_process <- function(samples, parameters, data, control,
 
   ## Reduce trajectories in forecast before saving
   message("Reducing trajectories")
-  forecast <- reduce_trajectories(forecast)
+  forecast <- reduce_trajectories(forecast, fit_by_age)
 
   if (!is.null(restart)) {
     ## When adding the trajectories, we might as well strip them down
@@ -358,7 +361,7 @@ extract_age_class_state <- function(state) {
 }
 
 
-reduce_trajectories <- function(samples) {
+reduce_trajectories <- function(samples, fit_by_age) {
   ## Remove unused trajectories for predict function in combined
   remove_strings <- c("prob_strain", "^R_", "I_weighted_", "D_hosp_", "D_all_",
                       "diagnoses_admitted_", "cum_infections_disag_",
@@ -405,7 +408,11 @@ reduce_trajectories <- function(samples) {
     abind1(state[setdiff(rownames(state), nms_S), , ], S)
 
   ## Calculate pillar 2 positivity or cases
-  ages_vector <- c("", "_over25", "_25_49", "_50_64", "_65_79", "_80_plus")
+  if (!fit_by_age) {
+    ages_vector <- c("", "_over25")
+  } else {
+    ages_vector <- c("", "_over25", "_25_49", "_50_64", "_65_79", "_80_plus")
+  }
   model_type <- samples$info$model_type
   pillar2_calculated <- NULL
 

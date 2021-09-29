@@ -295,7 +295,7 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
                    data$pillar2_positives_symp_pcr_only_50_64,
                    data$pillar2_positives_symp_pcr_only_65_79,
                    data$pillar2_positives_symp_pcr_only_80_plus)))) {
-    if (!full_data) {data$pillar2_cases_over25 <- NA_integer_}
+    if (!full_data && fit_by_age) {data$pillar2_cases_over25 <- NA_integer_}
     data$pillar2_cases_under15 <- data$pillar2_positives_symp_pcr_only_under15
     data$pillar2_cases_15_24 <- data$pillar2_positives_symp_pcr_only_15_24
     data$pillar2_cases_25_49 <- data$pillar2_positives_symp_pcr_only_25_49
@@ -319,7 +319,8 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
                    data$pillar2_positives_pcr_all_50_64,
                    data$pillar2_positives_pcr_all_65_79,
                    data$pillar2_positives_pcr_all_80_plus)))) {
-    if (!full_data) {data$pillar2_positives_over25 <- NA_integer_}
+    if (!full_data && fit_by_age) {
+      data$pillar2_positives_over25 <- NA_integer_}
     data$pillar2_positives_under15 <- data$pillar2_positives_pcr_all_under15
     data$pillar2_positives_15_24 <- data$pillar2_positives_pcr_all_15_24
     data$pillar2_positives_25_49 <- data$pillar2_positives_pcr_all_25_49
@@ -343,7 +344,8 @@ spim_data_rtm <- function(date, region, model_type, data, full_data,
                    data$pillar2_negatives_total_pcr_50_64,
                    data$pillar2_negatives_total_pcr_65_79,
                    data$pillar2_negatives_total_pcr_80_plus)))) {
-    if (!full_data) {data$pillar2_negatives_over25 <- NA_integer_}
+    if (!full_data && fit_by_age) {
+      data$pillar2_negatives_over25 <- NA_integer_}
     data$pillar2_negatives_under15 <- data$pillar2_negatives_total_pcr_under15
     data$pillar2_negatives_15_24 <- data$pillar2_negatives_total_pcr_15_24
     data$pillar2_negatives_25_49 <- data$pillar2_negatives_total_pcr_25_49
