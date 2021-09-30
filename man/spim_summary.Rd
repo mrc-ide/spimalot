@@ -6,15 +6,18 @@
 \alias{spim_summary_write}
 \title{Create summaries}
 \usage{
-spim_summary_nowcast(dat)
+spim_summary_nowcast(dat, sircovid_model = "carehomes")
 
-spim_summary_time_series(dat, time_series_date)
+spim_summary_time_series(dat, time_series_date, sircovid_model = "carehomes")
 
 spim_summary_write(result, path_template, path_save)
 }
 \arguments{
 \item{dat}{A combined data object (loaded by
 \link{spim_combined_load}}
+
+\item{sircovid_model}{The name of the sircovid model used.
+Default is \code{"carehomes"}}
 
 \item{time_series_date}{The start date for the preceding time series}
 

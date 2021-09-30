@@ -43,8 +43,9 @@
 spim_pars <- function(date, region, model_type, multistrain,
                       beta_date, vaccination, parameters,
                       kernel_scaling = 1, cross_immunity = NULL,
-                      waning_rate) {
+                      waning_rate, sircovid_model = "carehomes") {
   assert_is(parameters, "spim_pars_pmcmc")
+  spim_check_sircovid_model(sircovid_model)
 
   ## We take 'info' as the canonical source of names, then check that
   ## prior and proposal align correctly.
@@ -62,8 +63,16 @@ spim_pars <- function(date, region, model_type, multistrain,
     discrete = info$discrete,
     prior = lapply(split(prior, prior$name), make_prior))
 
-  transform <- spim_transform(region, model_type, multistrain, beta_date,
+  if (sircovid_model == "carehomes") {
+    transform <-
+      spim_carehomes_transform(region, model_type, multistrain, beta_date,
+                               vaccination, cross_immunity, waning_rate)
+  } else if (sircovid_model == "lancelot") {
+    transform <-
+      spim_lancelot_transform(region, model_type, multistrain, beta_date,
                               vaccination, cross_immunity, waning_rate)
+  }
+
 
   ret <- mcstate::pmcmc_parameters$new(pars, proposal, transform)
 
