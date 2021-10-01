@@ -269,7 +269,7 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
   message("Creating dust object")
   obj <- sircovid::carehomes$new(pars, step_start, NULL, pars_multi = TRUE,
                                  n_threads = args$n_threads, seed = args$seed)
-  obj$set_state(state_start)
+  obj$update_state(state = state_start)
   obj$set_index(index$run)
   message("Simulating!")
   state <- obj$simulate(steps)
