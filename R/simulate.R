@@ -267,7 +267,7 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
   }
 
   message("Creating dust object")
-  obj <- sircovid::lancelot$new(pars, step_start, NULL, pars_multi = TRUE,
+  obj <- sircovid::carehomes$new(pars, step_start, NULL, pars_multi = TRUE,
                                  n_threads = args$n_threads, seed = args$seed)
   obj$set_state(state_start)
   obj$set_index(index$run)
@@ -378,7 +378,7 @@ simulate_prepare_upgrade <- function(combined) {
       ## NOTE: this won't work well if we have to add new parameters
       ## because we then break the transform function.
       p <- combined$transform[[i]](combined$pars[[i]][1, ])
-      info_new <- sircovid::lancelot$new(p, 0, 1)$info()
+      info_new <- sircovid::carehomes$new(p, 0, 1)$info()
       cmp <- combined$state[[i]]
       combined$state[[i]] <- sircovid::upgrade_state(
         combined$state[[i]],
@@ -436,7 +436,7 @@ simulate_prepare_inflate_strain <- function(pars, state, info) {
 
   ## Then update the states given that:
   info_old <- info[[1]]$info
-  info_new <- sircovid::lancelot$new(pars_new[[1]][[1]], 0, 1)$info()
+  info_new <- sircovid::carehomes$new(pars_new[[1]][[1]], 0, 1)$info()
   state_new <- lapply(state, sircovid::inflate_state_strains,
                       info_old, info_new)
 
@@ -506,7 +506,7 @@ simulate_prepare_inflate_vacc_classes <- function(pars, state, info) {
 
   ## Then update the states given that:
   info_old <- info[[1]]$info
-  info_new <- sircovid::lancelot$new(pars_new[[1]][[1]], 0, 1)$info()
+  info_new <- sircovid::carehomes$new(pars_new[[1]][[1]], 0, 1)$info()
   state_new <- lapply(state, sircovid::inflate_state_vacc_classes,
                       info_old, info_new)
 
@@ -575,7 +575,7 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
     args$strain_vaccine_efficacy,
     args$strain_severity_modifier)
 
-  extra <- sircovid:::lancelot_parameters_vaccination(
+  extra <- sircovid:::carehomes_parameters_vaccination(
     N_tot,
     pars[[1]]$dt,
     rel_susceptibility = rel_list$rel_susceptibility,
@@ -603,7 +603,7 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
       extra$rel_p_G_D <- rel_severity
 
   if (!is.null(args$strain_transmission)) {
-    strain_params <- sircovid:::lancelot_parameters_strain(
+    strain_params <- sircovid:::carehomes_parameters_strain(
       args$strain_transmission,
       sircovid::sircovid_date(args$strain_seed_date),
       args$strain_seed_rate[[region]],
@@ -619,7 +619,7 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
 
   ## TODO: someone could explain why this is the check function wanted
   ## here, as it is not obvious.
-  lapply(pars, sircovid::lancelot_check_severity)
+  lapply(pars, sircovid::carehomes_check_severity)
 }
 
 
@@ -656,7 +656,7 @@ simulate_index <- function(info, keep, calculate_vaccination, multistrain) {
     index_prob_strain <- NULL
   }
 
-  index <- c(sircovid::lancelot_index(info)$state[keep],
+  index <- c(sircovid::carehomes_index(info)$state[keep],
              index_S, index_D, index_I, index_A, index_n_vaccinated,
              index_R, index_prob_strain)
 
@@ -688,7 +688,7 @@ setup_future_betas <- function(pars, rt_future, S, rt_type,
   beta <- array(beta, c(dim(pars), ncol(beta)))
 
   rt <- vnapply(seq_along(pars), function(i)
-    sircovid::lancelot_Rt(step_current, S[, i, drop = FALSE], pars[[i]],
+    sircovid::carehomes_Rt(step_current, S[, i, drop = FALSE], pars[[i]],
                            type = rt_type, R = R[, i, drop = FALSE],
                            prob_strain = prob_strain[, i, drop = FALSE],
                            weight_Rt = FALSE)[[rt_type]][1])
@@ -852,7 +852,7 @@ simulate_rt <- function(steps, S, pars, critical_dates, voc_seeded,
 
   rt_type <- c("Rt_general", "eff_Rt_general")
 
-  rt <- sircovid::lancelot_Rt_trajectories(
+  rt <- sircovid::carehomes_Rt_trajectories(
     steps, S, pars, type = rt_type,
     initial_step_from_parameters = FALSE,
     interpolate_critical_dates = critical_dates,
@@ -885,7 +885,7 @@ simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
                                            strain_vaccine_efficacy,
                                            strain_vaccine_booster_efficacy,
                                            strain_cross_immunity) {
-  n_groups <- sircovid:::lancelot_n_groups()
+  n_groups <- sircovid:::carehomes_n_groups()
   regions <- dimnames(state)[[3]]
 
   ## output the cumulative transitions between vaccine strata
@@ -1217,7 +1217,7 @@ validate_rt_future <- function(x, regions, name = deparse(substitute(x))) {
 
 
 simulate_extract_age_class_state <- function(state, index) {
-  n_groups <- sircovid:::lancelot_n_groups()
+  n_groups <- sircovid:::carehomes_n_groups()
 
   ## output cumulative states by
   ## age / vaccine class / sample / region / time
