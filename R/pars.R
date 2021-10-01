@@ -36,6 +36,8 @@
 ##'
 ##' @param waning_rate Rate of waning immunity
 ##'
+##' @param short_si Logical, whether or not to have a shorter serial interval
+##'
 ##' @return An [mcstate::pmcmc_parameters] object which can be used
 ##'   with [mcstate::pmcmc]
 ##'
@@ -43,7 +45,8 @@
 spim_pars <- function(date, region, model_type, multistrain,
                       beta_date, vaccination, parameters,
                       kernel_scaling = 1, cross_immunity = NULL,
-                      waning_rate, sircovid_model = "carehomes") {
+                      waning_rate, sircovid_model = "carehomes",
+                      short_si = FALSE) {
   assert_is(parameters, "spim_pars_pmcmc")
   spim_check_sircovid_model(sircovid_model)
 
@@ -70,7 +73,8 @@ spim_pars <- function(date, region, model_type, multistrain,
   } else if (sircovid_model == "lancelot") {
     transform <-
       spim_lancelot_transform(region, model_type, multistrain, beta_date,
-                              vaccination, cross_immunity, waning_rate)
+                              vaccination, cross_immunity, waning_rate,
+                              short_si)
   }
 
 

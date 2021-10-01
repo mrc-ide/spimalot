@@ -301,7 +301,7 @@ spim_carehomes_transform <- function(region, model_type, multistrain, beta_date,
 
 spim_lancelot_transform <- function(region, model_type, multistrain, beta_date,
                                     vaccination, cross_immunity = NULL,
-                                    waning_rate) {
+                                    waning_rate, short_si) {
   beta_date <- sircovid::sircovid_date(beta_date)
   assert_is(vaccination, "spim_vaccination_data")
 
@@ -458,8 +458,16 @@ spim_lancelot_transform <- function(region, model_type, multistrain, beta_date,
     gamma_W_R_value <- gammas$gamma_W_R * mu_gamma_H_value
     gamma_W_D_value <- gammas$gamma_W_D * mu_gamma_H_value
 
+    if (short_si) {
+      gamma_E <- 1 / (1.92 / 2)
+    } else {
+      gamma_E <- 1 / (3.42 / 2)
+    }
+
+
     progression <- sircovid::lancelot_parameters_progression(
       0.25,
+      gamma_E = list(value = gamma_E),
       gamma_ICU_pre = list(value = gamma_ICU_pre),
       gamma_H_D = list(value = gamma_H_D_value, date = mu_gamma_H_date),
       gamma_H_R = list(value = gamma_H_R_value, date = mu_gamma_H_date),
