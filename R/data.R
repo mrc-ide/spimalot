@@ -42,7 +42,7 @@ spim_data <- function(date, region, model_type, rtm, serology,
                       fit_to_variants = FALSE, sircovid_model = "carehomes") {
   check_region(region)
   spim_check_model_type(model_type)
-  spim_check_sircovid_model(sircovid_model)
+  sircovid::check_sircovid_model(sircovid_model)
 
   if (length(region) > 1) {
     ## See the original task

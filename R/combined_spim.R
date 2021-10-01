@@ -13,7 +13,7 @@
 ##' @rdname spim_summary
 ##' @export
 spim_summary_nowcast <- function(dat, sircovid_model = "carehomes") {
-  spim_check_sircovid_model(sircovid_model)
+  sircovid::check_sircovid_model(sircovid_model)
   message("Creating time series")
   f <- function(region) {
     message(paste("  -", region))

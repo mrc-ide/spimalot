@@ -45,7 +45,7 @@ spim_pars <- function(date, region, model_type, multistrain,
                       kernel_scaling = 1, cross_immunity = NULL,
                       waning_rate, sircovid_model = "carehomes") {
   assert_is(parameters, "spim_pars_pmcmc")
-  spim_check_sircovid_model(sircovid_model)
+  sircovid::check_sircovid_model(sircovid_model)
 
   ## We take 'info' as the canonical source of names, then check that
   ## prior and proposal align correctly.
