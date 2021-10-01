@@ -10,7 +10,8 @@ spim_plot_trajectories(
   what,
   date_min = NULL,
   with_forecast = TRUE,
-  add_betas = FALSE
+  add_betas = FALSE,
+  sircovid_model = "carehomes"
 )
 }
 \arguments{
@@ -26,6 +27,9 @@ the beginning of the data.}
 \item{with_forecast}{Logical, indicating if we should add the forecast}
 
 \item{add_betas}{Logical, indicating if we should add betas}
+
+\item{sircovid_model}{The name of the sircovid model used.
+Default is \code{"carehomes"}}
 }
 \description{
 Plot trajectories

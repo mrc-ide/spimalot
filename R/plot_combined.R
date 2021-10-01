@@ -63,9 +63,16 @@ spim_plot_admissions_by_age <- function(dat, region) {
 ##'
 ##' @param add_betas Logical, indicating if we should add betas
 ##'
+##' @param sircovid_model The name of the sircovid model used.
+##'   Default is `"carehomes"`
+##'
+##'
 ##' @export
 spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
-                                   with_forecast = TRUE, add_betas = FALSE) {
+                                   with_forecast = TRUE, add_betas = FALSE,
+                                   sircovid_model = "carehomes") {
+
+  spim_check_sircovid_model(sircovid_model)
 
   n_regions <- length(regions)
   op <- par(mfcol = c(length(what), n_regions),
@@ -76,7 +83,8 @@ spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
   for (r in regions) {
     spim_plot_trajectories_region(r, dat, what, date_min,
                                   with_forecast = with_forecast,
-                                  add_betas = add_betas)
+                                  add_betas = add_betas,
+                                  sircovid_model = sircovid_model)
   }
 
   mtext(side = 3, text = toupper(spim_region_name(regions)),
@@ -1120,7 +1128,8 @@ spim_plot_serology_region <- function(region, dat, sero_flow, ymax,
 
 spim_plot_trajectories_region <- function(region, dat, what = NULL,
                                           date_min = NULL, with_forecast = TRUE,
-                                          add_betas = FALSE) {
+                                          add_betas = FALSE,
+                                          sircovid_model = "carehomes") {
   if (is.null(what)) {
     what <- c("deaths_hosp", "deaths_comm", "deaths_carehomes",
               "icu", "general", "admitted", "diagnoses")
@@ -1128,7 +1137,8 @@ spim_plot_trajectories_region <- function(region, dat, what = NULL,
   for (w in what) {
     spim_plot_trajectories_region1(
       w, region, dat, date_min,
-      with_forecast = with_forecast, add_betas = add_betas)
+      with_forecast = with_forecast, add_betas = add_betas,
+      sircovid_model = sircovid_model)
   }
 }
 
@@ -1350,7 +1360,8 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
 
 spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
                                            with_forecast = TRUE,
-                                           add_betas = FALSE) {
+                                           add_betas = FALSE,
+                                           sircovid_model = "carehomes") {
   trajectories <- dat$samples[[region]]$trajectories
   date <- dat$info$date
   cols <- spim_colours()
@@ -1385,9 +1396,14 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
       trajectories$state["deaths_comm_inc", , -1L] +
       trajectories$state["deaths_carehomes_inc", , -1L]
   } else if (what == "all_admission") {
-    res <-
-      trajectories$state["diagnoses_inc", , -1L] +
-      trajectories$state["admitted_inc", , -1L]
+    if (sircovid_model == "carehomes") {
+      res <-
+        trajectories$state["diagnoses_inc", , -1L] +
+        trajectories$state["admitted_inc", , -1L]
+    } else if (sircovid_model == "lancelot") {
+      res <-
+        trajectories$state["all_admission_inc", , -1L]
+    }
   } else {
     res <- trajectories$state[trajnames[what], , -1L]
   }

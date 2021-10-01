@@ -340,9 +340,14 @@ spim_summary_region_forecast_trajectory <- function(region, dat, name, as,
       trajectories$state["deaths_comm_inc", , ] +
       trajectories$state["deaths_carehomes_inc", , ]
   } else if (name == "all_admission_inc") {
-    value <-
-      trajectories$state["diagnoses_inc", , ] +
-      trajectories$state["admitted_inc", , ]
+    if (sircovid_model == "carehomes") {
+      value <-
+        trajectories$state["diagnoses_inc", , ] +
+        trajectories$state["admitted_inc", , ]
+    } else if (sircovid_model == "lancelot") {
+      value <-
+        trajectories$state["all_admission_inc", , ]
+    }
   } else {
     value <- trajectories$state[name, , ]
   }

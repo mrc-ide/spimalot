@@ -191,7 +191,8 @@ spim_lancelot_fit_process <- function(samples, parameters, data, control,
   message("Preparing onward simulation object")
   start_date_sim <- "2021-01-01"
   simulate <- create_simulate_object(
-    forecast, samples$vaccine$efficacy, start_date_sim, samples$info$date)
+    forecast, samples$vaccine$efficacy, start_date_sim, samples$info$date,
+    sircovid_model = "lancelot")
 
   ## Reduce trajectories in forecast before saving
   message("Reducing trajectories")
@@ -270,7 +271,7 @@ spim_fit_process_data <- function(admissions, rtm, fitted, full, vaccination) {
 
 
 create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
-                                   date) {
+                                   date, sircovid_model = "carehomes") {
   start_date_sim <- sircovid::sircovid_date(start_date_sim)
   fit_dates <- samples$trajectories$date
   idx_dates <- (fit_dates >= start_date_sim) &
@@ -288,8 +289,14 @@ create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
     c(ret, calculate_vaccination(ret$state, vaccine_efficacy, cross_immunity))
 
   # thin trajectories
-  ret$state <- ret$state[c("deaths", "deaths_comm", "deaths_hosp", "admitted",
-                           "diagnoses", "infections", "hosp", "icu"), , ]
+  if (sircovid_model == "carehomes") {
+    ret$state <- ret$state[c("deaths", "deaths_comm", "deaths_hosp", "admitted",
+                             "diagnoses", "infections", "hosp", "icu"), , ]
+  } else if (sircovid_model == "lancelot") {
+    ret$state <- ret$state[c("deaths", "deaths_comm", "deaths_hosp",
+                             "all_admission", "infections", "hosp", "icu"), , ]
+  }
+
 
   # reshape to add a regional dimension
   ret$state <- mcstate::array_reshape(ret$state, i = 2, c(ncol(ret$state), 1))
