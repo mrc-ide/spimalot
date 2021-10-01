@@ -387,7 +387,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
                                    fit_to_variants) {
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
-            "admitted", "new", "phe_admissions", "all_admission",
+            "phe_admissions", "all_admission",
             "death2", "death3", "death_chr", "death_comm",
             "ons_death_carehome", "ons_death_noncarehome",
             "pillar2_positives", "pillar2_negatives",
@@ -596,8 +596,6 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     general = data$final_general,
     hosp = data$final_hosp,
     deaths = data$deaths,
-    admitted = data$admitted,
-    diagnoses = data$new,
     all_admission = data$final_admissions,
     pillar2_tot = data$pillar2_positives + data$pillar2_negatives,
     pillar2_pos = data$pillar2_positives,
@@ -644,7 +642,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     ret$strain_over25_tot <- NA_integer_
 
     if (model_type == "BB") {
-      omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
+      omit <- c("hosp", "pillar2_tot", "pillar2_pos",
                 "pillar2_cases", "pillar2_over25_cases")
       for (i in omit) {
         ret[[i]] <- NA_integer_
@@ -657,7 +655,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
       }
     }
     if (model_type == "NB") {
-      omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
+      omit <- c("hosp", "pillar2_tot", "pillar2_pos",
                 "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos")
       for (i in omit) {
         ret[[i]] <- NA_integer_
