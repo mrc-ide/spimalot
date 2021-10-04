@@ -641,12 +641,16 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     ret$strain_over25_non_variant <- NA_integer_
     ret$strain_over25_tot <- NA_integer_
 
+    ret$hosp <-
+      ifelse(is.na(ret$general) | is.na(ret$icu), ret$hosp, NA_integer_)
+
     if (model_type == "BB") {
-      omit <- c("hosp", "pillar2_tot", "pillar2_pos",
+      omit <- c("pillar2_tot", "pillar2_pos",
                 "pillar2_cases", "pillar2_over25_cases")
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
+
       if (all(is.na(ret$pillar2_over25_tot))) {
         ret$pillar2_tot <- data$pillar2_positives + data$pillar2_negatives
         ret$pillar2_pos <- data$pillar2_positives
@@ -655,7 +659,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
       }
     }
     if (model_type == "NB") {
-      omit <- c("hosp", "pillar2_tot", "pillar2_pos",
+      omit <- c("pillar2_tot", "pillar2_pos",
                 "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos")
       for (i in omit) {
         ret[[i]] <- NA_integer_
