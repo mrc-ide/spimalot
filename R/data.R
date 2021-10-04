@@ -641,6 +641,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     ret$strain_over25_non_variant <- NA_integer_
     ret$strain_over25_tot <- NA_integer_
 
+    ## fit to hosp (all beds) where there is no icu/general split
     ret$hosp <-
       ifelse(is.na(ret$general) | is.na(ret$icu), ret$hosp, NA_integer_)
 
