@@ -661,6 +661,7 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
                                                 add_betas = FALSE,
                                                 hard_xlim = FALSE,
                                                 data_by = NULL) {
+
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
   date <- dat$info$date
@@ -780,7 +781,8 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
   segments(x0 = max(dx), y0 = 0, y1 = 100, lwd = 3, col = "white")
 
   if (add_betas == TRUE) {
-    abline(v = as.Date(sample$info$beta_date), lty = 2, col = cols$puce)
+    abline(v = sircovid::sircovid_date_as_date(sample$info$beta_date),
+           lty = 2, col = cols$puce)
   }
 
 }
@@ -874,7 +876,8 @@ spim_plot_pillar2_cases_region <- function(region, dat, date_min,
   segments(x0 = max(dx), y0 = 0, y1 = 100, lwd = 3, col = "white")
 
   if (add_betas == TRUE) {
-    abline(v = as.Date(sample$info$beta_date), lty = 2, col = cols$puce)
+    abline(v = sircovid::sircovid_date_as_date(sample$info$beta_date),
+           lty = 2, col = cols$puce)
   }
 
 }
@@ -976,7 +979,8 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   segments(x0 = as.Date(date), y0 = 0, y1 = 100, lwd = 3, col = "white")
 
   if (add_betas == TRUE) {
-    abline(v = as.Date(sample$info$beta_date), lty = 2, col = cols$puce)
+    abline(v = sircovid::sircovid_date_as_date(sample$info$beta_date),
+           lty = 2, col = cols$puce)
   }
 
 }
