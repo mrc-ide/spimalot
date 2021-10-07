@@ -1246,7 +1246,7 @@ spim_plot_alos_region <- function(region, dat, ymin, ymax, forecast_until,
 spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
                                 variant, add_betas, multistrain) {
 
-  beta_date <- dat$samples[[region]]$info$beta_date
+  beta_date <- dat$info$beta_date
   if (variant == "weighted") {
     sample_Rt <- dat$rt[[region]][[rt_type]][-1L, ]
     x <- sircovid::sircovid_date_as_date(dat$rt[[region]]$date[-1L, 1])
@@ -1359,7 +1359,7 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
   trajectories <- dat$samples[[region]]$trajectories
   date <- dat$info$date
   cols <- spim_colours()
-  beta_date <- dat$samples$info[[region]]$beta_date
+  beta_date <- dat$info$beta_date
 
   trajnames <- c(deaths = "deaths_inc",
                  deaths_comm = "deaths_comm_inc",

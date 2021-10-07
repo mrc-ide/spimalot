@@ -31,7 +31,7 @@ spim_combined_load <- function(path, regions = "all") {
   names(dat) <- regions
 
   info <- lapply(dat, function(x)
-    x$samples$info[c("date", "multistrain", "model_type")])
+    x$samples$info[c("date", "multistrain", "model_type", "beta_date")])
   if (length(unique(info)) != 1L) {
     stop("Incompatible regional fits")
   }
