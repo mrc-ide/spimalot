@@ -31,7 +31,8 @@ spim_combined_load <- function(path, regions = "all") {
   names(dat) <- regions
 
   info <- lapply(dat, function(x)
-    x$samples$info[c("date", "multistrain", "model_type", "beta_date")])
+    x$samples$info[c("date", "multistrain", "model_type", "beta_date",
+                     "restart_date")])
   if (length(unique(info)) != 1L) {
     stop("Incompatible regional fits")
   }
@@ -39,6 +40,8 @@ spim_combined_load <- function(path, regions = "all") {
   ret <- list_transpose(dat)
   ret$info <- info[[1]]
   ret$info$date <- as.Date(ret$info$date)
+  ret$info$restart_date <-
+    sircovid::sircovid_date_as_date(ret$info$restart_date)
 
   message("Reordering trajectories")
   ## reorder by increasing cumulative incidence:
