@@ -53,7 +53,7 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
   labels <- spim_region_name(names(samples), "code")
   par_names <- colnames(samples[[1]]$pars)
 
-  beta_date <- dat$samples[[1]]$info$beta_date
+  beta_date <- sircovid::sircovid_date_as_date(dat$samples[[1]]$info$beta_date)
   beta_names <- par_names[substr(par_names, 1, 4) == "beta"]
   beta_names <- beta_names[order(as.numeric(gsub("beta", "", beta_names)))]
 

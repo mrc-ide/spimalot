@@ -669,6 +669,7 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
                                                 add_betas = FALSE,
                                                 hard_xlim = FALSE,
                                                 data_by = NULL) {
+
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
   date <- dat$info$date
@@ -788,7 +789,8 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
   segments(x0 = max(dx), y0 = 0, y1 = 100, lwd = 3, col = "white")
 
   if (add_betas == TRUE) {
-    abline(v = as.Date(sample$info$beta_date), lty = 2, col = cols$puce)
+    abline(v = sircovid::sircovid_date_as_date(sample$info$beta_date),
+           lty = 2, col = cols$puce)
   }
 
 }
@@ -882,7 +884,8 @@ spim_plot_pillar2_cases_region <- function(region, dat, date_min,
   segments(x0 = max(dx), y0 = 0, y1 = 100, lwd = 3, col = "white")
 
   if (add_betas == TRUE) {
-    abline(v = as.Date(sample$info$beta_date), lty = 2, col = cols$puce)
+    abline(v = sircovid::sircovid_date_as_date(sample$info$beta_date),
+           lty = 2, col = cols$puce)
   }
 
 }
@@ -984,7 +987,8 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   segments(x0 = as.Date(date), y0 = 0, y1 = 100, lwd = 3, col = "white")
 
   if (add_betas == TRUE) {
-    abline(v = as.Date(sample$info$beta_date), lty = 2, col = cols$puce)
+    abline(v = sircovid::sircovid_date_as_date(sample$info$beta_date),
+           lty = 2, col = cols$puce)
   }
 
 }
@@ -1252,7 +1256,7 @@ spim_plot_alos_region <- function(region, dat, ymin, ymax, forecast_until,
 spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
                                 variant, add_betas, multistrain) {
 
-  beta_date <- dat$samples[[region]]$info$beta_date
+  beta_date <- dat$info$beta_date
   if (variant == "weighted") {
     sample_Rt <- dat$rt[[region]][[rt_type]][-1L, ]
     x <- sircovid::sircovid_date_as_date(dat$rt[[region]]$date[-1L, 1])
@@ -1353,7 +1357,8 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
     abline(h = 1, lty = 2)
   }
   if (add_betas) {
-    abline(v = as.Date(beta_date), lty = 2, col = spim_colours()$orange)
+    abline(v = sircovid::sircovid_date_as_date(beta_date),
+           lty = 2, col = spim_colours()$orange)
   }
 }
 
@@ -1365,7 +1370,7 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
   trajectories <- dat$samples[[region]]$trajectories
   date <- dat$info$date
   cols <- spim_colours()
-  beta_date <- dat$info[[region]]$beta_date
+  beta_date <- dat$info$beta_date
 
   trajnames <- c(deaths = "deaths_inc",
                  deaths_comm = "deaths_comm_inc",
@@ -1467,7 +1472,8 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
          lwd = 0.6)
 
   if (add_betas) {
-    abline(v = as.Date(beta_date), lty = 2, col = cols$puce)
+    abline(v = sircovid::sircovid_date_as_date(beta_date),
+           lty = 2, col = cols$puce)
   }
 }
 
