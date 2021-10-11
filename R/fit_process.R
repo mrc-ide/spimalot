@@ -638,6 +638,9 @@ calculate_vaccination <- function(state, vaccine_efficacy, cross_immunity) {
 
   de <- dim(vaccine_efficacy[[1]])
   if (length(de) == 2L) {
+    ## We've changed the parameter preparation so that this branch
+    ## should never be used
+    message("WARNING: you are using old versions of tasks")
     n_groups <- de[[1]]
     n_strain <- 1
     n_vacc_classes <- de[[2]]
@@ -646,7 +649,7 @@ calculate_vaccination <- function(state, vaccine_efficacy, cross_immunity) {
     n_groups <- de[[1]]
     n_strain <- de[[2]]
     n_vacc_classes <- de[[3]]
-    multistrain <- TRUE
+    multistrain <- n_strain > 1
   }
   n_days <- dim(state)[[3]]
 
