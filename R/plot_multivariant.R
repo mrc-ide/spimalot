@@ -71,7 +71,8 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
                                       manuscript = FALSE) {
   # Get relevant betas to current date and filter out school holidays
   betas <- data.frame(
-    dates = as.Date(tail(dat$samples[[1]]$info$beta_date, 12)),
+    dates = sircovid::sircovid_date_as_date(
+      tail(dat$samples[[1]]$info$beta_date, 12)),
     label = c(
       "End of 2nd\nLockdown",
       "School Holidays",
