@@ -266,6 +266,10 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
       1, 2, args$strain_initial_proportion, regions)
   }
 
+  for (i in seq_along(pars)) {
+    pars[[i]]$steps_per_day <- as.integer(pars[[i]]$steps_per_day)
+    pars[[i]]$index_dose <- as.integer(pars[[i]]$index_dose)
+  }
   message("Creating dust object")
   obj <- sircovid::lancelot$new(pars, step_start, NULL, pars_multi = TRUE,
                                 n_threads = args$n_threads, seed = args$seed)
@@ -533,18 +537,18 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
 
   ## TODO: in the validation, if booster doses is non-empty, we should
   ## check that we have a model with boosters
-  ## I've hardcoded this NULL here for now
-  vaccine_index_booster <- NULL
-  # if (!is.null(args$vaccine_booster_daily_doses)) {
-  #   args$vaccine_efficacy <-
-  #     Map(cbind, args$vaccine_efficacy, args$vaccine_booster_efficacy)
-  #   args$strain_vaccine_efficacy <-
-  #     Map(cbind, args$strain_vaccine_efficacy,
-  #         args$strain_vaccine_booster_efficacy)
-  #   vaccine_index_booster <- pars[[1]]$index_dose[[3]]
-  # } else {
-  #   vaccine_index_booster <- NULL
-  # }
+  if (!is.null(args$vaccine_booster_daily_doses)) {
+    args$vaccine_efficacy <-
+      Map(cbind, args$vaccine_efficacy, args$vaccine_booster_efficacy)
+    args$strain_vaccine_efficacy <-
+      Map(cbind, args$strain_vaccine_efficacy,
+          args$strain_vaccine_booster_efficacy)
+    ## TODO: index_dose for boosters is assumed to be fourth column, when in
+    ## fact it's now the fifth!! This needs fixing ASAP
+    vaccine_index_booster <- pars[[1]]$index_dose[[3]] + 1
+  } else {
+    vaccine_index_booster <- NULL
+  }
 
   mean_days_between_doses <- round(vaccine$mean_days_between_doses *
                                      args$vaccine_delay_multiplier)
@@ -558,9 +562,7 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
     priority_population = priority_population,
     lag_groups = args$vaccine_lag_groups,
     lag_days = args$vaccine_lag_days,
-    ## TODO: hardcoded NULL - this should be the booster schedule read in from
-    ## parameters task
-    boosters_future = NULL,
+    boosters_future = args$vaccine_booster_daily_doses[[region]],
     boosters_prepend_zero = FALSE)
 
   ## check boosters
