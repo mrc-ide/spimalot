@@ -533,29 +533,34 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
 
   ## TODO: in the validation, if booster doses is non-empty, we should
   ## check that we have a model with boosters
-  if (!is.null(args$vaccine_booster_daily_doses)) {
-    args$vaccine_efficacy <-
-      Map(cbind, args$vaccine_efficacy, args$vaccine_booster_efficacy)
-    args$strain_vaccine_efficacy <-
-      Map(cbind, args$strain_vaccine_efficacy,
-          args$strain_vaccine_booster_efficacy)
-    vaccine_index_booster <- pars[[1]]$index_dose[[3]]
-  } else {
-    vaccine_index_booster <- NULL
-  }
+  ## I've hardcoded this NULL here for now
+  vaccine_index_booster <- NULL
+  # if (!is.null(args$vaccine_booster_daily_doses)) {
+  #   args$vaccine_efficacy <-
+  #     Map(cbind, args$vaccine_efficacy, args$vaccine_booster_efficacy)
+  #   args$strain_vaccine_efficacy <-
+  #     Map(cbind, args$strain_vaccine_efficacy,
+  #         args$strain_vaccine_booster_efficacy)
+  #   vaccine_index_booster <- pars[[1]]$index_dose[[3]]
+  # } else {
+  #   vaccine_index_booster <- NULL
+  # }
 
   mean_days_between_doses <- round(vaccine$mean_days_between_doses *
                                      args$vaccine_delay_multiplier)
 
   vaccine_schedule <- sircovid::vaccine_schedule_scenario(
-    schedule_past = vaccine$schedule,
+    ## schedule_past got renamed to schedule_real in new params task
+    schedule_past = vaccine$schedule_real,
     doses_future = args$vaccine_daily_doses[[region]],
     end_date = args$end_date,
     mean_days_between_doses = mean_days_between_doses,
     priority_population = priority_population,
     lag_groups = args$vaccine_lag_groups,
     lag_days = args$vaccine_lag_days,
-    boosters_future = args$vaccine_booster_daily_doses[[region]],
+    ## TODO: hardcoded NULL - this should be the booster schedule read in from
+    ## parameters task
+    boosters_future = NULL,
     boosters_prepend_zero = FALSE)
 
   ## check boosters
