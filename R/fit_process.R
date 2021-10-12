@@ -582,26 +582,11 @@ reduce_trajectories <- function(samples) {
     abind1(state[setdiff(rownames(state), nms_S), , ], S)
 
   ## Calculate Pillar 2 positivity and cases
-  pillar2_positivity <- calculate_positivity(samples, FALSE)
-  pillar2_positivity <-
-    array(pillar2_positivity, c(1, dim(pillar2_positivity)))
-  pillar2_positivity_over25 <- calculate_positivity(samples, TRUE)
-  pillar2_positivity_over25 <-
-    array(pillar2_positivity_over25, c(1, dim(pillar2_positivity_over25)))
-  pillar2_cases <- calculate_cases(samples, FALSE)
-  pillar2_cases <-
-    array(pillar2_cases, c(1, dim(pillar2_cases)))
-  pillar2_cases_over25 <- calculate_cases(samples, TRUE)
-  pillar2_cases_over25 <-
-    array(pillar2_cases_over25, c(1, dim(pillar2_cases_over25)))
-  pillar2 <- abind1(pillar2_positivity, pillar2_positivity_over25)
-  pillar2 <- abind1(pillar2, pillar2_cases)
-  pillar2 <- abind1(pillar2, pillar2_cases_over25)
-  row.names(pillar2) <-
-    c("pillar2_positivity", "pillar2_positivity_over25",
-      "pillar2_cases", "pillar2_cases_over25")
-  samples$trajectories$state <-
-    abind1(samples$trajectories$state, pillar2)
+  if (samples$info$model_type == "BB") {
+    samples <- calculate_positivity(samples)
+  } else {
+    samples <- calculate_cases(samples)
+  }
 
   samples
 }
@@ -817,72 +802,138 @@ spim_fit_parameters <- function(samples, parameters) {
 
 calculate_positivity <- function(samples, over25) {
 
+  p_NC_names <- c("p_NC_under15", "p_NC_15_24", "p_NC_25_49",
+                  "p_NC_50_64", "p_NC_65_79", "p_NC_80_plus",
+                  "p_NC_weekend_under15", "p_NC_weekend_15_24",
+                  "p_NC_weekend_25_49", "p_NC_weekend_50_64",
+                  "p_NC_weekend_65_79", "p_NC_weekend_80_plus")
+
   x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
 
-  model_params <- samples$predict$transform(samples$pars[1, ])
+  base_pars <- samples$predict$transform(samples$pars[1, ])
 
-  if ("p_NC" %in% colnames(samples$pars)) {
-    p_NC <- samples$pars[, "p_NC"]
-  } else {
-    p_NC <- model_params$p_NC
+  pars <- t(vapply(seq_len(nrow(samples$pars)),
+                 function(i) unlist(samples$predict$transform(
+                   samples$pars[i, ])[p_NC_names]),
+                 numeric(length(p_NC_names))))
+
+  pos_under15 <-
+    samples$trajectories$state[paste0("sympt_cases_under15_inc"), , ]
+  pos_15_24 <- samples$trajectories$state[paste0("sympt_cases_15_24_inc"), , ]
+  pos_25_49 <- samples$trajectories$state[paste0("sympt_cases_25_49_inc"), , ]
+  pos_50_64 <- samples$trajectories$state[paste0("sympt_cases_50_64_inc"), , ]
+  pos_65_79 <- samples$trajectories$state[paste0("sympt_cases_65_79_inc"), , ]
+  pos_80_plus <-
+    samples$trajectories$state[paste0("sympt_cases_80_plus_inc"), , ]
+
+  pos_over25 <- pos_25_49 + pos_50_64 + pos_65_79 + pos_80_plus
+  pos <- pos_under15 + pos_15_24 + pos_over25
+
+  calc_negs <- function(group) {
+    neg <- base_pars[[paste0("N_tot_", group)]] -
+      samples$trajectories$state[paste0("sympt_cases_", group, "_inc"), , ]
+
+    neg[, grepl("^S", weekdays(x))] <-
+      neg[, grepl("^S", weekdays(x))] * pars[, paste0("p_NC_weekend_", group)]
+    neg[, !grepl("^S", weekdays(x))] <-
+      neg[, !grepl("^S", weekdays(x))] * pars[, paste0("p_NC_", group)]
+
+    neg
   }
 
-  if ("p_NC_weekend" %in% colnames(samples$pars)) {
-    p_NC_weekend <- samples$pars[, "p_NC_weekend"]
-  } else {
-    p_NC_weekend <- p_NC
+  neg_under15 <- calc_negs("under15")
+  neg_15_24 <- calc_negs("15_24")
+  neg_25_49 <- calc_negs("25_49")
+  neg_50_64 <- calc_negs("50_64")
+  neg_65_79 <- calc_negs("65_79")
+  neg_80_plus <- calc_negs("80_plus")
+
+  neg_over25 <- neg_25_49 + neg_50_64 + neg_65_79 + neg_80_plus
+  neg <- neg_under15 + neg_15_24 + neg_over25
+
+  calc_pos <- function(pos, neg) {
+    positivity <-
+      (pos * base_pars$pillar2_sensitivity +
+         neg * (1 - base_pars$pillar2_specificity)) / (pos + neg) * 100
+    array(positivity, c(1, dim(positivity)))
   }
 
-  if (over25) {
-    pos <- samples$trajectories$state["sympt_cases_over25_inc", , ]
-    neg <- (sum(model_params$N_tot[6:19]) - pos)
-  } else {
-    pos <- samples$trajectories$state["sympt_cases_inc", , ]
-    neg <- (sum(model_params$N_tot) - pos)
-  }
+  positivity <- calc_pos(pos, neg)
+  positivity <- abind1(positivity, calc_pos(pos_over25, neg_over25))
+  positivity <- abind1(positivity, calc_pos(pos_under15, neg_under15))
+  positivity <- abind1(positivity, calc_pos(pos_15_24, neg_15_24))
+  positivity <- abind1(positivity, calc_pos(pos_25_49, neg_25_49))
+  positivity <- abind1(positivity, calc_pos(pos_50_64, neg_50_64))
+  positivity <- abind1(positivity, calc_pos(pos_65_79, neg_65_79))
+  positivity <- abind1(positivity, calc_pos(pos_80_plus, neg_80_plus))
 
-  neg[, grepl("^S", weekdays(x))] <-
-    neg[, grepl("^S", weekdays(x))] * p_NC_weekend
-  neg[, !grepl("^S", weekdays(x))] <-
-    neg[, !grepl("^S", weekdays(x))] * p_NC
+  row.names(positivity) <- paste0("pillar2_positivity",
+                                  c("", "_over25", "_under15", "_15_24",
+                                    "_25_49", "_50_64", "_65_79", "_80_plus"))
 
-  out <- (pos * model_params$pillar2_sensitivity +
-            neg * (1 - model_params$pillar2_specificity)) / (pos + neg) * 100
+  samples$trajectories$state <-
+    abind1(samples$trajectories$state, positivity)
 
-  out
-
+  samples
 }
 
 
 calculate_cases <- function(samples, over25) {
 
+  phi_pillar2_cases_names <-
+    c("phi_pillar2_cases_under15", "phi_pillar2_cases_15_24",
+      "phi_pillar2_cases_25_49", "phi_pillar2_cases_50_64",
+      "phi_pillar2_cases_65_79", "phi_pillar2_cases_80_plus",
+      "phi_pillar2_cases_weekend_under15", "phi_pillar2_cases_weekend_15_24",
+      "phi_pillar2_cases_weekend_25_49", "phi_pillar2_cases_weekend_50_64",
+      "phi_pillar2_cases_weekend_65_79", "phi_pillar2_cases_weekend_80_plus")
+
   x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
 
-  model_params <- samples$predict$transform(samples$pars[1, ])
+  base_pars <- samples$predict$transform(samples$pars[1, ])
 
-  if ("phi_pillar2_cases" %in% colnames(samples$pars)) {
-    phi_pillar2_cases <- samples$pars[, "phi_pillar2_cases"]
-  } else {
-    phi_pillar2_cases <- model_params$phi_pillar2_cases
+  pars <- t(vapply(seq_len(nrow(samples$pars)),
+                   function(i) unlist(samples$predict$transform(
+                     samples$pars[i, ])[phi_pillar2_cases_names]),
+                   numeric(length(phi_pillar2_cases_names))))
+
+  calc_cases <- function(group) {
+    cases <- samples$trajectories$state[paste0("sympt_cases_", group, "_inc"), , ]
+
+    cases[, grepl("^S", weekdays(x))] <-
+      cases[, grepl("^S", weekdays(x))] *
+      pars[, paste0("phi_pillar2_cases_weekend_", group)]
+    cases[, !grepl("^S", weekdays(x))] <-
+      cases[, !grepl("^S", weekdays(x))] *
+      pars[, paste0("phi_pillar2_cases_", group)]
+
+    array(cases, c(1, dim(cases)))
   }
 
-  if ("phi_pillar2_cases_weekend" %in% colnames(samples$pars)) {
-    phi_pillar2_cases_weekend <- samples$pars[, "phi_pillar2_cases_weekend"]
-  } else {
-    phi_pillar2_cases_weekend <- phi_pillar2_cases
-  }
+  cases_under15 <- calc_cases("under15")
+  cases_15_24 <- calc_cases("15_24")
+  cases_25_49 <- calc_cases("25_49")
+  cases_50_64 <- calc_cases("50_64")
+  cases_65_79 <- calc_cases("65_79")
+  cases_80_plus <- calc_cases("80_plus")
 
-  if (over25) {
-    pos <- samples$trajectories$state["sympt_cases_over25_inc", , ]
-  } else {
-    pos <- samples$trajectories$state["sympt_cases_inc", , ]
-  }
+  cases_over25 <- cases_25_49 + cases_50_64 + cases_65_79 + cases_80_plus
+  cases <- cases_under15 + cases_15_24 + cases_over25
 
-  pos[, grepl("^S", weekdays(x))] <-
-    pos[, grepl("^S", weekdays(x))] * phi_pillar2_cases_weekend
-  pos[, !grepl("^S", weekdays(x))] <-
-    pos[, !grepl("^S", weekdays(x))] * phi_pillar2_cases
+  cases <- abind1(cases, cases_over25)
+  cases <- abind1(cases, cases_under15)
+  cases <- abind1(cases, cases_15_24)
+  cases <- abind1(cases, cases_25_49)
+  cases <- abind1(cases, cases_50_64)
+  cases <- abind1(cases, cases_65_79)
+  cases <- abind1(cases, cases_80_plus)
 
-  pos
+  row.names(cases) <- paste0("pillar2_cases",
+                             c("", "_over25", "_under15", "_15_24",
+                               "_25_49", "_50_64", "_65_79", "_80_plus"))
 
+  samples$trajectories$state <-
+    abind1(samples$trajectories$state, cases)
+
+  samples
 }
