@@ -563,7 +563,8 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
     lag_groups = args$vaccine_lag_groups,
     lag_days = args$vaccine_lag_days,
     boosters_future = args$vaccine_booster_daily_doses[[region]],
-    boosters_prepend_zero = FALSE)
+    boosters_prepend_zero = TRUE,
+    booster_proportion = args$vaccine_booster_eligibility)
 
   ## check boosters
   # > par(mfrow = c(3, 1))
@@ -1897,6 +1898,7 @@ spim_simulation_vars <- function() {
     "vaccine_booster_daily_doses",
     "vaccine_efficacy",
     "vaccine_booster_efficacy",
+    "vaccine_booster_eligibility",
     "vaccine_eligibility",
     "vaccine_uptake",
     "vaccine_lag_groups",
