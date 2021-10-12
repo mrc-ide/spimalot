@@ -65,11 +65,11 @@ spim_pars <- function(date, region, model_type, multistrain,
 
   if (sircovid_model == "carehomes") {
     transform <-
-      spim_carehomes_transform(region, model_type, multistrain, beta_date,
+      transform_carehomes(region, model_type, multistrain, beta_date,
                                vaccination, cross_immunity, waning_rate)
   } else if (sircovid_model == "lancelot") {
     transform <-
-      spim_lancelot_transform(region, model_type, multistrain, beta_date,
+      transform_lancelot(region, model_type, multistrain, beta_date,
                               vaccination, cross_immunity, waning_rate)
   }
 

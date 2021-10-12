@@ -1,4 +1,4 @@
-spim_carehomes_transform <- function(region, model_type, multistrain, beta_date,
+transform_carehomes <- function(region, model_type, multistrain, beta_date,
                                      vaccination, cross_immunity = NULL,
                                      waning_rate) {
   beta_date <- sircovid::sircovid_date(beta_date)
