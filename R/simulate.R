@@ -1246,9 +1246,9 @@ simulate_extract_age_class_state <- function(state, index) {
 
     if (ncol(x) == 3) {
       colnames(x) <- c("unvaccinated", "partial_protection", "full_protection")
-    } else  if (ncol(x) == 4) {
+    } else  if (ncol(x) == 5) {
       colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
-                       "booster")
+                       "waned_protection", "booster")
     }
 
     ## aggregate age groups
