@@ -40,16 +40,23 @@
 spim_data <- function(date, region, model_type, rtm, serology,
                       trim_deaths, trim_pillar2, full_data = FALSE,
                       fit_to_variants = FALSE, sircovid_model = "carehomes") {
-  check_region(region)
   spim_check_model_type(model_type)
   spim_check_sircovid_model(sircovid_model)
 
   if (length(region) > 1) {
-    ## See the original task
-    stop("Not yet supported")
+    data <- lapply(region, function(x)
+      spim_data_single(date, x, model_type, rtm, serology, trim_deaths,
+                       trim_pillar2, full_data, fit_to_variants,
+                       sircovid_model))
+    data <- do.call(rbind, data)
+    data <- cbind(data,
+                  population = factor(rep(region,
+                                          each = nrow(data) / length(region)),
+                                      levels = region))
   } else {
-    spim_data_single(date, region, model_type, rtm, serology, trim_deaths,
-                     trim_pillar2, full_data, fit_to_variants, sircovid_model)
+    data <-
+      spim_data_single(date, region, model_type, rtm, serology, trim_deaths,
+                       trim_pillar2, full_data, fit_to_variants, sircovid_model)
   }
 }
 
@@ -57,6 +64,9 @@ spim_data <- function(date, region, model_type, rtm, serology,
 spim_data_single <- function(date, region, model_type, rtm, serology,
                              trim_deaths, trim_pillar2, full_data,
                              fit_to_variants, sircovid_model) {
+
+  check_region(region)
+
   ## TODO: verify that rtm has consecutive days
   if (sircovid_model == "carehomes") {
     rtm <- spim_carehomes_data_rtm(date, region, model_type, rtm, full_data,
