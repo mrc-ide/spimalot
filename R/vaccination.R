@@ -28,6 +28,11 @@
 ##'  [sircovid::vaccine_schedule_future] or
 ##'  [sircovid::vaccine_schedule_data_future]
 ##'
+##' @param mean_days_to_waning Mean number of days until waning from second
+##'  dose, the inverse is passed to `vaccine_progression_rate`. If `Inf`
+##'  (default) then no waning or boosting. Currently only used in
+##'  `transform_lancelot`.
+##'
 ##' @return A list suitable for passing to `spim_pars` as
 ##'   `vaccination`, containing the new vaccination schedule
 ##'   (important bits are `efficacy` and `schedule`, but other
@@ -36,7 +41,9 @@
 ##' @export
 spim_vaccination_data <- function(date, region, uptake, end_date,
                                   mean_days_between_doses, efficacy,
-                                  data, boosters = NULL) {
+                                  data, boosters = NULL,
+                                  mean_days_to_waning = Inf,
+                                  booster_proportion = rep(1L, 19)) {
   if (region == "scotland") {
     data$age_band_min[data$age_band_min == 16] <- 15
   }
@@ -85,7 +92,9 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
 
     schedule <- sircovid::vaccine_schedule_future(
       date_start, doses, mean_days_between_doses,
-      priority_population, booster_daily_doses_value = boosters)
+      priority_population,
+      booster_daily_doses_value = boosters,
+      booster_proportion = booster_proportion)
   } else {
     # A number of vaccines have unexpectedly been allocoated to an NA age-group
     # in Scotland, let's filter them out for the time being
@@ -123,7 +132,8 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
     schedule <- sircovid::vaccine_schedule_data_future(data, region, uptake,
                                                        end_date,
                                                        mean_days_between_doses,
-                                                       boosters)
+                                                       boosters,
+                                                       booster_proportion)
   }
 
   i <- seq_len(sircovid::sircovid_date(date) - schedule$date + 1)
@@ -136,7 +146,8 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
     priority_population = priority_population,
     schedule = schedule,
     schedule_real = schedule_real,
-    efficacy = efficacy)
+    efficacy = efficacy,
+    mean_days_to_waning = mean_days_to_waning)
   class(ret) <- "spim_vaccination_data" # soon
   ret
 }

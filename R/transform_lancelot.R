@@ -1,4 +1,4 @@
-spim_lancelot_transform <- function(region, model_type, multistrain, beta_date,
+transform_lancelot <- function(region, model_type, multistrain, beta_date,
                                     vaccination, cross_immunity = NULL,
                                     waning_rate) {
   beta_date <- sircovid::sircovid_date(beta_date)
@@ -237,17 +237,9 @@ spim_lancelot_transform <- function(region, model_type, multistrain, beta_date,
       strain_transmission <- 1
     }
 
+    ## lancelot expects boosting and waning
     n_doses <- vaccination$schedule$n_doses
-    if (n_doses == 2) {
-      vaccine_progression_rate <- c(0, 1 / 21, 0, 0)
-      vaccine_index_booster <- NULL
-    } else if (n_doses == 3) {
-      vaccine_progression_rate <- c(0, 1 / 21, 0, 0, 0)
-      vaccine_index_booster <- 4L
-    } else {
-      stop("Expected 2 or 3 n_doses")
-    }
-
+    stopifnot(n_doses == 3)
 
     ret <- sircovid::lancelot_parameters(
       ## Core
@@ -278,10 +270,11 @@ spim_lancelot_transform <- function(region, model_type, multistrain, beta_date,
       rel_p_hosp_if_sympt = rel_efficacy$rel_p_hosp_if_sympt,
       rel_p_death = rel_efficacy$rel_p_death,
       rel_infectivity = rel_efficacy$rel_infectivity,
-      vaccine_progression_rate = vaccine_progression_rate,
+      vaccine_progression_rate = c(0, 0, 1 / vaccination$mean_days_to_waning,
+                                   0, 0),
       vaccine_schedule = vaccination$schedule,
-      vaccine_index_dose2 = 3L,
-      vaccine_index_booster = vaccine_index_booster,
+      vaccine_index_dose2 = 2L,
+      vaccine_index_booster = 4L,
       n_doses = n_doses,
       ## Strains
       strain_transmission = strain_transmission,

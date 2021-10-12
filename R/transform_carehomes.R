@@ -248,7 +248,7 @@ transform_carehomes <- function(region, model_type, multistrain, beta_date,
       stop("Expected 2 or 3 n_doses")
     }
 
-
+browser()
     ret <- sircovid::carehomes_parameters(
       ## Core
       start_date = start_date,

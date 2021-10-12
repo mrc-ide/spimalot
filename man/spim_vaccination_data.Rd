@@ -12,7 +12,8 @@ spim_vaccination_data(
   mean_days_between_doses,
   efficacy,
   data,
-  boosters = NULL
+  boosters = NULL,
+  mean_days_to_waning = Inf
 )
 }
 \arguments{
@@ -46,6 +47,11 @@ matrix must be a proportion and decrease across columns.}
 \item{boosters}{Boosters daily doses value passed to
 \link[sircovid:vaccine_schedule_future]{sircovid::vaccine_schedule_future} or
 \link[sircovid:vaccine_schedule_data_future]{sircovid::vaccine_schedule_data_future}}
+
+\item{mean_days_to_waning}{Mean number of days until waning from second
+dose, the inverse is passed to \code{vaccine_progression_rate}. If \code{Inf}
+(default) then no waning or boosting. Currently only used in
+\code{transform_lancelot}.}
 }
 \value{
 A list suitable for passing to \code{spim_pars} as
