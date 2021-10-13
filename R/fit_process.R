@@ -899,12 +899,13 @@ calculate_cases <- function(samples) {
                    numeric(length(phi_pillar2_cases_names))))
 
   calc_cases <- function(group) {
-    cases <- samples$trajectories$state[paste0("sympt_cases_", group, "_inc"), , ]
+    cases1 <-
+      samples$trajectories$state[paste0("sympt_cases_", group, "_inc"), , ]
 
-    cases[, grepl("^S", weekdays(x))] <-
+    cases1[, grepl("^S", weekdays(x))] <-
       cases[, grepl("^S", weekdays(x))] *
       pars[, paste0("phi_pillar2_cases_weekend_", group)]
-    cases[, !grepl("^S", weekdays(x))] <-
+    cases1[, !grepl("^S", weekdays(x))] <-
       cases[, !grepl("^S", weekdays(x))] *
       pars[, paste0("phi_pillar2_cases_", group)]
 
@@ -919,9 +920,9 @@ calculate_cases <- function(samples) {
   cases_80_plus <- calc_cases("80_plus")
 
   cases_over25 <- cases_25_49 + cases_50_64 + cases_65_79 + cases_80_plus
-  cases <- cases_under15 + cases_15_24 + cases_over25
+  cases_all <- cases_under15 + cases_15_24 + cases_over25
 
-  cases <- abind1(cases, cases_over25)
+  cases <- abind1(cases_all, cases_over25)
   cases <- abind1(cases, cases_under15)
   cases <- abind1(cases, cases_15_24)
   cases <- abind1(cases, cases_25_49)
