@@ -802,6 +802,7 @@ spim_fit_parameters <- function(samples, parameters) {
 
 calculate_positivity <- function(samples, over25) {
 
+  browser()
   p_NC_names <- c("p_NC_under15", "p_NC_15_24", "p_NC_25_49",
                   "p_NC_50_64", "p_NC_65_79", "p_NC_80_plus",
                   "p_NC_weekend_under15", "p_NC_weekend_15_24",
@@ -852,10 +853,10 @@ calculate_positivity <- function(samples, over25) {
   neg_all <- neg_under15 + neg_15_24 + neg_over25
 
   calc_pos <- function(pos, neg) {
-    positivity <-
+    positivity1 <-
       (pos * base_pars$pillar2_sensitivity +
          neg * (1 - base_pars$pillar2_specificity)) / (pos + neg) * 100
-    array(positivity, c(1, dim(positivity)))
+    array(positivity1, c(1, dim(positivity1)))
   }
 
   positivity <- calc_pos(pos_all, neg_all)
