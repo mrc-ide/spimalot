@@ -827,7 +827,7 @@ calculate_positivity <- function(samples, over25) {
     samples$trajectories$state[paste0("sympt_cases_80_plus_inc"), , ]
 
   pos_over25 <- pos_25_49 + pos_50_64 + pos_65_79 + pos_80_plus
-  pos <- pos_under15 + pos_15_24 + pos_over25
+  pos_all <- pos_under15 + pos_15_24 + pos_over25
 
   calc_negs <- function(group) {
     neg <- base_pars[[paste0("N_tot_", group)]] -
@@ -849,7 +849,7 @@ calculate_positivity <- function(samples, over25) {
   neg_80_plus <- calc_negs("80_plus")
 
   neg_over25 <- neg_25_49 + neg_50_64 + neg_65_79 + neg_80_plus
-  neg <- neg_under15 + neg_15_24 + neg_over25
+  neg_all <- neg_under15 + neg_15_24 + neg_over25
 
   calc_pos <- function(pos, neg) {
     positivity <-
@@ -858,7 +858,7 @@ calculate_positivity <- function(samples, over25) {
     array(positivity, c(1, dim(positivity)))
   }
 
-  positivity <- calc_pos(pos, neg)
+  positivity <- calc_pos(pos_all, neg_all)
   positivity <- abind1(positivity, calc_pos(pos_over25, neg_over25))
   positivity <- abind1(positivity, calc_pos(pos_under15, neg_under15))
   positivity <- abind1(positivity, calc_pos(pos_15_24, neg_15_24))
