@@ -553,6 +553,12 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
   mean_days_between_doses <- round(vaccine$mean_days_between_doses *
                                      args$vaccine_delay_multiplier)
 
+  ## TODO: potentially a big problem here! We cannot fully disentangle booster
+  ## eligibility from general vaccine eligibility, cna we? Especially, it seems
+  ## the wya the latter is inputed (i.e. eligibility * uptake = calculation of
+  ## priority population) seems to heavily affect actual boosters uptake! So
+  ## we are potentially overestimating by quite a lot the effect of a
+  ## boster vaccination programme!
   vaccine_schedule <- sircovid::vaccine_schedule_scenario(
     ## schedule_past got renamed to schedule_real in new params task
     schedule_past = vaccine$schedule_real,
