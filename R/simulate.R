@@ -946,7 +946,7 @@ simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
 
   # Output number of first, second and booster doses
 
-  idx_doses <- c("first_dose" = 1, "second_dose" = 3, "booster_dose" = 4)
+  idx_doses <- c("first_dose" = 1, "second_dose" = 3, "booster_dose" = 5)
   doses <- n_vaccinated[, idx_doses, , ]
   dimnames(doses)[2:3] <- list(names(idx_doses), regions)
   doses_inc <- aperm(apply(doses, c(1, 2, 3), diff), c(2, 3, 4, 1))
