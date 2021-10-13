@@ -903,13 +903,13 @@ calculate_cases <- function(samples) {
       samples$trajectories$state[paste0("sympt_cases_", group, "_inc"), , ]
 
     cases1[, grepl("^S", weekdays(x))] <-
-      cases[, grepl("^S", weekdays(x))] *
+      cases1[, grepl("^S", weekdays(x))] *
       pars[, paste0("phi_pillar2_cases_weekend_", group)]
     cases1[, !grepl("^S", weekdays(x))] <-
-      cases[, !grepl("^S", weekdays(x))] *
+      cases1[, !grepl("^S", weekdays(x))] *
       pars[, paste0("phi_pillar2_cases_", group)]
 
-    array(cases, c(1, dim(cases)))
+    array(cases1, c(1, dim(cases1)))
   }
 
   cases_under15 <- calc_cases("under15")
