@@ -800,9 +800,8 @@ spim_fit_parameters <- function(samples, parameters) {
 }
 
 
-calculate_positivity <- function(samples, over25) {
+calculate_positivity <- function(samples) {
 
-  browser()
   p_NC_names <- c("p_NC_under15", "p_NC_15_24", "p_NC_25_49",
                   "p_NC_50_64", "p_NC_65_79", "p_NC_80_plus",
                   "p_NC_weekend_under15", "p_NC_weekend_15_24",
@@ -875,11 +874,12 @@ calculate_positivity <- function(samples, over25) {
   samples$trajectories$state <-
     abind1(samples$trajectories$state, positivity)
 
+
   samples
 }
 
 
-calculate_cases <- function(samples, over25) {
+calculate_cases <- function(samples) {
 
   phi_pillar2_cases_names <-
     c("phi_pillar2_cases_under15", "phi_pillar2_cases_15_24",
