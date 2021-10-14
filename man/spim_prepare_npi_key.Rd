@@ -15,6 +15,7 @@ spim_prepare_npi_key(
   overwrite_central_adherence = NULL,
   overwrite_low_adherence = NULL,
   overwrite_high_adherence = NULL,
+  overwrite_mtp_adherence = NULL,
   npi_key = NULL,
   modify_gradual = FALSE
 )
@@ -46,6 +47,8 @@ be useful if automating some, but not all, of the Rt values}
 
 \item{overwrite_low_adherence, overwrite_high_adherence}{As for
 \code{overwrite_central_adherence}}
+
+\item{overwrite_mtp_adherence}{As for \code{overwrite_central_adherence}}
 
 \item{npi_key}{Optional data.frame, instead of reading from \code{path}}
 
