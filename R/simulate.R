@@ -266,9 +266,13 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
       1, 2, args$strain_initial_proportion, regions)
   }
 
+  for (i in seq_along(pars)) {
+    pars[[i]]$steps_per_day <- as.integer(pars[[i]]$steps_per_day)
+    pars[[i]]$index_dose <- as.integer(pars[[i]]$index_dose)
+  }
   message("Creating dust object")
-  obj <- sircovid::carehomes$new(pars, step_start, NULL, pars_multi = TRUE,
-                                 n_threads = args$n_threads, seed = args$seed)
+  obj <- sircovid::lancelot$new(pars, step_start, NULL, pars_multi = TRUE,
+                                n_threads = args$n_threads, seed = args$seed)
   obj$update_state(state = state_start)
   obj$set_index(index$run)
   message("Simulating!")
@@ -378,7 +382,7 @@ simulate_prepare_upgrade <- function(combined) {
       ## NOTE: this won't work well if we have to add new parameters
       ## because we then break the transform function.
       p <- combined$transform[[i]](combined$pars[[i]][1, ])
-      info_new <- sircovid::carehomes$new(p, 0, 1)$info()
+      info_new <- sircovid::lancelot$new(p, 0, 1)$info()
       cmp <- combined$state[[i]]
       combined$state[[i]] <- sircovid::upgrade_state(
         combined$state[[i]],
@@ -436,7 +440,7 @@ simulate_prepare_inflate_strain <- function(pars, state, info) {
 
   ## Then update the states given that:
   info_old <- info[[1]]$info
-  info_new <- sircovid::carehomes$new(pars_new[[1]][[1]], 0, 1)$info()
+  info_new <- sircovid::lancelot$new(pars_new[[1]][[1]], 0, 1)$info()
   state_new <- lapply(state, sircovid::inflate_state_strains,
                       info_old, info_new)
 
@@ -481,7 +485,7 @@ simulate_prepare_inflate_vacc_classes <- function(pars, state, info) {
                  index_dose = new_idx_dose,
                  index_dose_inverse =
                    sircovid:::create_index_dose_inverse(new_n_vacc_classes,
-                                                       new_idx_dose))
+                                                        new_idx_dose))
 
   inflate_pars <- function(p_i) {
     p_i[names(update)] <- update
@@ -506,7 +510,7 @@ simulate_prepare_inflate_vacc_classes <- function(pars, state, info) {
 
   ## Then update the states given that:
   info_old <- info[[1]]$info
-  info_new <- sircovid::carehomes$new(pars_new[[1]][[1]], 0, 1)$info()
+  info_new <- sircovid::lancelot$new(pars_new[[1]][[1]], 0, 1)$info()
   state_new <- lapply(state, sircovid::inflate_state_vacc_classes,
                       info_old, info_new)
 
@@ -539,16 +543,25 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
     args$strain_vaccine_efficacy <-
       Map(cbind, args$strain_vaccine_efficacy,
           args$strain_vaccine_booster_efficacy)
-    vaccine_index_booster <- pars[[1]]$index_dose[[3]]
+    ## TODO: index_dose for boosters is assumed to be fourth column, when in
+    ## fact it's now the fifth!! This needs fixing ASAP
+    vaccine_index_booster <- pars[[1]]$index_dose[[3]] + 1
   } else {
     vaccine_index_booster <- NULL
   }
 
   mean_days_between_doses <- round(vaccine$mean_days_between_doses *
-                                   args$vaccine_delay_multiplier)
+                                     args$vaccine_delay_multiplier)
 
+  ## TODO: potentially a big problem here! We cannot fully disentangle booster
+  ## eligibility from general vaccine eligibility, cna we? Especially, it seems
+  ## the wya the latter is inputed (i.e. eligibility * uptake = calculation of
+  ## priority population) seems to heavily affect actual boosters uptake! So
+  ## we are potentially overestimating by quite a lot the effect of a
+  ## boster vaccination programme!
   vaccine_schedule <- sircovid::vaccine_schedule_scenario(
-    schedule_past = vaccine$schedule,
+    ## schedule_past got renamed to schedule_real in new params task
+    schedule_past = vaccine$schedule_real,
     doses_future = args$vaccine_daily_doses[[region]],
     end_date = args$end_date,
     mean_days_between_doses = mean_days_between_doses,
@@ -556,7 +569,8 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
     lag_groups = args$vaccine_lag_groups,
     lag_days = args$vaccine_lag_days,
     boosters_future = args$vaccine_booster_daily_doses[[region]],
-    boosters_prepend_zero = FALSE)
+    boosters_prepend_zero = TRUE,
+    booster_proportion = args$vaccine_booster_eligibility)
 
   ## check boosters
   # > par(mfrow = c(3, 1))
@@ -575,7 +589,7 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
     args$strain_vaccine_efficacy,
     args$strain_severity_modifier)
 
-  extra <- sircovid:::carehomes_parameters_vaccination(
+  extra <- sircovid:::lancelot_parameters_vaccination(
     N_tot,
     pars[[1]]$dt,
     rel_susceptibility = rel_list$rel_susceptibility,
@@ -590,20 +604,20 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
     n_strains = n_strain,
     n_doses = pars[[1]]$n_doses)
 
-    n_group <- nrow(rel_list$rel_p_sympt)
-    n_vacc_class <- extra$n_vacc_classes
+  n_group <- nrow(rel_list$rel_p_sympt)
+  n_vacc_class <- extra$n_vacc_classes
 
-    rel_severity <- sircovid:::build_rel_param(extra$rel_p_death, n_strain,
-                                               n_vacc_class, "rel_p_death")
+  rel_severity <- sircovid:::build_rel_param(extra$rel_p_death, n_strain,
+                                             n_vacc_class, "rel_p_death")
 
-    extra$rel_p_ICU <- extra$rel_p_R <-
-      array(1, c(n_group, n_strain, n_vacc_class))
+  extra$rel_p_ICU <- extra$rel_p_R <-
+    array(1, c(n_group, n_strain, n_vacc_class))
 
-    extra$rel_p_ICU_D <- extra$rel_p_H_D <- extra$rel_p_W_D <-
-      extra$rel_p_G_D <- rel_severity
+  extra$rel_p_ICU_D <- extra$rel_p_H_D <- extra$rel_p_W_D <-
+    extra$rel_p_G_D <- rel_severity
 
   if (!is.null(args$strain_transmission)) {
-    strain_params <- sircovid:::carehomes_parameters_strain(
+    strain_params <- sircovid:::lancelot_parameters_strain(
       args$strain_transmission,
       sircovid::sircovid_date(args$strain_seed_date),
       args$strain_seed_rate[[region]],
@@ -619,7 +633,7 @@ simulate_one_pars_vaccination <- function(region, args, combined, n_strain) {
 
   ## TODO: someone could explain why this is the check function wanted
   ## here, as it is not obvious.
-  lapply(pars, sircovid::carehomes_check_severity)
+  lapply(pars, sircovid::lancelot_check_severity)
 }
 
 
@@ -656,7 +670,7 @@ simulate_index <- function(info, keep, calculate_vaccination, multistrain) {
     index_prob_strain <- NULL
   }
 
-  index <- c(sircovid::carehomes_index(info)$state[keep],
+  index <- c(sircovid::lancelot_index(info)$state[keep],
              index_S, index_D, index_I, index_A, index_n_vaccinated,
              index_R, index_prob_strain)
 
@@ -688,10 +702,10 @@ setup_future_betas <- function(pars, rt_future, S, rt_type,
   beta <- array(beta, c(dim(pars), ncol(beta)))
 
   rt <- vnapply(seq_along(pars), function(i)
-    sircovid::carehomes_Rt(step_current, S[, i, drop = FALSE], pars[[i]],
-                           type = rt_type, R = R[, i, drop = FALSE],
-                           prob_strain = prob_strain[, i, drop = FALSE],
-                           weight_Rt = FALSE)[[rt_type]][1])
+    sircovid::lancelot_Rt(step_current, S[, i, drop = FALSE], pars[[i]],
+                          type = rt_type, R = R[, i, drop = FALSE],
+                          prob_strain = prob_strain[, i, drop = FALSE],
+                          weight_Rt = FALSE)[[rt_type]][1])
   beta_rt_ratio <- beta[, , step_current] / rt
 
   for (region_index in seq_len(ncol(pars))) {
@@ -852,7 +866,7 @@ simulate_rt <- function(steps, S, pars, critical_dates, voc_seeded,
 
   rt_type <- c("Rt_general", "eff_Rt_general")
 
-  rt <- sircovid::carehomes_Rt_trajectories(
+  rt <- sircovid::lancelot_Rt_trajectories(
     steps, S, pars, type = rt_type,
     initial_step_from_parameters = FALSE,
     interpolate_critical_dates = critical_dates,
@@ -885,7 +899,7 @@ simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
                                            strain_vaccine_efficacy,
                                            strain_vaccine_booster_efficacy,
                                            strain_cross_immunity) {
-  n_groups <- sircovid:::carehomes_n_groups()
+  n_groups <- sircovid:::lancelot_n_groups()
   regions <- dimnames(state)[[3]]
 
   ## output the cumulative transitions between vaccine strata
@@ -938,7 +952,7 @@ simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
 
   # Output number of first, second and booster doses
 
-  idx_doses <- c("first_dose" = 1, "second_dose" = 3, "booster_dose" = 4)
+  idx_doses <- c("first_dose" = 1, "second_dose" = 3, "booster_dose" = 5)
   doses <- n_vaccinated[, idx_doses, , ]
   dimnames(doses)[2:3] <- list(names(idx_doses), regions)
   doses_inc <- aperm(apply(doses, c(1, 2, 3), diff), c(2, 3, 4, 1))
@@ -958,7 +972,7 @@ simulate_calculate_vaccination <- function(state, index, vaccine_efficacy,
 ## TODO: overlap considerably with calculate_n_protected
 ## make R strain specific
 calculate_n_protected <- function(n_vaccinated, R, vaccine_efficacy,
-                                        booster_efficacy) {
+                                  booster_efficacy) {
   vp <- get_vaccine_protection(vaccine_efficacy, booster_efficacy)
 
   # Methodology: calculate incidence of first / second doses,
@@ -1110,7 +1124,7 @@ simulate_validate_args1 <- function(args, regions, multistrain) {
 
   if (has_boosters) {
     validate_vaccine_doses(args$vaccine_booster_daily_doses, regions,
-                         "vaccine_booster_daily_doses")
+                           "vaccine_booster_daily_doses")
     validate_vaccine_efficacy(args$vaccine_booster_efficacy,
                               n_groups, 1)
   } else {
@@ -1217,7 +1231,7 @@ validate_rt_future <- function(x, regions, name = deparse(substitute(x))) {
 
 
 simulate_extract_age_class_state <- function(state, index) {
-  n_groups <- sircovid:::carehomes_n_groups()
+  n_groups <- sircovid:::lancelot_n_groups()
 
   ## output cumulative states by
   ## age / vaccine class / sample / region / time
@@ -1239,9 +1253,9 @@ simulate_extract_age_class_state <- function(state, index) {
 
     if (ncol(x) == 3) {
       colnames(x) <- c("unvaccinated", "partial_protection", "full_protection")
-    } else  if (ncol(x) == 4) {
+    } else  if (ncol(x) == 5) {
       colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
-                       "booster")
+                       "waned_protection", "booster")
     }
 
     ## aggregate age groups
@@ -1459,14 +1473,14 @@ spim_simulation_predictors <- function(summary) {
   vars <- names(which(vapply(summary, function(i)
     length(unique(i)) > 1, logical(1))))
   vars <- setdiff(vars, c(## not needed
-                          "analysis", "full_run", "state", "rt_future",
-                          ## taken into account in scenario
-                          "adherence_to_baseline_npis",
-                          ## outcomes
-                          "2.5%", "50%", "97.5%",
-                          ## these two are identical to
-                          ## vaccine_efficacy_strain_2
-                          "strain_severity_modifier", "rel_strain_modifier"))
+    "analysis", "full_run", "state", "rt_future",
+    ## taken into account in scenario
+    "adherence_to_baseline_npis",
+    ## outcomes
+    "2.5%", "50%", "97.5%",
+    ## these two are identical to
+    ## vaccine_efficacy_strain_2
+    "strain_severity_modifier", "rel_strain_modifier"))
 
   vars
 }
@@ -1504,6 +1518,8 @@ spim_simulation_predictors <- function(summary) {
 ##' @param overwrite_low_adherence,overwrite_high_adherence As for
 ##'   `overwrite_central_adherence`
 ##'
+##' @param overwrite_mtp_adherence As for `overwrite_central_adherence`
+##'
 ##' @param npi_key Optional data.frame, instead of reading from `path`
 ##'
 ##' @param modify_gradual Logical, stating whether to adjust gradual `npi`
@@ -1519,6 +1535,7 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
                                  overwrite_central_adherence = NULL,
                                  overwrite_low_adherence = NULL,
                                  overwrite_high_adherence = NULL,
+                                 overwrite_mtp_adherence = NULL,
                                  npi_key = NULL, modify_gradual = FALSE) {
 
   schools_modifier <- abs(schools_modifier)
@@ -1564,10 +1581,10 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
   npi_key <- dplyr::bind_rows(
     npi_key,
     npi_key %>%
-    dplyr::mutate(npi = gsub(schools, setdiff(all_schools, schools), npi),
-                  Rt = case_when(schools == "open" ~ Rt - schools_modifier,
-                                  schools == "closed" ~ Rt + schools_modifier))
-    )
+      dplyr::mutate(npi = gsub(schools, setdiff(all_schools, schools), npi),
+                    Rt = case_when(schools == "open" ~ Rt - schools_modifier,
+                                   schools == "closed" ~ Rt + schools_modifier))
+  )
 
   if (!is.null(gradual_start)) {
 
@@ -1611,7 +1628,7 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
         data.frame(nation = nat, npi = npi, Rt = steps, Rt_sd = sd,
                    adherence = ad)
       }) %>%
-      dplyr::bind_rows()
+        dplyr::bind_rows()
     }
 
     f <- function(ad) {
@@ -1623,7 +1640,7 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
           lapply(npi_key[npi_key$npi == gradual_end, "adherence"], f)))
   }
 
- npi_key %>%
+  npi_key %>%
     dplyr::arrange(adherence, nation, npi) %>%
     dplyr::mutate(Rt = round(Rt, 3)) %>%
     `rownames<-`(NULL)
@@ -1744,7 +1761,7 @@ spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
     x <- vapply(as.numeric(c(x[["50%"]], x[["2.5%"]], x[["97.5%"]])),
                 find_r_from_R, numeric(1))
   }) %>%
-  `rownames<-`(c("50%", "2.5%", "97.5%")) %>%
+    `rownames<-`(c("50%", "2.5%", "97.5%")) %>%
     t() %>%
     data.frame(obj$date, obj$analysis, obj$scenario) %>%
     `colnames<-`(c("50%", "2.5%", "97.5%", "date", "analysis", "scenario")) %>%
@@ -1847,9 +1864,9 @@ spim_write_npi_key <- function(npi_key, filename) {
       npi_pars <- mapply(function(mean, sd) {
         dist <- distr6::dstr("Lognormal", mean = mean, sd = sd)
         unlist(c(q2.5 = dist$quantile(0.025),
-                q97.5 = dist$quantile(0.975),
-                meanlog = dist$parameters("meanlog")$value,
-                sdlog = dist$parameters("sdlog")$value))
+                 q97.5 = dist$quantile(0.975),
+                 meanlog = dist$parameters("meanlog")$value,
+                 sdlog = dist$parameters("sdlog")$value))
       }, mean = key$Rt, sd = key$Rt_sd)
       npi_pars <- cbind(key, signif(t(npi_pars), 3))
       npi_pars$region <- i
@@ -1887,6 +1904,7 @@ spim_simulation_vars <- function() {
     "vaccine_booster_daily_doses",
     "vaccine_efficacy",
     "vaccine_booster_efficacy",
+    "vaccine_booster_eligibility",
     "vaccine_eligibility",
     "vaccine_uptake",
     "vaccine_lag_groups",
