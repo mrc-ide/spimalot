@@ -415,6 +415,10 @@ spim_lancelot_transform <- function(region, model_type, multistrain, beta_date,
                                           "2021-02-15"))
     p_H_value <- c(p_H, p_H_2, p_H_3)
 
+    p_star_date <- sircovid::sircovid_date(c("2020-03-15", "2020-07-01",
+                                             "2020-09-20", "2021-06-27"))
+    p_star_value <- c(0.1, 0.42, 0.2, 0.45)
+
     severity <- sircovid::lancelot_parameters_severity(
       0.25,
       severity,
@@ -424,7 +428,8 @@ spim_lancelot_transform <- function(region, model_type, multistrain, beta_date,
       p_H_D = list(value = p_H_D_value, date = p_D_date),
       p_W_D = list(value = p_W_D_value, date = p_D_date),
       p_G_D = list(value = p_G_D),
-      p_G_D_CHR = list(value = p_G_D_CHR))
+      p_G_D_CHR = list(value = p_G_D_CHR),
+      p_star = list(value = p_star_value, date = p_star_date))
 
     ## Set progression parameters based on Bob's analysis and fitted parameters
     k_parameters <-
@@ -478,6 +483,8 @@ spim_lancelot_transform <- function(region, model_type, multistrain, beta_date,
     progression$gamma_sero_pos_1 <- 1 / 200
     progression$k_sero_pos_2 <- 1
     progression$gamma_sero_pos_2 <- 1 / 400
+    # Time to diagnosis if admitted without test
+    progression$gamma_U <- 1 / 3
 
     observation <- sircovid::lancelot_parameters_observation()
 
@@ -490,6 +497,8 @@ spim_lancelot_transform <- function(region, model_type, multistrain, beta_date,
     observation$kappa_ICU <- 1 / alpha_H
     observation$kappa_general <- 1 / alpha_H
     observation$kappa_hosp <- 1 / alpha_H
+    observation$kappa_admitted <- 1 / alpha_H
+    observation$kappa_diagnoses <- 1 / alpha_H
     observation$kappa_all_admission <- 1 / alpha_H
     observation$kappa_death_hosp <- 1 / alpha_H
 

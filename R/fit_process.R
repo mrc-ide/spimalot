@@ -191,8 +191,7 @@ spim_lancelot_fit_process <- function(samples, parameters, data, control,
   message("Preparing onward simulation object")
   start_date_sim <- "2021-01-01"
   simulate <- create_simulate_object(
-    forecast, samples$vaccine$efficacy, start_date_sim, samples$info$date,
-    sircovid_model = "lancelot")
+    forecast, samples$vaccine$efficacy, start_date_sim, samples$info$date)
 
   ## Reduce trajectories in forecast before saving
   message("Reducing trajectories")
