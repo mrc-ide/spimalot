@@ -390,3 +390,61 @@ reorder_variant_rt <- function(x, rank) {
 
   x
 }
+
+##' Add forecasts to combined fit object
+##'
+##' @title Add forecasts to combined fit object
+##'
+##' @param dat A combined fit object
+##'
+##' @param forecast_days Number of days of forecasts to add
+##'
+##' @return A combined fit object with forecasts added in
+##' @export
+spim_add_forecast <- function(dat, forecast_days) {
+
+  message("Adding forecasts")
+  dat$samples <- lapply(dat$samples[sircovid::regions("all")],
+                        function(x) spim_add_forecast_region(x, forecast_days))
+  dat$samples <- combined_aggregate_samples(dat$samples)
+
+  dat
+}
+
+
+spim_add_forecast_region <- function(samples, forecast_days) {
+
+  ## Run forecast
+  steps_predict <- seq(samples$predict$step,
+                       length.out = forecast_days + 1L,
+                       by = samples$predict$rate)
+  forecast <- mcstate::pmcmc_predict(
+    samples, steps_predict,
+    prepend_trajectories = FALSE)
+  forecast$date <- forecast$step / forecast$rate
+
+  ## Get forecast trajectories in a shape compatible with samples trajectories
+  forecast_samples <- samples
+  forecast_samples$trajectories <- forecast
+  forecast_samples$trajectories <-
+    sircovid::add_trajectory_incidence(forecast_samples$trajectories, "deaths")
+  forecast_samples <- reduce_trajectories(forecast_samples)
+
+  ## Join trajectories from forecast and samples together
+  ## We remove the first date from the forecast as this is the same as the last
+  ## fitted date
+  samples$trajectories$state <-
+    abind_quiet(samples$trajectories$state,
+                forecast_samples$trajectories$state[, , -1L],
+                along = 3)
+  samples$trajectories$step <- c(samples$trajectories$step,
+                                 forecast_samples$trajectories$step[-1L])
+  samples$trajectories$date <- c(samples$trajectories$date,
+                                 forecast_samples$trajectories$date[-1L])
+  samples$trajectories$predicted <-
+    c(samples$trajectories$predicted,
+      forecast_samples$trajectories$predicted[-1L])
+
+  samples
+
+}
