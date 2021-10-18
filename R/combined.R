@@ -408,6 +408,7 @@ reorder_variant_rt <- function(x, rank) {
 
 spim_add_forecast <- function(samples, forecast_days) {
 
+  ## Run forecast
   steps_predict <- seq(samples$predict$step,
                        length.out = forecast_days + 1L,
                        by = samples$predict$rate)
@@ -416,13 +417,16 @@ spim_add_forecast <- function(samples, forecast_days) {
     prepend_trajectories = FALSE)
   forecast$date <- forecast$step / forecast$rate
 
+  ## Get forecast trajectories in a shape compatible with samples trajectories
   forecast_samples <- samples
   forecast_samples$trajectories <- forecast
   forecast_samples$trajectories <-
     sircovid::add_trajectory_incidence(forecast_samples$trajectories, "deaths")
   forecast_samples <- reduce_trajectories(forecast_samples)
 
-
+  ## Join trajectories from forecast and samples together
+  ## We remove the first date from the forecast as this is the same as the last
+  ## fitted date
   samples$trajectories$state <-
     abind_quiet(samples$trajectories$state,
                 forecast_samples$trajectories$state[, , -1L],
