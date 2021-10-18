@@ -9,16 +9,9 @@
 ##' @param regions Region type passed to [sircovid::regions] (default
 ##'   is `all`, otherwise try `england`)
 ##'
-##' @param add_forecast Logical, whether to add forecasts to the fitted
-##'   trajectories or not
-##'
-##' @param forecast_days Number of days of forecasts to add if
-##'   `add_forecast = TRUE`
-##'
 ##' @return A combined fit object
 ##' @export
-spim_combined_load <- function(path, regions = "all",
-                               add_forecast = FALSE, forecast_days = 71) {
+spim_combined_load <- function(path, regions = "all") {
   regions <- sircovid::regions(regions)
 
   files <- file.path(path, regions, "fit.rds")
@@ -84,13 +77,6 @@ spim_combined_load <- function(path, regions = "all",
   message("Creating data for onward use")
   ret$onward <- spim_combined_onward(ret)
   ret$parameters <- lapply(list_transpose(ret$parameters), dplyr::bind_rows)
-
-  if (add_forecast){
-    message("Adding forecasts")
-    ret$samples <- lapply(ret$samples,
-                          function(x) spim_add_forecast(x, forecast_days))
-    agg_samples <- combined_aggregate_samples(ret$samples)
-  }
 
   ## Now the onward object has been created, we can safely store the
   ## other aggregated outputs in ret
@@ -405,8 +391,28 @@ reorder_variant_rt <- function(x, rank) {
   x
 }
 
+##' Add forecasts to combined fit object
+##'
+##' @title Add forecasts to combined fit object
+##'
+##' @param dat A combined fit object
+##'
+##' @param forecast_days Number of days of forecasts to add
+##'
+##' @return A combined fit object with forecasts added in
+##' @export
+spim_add_forecast <- function(dat, forecast_days) {
 
-spim_add_forecast <- function(samples, forecast_days) {
+  message("Adding forecasts")
+  dat$samples <- lapply(dat$samples[sircovid::regions("all")],
+                        function(x) spim_add_forecast_region(x, forecast_days))
+  dat$samples <- combined_aggregate_samples(dat$samples)
+
+  dat
+}
+
+
+spim_add_forecast_region <- function(samples, forecast_days) {
 
   ## Run forecast
   steps_predict <- seq(samples$predict$step,
