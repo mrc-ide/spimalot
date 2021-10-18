@@ -9,9 +9,16 @@
 ##' @param regions Region type passed to [sircovid::regions] (default
 ##'   is `all`, otherwise try `england`)
 ##'
+##' @param add_forecast Logical, whether to add forecasts to the fitted
+##'   trajectories or not
+##'
+##' @param forecast_days Number of days of forecasts to add if
+##'   `add_forecast = TRUE`
+##'
 ##' @return A combined fit object
 ##' @export
-spim_combined_load <- function(path, regions = "all") {
+spim_combined_load <- function(path, regions = "all",
+                               add_forecast = FALSE, forecast_days = 71) {
   regions <- sircovid::regions(regions)
 
   files <- file.path(path, regions, "fit.rds")
@@ -77,6 +84,13 @@ spim_combined_load <- function(path, regions = "all") {
   message("Creating data for onward use")
   ret$onward <- spim_combined_onward(ret)
   ret$parameters <- lapply(list_transpose(ret$parameters), dplyr::bind_rows)
+
+  if (add_forecast){
+    message("Adding forecasts")
+    ret$samples <- lapply(ret$samples,
+                          function(x) spim_add_forecast(x, forecast_days))
+    agg_samples <- combined_aggregate_samples(ret$samples)
+  }
 
   ## Now the onward object has been created, we can safely store the
   ## other aggregated outputs in ret
@@ -389,4 +403,38 @@ reorder_variant_rt <- function(x, rank) {
   }
 
   x
+}
+
+
+spim_add_forecast <- function(samples, forecast_days) {
+
+  steps_predict <- seq(samples$predict$step,
+                       length.out = forecast_days + 1L,
+                       by = samples$predict$rate)
+  forecast <- mcstate::pmcmc_predict(
+    samples, steps_predict,
+    prepend_trajectories = FALSE)
+  forecast$date <- forecast$step / forecast$rate
+
+  forecast_samples <- samples
+  forecast_samples$trajectories <- forecast
+  forecast_samples$trajectories <-
+    sircovid::add_trajectory_incidence(forecast_samples$trajectories, "deaths")
+  forecast_samples <- reduce_trajectories(forecast_samples)
+
+
+  samples$trajectories$state <-
+    abind_quiet(samples$trajectories$state,
+                forecast_samples$trajectories$state[, , -1L],
+                along = 3)
+  samples$trajectories$step <- c(samples$trajectories$step,
+                                 forecast_samples$trajectories$step[-1L])
+  samples$trajectories$date <- c(samples$trajectories$date,
+                                 forecast_samples$trajectories$date[-1L])
+  samples$trajectories$predicted <-
+    c(samples$trajectories$predicted,
+      forecast_samples$trajectories$predicted[-1L])
+
+  samples
+
 }

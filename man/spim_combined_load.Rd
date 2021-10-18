@@ -4,7 +4,12 @@
 \alias{spim_combined_load}
 \title{Load combined fits}
 \usage{
-spim_combined_load(path, regions = "all")
+spim_combined_load(
+  path,
+  regions = "all",
+  add_forecast = FALSE,
+  forecast_days = 71
+)
 }
 \arguments{
 \item{path}{Directory name. Within here we expect to see
@@ -13,6 +18,12 @@ spim_combined_load(path, regions = "all")
 
 \item{regions}{Region type passed to \link[sircovid:regions]{sircovid::regions} (default
 is \code{all}, otherwise try \code{england})}
+
+\item{add_forecast}{Logical, whether to add forecasts to the fitted
+trajectories or not}
+
+\item{forecast_days}{Number of days of forecasts to add if
+\code{add_forecast = TRUE}}
 }
 \value{
 A combined fit object
