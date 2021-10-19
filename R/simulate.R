@@ -1277,7 +1277,7 @@ simulate_extract_age_class_state <- function(state, index) {
     res$chr <- NULL
 
     # take mean across particles
-    ret <- apply(abind::abind(res, along = 5), c(1, 3, 4, 5), mean)
+    ret <- apply(abind_quiet(res, along = 5), c(1, 3, 4, 5), mean)
 
     # [age, vaccine status, region, time]
     round(aperm(ret, c(4, 1, 2, 3)))

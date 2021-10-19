@@ -305,7 +305,7 @@ combine_variant_rt <- function(variant_rt, samples, rank) {
   ## finally we join the variants together
   ret <- variant1
   for (w in what) {
-    ret[[w]] <- aperm(abind::abind(variant1[[w]], variant2[[w]], along = 3),
+    ret[[w]] <- aperm(abind_quiet(variant1[[w]], variant2[[w]], along = 3),
                          c(1, 3, 2))
   }
 

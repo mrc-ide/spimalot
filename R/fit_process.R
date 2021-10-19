@@ -521,7 +521,7 @@ extract_age_class_state <- function(state) {
     res$chr <- NULL
 
     # take mean across particles
-    ret <- apply(abind::abind(res, along = 4), c(1, 3, 4), mean)
+    ret <- apply(abind_quiet(res, along = 4), c(1, 3, 4), mean)
 
     # [age, vaccine status, region, time]
     ret <- round(aperm(ret, c(3, 1, 2)))
@@ -734,7 +734,7 @@ calculate_vaccination <- function(state, vaccine_efficacy, cross_immunity) {
                                    doses_inc)
   colnames(doses_inc) <- paste0(colnames(doses), "_inc")
 
-  n_doses <- abind::abind(doses, doses_inc, along = 2)
+  n_doses <- abind_quiet(doses, doses_inc, along = 2)
 
   list(n_protected = lapply(n_protected, mcstate::array_reshape, i = 2,
                             d = c(1, ncol(n_protected[[1]]))),

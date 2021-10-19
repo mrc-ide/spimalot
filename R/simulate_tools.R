@@ -238,7 +238,7 @@ spim_simulate_add_diagnoses_admitted <- function(obj, incidence = FALSE) {
       rownames(state) <- "diagnoses_admitted"
     }
 
-    obj$state <- abind::abind(obj$state, state, along = 1L)
+    obj$state <- abind_quiet(obj$state, state, along = 1L)
   }
 
   obj
@@ -272,7 +272,7 @@ spim_simulate_add_all_deaths <- function(obj, incidence = FALSE) {
       rownames(state) <- "deaths"
     }
 
-    obj$state <- abind::abind(obj$state, state, along = 1L)
+    obj$state <- abind_quiet(obj$state, state, along = 1L)
   }
 
   obj
