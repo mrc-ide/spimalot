@@ -490,7 +490,9 @@ tidy_state_one <- function(x, common) {
   res <- list()
 
   if ("summary_state" %in% names(x)) {
-
+    ## This tests if the incoming object is already summarised to
+    ## quantiles (we can tell based on the names that would have been
+    ## added to the second dimension)
     if (is.null(colnames(x$summary_state))) {
       name_2 <- "particle"
     } else {
@@ -510,7 +512,7 @@ tidy_state_one <- function(x, common) {
   }
 
   if ("state" %in% names(x)) {
-
+    ## As above, do we have an already-summarised object?
     if (is.null(colnames(x$state))) {
       name_2 <- "particle"
     } else {
@@ -548,6 +550,7 @@ tidy_state_one <- function(x, common) {
 
 
     # date, [particle] = mean, group, vaccine_status, region, state
+    # 'av' is "age and vaccine"
     av <-
       unlist(lapply(x$state_by_age, aperm, c(4, 1, 2, 3)), use.names = FALSE)
     dn$group <- rownames(x$state_by_age[[1]])
