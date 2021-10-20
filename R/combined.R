@@ -76,7 +76,15 @@ spim_combined_load <- function(path, regions = "all") {
   ## but I do not think that we need to.
   message("Creating data for onward use")
   ret$onward <- spim_combined_onward(ret)
-  ret$parameters <- lapply(list_transpose(ret$parameters), dplyr::bind_rows)
+
+  ## There are 3 elements in the parameter list that we need to join
+  ## together; info, prior and proposal, anything else we will leave
+  ## as a nested list (this includes the baseline parameter set which
+  ## will come through as 'base')
+  ret$parameters <- list_transpose(ret$parameters)
+  pars_combine <- c("info", "prior", "proposal")
+  ret$parameters[pars_combine] <-
+    lapply(ret$parameters[pars_combine], dplyr::bind_rows)
 
   ## Now the onward object has been created, we can safely store the
   ## other aggregated outputs in ret
