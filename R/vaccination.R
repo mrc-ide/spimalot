@@ -24,9 +24,7 @@
 ##'
 ##' @param data Vaccination data (TODO: DESCRIBE CONTENTS)
 ##'
-##' @param boosters Boosters daily doses value passed to
-##'  [sircovid::vaccine_schedule_future] or
-##'  [sircovid::vaccine_schedule_data_future]
+##' @param data_boosters Booster data
 ##'
 ##' @return A list suitable for passing to `spim_pars` as
 ##'   `vaccination`, containing the new vaccination schedule
@@ -36,7 +34,7 @@
 ##' @export
 spim_vaccination_data <- function(date, region, uptake, end_date,
                                   mean_days_between_doses, efficacy,
-                                  data, boosters = NULL) {
+                                  data, data_booster = NULL) {
   if (region == "scotland") {
     data$age_band_min[data$age_band_min == 16] <- 15
   }
@@ -46,6 +44,8 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
   data <- data[data$region == region, ]
   data$date <- as.Date(data$date)
   data <- dplyr::arrange(data, date)
+
+  boosters <- 0
 
   priority_population <- sircovid::vaccine_priority_population(region, uptake)
 
@@ -82,6 +82,8 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
     doses <- c(
       data$doses,
       rep(mean(tail(data$doses, 7)), end_date - (date_start + nrow(data))))
+      ## no boosters data for NI currently
+    boosters <- 0
 
     schedule <- sircovid::vaccine_schedule_future(
       date_start, doses, mean_days_between_doses,
@@ -120,10 +122,41 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
 
     data <- data[data$date <= last_day, ]
 
+    if (region %in% nations) {
+      ## no boosters data for Scotland or Wales currently
+      boosters <- 0
+      booster_start_date <- NULL
+    } else {
+      data_booster <-
+        data_booster[tolower(gsub(" ", "_", data_booster$region)) == region, ]
+      data_booster$date <- data_booster$date - 1
+      data_booster$booster <- c(data_booster$cumul_booster[1L],
+                                head(data_booster$booster, -1L))
+      data_booster <- data_booster[data_booster$date <= as.Date(date), ]
+      booster_start_date <- min(data_booster$date)
+      boosters <- data_booster$booster
+    }
+
     schedule <- sircovid::vaccine_schedule_data_future(data, region, uptake,
                                                        end_date,
                                                        mean_days_between_doses,
                                                        boosters)
+
+    if (is.null(booster_start_date)) {
+      schedule$doses <- schedule$doses[, , -dim(schedule$doses)[3]]
+    } else {
+      n_days <- sircovid::sircovid_date(end_date) - schedule$date + 1
+      schedule_boosters <-
+        schedule$doses[, 3, seq(n_days + 1, dim(schedule$doses)[3])]
+      booster_dates <-
+        seq(sircovid::sircovid_date(booster_start_date) -
+              schedule$date + 1, by = 1, length.out = length(boosters))
+      schedule$doses[, 3, booster_dates] <- schedule_boosters
+      schedule$doses <-
+        schedule$doses[, , -seq(n_days + 1, dim(schedule$doses)[3])]
+
+    }
+
   }
 
   i <- seq_len(sircovid::sircovid_date(date) - schedule$date + 1)
