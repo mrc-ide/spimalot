@@ -11,6 +11,8 @@ fit_process_restart <- function(samples, parameters, data, control) {
   pars$sample <- samples$pars
   class(pars) <- "spim_pars_pmcmc"
 
+  pars$base <- parameters$base
+
   list(state = samples$restart,
        info = samples$info,
        pars = pars,

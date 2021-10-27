@@ -794,9 +794,11 @@ spim_fit_parameters <- function(samples, parameters) {
                          name = colnames(covariance),
                          covariance)
 
-  list(info = info,
-       prior = prior,
-       proposal = proposal)
+  parameters$info <- info
+  parameters$prior <- prior
+  parameters$proposal <- proposal
+
+  parameters
 }
 
 
