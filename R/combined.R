@@ -104,6 +104,7 @@ spim_combined_onward <- function(dat) {
        steps_per_day = steps_per_day,
        dt = 1 / steps_per_day,
        pars = lapply(dat$samples, "[[", "pars"),
+       base = lapply(dat$parameters, function(x) x$base),
        state = lapply(dat$samples, "[[", "state"),
        data = lapply(dat$samples, function(x) x$predict$filter$data),
        transform = lapply(dat$samples, function(x) x$predict$transform),

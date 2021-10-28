@@ -76,7 +76,7 @@ spim_simulate_prepare <- function(combined, n_par,
                  c(nrow(state[[1]]), n_par, n_regions))
 
   ## Our final object that we will use in the simulations
-  ret <- combined[c("step", "date", "dt", "steps_per_day", "vaccine")]
+  ret <- combined[c("step", "date", "dt", "steps_per_day", "base")]
   ret$pars <- pars
   ret$state <- state
   ret$info <- info
