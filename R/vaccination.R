@@ -50,8 +50,6 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
   data$date <- as.Date(data$date)
   data <- dplyr::arrange(data, date)
 
-  boosters <- 0
-
   priority_population <- sircovid::vaccine_priority_population(region, uptake)
 
   if (region == "northern_ireland") {
@@ -149,9 +147,12 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
                                                        boosters,
                                                        booster_proportion)
 
-    if (is.null(booster_start_date)) {
-      schedule$doses <- schedule$doses[, , -dim(schedule$doses)[3]]
-    } else {
+
+    if (!is.null(booster_start_date)) {
+      ## This is a bit of a hack - currently booster doses are added on after
+      ## the last day in the data. So we shift them to the correct day here.
+      ## Once the vaccine schedule code is refactored to deal with full
+      ## booster data, we can remove this
       n_days <- sircovid::sircovid_date(end_date) - schedule$date + 1
       n_days_data <- sircovid::sircovid_date(last_day) - schedule$date + 1
       schedule_boosters <-
