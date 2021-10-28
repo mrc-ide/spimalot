@@ -111,6 +111,32 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
     ## Remove any data after the date parameter
     data <- data[data$date <= as.Date(date) & !is.na(data$age_band_min), ]
 
+    if (region == "scotland") {
+      ## no boosters data for Scotland currently
+      boosters <- 0
+      booster_start_date <- NULL
+    } else if (region == "wales") {
+      ## Welsh booster data is age specific, but we do not have support for
+      ## this in sircovid yet
+      data_booster <- data %>%
+        dplyr::group_by(.data$date) %>%
+        dplyr::summarise(
+          dose3 = sum(.data$third_dose, na.rm = TRUE))
+      booster_start_date <-
+        data_booster$date[min(which(data_booster$dose3 > 0))]
+      boosters <- data_booster$dose3[data_booster$date >= booster_start_date]
+    } else {
+      ## NHS English regions
+      data_booster <-
+        data_booster[tolower(gsub(" ", "_", data_booster$region)) == region, ]
+      data_booster$date <- data_booster$date - 1
+      data_booster$booster <- c(data_booster$cumul_booster[1L],
+                                head(data_booster$booster, -1L))
+      data_booster <- data_booster[data_booster$date <= as.Date(date), ]
+      booster_start_date <- min(data_booster$date)
+      boosters <- data_booster$booster
+    }
+
     data <- data %>%
       dplyr::group_by(.data$date, .data$age_band_min, .data$age_band_max) %>%
       dplyr::summarise(
@@ -125,21 +151,6 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
                  tail(1))$date
 
     data <- data[data$date <= last_day, ]
-
-    if (region %in% nations) {
-      ## no boosters data for Scotland or Wales currently
-      boosters <- 0
-      booster_start_date <- NULL
-    } else {
-      data_booster <-
-        data_booster[tolower(gsub(" ", "_", data_booster$region)) == region, ]
-      data_booster$date <- data_booster$date - 1
-      data_booster$booster <- c(data_booster$cumul_booster[1L],
-                                head(data_booster$booster, -1L))
-      data_booster <- data_booster[data_booster$date <= as.Date(date), ]
-      booster_start_date <- min(data_booster$date)
-      boosters <- data_booster$booster
-    }
 
     schedule <- sircovid::vaccine_schedule_data_future(data, region, uptake,
                                                        end_date,
