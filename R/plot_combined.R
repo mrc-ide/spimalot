@@ -348,37 +348,49 @@ spim_plot_prop_susceptible <- function(dat, regions, ymin) {
 ##' @param regions Vector of regions to plot
 ##'
 ##' @param yield Which kind of age-specific trajectories to add, can be
-##'   "admissions" or "deaths"
+##'   "pillar2", "admissions" or "deaths"
 ##'
 ##' @export
 spim_plot_log_traj_by_age <- function(dat, regions, yield) {
 
-  oo <- par(mfrow = c(length(regions), 5), oma = c(1, 1, 4, 1),
-            mar = c(3, 3, 0.5, 0.5))
-  on.exit(oo)
+  if (yield == "pillar2") {
+    what <- c("under15", "15_24", "25_49", "50_64", "65_79", "80_plus")
+    oo <- par(mfrow = c(length(regions), length(what)), oma = c(1, 1, 4, 1),
+              mar = c(3, 3, 0.5, 0.5))
+    on.exit(oo)
+    for (r in regions) {
+      spim_plot_log_traj_by_age_region(r, dat, yield, what)
+    }
+    mtext(side = 3,
+          text = stringr::str_to_sentence(stringr::str_replace(what, "_", " ")),
+          line = 0.5, outer = TRUE, cex = 0.9,
+          at = c(0.1, 0.26, 0.43, 0.6, 0.76, 0.93))
+  } else {
+    oo <- par(mfrow = c(length(regions), 5), oma = c(1, 1, 4, 1),
+              mar = c(3, 3, 0.5, 0.5))
+    on.exit(oo)
+    if (yield == "admissions") {
+      what <- c("adm_0", "adm_25", "adm_55", "adm_65", "adm_75")
+      what_names <- c("Admissions under 25s", "Admissions 25 to 54",
+                      "Admissions 55 to 64", "Admissions 65 to 74",
+                      "Admissions 75+")
+    }
+    if (yield == "deaths") {
+      what <- c("death_0", "death_55", "death_65", "death_75", "death_chr")
+      what_names <- c("Deaths under 25s", "Deaths 25 to 54", "Deaths 55 to 64",
+                      "Deaths 65 to 74", "Deaths 75+")
+    }
 
-  if (yield == "admissions") {
-    what <- c("adm_0", "adm_25", "adm_55", "adm_65", "adm_75")
-    what_names <- c("Admissions under 25s", "Admissions 25 to 54",
-                    "Admissions 55 to 64", "Admissions 65 to 74",
-                    "Admissions 75+")
-  }
-  if (yield == "deaths") {
-    what <- c("death_0", "death_55", "death_65", "death_75", "death_chr")
-    what_names <- c("Admissions under 25s", "Admissions 25 to 54",
-                    "Admissions 55 to 64", "Admissions 65 to 74",
-                    "Admissions 75+")
-  }
+    for (r in regions) {
+      spim_plot_log_traj_by_age_region(r, dat, yield, what)
+    }
 
-  for (r in regions) {
-    spim_plot_log_traj_by_age_region(r, dat, what)
+    mtext(side = 3, text = what_names,
+          line = 0.5, outer = TRUE, cex = 0.9, at = c(0.1, 0.32, 0.5, 0.7, 0.9))
+    mtext(side = 2, text = spim_region_name(regions),
+          line = -0.5, outer = TRUE, cex = 0.7,
+          at = c(0.1, 0.24, 0.38, 0.53, 0.67, 0.81, 0.96))
   }
-
-  mtext(side = 3, text = what_names,
-        line = 0.5, outer = TRUE, cex = 0.9, at = c(0.1, 0.32, 0.5, 0.7, 0.9))
-  mtext(side = 2, text = spim_region_name(regions),
-        line = -0.5, outer = TRUE, cex = 0.7,
-        at = c(0.1, 0.24, 0.38, 0.53, 0.67, 0.81, 0.96))
 
 }
 
@@ -480,75 +492,130 @@ spim_plot_variant_region <- function(region, dat, date_min) {
 }
 
 
-spim_plot_log_traj_by_age_region <- function(region, dat, what) {
+spim_plot_log_traj_by_age_region <- function(region, dat, yield, what) {
 
   for (w in what) {
-    spim_plot_log_traj_by_age_region1(region, dat, w)
+    spim_plot_log_traj_by_age_region1(region, dat, yield, w)
   }
 
 }
 
 
-spim_plot_log_traj_by_age_region1 <- function(region, dat, what) {
+spim_plot_log_traj_by_age_region1 <- function(region, dat, yield, what) {
 
-  if (grepl("^death_", what)) {
-    samples <- dat$deaths[[region]]
+  if (yield == "pillar2") {
+
+    sample <- dat$samples[[region]]$trajectories
+    trajectories <- sample$state
+    x <- sircovid::sircovid_date_as_date(sample$date)
+
+    data <- dat$data[[region]]$fitted
+    date <- dat$info$date
+    cols <- spim_colours()
+    pos_col <- cols$blue
+    dcols <- c(cols$orange, cols$brown)
+
+    npos <- data[, paste0("pillar2_", what, "_pos")]
+    ntot <- data[, paste0("pillar2_", what, "_tot")]
+
+    npos[is.na(npos)] <- 0
+    ntot[is.na(ntot)] <- 0
+    dx <- as.Date(data$date_string)
+
+    res <- trajectories[paste0("pillar2_positivity_", what), , ]
+
+    ps <- seq(0.025, 0.975, 0.005)
+    qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+
+    cis <- Hmisc::binconf(x = npos, n = ntot) * 100
+    dy <- cis[, "PointEst"]
+    dy[ntot == 0] <- NA
+
+    pos_cols <- c(mix_cols(pos_col, "white", 0.7),
+                  mix_cols(pos_col, "white", 0.495))
+
+    if (what == "under15"){
+      ylab <- spim_region_name(region)
+    } else(
+      ylab <- ""
+    )
+
+    oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+    on.exit(oo)
+
+    date_min <- as.Date("2020-05-15")
+    plot(date_min, 0, type = "n",
+         xlim = c(date_min, dat$info$date),
+         ylim = c(0, 40),
+         las = 1,
+         font.main = 1,
+         xlab = "", ylab = ylab)
+
+    ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
+             horiz = FALSE, leg = FALSE)
+    lines(x, qs["50.0%", ], col = pos_col, lty = 1, lwd = 1.5, lend = 1)
+    lines(dx, dy, col = grDevices::grey(0.2), lend = 1)
+    segments(x0 = max(dx), y0 = 0, y1 = 100, lwd = 3, col = "white")
+
+  } else {
+    if (grepl("^death_", what)) {
+      samples <- dat$deaths[[region]]
+    }
+    if (grepl("^adm_", what)) {
+      samples <- dat$admissions[[region]]
+    }
+
+    date <- dat$info$date
+
+    cols <- spim_colours()
+    now_col <- cols$blue
+    dcols <- c(cols$orange, cols$green2)
+
+    # Get model results
+    res <- data.frame(count = samples$output_t[-1L, what],
+                      lb = samples$lower_bound[-1L, what],
+                      ub = samples$upper_bound[-1L, what])
+
+    date_res <- dat$samples[[region]]$trajectories$date[-c(1, 2)]
+    date_res <- sircovid::sircovid_date_as_date(date_res)
+    res$date_res <- date_res
+    res <- res %>% dplyr::filter(date_res <= date)
+
+    # Get data
+    data <- samples$data %>%
+      dplyr::select(date_res = "date", count = get("what")) %>%
+      dplyr::mutate(date_res = as.Date(date_res))
+    suppressMessages(
+      data <- dplyr::left_join(as.data.frame(date_res), as.data.frame(data))
+    )
+
+    # Vectors for plotting
+    x_nowcast <- res$date_res
+    y_nowcast <- res$count + 1
+    lb <- res$lb + 1
+    ub <- res$ub + 1
+
+    dx <- data$date
+    dy <- data$count + 1
+
+    xlim <- c(min(date_res), date)
+    ylim <- c(1, max(res$ub, na.rm = TRUE))
+
+    oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+    on.exit(oo)
+
+    plot(xlim[1], 1, type = "n",
+         xlim = xlim,
+         ylim = ylim,
+         log = "y",
+         xlab = "", ylab = "log scale", cex.lab = 0.8)
+    now_cols <- c(mix_cols(now_col, "white", 0.7),
+                  mix_cols(now_col, "white", 0.495))
+
+    polygon(c(x_nowcast, rev(x_nowcast)), c(lb, rev(ub)), col = now_cols)
+    lines(x_nowcast, y_nowcast, col = now_col, lty = 1, lwd = 1.5, lend = 1)
+    points(dx, dy, pch = 23, bg = dcols[1], col = dcols[2], cex = 0.7, lwd = 0.6)
   }
-  if (grepl("^adm_", what)) {
-    samples <- dat$admissions[[region]]
-  }
-
-  date <- dat$info$date
-
-  cols <- spim_colours()
-  now_col <- cols$blue
-  dcols <- c(cols$orange, cols$green2)
-
-  # Get model results
-  res <- data.frame(count = samples$output_t[-1L, what],
-                    lb = samples$lower_bound[-1L, what],
-                    ub = samples$upper_bound[-1L, what])
-
-  date_res <- dat$samples[[region]]$trajectories$date[-c(1, 2)]
-  date_res <- sircovid::sircovid_date_as_date(date_res)
-  res$date_res <- date_res
-  res <- res %>% dplyr::filter(date_res <= date)
-
-  # Get data
-  data <- samples$data %>%
-    dplyr::select(date_res = "date", count = get("what")) %>%
-    dplyr::mutate(date_res = as.Date(date_res))
-  suppressMessages(
-    data <- dplyr::left_join(as.data.frame(date_res), as.data.frame(data))
-  )
-
-  # Vectors for plotting
-  x_nowcast <- res$date_res
-  y_nowcast <- res$count + 1
-  lb <- res$lb + 1
-  ub <- res$ub + 1
-
-  dx <- data$date
-  dy <- data$count + 1
-
-  xlim <- c(min(date_res), date)
-  ylim <- c(1, max(res$ub, na.rm = TRUE))
-
-  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
-  on.exit(oo)
-
-  plot(xlim[1], 1, type = "n",
-       xlim = xlim,
-       ylim = ylim,
-       log = "y",
-       xlab = "", ylab = "log scale", cex.lab = 0.8)
-  now_cols <- c(mix_cols(now_col, "white", 0.7),
-                mix_cols(now_col, "white", 0.495))
-
-  polygon(c(x_nowcast, rev(x_nowcast)), c(lb, rev(ub)), col = now_cols)
-  lines(x_nowcast, y_nowcast, col = now_col, lty = 1, lwd = 1.5, lend = 1)
-  points(dx, dy, pch = 23, bg = dcols[1], col = dcols[2], cex = 0.7, lwd = 0.6)
-
 }
 
 
