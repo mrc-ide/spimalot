@@ -350,8 +350,10 @@ spim_plot_prop_susceptible <- function(dat, regions, ymin) {
 ##' @param yield Which kind of age-specific trajectories to add, can be
 ##'   "pillar2", "admissions" or "deaths"
 ##'
+##' @param model_type Which model is being run, either "BB" or "NB"
+##'
 ##' @export
-spim_plot_log_traj_by_age <- function(dat, regions, yield) {
+spim_plot_log_traj_by_age <- function(dat, regions, yield, model_type) {
 
   if (yield == "pillar2") {
     what <- c("under15", "15_24", "25_49", "50_64", "65_79", "80_plus")
@@ -359,7 +361,7 @@ spim_plot_log_traj_by_age <- function(dat, regions, yield) {
               mar = c(3, 3, 0.5, 0.5))
     on.exit(oo)
     for (r in regions) {
-      spim_plot_log_traj_by_age_region(r, dat, yield, what)
+      spim_plot_log_traj_by_age_region(r, dat, yield, what, model_type)
     }
     mtext(side = 3,
           text = stringr::str_to_sentence(stringr::str_replace(what, "_", " ")),
@@ -382,7 +384,7 @@ spim_plot_log_traj_by_age <- function(dat, regions, yield) {
     }
 
     for (r in regions) {
-      spim_plot_log_traj_by_age_region(r, dat, yield, what)
+      spim_plot_log_traj_by_age_region(r, dat, yield, what, model_type)
     }
 
     mtext(side = 3, text = what_names,
@@ -492,16 +494,18 @@ spim_plot_variant_region <- function(region, dat, date_min) {
 }
 
 
-spim_plot_log_traj_by_age_region <- function(region, dat, yield, what) {
+spim_plot_log_traj_by_age_region <- function(region, dat, yield, what,
+                                             model_type) {
 
   for (w in what) {
-    spim_plot_log_traj_by_age_region1(region, dat, yield, w)
+    spim_plot_log_traj_by_age_region1(region, dat, yield, w, model_type)
   }
 
 }
 
 
-spim_plot_log_traj_by_age_region1 <- function(region, dat, yield, what) {
+spim_plot_log_traj_by_age_region1 <- function(region, dat, yield, what,
+                                              model_type) {
 
   if (yield == "pillar2") {
 
@@ -514,22 +518,34 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, yield, what) {
     cols <- spim_colours()
     pos_col <- cols$blue
     dcols <- c(cols$orange, cols$brown)
-
-    npos <- data[, paste0("pillar2_", what, "_pos")]
-    ntot <- data[, paste0("pillar2_", what, "_tot")]
-
-    npos[is.na(npos)] <- 0
-    ntot[is.na(ntot)] <- 0
     dx <- as.Date(data$date_string)
 
-    res <- trajectories[paste0("pillar2_positivity_", what), , ]
+    if (model_type == "BB") {
+      res <- trajectories[paste0("pillar2_positivity_", what), , ]
+      ylim <- c(0, 40)
+
+      npos <- data[, paste0("pillar2_", what, "_pos")]
+      ntot <- data[, paste0("pillar2_", what, "_tot")]
+      npos[is.na(npos)] <- 0
+      ntot[is.na(ntot)] <- 0
+
+      cis <- Hmisc::binconf(x = npos, n = ntot) * 100
+      dy <- cis[, "PointEst"]
+      dy[ntot == 0] <- NA
+    }
+
+    if (model_type == "NB") {
+      dy <- data[paste0("pillar2_", what, "_cases"), , ]
+      res <- trajectories[paste0("pillar2_cases_", what), , ]
+
+      xlim <- c(date_min, dat$info$date)
+      ymax <- max(dy[dx >= xlim[1] & dx <= xlim[2]],
+                  qs[, x >= xlim[1] & x <= xlim[2]], na.rm = TRUE)
+      ylim <- c(0, ymax)
+    }
 
     ps <- seq(0.025, 0.975, 0.005)
     qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
-
-    cis <- Hmisc::binconf(x = npos, n = ntot) * 100
-    dy <- cis[, "PointEst"]
-    dy[ntot == 0] <- NA
 
     pos_cols <- c(mix_cols(pos_col, "white", 0.7),
                   mix_cols(pos_col, "white", 0.495))
@@ -546,15 +562,20 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, yield, what) {
     date_min <- as.Date("2020-05-15")
     plot(date_min, 0, type = "n",
          xlim = c(date_min, dat$info$date),
-         ylim = c(0, 40),
+         ylim = ylim,
          las = 1,
-         font.main = 1,
          xlab = "", ylab = ylab)
 
     ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
              horiz = FALSE, leg = FALSE)
     lines(x, qs["50.0%", ], col = pos_col, lty = 1, lwd = 1.5, lend = 1)
-    lines(dx, dy, col = grDevices::grey(0.2), lend = 1)
+    if (model_type == "BB") {
+      lines(dx, dy, col = grDevices::grey(0.2), lend = 1)
+    }
+    if (model_type == "NB") {
+      points(dx, dy, pch = 23, bg = dcols[1], col = dcols[2], cex = 0.8,
+             lwd = 0.6)
+    }
     segments(x0 = max(dx), y0 = 0, y1 = 100, lwd = 3, col = "white")
 
   } else {
