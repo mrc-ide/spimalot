@@ -44,11 +44,11 @@ matrix must be a proportion and decrease across columns.}
 
 \item{data}{Vaccination data (TODO: DESCRIBE CONTENTS)}
 
+\item{data_booster}{Booster data}
+
 \item{booster_proportion}{Proportion of the groups in
 \code{priority_population} to boost, default is all groups; ignored if
 \code{booster_daily_doses_value} is NULL.}
-
-\item{data_boosters}{Booster data}
 }
 \value{
 A list suitable for passing to \code{spim_pars} as

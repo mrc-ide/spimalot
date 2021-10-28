@@ -24,7 +24,7 @@
 ##'
 ##' @param data Vaccination data (TODO: DESCRIBE CONTENTS)
 ##'
-##' @param data_boosters Booster data
+##' @param data_booster Booster data
 ##'
 ##' @param booster_proportion Proportion of the groups in
 ##'  `priority_population` to boost, default is all groups; ignored if
