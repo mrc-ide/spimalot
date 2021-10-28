@@ -478,7 +478,7 @@ spim_simulate_tidy_states <- function(res, run_grid, combined) {
   ret <- lapply(seq_along(res), function(i)
     tidy_state_one(res[[i]], run_grid[i, ]))
 
-  lapply(transpose_list(ret), dplyr::bind_rows)
+  lapply(list_transpose(ret), dplyr::bind_rows)
 }
 
 ##' @title Create tidy (long) dataframe of simulated results
