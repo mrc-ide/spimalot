@@ -12,7 +12,8 @@ spim_vaccination_data(
   mean_days_between_doses,
   efficacy,
   data,
-  boosters = NULL
+  data_booster = NULL,
+  booster_proportion = rep(1L, 19)
 )
 }
 \arguments{
@@ -43,9 +44,11 @@ matrix must be a proportion and decrease across columns.}
 
 \item{data}{Vaccination data (TODO: DESCRIBE CONTENTS)}
 
-\item{boosters}{Boosters daily doses value passed to
-\link[sircovid:vaccine_schedule_future]{sircovid::vaccine_schedule_future} or
-\link[sircovid:vaccine_schedule_data_future]{sircovid::vaccine_schedule_data_future}}
+\item{data_booster}{Booster data}
+
+\item{booster_proportion}{Proportion of the groups in
+\code{priority_population} to boost, default is all groups; ignored if
+\code{booster_daily_doses_value} is NULL.}
 }
 \value{
 A list suitable for passing to \code{spim_pars} as
