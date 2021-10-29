@@ -24,9 +24,11 @@
 ##'
 ##' @param data Vaccination data (TODO: DESCRIBE CONTENTS)
 ##'
-##' @param boosters Boosters daily doses value passed to
-##'  [sircovid::vaccine_schedule_future] or
-##'  [sircovid::vaccine_schedule_data_future]
+##' @param data_booster Booster data
+##'
+##' @param booster_proportion Proportion of the groups in
+##'  `priority_population` to boost, default is all groups; ignored if
+##'  `booster_daily_doses_value` is NULL.
 ##'
 ##' @return A list suitable for passing to `spim_pars` as
 ##'   `vaccination`, containing the new vaccination schedule
@@ -36,7 +38,8 @@
 ##' @export
 spim_vaccination_data <- function(date, region, uptake, end_date,
                                   mean_days_between_doses, efficacy,
-                                  data, boosters = NULL) {
+                                  data, data_booster = NULL,
+                                  booster_proportion = rep(1L, 19)) {
   if (region == "scotland") {
     data$age_band_min[data$age_band_min == 16] <- 15
   }
@@ -82,10 +85,13 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
     doses <- c(
       data$doses,
       rep(mean(tail(data$doses, 7)), end_date - (date_start + nrow(data))))
+      ## no boosters data for NI currently
+    boosters <- 0
 
     schedule <- sircovid::vaccine_schedule_future(
       date_start, doses, mean_days_between_doses,
-      priority_population, booster_daily_doses_value = boosters)
+      priority_population, booster_daily_doses_value = boosters,
+      booster_proportion = booster_proportion)
   } else {
     # A number of vaccines have unexpectedly been allocoated to an NA age-group
     # in Scotland, let's filter them out for the time being
@@ -105,6 +111,32 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
     ## Remove any data after the date parameter
     data <- data[data$date <= as.Date(date) & !is.na(data$age_band_min), ]
 
+    if (region == "scotland") {
+      ## no boosters data for Scotland currently
+      boosters <- 0
+      booster_start_date <- NULL
+    } else if (region == "wales") {
+      ## Welsh booster data is age specific, but we do not have support for
+      ## this in sircovid yet
+      data_booster <- data %>%
+        dplyr::group_by(.data$date) %>%
+        dplyr::summarise(
+          dose3 = sum(.data$third_dose, na.rm = TRUE))
+      booster_start_date <-
+        data_booster$date[min(which(data_booster$dose3 > 0))]
+      boosters <- data_booster$dose3[data_booster$date >= booster_start_date]
+    } else {
+      ## NHS English regions
+      data_booster <-
+        data_booster[tolower(gsub(" ", "_", data_booster$region)) == region, ]
+      data_booster$date <- data_booster$date - 1
+      data_booster$booster <- c(data_booster$cumul_booster[1L],
+                                head(data_booster$booster, -1L))
+      data_booster <- data_booster[data_booster$date <= as.Date(date), ]
+      booster_start_date <- min(data_booster$date)
+      boosters <- data_booster$booster
+    }
+
     data <- data %>%
       dplyr::group_by(.data$date, .data$age_band_min, .data$age_band_max) %>%
       dplyr::summarise(
@@ -123,7 +155,26 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
     schedule <- sircovid::vaccine_schedule_data_future(data, region, uptake,
                                                        end_date,
                                                        mean_days_between_doses,
-                                                       boosters)
+                                                       boosters,
+                                                       booster_proportion)
+
+
+    if (!is.null(booster_start_date)) {
+      ## This is a bit of a hack - currently booster doses are added on after
+      ## the last day in the data. So we shift them to the correct day here.
+      ## Once the vaccine schedule code is refactored to deal with full
+      ## booster data, we can remove this
+      n_days <- sircovid::sircovid_date(end_date) - schedule$date + 1
+      n_days_data <- sircovid::sircovid_date(last_day) - schedule$date + 1
+      schedule_boosters <-
+        schedule$doses[, 3, seq(n_days_data + 1, dim(schedule$doses)[3])]
+      booster_dates <-
+        seq(sircovid::sircovid_date(booster_start_date) -
+              schedule$date + 1, by = 1, length.out = length(boosters))
+      schedule$doses[, 3, booster_dates] <- schedule_boosters
+      schedule$doses <- schedule$doses[, , seq_len(n_days)]
+    }
+
   }
 
   i <- seq_len(sircovid::sircovid_date(date) - schedule$date + 1)
