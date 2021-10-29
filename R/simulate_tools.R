@@ -238,7 +238,7 @@ spim_simulate_add_diagnoses_admitted <- function(obj, incidence = FALSE) {
       rownames(state) <- "diagnoses_admitted"
     }
 
-    obj$state <- abind::abind(obj$state, state, along = 1L)
+    obj$state <- abind_quiet(obj$state, state, along = 1L)
   }
 
   obj
@@ -272,7 +272,7 @@ spim_simulate_add_all_deaths <- function(obj, incidence = FALSE) {
       rownames(state) <- "deaths"
     }
 
-    obj$state <- abind::abind(obj$state, state, along = 1L)
+    obj$state <- abind_quiet(obj$state, state, along = 1L)
   }
 
   obj
@@ -478,7 +478,7 @@ spim_simulate_tidy_states <- function(res, run_grid, combined) {
   ret <- lapply(seq_along(res), function(i)
     tidy_state_one(res[[i]], run_grid[i, ]))
 
-  lapply(switch_levels(ret), dplyr::bind_rows)
+  lapply(list_transpose(ret), dplyr::bind_rows)
 }
 
 ##' @title Create tidy (long) dataframe of simulated results
@@ -490,7 +490,9 @@ tidy_state_one <- function(x, common) {
   res <- list()
 
   if ("summary_state" %in% names(x)) {
-
+    ## This tests if the incoming object is already summarised to
+    ## quantiles (we can tell based on the names that would have been
+    ## added to the second dimension)
     if (is.null(colnames(x$summary_state))) {
       name_2 <- "particle"
     } else {
@@ -510,7 +512,7 @@ tidy_state_one <- function(x, common) {
   }
 
   if ("state" %in% names(x)) {
-
+    ## As above, do we have an already-summarised object?
     if (is.null(colnames(x$state))) {
       name_2 <- "particle"
     } else {
@@ -548,6 +550,7 @@ tidy_state_one <- function(x, common) {
 
 
     # date, [particle] = mean, group, vaccine_status, region, state
+    # 'av' is "age and vaccine"
     av <-
       unlist(lapply(x$state_by_age, aperm, c(4, 1, 2, 3)), use.names = FALSE)
     dn$group <- rownames(x$state_by_age[[1]])

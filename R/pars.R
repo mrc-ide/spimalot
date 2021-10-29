@@ -136,7 +136,7 @@ spim_pars_pmcmc_load <- function(path, info = "info.csv", prior = "prior.csv",
 ##' @return Nothing, called for side effects
 ##' @export
 spim_pars_pmcmc_save <- function(p, path) {
-  stopifnot(setequal(names(p), c("info", "prior", "proposal")))
+  stopifnot(all(c("info", "prior", "proposal") %in% names(p)))
   dir.create(path, FALSE, TRUE)
   write_csv(p$info, file.path(path, "info.csv"))
   write_csv(p$prior, file.path(path, "prior.csv"))
