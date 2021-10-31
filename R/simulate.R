@@ -76,7 +76,7 @@ spim_simulate_prepare <- function(combined, n_par,
                  c(nrow(state[[1]]), n_par, n_regions))
 
   ## Our final object that we will use in the simulations
-  ret <- combined[c("step", "date", "dt", "steps_per_day", "vaccine")]
+  ret <- combined[c("step", "date", "dt", "steps_per_day", "base")]
   ret$pars <- pars
   ret$state <- state
   ret$info <- info
@@ -1247,10 +1247,6 @@ simulate_extract_age_class_state <- function(state, index) {
 
     x <- mcstate::array_reshape(array, 1L, c(n_groups, strata))
 
-    ## aggregate partially immunised strata
-    x[, 2L, , , ] <- x[, 2L, , , ] + x[, 3L, , , ]
-    x <- x[, -3L, , , ]
-
     if (ncol(x) == 3) {
       colnames(x) <- c("unvaccinated", "partial_protection", "full_protection")
     } else  if (ncol(x) == 5) {
@@ -1277,7 +1273,7 @@ simulate_extract_age_class_state <- function(state, index) {
     res$chr <- NULL
 
     # take mean across particles
-    ret <- apply(abind::abind(res, along = 5), c(1, 3, 4, 5), mean)
+    ret <- apply(abind_quiet(res, along = 5), c(1, 3, 4, 5), mean)
 
     # [age, vaccine status, region, time]
     round(aperm(ret, c(4, 1, 2, 3)))

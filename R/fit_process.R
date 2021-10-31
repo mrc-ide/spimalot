@@ -491,14 +491,12 @@ extract_age_class_state <- function(state) {
   f <- function(array) {
     x <- mcstate::array_reshape(array, 1L, c(n_groups, strata))
 
-    ## aggregate partially immunised strata
-    x[, 2L, , ] <- x[, 2L, , ] + x[, 3L, , ]
-    x <- x[, -3L, , ]
-    if (ncol(x) == 4) {
+    if (ncol(x) == 5) {
       colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
-                       "booster_protection")
+                       "waned_protection", "booster_protection")
     } else {
-      colnames(x) <- c("unvaccinated", "partial_protection", "full_protection")
+      colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
+                       "waned_protection")
     }
 
 
@@ -521,7 +519,7 @@ extract_age_class_state <- function(state) {
     res$chr <- NULL
 
     # take mean across particles
-    ret <- apply(abind::abind(res, along = 4), c(1, 3, 4), mean)
+    ret <- apply(abind_quiet(res, along = 4), c(1, 3, 4), mean)
 
     # [age, vaccine status, region, time]
     ret <- round(aperm(ret, c(3, 1, 2)))
@@ -734,7 +732,7 @@ calculate_vaccination <- function(state, vaccine_efficacy, cross_immunity) {
                                    doses_inc)
   colnames(doses_inc) <- paste0(colnames(doses), "_inc")
 
-  n_doses <- abind::abind(doses, doses_inc, along = 2)
+  n_doses <- abind_quiet(doses, doses_inc, along = 2)
 
   list(n_protected = lapply(n_protected, mcstate::array_reshape, i = 2,
                             d = c(1, ncol(n_protected[[1]]))),
@@ -794,9 +792,11 @@ spim_fit_parameters <- function(samples, parameters) {
                          name = colnames(covariance),
                          covariance)
 
-  list(info = info,
-       prior = prior,
-       proposal = proposal)
+  parameters$info <- info
+  parameters$prior <- prior
+  parameters$proposal <- proposal
+
+  parameters
 }
 
 
