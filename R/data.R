@@ -574,7 +574,9 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
                    data$pillar2_positives_symp_pcr_only_50_64,
                    data$pillar2_positives_symp_pcr_only_65_79,
                    data$pillar2_positives_symp_pcr_only_80_plus)))) {
-    if (!full_data && fit_by_age) {data$pillar2_cases_over25 <- NA_integer_}
+    if (!full_data && fit_by_age) {
+      data$pillar2_cases_over25 <- NA_integer_
+      }
     data$pillar2_cases_under15 <- data$pillar2_positives_symp_pcr_only_under15
     data$pillar2_cases_15_24 <- data$pillar2_positives_symp_pcr_only_15_24
     data$pillar2_cases_25_49 <- data$pillar2_positives_symp_pcr_only_25_49
@@ -599,7 +601,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
                    data$pillar2_positives_pcr_all_65_79,
                    data$pillar2_positives_pcr_all_80_plus)))) {
     if (!full_data && fit_by_age) {
-      data$pillar2_positives_over25 <- NA_integer_}
+      data$pillar2_positives_over25 <- NA_integer_
+      }
     data$pillar2_positives_under15 <- data$pillar2_positives_pcr_all_under15
     data$pillar2_positives_15_24 <- data$pillar2_positives_pcr_all_15_24
     data$pillar2_positives_25_49 <- data$pillar2_positives_pcr_all_25_49
@@ -624,7 +627,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
                    data$pillar2_negatives_total_pcr_65_79,
                    data$pillar2_negatives_total_pcr_80_plus)))) {
     if (!full_data && fit_by_age) {
-      data$pillar2_negatives_over25 <- NA_integer_}
+      data$pillar2_negatives_over25 <- NA_integer_
+      }
     data$pillar2_negatives_under15 <- data$pillar2_negatives_total_pcr_under15
     data$pillar2_negatives_15_24 <- data$pillar2_negatives_total_pcr_15_24
     data$pillar2_negatives_25_49 <- data$pillar2_negatives_total_pcr_25_49
@@ -798,7 +802,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
                   "pillar2_25_49_tot", "pillar2_50_64_tot", "pillar2_65_79_tot",
                   "pillar2_80_plus_tot", "pillar2_under15_pos",
                   "pillar2_15_24_pos", "pillar2_25_49_pos", "pillar2_50_64_pos",
-                  "pillar2_65_79_pos", "pillar2_80_plus_pos")}
+                  "pillar2_65_79_pos", "pillar2_80_plus_pos")
+        }
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
@@ -819,7 +824,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
       if (!fit_by_age) {
         omity <- c(omit, "pillar2_under15_cases", "pillar2_15_24_cases",
                    "pillar2_25_49_cases", "pillar2_50_64_cases",
-                   "pillar2_65_79_cases", "pillar2_80_plus_cases")}
+                   "pillar2_65_79_cases", "pillar2_80_plus_cases")
+        }
 
       for (i in omit) {
         ret[[i]] <- NA_integer_

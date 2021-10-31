@@ -550,9 +550,9 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, yield, what,
     pos_cols <- c(mix_cols(pos_col, "white", 0.7),
                   mix_cols(pos_col, "white", 0.495))
 
-    if (what == "under15"){
+    if (what == "under15") {
       ylab <- spim_region_name(region)
-    } else(
+    } else (
       ylab <- ""
     )
 
@@ -635,7 +635,8 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, yield, what,
 
     polygon(c(x_nowcast, rev(x_nowcast)), c(lb, rev(ub)), col = now_cols)
     lines(x_nowcast, y_nowcast, col = now_col, lty = 1, lwd = 1.5, lend = 1)
-    points(dx, dy, pch = 23, bg = dcols[1], col = dcols[2], cex = 0.7, lwd = 0.6)
+    points(dx, dy, pch = 23, bg = dcols[1], col = dcols[2], cex = 0.7,
+           lwd = 0.6)
   }
 }
 
