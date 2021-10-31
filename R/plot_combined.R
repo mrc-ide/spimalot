@@ -519,6 +519,8 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, yield, what,
     pos_col <- cols$blue
     dcols <- c(cols$orange, cols$brown)
     dx <- as.Date(data$date_string)
+    date_min <- as.Date("2020-05-15")
+    ps <- seq(0.025, 0.975, 0.005)
 
     if (model_type == "BB") {
       res <- trajectories[paste0("pillar2_positivity_", what), , ]
@@ -532,20 +534,19 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, yield, what,
       cis <- Hmisc::binconf(x = npos, n = ntot) * 100
       dy <- cis[, "PointEst"]
       dy[ntot == 0] <- NA
+      qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
     }
 
     if (model_type == "NB") {
-      dy <- data[paste0("pillar2_", what, "_cases"), , ]
+      dy <- data[, paste0("pillar2_", what, "_cases")]
       res <- trajectories[paste0("pillar2_cases_", what), , ]
+      qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
 
       xlim <- c(date_min, dat$info$date)
       ymax <- max(dy[dx >= xlim[1] & dx <= xlim[2]],
                   qs[, x >= xlim[1] & x <= xlim[2]], na.rm = TRUE)
       ylim <- c(0, ymax)
     }
-
-    ps <- seq(0.025, 0.975, 0.005)
-    qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
 
     pos_cols <- c(mix_cols(pos_col, "white", 0.7),
                   mix_cols(pos_col, "white", 0.495))
@@ -559,7 +560,6 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, yield, what,
     oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
     on.exit(oo)
 
-    date_min <- as.Date("2020-05-15")
     plot(date_min, 0, type = "n",
          xlim = c(date_min, dat$info$date),
          ylim = ylim,
