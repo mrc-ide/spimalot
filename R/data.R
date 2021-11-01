@@ -822,10 +822,10 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
                 "pillar2_50_64_pos", "pillar2_65_79_pos", "pillar2_80_plus_pos")
 
       if (!fit_by_age) {
-        omity <- c(omit, "pillar2_under15_cases", "pillar2_15_24_cases",
-                   "pillar2_25_49_cases", "pillar2_50_64_cases",
-                   "pillar2_65_79_cases", "pillar2_80_plus_cases")
-        }
+        omit <- c(omit, "pillar2_under15_cases", "pillar2_15_24_cases",
+                  "pillar2_25_49_cases", "pillar2_50_64_cases",
+                  "pillar2_65_79_cases", "pillar2_80_plus_cases")
+      }
 
       for (i in omit) {
         ret[[i]] <- NA_integer_
