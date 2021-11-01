@@ -395,6 +395,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
                                    fit_to_variants, fit_by_age,
                                    fit_to_under25) {
 
+  pillar2_age_bands <- c("under15", "15_24", "25_49", "50_64",
+                         "65_79", "80_plus")
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
             "death2", "death3", "death_chr", "death_comm", "ons_death_carehome",
@@ -403,40 +405,21 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
             "n_symp_non_delta_variant",
             # Positives
             "positives", "positives_over25", "pillar2_positives",
-            "pillar2_positives_over25", "pillar2_positives_under15",
-            "pillar2_positives_15_24", "pillar2_positives_25_49",
-            "pillar2_positives_50_64", "pillar2_positives_65_79",
-            "pillar2_positives_80_plus",
+            "pillar2_positives_over25",
+            paste0("pillar2_positives_", pillar2_age_bands),
             # Pillar 2 positives symptomatic PCR only
             "pillar2_positives_symp_pcr_only",
             "pillar2_positives_symp_pcr_only_over25",
-            "pillar2_positives_symp_pcr_only_under15",
-            "pillar2_positives_symp_pcr_only_15_24",
-            "pillar2_positives_symp_pcr_only_25_49",
-            "pillar2_positives_symp_pcr_only_50_64",
-            "pillar2_positives_symp_pcr_only_65_79",
-            "pillar2_positives_symp_pcr_only_80_plus",
+            paste0("pillar2_positives_symp_pcr_only_", pillar2_age_bands),
             # Pillar 2 positive PRC all (includes LFT+PCR and PCR only)
             "pillar2_positives_pcr_all", "pillar2_positives_pcr_all_over25",
-            "pillar2_positives_pcr_all_under15",
-            "pillar2_positives_pcr_all_15_24",
-            "pillar2_positives_pcr_all_25_49",
-            "pillar2_positives_pcr_all_50_64",
-            "pillar2_positives_pcr_all_65_79",
-            "pillar2_positives_pcr_all_80_plus",
+            paste0("pillar2_positives_pcr_all_", pillar2_age_bands),
             # Pillar 2 negatives
             "negatives", "pillar2_negatives", "pillar2_negatives_over25",
-            "pillar2_negatives_under15", "pillar2_negatives_15_24",
-            "pillar2_negatives_25_49", "pillar2_negatives_50_64",
-            "pillar2_negatives_65_79", "pillar2_negatives_80_plus",
+            paste0("pillar2_negatives_", pillar2_age_bands),
             # Pillar 2 negative PCR
             "pillar2_negatives_total_pcr_over25", "pillar2_negatives_total_pcr",
-            "pillar2_negatives_total_pcr_under15",
-            "pillar2_negatives_total_pcr_15_24",
-            "pillar2_negatives_total_pcr_25_49",
-            "pillar2_negatives_total_pcr_50_64",
-            "pillar2_negatives_total_pcr_65_79",
-            "pillar2_negatives_total_pcr_80_plus")
+            paste0("pillar2_negatives_total_pcr_", pillar2_age_bands))
   data <- data[c("region", "date", vars)]
 
   ## Remove any data after the date parameter
@@ -537,14 +520,10 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     data$pillar2_negatives <- c(data$negatives[-c(1, 2)], rep(NA_integer_, 2))
     data$pillar2_positives_over25 <- data$positives_over25
     ## We do not have any age breakdown for negatives for Scotland
-    data$pillar2_positives_over25 <- NA_integer_
-    data$pillar2_negatives_over25 <- NA_integer_
-    data$pillar2_negatives_under15 <- NA_integer_
-    data$pillar2_negatives_15_24 <- NA_integer_
-    data$pillar2_negatives_25_49 <- NA_integer_
-    data$pillar2_negatives_50_64 <- NA_integer_
-    data$pillar2_negatives_65_79 <- NA_integer_
-    data$pillar2_negatives_80_plus <- NA_integer_
+    for (i in c("over25", pillar2_age_bands)) {
+      data[, paste0("pillar2_positives_", i)] <- NA_integer_
+      data[, paste0("pillar2_negatives_", i)] <- NA_integer_
+    }
 
     data$phe_patients[data$date >= as.Date("2020-06-01") &
                         data$date <= as.Date("2020-09-10")] <- NA_integer_
@@ -567,6 +546,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     data$pillar2_cases_over25 <- data$pillar2_positives_symp_pcr_only_over25
   }
 
+  browser()
   ## Use symp PCR only for cases by age where available
   if (!all(is.na(c(data$pillar2_positives_symp_pcr_only_under15,
                    data$pillar2_positives_symp_pcr_only_15_24,
