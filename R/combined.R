@@ -435,8 +435,6 @@ spim_add_forecast_region <- function(samples, forecast_days) {
   ## Get forecast trajectories in a shape compatible with samples trajectories
   forecast_samples <- samples
   forecast_samples$trajectories <- forecast
-  forecast_samples$trajectories <-
-    sircovid::add_trajectory_incidence(forecast_samples$trajectories, "deaths")
   forecast_samples <- reduce_trajectories(forecast_samples)
 
   ## Join trajectories from forecast and samples together
