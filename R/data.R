@@ -546,23 +546,22 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     data$pillar2_cases_over25 <- data$pillar2_positives_symp_pcr_only_over25
   }
 
-  browser()
   ## Use symp PCR only for cases by age where available
-  if (!all(is.na(c(data$pillar2_positives_symp_pcr_only_under15,
-                   data$pillar2_positives_symp_pcr_only_15_24,
-                   data$pillar2_positives_symp_pcr_only_25_49,
-                   data$pillar2_positives_symp_pcr_only_50_64,
-                   data$pillar2_positives_symp_pcr_only_65_79,
-                   data$pillar2_positives_symp_pcr_only_80_plus)))) {
+  pillar2_symp_PCR_only_by_age <- NULL
+  for (i in pillar2_age_bands) {
+    pillar2_symp_PCR_only_by_age <-
+      rbind(pillar2_symp_PCR_only_by_age,
+            data[ , paste0("pillar2_positives_symp_pcr_only_", i)]
+    )
+  }
+  if (!all(is.na(pillar2_symp_PCR_only_by_age))) {
     if (!full_data && fit_by_age) {
       data$pillar2_cases_over25 <- NA_integer_
-      }
-    data$pillar2_cases_under15 <- data$pillar2_positives_symp_pcr_only_under15
-    data$pillar2_cases_15_24 <- data$pillar2_positives_symp_pcr_only_15_24
-    data$pillar2_cases_25_49 <- data$pillar2_positives_symp_pcr_only_25_49
-    data$pillar2_cases_50_64 <- data$pillar2_positives_symp_pcr_only_50_64
-    data$pillar2_cases_65_79 <- data$pillar2_positives_symp_pcr_only_65_79
-    data$pillar2_cases_80_plus <- data$pillar2_positives_symp_pcr_only_80_plus
+    }
+    for (i in pillar2_age_bands) {
+      data[ , paste0("pillar2_cases_", i)] <-
+        data[ , paste0("pillar2_positives_symp_pcr_only_", i)]
+    }
   }
 
   ## Use PCR all for positives where available
@@ -574,21 +573,21 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
   }
 
   ## Use PCR all for positives by age where available
-  if (!all(is.na(c(data$pillar2_positives_pcr_all_under15,
-                   data$pillar2_positives_pcr_all_15_24,
-                   data$pillar2_positives_pcr_all_25_49,
-                   data$pillar2_positives_pcr_all_50_64,
-                   data$pillar2_positives_pcr_all_65_79,
-                   data$pillar2_positives_pcr_all_80_plus)))) {
+  pillar2_positives_pcr_all_by_age <- NULL
+  for (i in pillar2_age_bands) {
+    pillar2_positives_pcr_all_by_age <-
+      rbind(pillar2_positives_pcr_all_by_age,
+            data[ , paste0("pillar2_positives_pcr_all_", i)]
+    )
+  }
+  if (!all(is.na(pillar2_positives_pcr_all_by_age))) {
     if (!full_data && fit_by_age) {
       data$pillar2_positives_over25 <- NA_integer_
-      }
-    data$pillar2_positives_under15 <- data$pillar2_positives_pcr_all_under15
-    data$pillar2_positives_15_24 <- data$pillar2_positives_pcr_all_15_24
-    data$pillar2_positives_25_49 <- data$pillar2_positives_pcr_all_25_49
-    data$pillar2_positives_50_64 <- data$pillar2_positives_pcr_all_50_64
-    data$pillar2_positives_65_79 <- data$pillar2_positives_pcr_all_65_79
-    data$pillar2_positives_80_plus <- data$pillar2_positives_pcr_all_80_plus
+    }
+    for (i in pillar2_age_bands) {
+      data[ , paste0("pillar2_positives_", i)] <-
+        data[ , paste0("pillar2_positives_pcr_all_", i)]
+    }
   }
 
   ## Use total PCR for negatives where available
@@ -600,21 +599,21 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
   }
 
   ## Use total PCR for negatives by age where available
-  if (!all(is.na(c(data$pillar2_negatives_total_pcr_under15,
-                   data$pillar2_negatives_total_pcr_15_24,
-                   data$pillar2_negatives_total_pcr_25_49,
-                   data$pillar2_negatives_total_pcr_50_64,
-                   data$pillar2_negatives_total_pcr_65_79,
-                   data$pillar2_negatives_total_pcr_80_plus)))) {
+  pillar2_negatives_total_pcr_by_age <- NULL
+  for (i in pillar2_age_bands) {
+    pillar2_negatives_total_pcr_by_age <-
+      rbind(pillar2_negatives_total_pcr_by_age,
+            data[ , paste0("pillar2_negatives_total_pcr_", i)]
+      )
+  }
+  if (!all(is.na(pillar2_negatives_total_pcr_by_age))) {
     if (!full_data && fit_by_age) {
       data$pillar2_negatives_over25 <- NA_integer_
-      }
-    data$pillar2_negatives_under15 <- data$pillar2_negatives_total_pcr_under15
-    data$pillar2_negatives_15_24 <- data$pillar2_negatives_total_pcr_15_24
-    data$pillar2_negatives_25_49 <- data$pillar2_negatives_total_pcr_25_49
-    data$pillar2_negatives_50_64 <- data$pillar2_negatives_total_pcr_50_64
-    data$pillar2_negatives_65_79 <- data$pillar2_negatives_total_pcr_65_79
-    data$pillar2_negatives_80_plus <- data$pillar2_negatives_total_pcr_80_plus
+    }
+    for (i in pillar2_age_bands) {
+      data[ , paste0("pillar2_negatives_", i)] <-
+        data[ , paste0("pillar2_negatives_total_pcr_", i)]
+    }
   }
 
   # Use hospital data from dashboard for all except Wales (linelist)
@@ -632,17 +631,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
   }
 
   cols_pillar2 <- c("pillar2_positives", "pillar2_negatives", "pillar2_cases",
-                    "pillar2_positives_over25", "pillar2_negatives_over25",
-                    "pillar2_positives_under15", "pillar2_positives_15_24",
-                    "pillar2_positives_25_49", "pillar2_positives_50_64",
-                    "pillar2_positives_65_79", "pillar2_positives_80_plus",
-                    "pillar2_negatives_under15", "pillar2_negatives_15_24",
-                    "pillar2_negatives_25_49", "pillar2_negatives_50_64",
-                    "pillar2_negatives_65_79", "pillar2_negatives_80_plus",
-                    "pillar2_cases_over25", "pillar2_cases_under15",
-                    "pillar2_cases_15_24", "pillar2_cases_25_49",
-                    "pillar2_cases_50_64", "pillar2_cases_65_79",
-                    "pillar2_cases_80_plus")
+                    paste0("pillar2_positives_",
+                           c("over25", pillar2_age_bands)),
+                    paste0("pillar2_negatives_",
+                           c("over25", pillar2_age_bands)),
+                    paste0("pillar2_cases_",
+                           c("over25", pillar2_age_bands)))
 
   # ignore pillar 2 testing before 2020-06-18
   data[which(data$date < "2020-06-18"), cols_pillar2] <- NA_integer_
@@ -660,6 +654,14 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
   }
 
   ## Remove implausible values for pillar2_negatives data
+  pillar2_negatives_cols <-
+    c("pillar2_negatives", paste0("pillar2_negatives_",
+                                  c("over25", pillar2_age_bands)))
+  browser()
+  for (i in pillar2_negatives_cols) {
+    data[which(data[, i] < 0), i] <- NA_integer_
+  }
+
   data[which(data$pillar2_negatives < 0), "pillar2_negatives"] <- NA_integer_
   data[which(data$pillar2_negatives_over25 < 0), "pillar2_negatives_over25"] <-
     NA_integer_
