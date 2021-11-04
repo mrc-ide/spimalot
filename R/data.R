@@ -545,17 +545,14 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
   }
 
   ## Use symp PCR only for cases by age where available
-  pillar2_symp_PCR_only_by_age <- NULL
-  for (i in pillar2_age_bands) {
-    pillar2_symp_PCR_only_by_age <-
-      rbind(pillar2_symp_PCR_only_by_age,
-            data[, paste0("pillar2_positives_symp_pcr_only_", i)]
-    )
-  }
+  pillar2_symp_PCR_only_by_age <-
+    data[, paste0("pillar2_positives_symp_pcr_only_", pillar2_age_bands)]
   if (!all(is.na(pillar2_symp_PCR_only_by_age))) {
     if (!full_data) {
       data$pillar2_cases_over25 <- NA_integer_
     }
+    ## TODO: Ed, think this makes it very explicit, let me know if you have
+    ## another suggestion for this
     for (i in pillar2_age_bands) {
       data[, paste0("pillar2_cases_", i)] <-
         data[, paste0("pillar2_positives_symp_pcr_only_", i)]
@@ -571,17 +568,13 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
   }
 
   ## Use PCR all for positives by age where available
-  pillar2_positives_pcr_all_by_age <- NULL
-  for (i in pillar2_age_bands) {
-    pillar2_positives_pcr_all_by_age <-
-      rbind(pillar2_positives_pcr_all_by_age,
-            data[, paste0("pillar2_positives_pcr_all_", i)]
-    )
-  }
+  pillar2_positives_pcr_all_by_age <-
+    data[, paste0("pillar2_positives_pcr_all_", pillar2_age_bands)]
   if (!all(is.na(pillar2_positives_pcr_all_by_age))) {
     if (!full_data) {
       data$pillar2_positives_over25 <- NA_integer_
     }
+    ## TODO: Ed, as above
     for (i in pillar2_age_bands) {
       data[, paste0("pillar2_positives_", i)] <-
         data[, paste0("pillar2_positives_pcr_all_", i)]
@@ -597,17 +590,13 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
   }
 
   ## Use total PCR for negatives by age where available
-  pillar2_negatives_total_pcr_by_age <- NULL
-  for (i in pillar2_age_bands) {
-    pillar2_negatives_total_pcr_by_age <-
-      rbind(pillar2_negatives_total_pcr_by_age,
-            data[, paste0("pillar2_negatives_total_pcr_", i)]
-      )
-  }
+  pillar2_negatives_total_pcr_by_age <-
+    data[, paste0("pillar2_negatives_total_pcr_", pillar2_age_bands)]
   if (!all(is.na(pillar2_negatives_total_pcr_by_age))) {
     if (!full_data) {
       data$pillar2_negatives_over25 <- NA_integer_
     }
+    ## TODO: Ed, as above
     for (i in pillar2_age_bands) {
       data[, paste0("pillar2_negatives_", i)] <-
         data[, paste0("pillar2_negatives_total_pcr_", i)]
