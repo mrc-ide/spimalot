@@ -31,8 +31,6 @@
 ##'
 ##' @param fit_to_variants Logical, whether to fit to variants data or not
 ##'
-##' @param fit_by_age Logical, whether to fit to age-specific data or not
-##'
 ##' @param fit_to_under25 Logical, whether to include data on under 25s when
 ##'   fitting by age
 ##'
@@ -44,8 +42,8 @@
 ##' @export
 spim_data <- function(date, region, model_type, rtm, serology,
                       trim_deaths, trim_pillar2, full_data = FALSE,
-                      fit_to_variants = FALSE, fit_by_age = FALSE,
-                      fit_to_under25 = FALSE, sircovid_model = "carehomes") {
+                      fit_to_variants = FALSE, fit_to_under25 = FALSE,
+                      sircovid_model = "carehomes") {
   check_region(region)
   spim_check_model_type(model_type)
   spim_check_sircovid_model(sircovid_model)
@@ -55,16 +53,15 @@ spim_data <- function(date, region, model_type, rtm, serology,
     stop("Not yet supported")
   } else {
     spim_data_single(date, region, model_type, rtm, serology, trim_deaths,
-                     trim_pillar2, full_data, fit_to_variants, fit_by_age,
-                     fit_to_under25, sircovid_model)
+                     trim_pillar2, full_data, fit_to_variants, fit_to_under25,
+                     sircovid_model)
   }
 }
 
 
 spim_data_single <- function(date, region, model_type, rtm, serology,
                              trim_deaths, trim_pillar2, full_data,
-                             fit_to_variants, fit_by_age, fit_to_under25,
-                             sircovid_model) {
+                             fit_to_variants, fit_to_under25, sircovid_model) {
   ## TODO: verify that rtm has consecutive days
   if (sircovid_model == "carehomes") {
     rtm <- spim_carehomes_data_rtm(date, region, model_type, rtm, full_data,
@@ -72,7 +69,7 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
   } else if (sircovid_model == "lancelot") {
     ## TODO: verify that rtm has consecutive days
     rtm <- spim_lancelot_data_rtm(date, region, model_type, rtm, full_data,
-                                  fit_to_variants, fit_by_age, fit_to_under25)
+                                  fit_to_variants, fit_to_under25)
   }
   serology <- spim_data_serology(date, region, serology)
 
@@ -392,8 +389,7 @@ spim_carehomes_data_rtm <- function(date, region, model_type, data, full_data,
 
 ##' @importFrom dplyr %>%
 spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
-                                   fit_to_variants, fit_by_age,
-                                   fit_to_under25) {
+                                   fit_to_variants, fit_to_under25) {
 
   pillar2_age_bands <- c("under15", "15_24", "25_49", "50_64",
                          "65_79", "80_plus")
@@ -556,7 +552,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     )
   }
   if (!all(is.na(pillar2_symp_PCR_only_by_age))) {
-    if (!full_data && fit_by_age) {
+    if (!full_data) {
       data$pillar2_cases_over25 <- NA_integer_
     }
     for (i in pillar2_age_bands) {
@@ -582,7 +578,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     )
   }
   if (!all(is.na(pillar2_positives_pcr_all_by_age))) {
-    if (!full_data && fit_by_age) {
+    if (!full_data) {
       data$pillar2_positives_over25 <- NA_integer_
     }
     for (i in pillar2_age_bands) {
@@ -608,7 +604,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
       )
   }
   if (!all(is.na(pillar2_negatives_total_pcr_by_age))) {
-    if (!full_data && fit_by_age) {
+    if (!full_data) {
       data$pillar2_negatives_over25 <- NA_integer_
     }
     for (i in pillar2_age_bands) {
@@ -746,13 +742,6 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
         omit <- c(omit, "pillar2_tot", "pillar2_pos")
       }
 
-      if (!fit_by_age) {
-        omit <- c(omit, "pillar2_under15_tot", "pillar2_15_24_tot",
-                  "pillar2_25_49_tot", "pillar2_50_64_tot", "pillar2_65_79_tot",
-                  "pillar2_80_plus_tot", "pillar2_under15_pos",
-                  "pillar2_15_24_pos", "pillar2_25_49_pos", "pillar2_50_64_pos",
-                  "pillar2_65_79_pos", "pillar2_80_plus_pos")
-        }
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
@@ -769,12 +758,6 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
                 "pillar2_50_64_tot", "pillar2_65_79_tot", "pillar2_80_plus_tot",
                 "pillar2_under15_pos", "pillar2_15_24_pos", "pillar2_25_49_pos",
                 "pillar2_50_64_pos", "pillar2_65_79_pos", "pillar2_80_plus_pos")
-
-      if (!fit_by_age) {
-        omit <- c(omit, "pillar2_under15_cases", "pillar2_15_24_cases",
-                  "pillar2_25_49_cases", "pillar2_50_64_cases",
-                  "pillar2_65_79_cases", "pillar2_80_plus_cases")
-      }
 
       for (i in omit) {
         ret[[i]] <- NA_integer_
