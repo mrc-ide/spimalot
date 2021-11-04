@@ -391,8 +391,9 @@ spim_carehomes_data_rtm <- function(date, region, model_type, data, full_data,
 spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
                                    fit_to_variants, fit_to_under25) {
 
-  pillar2_age_bands <- c("under15", "15_24", "25_49", "50_64",
-                         "65_79", "80_plus")
+  pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
+  pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
+
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
             "death2", "death3", "death_chr", "death_comm", "ons_death_carehome",
@@ -664,6 +665,13 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     data_pillar2 <- rbind(data_pillar2, data[, i])
   }
 
+  ## If we do not have negatives, set corresponding positives to 0
+  for (i in c(paste0("_", pillar2_age_bands), "_over25", "")) {
+    if (all(is.na(data[, paste0("pillar2_negatives", i)]))) {
+      data[, paste0("pillar2_positives", i)] <- NA_integer_
+    }
+  }
+
   stopifnot(all(data_pillar2 >= 0, na.rm = TRUE))
 
   ## TODO: with a stripped down compare function wee could drop the NA
@@ -738,22 +746,33 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
                 "pillar2_50_64_cases", "pillar2_65_79_cases",
                 "pillar2_80_plus_cases")
 
-      if (!(region %in% c("scotland", "northern_ireland"))) {
-        omit <- c(omit, "pillar2_tot", "pillar2_pos")
-      }
-
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
-      if (all(is.na(ret$pillar2_over25_tot)) &&
-          region %in% c("northern_ireland", "wales")) {
+
+      ## If we fit pillar 2 to any over 25 sub-age bands, do not fit to
+      ## aggregated over 25
+      fit_to_pillar2_age_bands_over25 <-
+        !all(is.na(ret[, paste0("pillar2_", pillar2_over25_age_bands, "_tot")]))
+      if (fit_to_pillar2_age_bands_over25) {
         ret$pillar2_over25_tot <- NA_integer_
         ret$pillar2_over25_pos <- NA_integer_
       }
+
+      ## If we fit pillar 2 to any age bands (including over 25), do not fit to
+      ## all ages aggregated
+      fit_to_pillar2_age_bands <-
+        !all(is.na(ret[, paste0("pillar2_", c("over25", pillar2_age_bands),
+                                "_tot")]))
+      if (fit_to_pillar2_age_bands) {
+        ret$pillar2_tot <- NA_integer_
+        ret$pillar2_pos <- NA_integer_
+      }
+
     }
     if (model_type == "NB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
-                "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos",
+                "pillar2_over25_tot", "pillar2_over25_pos",
                 "pillar2_under15_tot", "pillar2_15_24_tot", "pillar2_25_49_tot",
                 "pillar2_50_64_tot", "pillar2_65_79_tot", "pillar2_80_plus_tot",
                 "pillar2_under15_pos", "pillar2_15_24_pos", "pillar2_25_49_pos",
@@ -762,10 +781,25 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
-      if (all(is.na(ret$pillar2_over25_cases)) &&
-          region %in% c("northern_ireland", "wales")) {
-        ret$pillar2_cases <- data$pillar2_positives
+
+      ## If we fit pillar 2 to any over 25 sub-age bands, do not fit to
+      ## aggregated over 25
+      fit_to_pillar2_age_bands_over25 <-
+        !all(is.na(ret[, paste0("pillar2_", pillar2_over25_age_bands,
+                                "_cases")]))
+      if (fit_to_pillar2_age_bands_over25) {
+        ret$pillar2_over25_cases <- NA_integer_
       }
+
+      ## If we fit pillar 2 to any age bands (including over 25), do not fit to
+      ## all ages aggregated
+      fit_to_pillar2_age_bands <-
+        !all(is.na(ret[, paste0("pillar2_", c("over25", pillar2_age_bands),
+                                "_cases")]))
+      if (fit_to_pillar2_age_bands) {
+        ret$pillar2_cases <- NA_integer_
+      }
+
     }
   }
 
