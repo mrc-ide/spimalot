@@ -31,9 +31,6 @@
 ##'
 ##' @param fit_to_variants Logical, whether to fit to variants data or not
 ##'
-##' @param fit_to_under25 Logical, whether to include data on under 25s when
-##'   fitting by age
-##'
 ##' @param sircovid_model The name of the sircovid model used.
 ##'   Default is `"carehomes"`
 ##'
@@ -42,8 +39,7 @@
 ##' @export
 spim_data <- function(date, region, model_type, rtm, serology,
                       trim_deaths, trim_pillar2, full_data = FALSE,
-                      fit_to_variants = FALSE, fit_to_under25 = FALSE,
-                      sircovid_model = "carehomes") {
+                      fit_to_variants = FALSE, sircovid_model = "carehomes") {
   check_region(region)
   spim_check_model_type(model_type)
   spim_check_sircovid_model(sircovid_model)
@@ -53,15 +49,14 @@ spim_data <- function(date, region, model_type, rtm, serology,
     stop("Not yet supported")
   } else {
     spim_data_single(date, region, model_type, rtm, serology, trim_deaths,
-                     trim_pillar2, full_data, fit_to_variants, fit_to_under25,
-                     sircovid_model)
+                     trim_pillar2, full_data, fit_to_variants, sircovid_model)
   }
 }
 
 
 spim_data_single <- function(date, region, model_type, rtm, serology,
                              trim_deaths, trim_pillar2, full_data,
-                             fit_to_variants, fit_to_under25, sircovid_model) {
+                             fit_to_variants, sircovid_model) {
   ## TODO: verify that rtm has consecutive days
   if (sircovid_model == "carehomes") {
     rtm <- spim_carehomes_data_rtm(date, region, model_type, rtm, full_data,
@@ -69,7 +64,7 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
   } else if (sircovid_model == "lancelot") {
     ## TODO: verify that rtm has consecutive days
     rtm <- spim_lancelot_data_rtm(date, region, model_type, rtm, full_data,
-                                  fit_to_variants, fit_to_under25)
+                                  fit_to_variants)
   }
   serology <- spim_data_serology(date, region, serology)
 
@@ -389,7 +384,7 @@ spim_carehomes_data_rtm <- function(date, region, model_type, data, full_data,
 
 ##' @importFrom dplyr %>%
 spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
-                                   fit_to_variants, fit_to_under25) {
+                                   fit_to_variants) {
 
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
@@ -551,12 +546,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     if (!full_data) {
       data$pillar2_cases_over25 <- NA_integer_
     }
-    ## TODO: Ed, think this makes it very explicit, let me know if you have
-    ## another suggestion for this
-    for (i in pillar2_age_bands) {
-      data[, paste0("pillar2_cases_", i)] <-
-        data[, paste0("pillar2_positives_symp_pcr_only_", i)]
-    }
+    data[, paste0("pillar2_cases_", pillar2_age_bands)] <-
+      data[, paste0("pillar2_positives_symp_pcr_only_", pillar2_age_bands)]
   }
 
   ## Use PCR all for positives where available
@@ -574,11 +565,9 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     if (!full_data) {
       data$pillar2_positives_over25 <- NA_integer_
     }
-    ## TODO: Ed, as above
-    for (i in pillar2_age_bands) {
-      data[, paste0("pillar2_positives_", i)] <-
-        data[, paste0("pillar2_positives_pcr_all_", i)]
-    }
+    data[, paste0("pillar2_positives_", pillar2_age_bands)] <-
+      data[, paste0("pillar2_positives_pcr_all_", pillar2_age_bands)]
+
   }
 
   ## Use total PCR for negatives where available
@@ -596,11 +585,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     if (!full_data) {
       data$pillar2_negatives_over25 <- NA_integer_
     }
-    ## TODO: Ed, as above
-    for (i in pillar2_age_bands) {
-      data[, paste0("pillar2_negatives_", i)] <-
-        data[, paste0("pillar2_negatives_total_pcr_", i)]
-    }
+    data[, paste0("pillar2_negatives_", pillar2_age_bands)] <-
+      data[, paste0("pillar2_negatives_total_pcr_", pillar2_age_bands)]
   }
 
   # Use hospital data from dashboard for all except Wales (linelist)
