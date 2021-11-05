@@ -4,7 +4,7 @@
 \alias{spim_plot_log_traj_by_age}
 \title{Plot log trajectories by age}
 \usage{
-spim_plot_log_traj_by_age(dat, regions, yield)
+spim_plot_log_traj_by_age(dat, regions, yield, model_type)
 }
 \arguments{
 \item{dat}{Combined data set}
@@ -12,7 +12,9 @@ spim_plot_log_traj_by_age(dat, regions, yield)
 \item{regions}{Vector of regions to plot}
 
 \item{yield}{Which kind of age-specific trajectories to add, can be
-"admissions" or "deaths"}
+"pillar2", "admissions" or "deaths"}
+
+\item{model_type}{Which model is being run, either "BB" or "NB"}
 }
 \description{
 Plot log trajectories by age
