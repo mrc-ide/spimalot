@@ -14,7 +14,6 @@ spim_data(
   trim_pillar2,
   full_data = FALSE,
   fit_to_variants = FALSE,
-  fit_to_under25 = FALSE,
   sircovid_model = "carehomes"
 )
 }
@@ -45,9 +44,6 @@ back-fill issues. We typically use a value of 7 days.}
 \item{full_data}{Not sure yet, we'll find out}
 
 \item{fit_to_variants}{Logical, whether to fit to variants data or not}
-
-\item{fit_to_under25}{Logical, whether to include data on under 25s when
-fitting by age}
 
 \item{sircovid_model}{The name of the sircovid model used.
 Default is \code{"carehomes"}}
