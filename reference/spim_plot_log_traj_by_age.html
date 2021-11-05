@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.4.15</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.0</span>
       </span>
     </div>
 
@@ -117,7 +117,7 @@
     <p>Plot log trajectories by age</p>
     </div>
 
-    <pre class="usage"><span class='fu'>spim_plot_log_traj_by_age</span><span class='op'>(</span><span class='va'>dat</span>, <span class='va'>regions</span>, <span class='va'>yield</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>spim_plot_log_traj_by_age</span><span class='op'>(</span><span class='va'>dat</span>, <span class='va'>regions</span>, <span class='va'>yield</span>, <span class='va'>model_type</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -133,7 +133,11 @@
     <tr>
       <th>yield</th>
       <td><p>Which kind of age-specific trajectories to add, can be
-"admissions" or "deaths"</p></td>
+"pillar2", "admissions" or "deaths"</p></td>
+    </tr>
+    <tr>
+      <th>model_type</th>
+      <td><p>Which model is being run, either "BB" or "NB"</p></td>
     </tr>
     </table>
 
