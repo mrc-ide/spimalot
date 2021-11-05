@@ -386,19 +386,32 @@ spim_carehomes_data_rtm <- function(date, region, model_type, data, full_data,
 spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
                                    fit_to_variants) {
 
+  pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
+  pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
+
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
-            "death2", "death3", "death_chr", "death_comm",
-            "ons_death_carehome", "ons_death_noncarehome",
-            "pillar2_positives", "pillar2_negatives",
-            "positives", "negatives", "react_positive", "react_samples",
-            "pillar2_negatives_total_pcr_over25", "pillar2_negatives_total_pcr",
-            "pillar2_positives_over25", "pillar2_negatives_over25",
-            "positives_over25", "pillar2_positives_symp_pcr_only",
+            "death2", "death3", "death_chr", "death_comm", "ons_death_carehome",
+            "ons_death_noncarehome", "react_positive", "react_samples",
+            "n_delta_variant", "n_non_delta_variant", "n_symp_delta_variant",
+            "n_symp_non_delta_variant",
+            # Positives
+            "positives", "positives_over25", "pillar2_positives",
+            "pillar2_positives_over25",
+            paste0("pillar2_positives_", pillar2_age_bands),
+            # Pillar 2 positives symptomatic PCR only
+            "pillar2_positives_symp_pcr_only",
             "pillar2_positives_symp_pcr_only_over25",
+            paste0("pillar2_positives_symp_pcr_only_", pillar2_age_bands),
+            # Pillar 2 positive PRC all (includes LFT+PCR and PCR only)
             "pillar2_positives_pcr_all", "pillar2_positives_pcr_all_over25",
-            "n_delta_variant", "n_non_delta_variant",
-            "n_symp_delta_variant", "n_symp_non_delta_variant")
+            paste0("pillar2_positives_pcr_all_", pillar2_age_bands),
+            # Pillar 2 negatives
+            "negatives", "pillar2_negatives", "pillar2_negatives_over25",
+            paste0("pillar2_negatives_", pillar2_age_bands),
+            # Pillar 2 negative PCR
+            "pillar2_negatives_total_pcr_over25", "pillar2_negatives_total_pcr",
+            paste0("pillar2_negatives_total_pcr_", pillar2_age_bands))
   data <- data[c("region", "date", vars)]
 
   ## Remove any data after the date parameter
@@ -500,6 +513,10 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     data$pillar2_positives_over25 <- data$positives_over25
     ## We do not have any age breakdown for negatives for Scotland
     data$pillar2_negatives_over25 <- NA_integer_
+    for (i in pillar2_age_bands) {
+      data[, paste0("pillar2_positives_", i)] <- NA_integer_
+      data[, paste0("pillar2_negatives_", i)] <- NA_integer_
+    }
 
     data$phe_patients[data$date >= as.Date("2020-06-01") &
                         data$date <= as.Date("2020-09-10")] <- NA_integer_
@@ -522,6 +539,17 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     data$pillar2_cases_over25 <- data$pillar2_positives_symp_pcr_only_over25
   }
 
+  ## Use symp PCR only for cases by age where available
+  pillar2_symp_PCR_only_by_age <-
+    data[, paste0("pillar2_positives_symp_pcr_only_", pillar2_age_bands)]
+  if (!all(is.na(pillar2_symp_PCR_only_by_age))) {
+    if (!full_data) {
+      data$pillar2_cases_over25 <- NA_integer_
+    }
+    data[, paste0("pillar2_cases_", pillar2_age_bands)] <-
+      data[, paste0("pillar2_positives_symp_pcr_only_", pillar2_age_bands)]
+  }
+
   ## Use PCR all for positives where available
   if (!all(is.na(data$pillar2_positives_pcr_all))) {
     data$pillar2_positives <- data$pillar2_positives_pcr_all
@@ -530,12 +558,35 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     data$pillar2_positives_over25 <- data$pillar2_positives_pcr_all_over25
   }
 
+  ## Use PCR all for positives by age where available
+  pillar2_positives_pcr_all_by_age <-
+    data[, paste0("pillar2_positives_pcr_all_", pillar2_age_bands)]
+  if (!all(is.na(pillar2_positives_pcr_all_by_age))) {
+    if (!full_data) {
+      data$pillar2_positives_over25 <- NA_integer_
+    }
+    data[, paste0("pillar2_positives_", pillar2_age_bands)] <-
+      data[, paste0("pillar2_positives_pcr_all_", pillar2_age_bands)]
+
+  }
+
   ## Use total PCR for negatives where available
   if (!all(is.na(data$pillar2_negatives_total_pcr))) {
     data$pillar2_negatives <- data$pillar2_negatives_total_pcr
   }
   if (!all(is.na(data$pillar2_negatives_total_pcr_over25))) {
     data$pillar2_negatives_over25 <- data$pillar2_negatives_total_pcr_over25
+  }
+
+  ## Use total PCR for negatives by age where available
+  pillar2_negatives_total_pcr_by_age <-
+    data[, paste0("pillar2_negatives_total_pcr_", pillar2_age_bands)]
+  if (!all(is.na(pillar2_negatives_total_pcr_by_age))) {
+    if (!full_data) {
+      data$pillar2_negatives_over25 <- NA_integer_
+    }
+    data[, paste0("pillar2_negatives_", pillar2_age_bands)] <-
+      data[, paste0("pillar2_negatives_total_pcr_", pillar2_age_bands)]
   }
 
   # Use hospital data from dashboard for all except Wales (linelist)
@@ -553,8 +604,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
   }
 
   cols_pillar2 <- c("pillar2_positives", "pillar2_negatives", "pillar2_cases",
-                    "pillar2_positives_over25", "pillar2_negatives_over25",
-                    "pillar2_cases_over25")
+                    paste0("pillar2_positives_",
+                           c("over25", pillar2_age_bands)),
+                    paste0("pillar2_negatives_",
+                           c("over25", pillar2_age_bands)),
+                    paste0("pillar2_cases_",
+                           c("over25", pillar2_age_bands)))
 
   # ignore pillar 2 testing before 2020-06-18
   data[which(data$date < "2020-06-18"), cols_pillar2] <- NA_integer_
@@ -572,17 +627,24 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
   }
 
   ## Remove implausible values for pillar2_negatives data
-  data[which(data$pillar2_negatives < 0), "pillar2_negatives"] <- NA_integer_
-  data[which(data$pillar2_negatives_over25 < 0), "pillar2_negatives_over25"] <-
-    NA_integer_
+  pillar2_negatives_cols <-
+    c("pillar2_negatives", paste0("pillar2_negatives_",
+                                  c("over25", pillar2_age_bands)))
 
-  stopifnot(
-    all(data$pillar2_negatives >= 0, na.rm = TRUE),
-    all(data$pillar2_positives >= 0, na.rm = TRUE),
-    all(data$pillar2_cases >= 0, na.rm = TRUE),
-    all(data$pillar2_negatives_over25 >= 0, na.rm = TRUE),
-    all(data$pillar2_positives_over25 >= 0, na.rm = TRUE),
-    all(data$pillar2_cases_over25 >= 0, na.rm = TRUE))
+  for (i in pillar2_negatives_cols) {
+    data[which(data[, i] < 0), i] <- NA_integer_
+  }
+
+  ## If we do not have negatives, set corresponding positives to 0
+  for (i in c(paste0("_", pillar2_age_bands), "_over25", "")) {
+    if (all(is.na(data[, paste0("pillar2_negatives", i)]))) {
+      data[, paste0("pillar2_positives", i)] <- NA_integer_
+    }
+  }
+
+  ## Check all pillar 2 data is greater than 0 or NA
+  data_pillar2 <- data[, cols_pillar2]
+  stopifnot(all(data_pillar2 >= 0, na.rm = TRUE))
 
   ## TODO: with a stripped down compare function wee could drop the NA
   ## columns here.
@@ -606,24 +668,30 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
       data$pillar2_negatives_over25,
     pillar2_over25_pos = data$pillar2_positives_over25,
     pillar2_over25_cases = data$pillar2_cases_over25,
-    pillar2_under15_tot = NA_integer_,
-    pillar2_under15_pos = NA_integer_,
-    pillar2_under15_cases = NA_integer_,
-    pillar2_15_24_tot = NA_integer_,
-    pillar2_15_24_pos = NA_integer_,
-    pillar2_15_24_cases = NA_integer_,
-    pillar2_25_49_tot = NA_integer_,
-    pillar2_25_49_pos = NA_integer_,
-    pillar2_25_49_cases = NA_integer_,
-    pillar2_50_64_tot = NA_integer_,
-    pillar2_50_64_pos = NA_integer_,
-    pillar2_50_64_cases = NA_integer_,
-    pillar2_65_79_tot = NA_integer_,
-    pillar2_65_79_pos = NA_integer_,
-    pillar2_65_79_cases = NA_integer_,
-    pillar2_80_plus_tot = NA_integer_,
-    pillar2_80_plus_pos = NA_integer_,
-    pillar2_80_plus_cases = NA_integer_,
+    pillar2_under15_tot = data$pillar2_positives_under15 +
+      data$pillar2_negatives_under15,
+    pillar2_under15_pos = data$pillar2_positives_under15,
+    pillar2_under15_cases = data$pillar2_cases_under15,
+    pillar2_15_24_tot = data$pillar2_positives_15_24 +
+      data$pillar2_negatives_15_24,
+    pillar2_15_24_pos = data$pillar2_positives_15_24,
+    pillar2_15_24_cases = data$pillar2_cases_15_24,
+    pillar2_25_49_tot = data$pillar2_positives_25_49 +
+      data$pillar2_negatives_25_49,
+    pillar2_25_49_pos = data$pillar2_positives_25_49,
+    pillar2_25_49_cases = data$pillar2_cases_25_49,
+    pillar2_50_64_tot = data$pillar2_positives_50_64 +
+      data$pillar2_negatives_50_64,
+    pillar2_50_64_pos = data$pillar2_positives_50_64,
+    pillar2_50_64_cases = data$pillar2_cases_50_64,
+    pillar2_65_79_tot = data$pillar2_positives_65_79 +
+      data$pillar2_negatives_65_79,
+    pillar2_65_79_pos = data$pillar2_positives_65_79,
+    pillar2_65_79_cases = data$pillar2_cases_65_79,
+    pillar2_80_plus_tot = data$pillar2_positives_80_plus +
+      data$pillar2_negatives_80_plus,
+    pillar2_80_plus_pos = data$pillar2_positives_80_plus,
+    pillar2_80_plus_cases = data$pillar2_cases_80_plus,
     react_pos = data$react_positive,
     react_tot = data$react_samples,
     strain_non_variant = data$strain_non_variant,
@@ -644,27 +712,62 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     ret$strain_over25_tot <- NA_integer_
 
     if (model_type == "BB") {
-      omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
-                "pillar2_cases", "pillar2_over25_cases")
+      omit <- c("hosp", "admitted", "diagnoses", "pillar2_cases",
+                "pillar2_over25_cases",
+                paste0("pillar2_", pillar2_age_bands, "_cases"))
+
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
-      if (all(is.na(ret$pillar2_over25_tot))) {
-        ret$pillar2_tot <- data$pillar2_positives + data$pillar2_negatives
-        ret$pillar2_pos <- data$pillar2_positives
+
+      ## If we fit pillar 2 to any over 25 sub-age bands, do not fit to
+      ## aggregated over 25
+      fit_to_pillar2_age_bands_over25 <-
+        !all(is.na(ret[, paste0("pillar2_", pillar2_over25_age_bands, "_tot")]))
+      if (fit_to_pillar2_age_bands_over25) {
         ret$pillar2_over25_tot <- NA_integer_
         ret$pillar2_over25_pos <- NA_integer_
       }
+
+      ## If we fit pillar 2 to any age bands (including over 25), do not fit to
+      ## all ages aggregated
+      fit_to_pillar2_age_bands <-
+        !all(is.na(ret[, paste0("pillar2_", c("over25", pillar2_age_bands),
+                                "_tot")]))
+      if (fit_to_pillar2_age_bands) {
+        ret$pillar2_tot <- NA_integer_
+        ret$pillar2_pos <- NA_integer_
+      }
+
     }
     if (model_type == "NB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
-                "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos")
+                "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos",
+                paste0("pillar2_", pillar2_age_bands, "_tot"),
+                paste0("pillar2_", pillar2_age_bands, "_pos"))
+
       for (i in omit) {
         ret[[i]] <- NA_integer_
       }
-      if (all(is.na(ret$pillar2_over25_cases))) {
-        ret$pillar2_cases <- data$pillar2_positives
+
+      ## If we fit pillar 2 to any over 25 sub-age bands, do not fit to
+      ## aggregated over 25
+      fit_to_pillar2_age_bands_over25 <-
+        !all(is.na(ret[, paste0("pillar2_", pillar2_over25_age_bands,
+                                "_cases")]))
+      if (fit_to_pillar2_age_bands_over25) {
+        ret$pillar2_over25_cases <- NA_integer_
       }
+
+      ## If we fit pillar 2 to any age bands (including over 25), do not fit to
+      ## all ages aggregated
+      fit_to_pillar2_age_bands <-
+        !all(is.na(ret[, paste0("pillar2_", c("over25", pillar2_age_bands),
+                                "_cases")]))
+      if (fit_to_pillar2_age_bands) {
+        ret$pillar2_cases <- NA_integer_
+      }
+
     }
   }
 
