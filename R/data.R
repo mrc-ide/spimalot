@@ -713,10 +713,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
 
     if (model_type == "BB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_cases",
-                "pillar2_over25_cases", "pillar2_under15_cases",
-                "pillar2_15_24_cases", "pillar2_25_49_cases",
-                "pillar2_50_64_cases", "pillar2_65_79_cases",
-                "pillar2_80_plus_cases")
+                "pillar2_over25_cases",
+                paste0("pillar2_", pillar2_age_bands, "_cases"))
 
       for (i in omit) {
         ret[[i]] <- NA_integer_
@@ -744,11 +742,9 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     }
     if (model_type == "NB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
-                "pillar2_over25_tot", "pillar2_over25_pos",
-                "pillar2_under15_tot", "pillar2_15_24_tot", "pillar2_25_49_tot",
-                "pillar2_50_64_tot", "pillar2_65_79_tot", "pillar2_80_plus_tot",
-                "pillar2_under15_pos", "pillar2_15_24_pos", "pillar2_25_49_pos",
-                "pillar2_50_64_pos", "pillar2_65_79_pos", "pillar2_80_plus_pos")
+                "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos",
+                paste0("pillar2_", pillar2_age_bands, "_tot"),
+                paste0("pillar2_", pillar2_age_bands, "_pos"))
 
       for (i in omit) {
         ret[[i]] <- NA_integer_
