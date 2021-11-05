@@ -635,11 +635,6 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     data[which(data[, i] < 0), i] <- NA_integer_
   }
 
-  data_pillar2 <- NULL
-  for (i in cols_pillar2) {
-    data_pillar2 <- rbind(data_pillar2, data[, i])
-  }
-
   ## If we do not have negatives, set corresponding positives to 0
   for (i in c(paste0("_", pillar2_age_bands), "_over25", "")) {
     if (all(is.na(data[, paste0("pillar2_negatives", i)]))) {
@@ -647,6 +642,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     }
   }
 
+  ## Check all pillar 2 data is greater than 0 or NA
+  data_pillar2 <- data[, cols_pillar2]
   stopifnot(all(data_pillar2 >= 0, na.rm = TRUE))
 
   ## TODO: with a stripped down compare function wee could drop the NA
