@@ -1545,8 +1545,9 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
     npi_key <- read_csv(path)
   } else {
     stopifnot(identical(colnames(npi_key),
-                        c("nation", "npi", "Rt", "Rt_sd", "adherence")))
+                        c("nation", "npi", "Rt", "Rt_sd", "scenario")))
   }
+
   npi_key <- npi_key %>%
     dplyr::filter(nation == case_when(country == "england" ~ "england",
                                       TRUE ~ nation)) %>%
@@ -1554,25 +1555,25 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
 
   nations <- unique(npi_key$nation)
 
-  for (ad in unique(npi_key$adherence)) {
+  for (ad in unique(npi_key$scenario)) {
     for (n in unique(npi_key$npi)) {
-      if (sum(npi_key$npi == n & npi_key$adherence == ad) == 0) {
-        tmp <- npi_key[npi_key$npi == n & npi_key$adherence == "central", ]
-        tmp$adherence <- ad
+      if (sum(npi_key$npi == n & npi_key$scenario == ad) == 0) {
+        tmp <- npi_key[npi_key$npi == n & npi_key$scenario == "central", ]
+        tmp$scenario <- ad
         npi_key <- rbind(npi_key, tmp)
       }
     }
   }
 
-  for (ad in unique(npi_key$adherence)) {
-    obj <- get(sprintf("overwrite_%s_adherence", ad))
-    if (!is.null(obj)) {
-      for (i in seq_along(obj)) {
-        j <- npi_key$npi == names(obj)[[i]] & npi_key$adherence == ad
-        npi_key[j, "Rt"] <- obj[[i]]
-      }
-    }
-  }
+  # for (ad in unique(npi_key$scenario)) {
+  #   obj <- get(sprintf("overwrite_%s", ad))
+  #   if (!is.null(obj)) {
+  #     for (i in seq_along(obj)) {
+  #       j <- npi_key$npi == names(obj)[[i]] & npi_key$scenario == ad
+  #       npi_key[j, "Rt"] <- obj[[i]]
+  #     }
+  #   }
+  # }
 
   npi_key <- dplyr::bind_rows(
     npi_key,
@@ -1587,15 +1588,15 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
     gradualise <- function(start, end, steps, ad) {
       lapply(unique(npi_key$nation), function(nat) {
         to <- npi_key %>%
-          dplyr::filter(npi == end, adherence == ad, nation == nat) %>%
+          dplyr::filter(npi == end, scenario == ad, nation == nat) %>%
           dplyr::select(Rt) %>%
           as.numeric()
         from <- npi_key %>%
-          dplyr::filter(npi == start, adherence == ad, nation == nat) %>%
+          dplyr::filter(npi == start, scenario == ad, nation == nat) %>%
           dplyr::select(Rt) %>%
           as.numeric()
         sd <- npi_key %>%
-          dplyr::filter(npi == end, adherence == ad, nation == nat) %>%
+          dplyr::filter(npi == end, scenario == ad, nation == nat) %>%
           dplyr::select(Rt_sd) %>%
           as.numeric()
         steps <- round(seq.int(from, to, length.out = steps + 1)[2:steps], 3)
@@ -1622,7 +1623,7 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
         }
 
         data.frame(nation = nat, npi = npi, Rt = steps, Rt_sd = sd,
-                   adherence = ad)
+                   scenario = ad)
       }) %>%
         dplyr::bind_rows()
     }
@@ -1633,11 +1634,11 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
     npi_key <- npi_key %>%
       dplyr::bind_rows(
         dplyr::bind_rows(
-          lapply(npi_key[npi_key$npi == gradual_end, "adherence"], f)))
+          lapply(npi_key[npi_key$npi == gradual_end, "scenario"], f)))
   }
 
   npi_key %>%
-    dplyr::arrange(adherence, nation, npi) %>%
+    dplyr::arrange(scenario, nation, npi) %>%
     dplyr::mutate(Rt = round(Rt, 3)) %>%
     `rownames<-`(NULL)
 
@@ -1687,7 +1688,7 @@ spim_prepare_rt_future <- function(npi_key, start_date, end_date,
       date <= as.Date(end_date)
     ) %>%
     dplyr::left_join(npi_key, by = c("nation", "npi")) %>%
-    dplyr::mutate(key = paste(scenario, adherence, sep = ": "))
+    dplyr::mutate(key = paste(scenario_key, scenario, sep = ": "))
 
   schedule_celtic <- schedule %>%
     dplyr::filter(nation != "england") %>%
@@ -1796,9 +1797,14 @@ spim_create_rt_scenario <- function(path, region, scenario, schedule) {
   start <- min(sched$date)
   end <- max(sched$date)
 
+  if (region %in% sircovid::regions("england")) {
+    nation <- "england"
+  } else {
+    nation <- region
+  }
   ## create data.frame of all dates
-  out <- data.frame(nation = "england",
-                    scenario = scenario,
+  out <- data.frame(nation = nation,
+                    scenario_key = scenario,
                     date = seq.int(start, end, 1),
                     schools = NA,
                     npi = NA)

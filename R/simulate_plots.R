@@ -272,6 +272,7 @@ spim_plot_check_rt <- function(summary_state, combined_state, dates) {
     geom_line(data = combined_state, aes(x = date, y = `50%`),
               inherit.aes = FALSE) +
     facet_grid(cols = vars(analysis), rows = vars(state),
+               scales = "free_y",
                labeller = label_wrap_gen(width = 7)) +
     scale_x_date(date_breaks = "1 month") +
     geom_vline(xintercept = dates, lty = 2, color = "gray")
