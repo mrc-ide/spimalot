@@ -28,7 +28,13 @@ fit_process_restart_priors <- function(values, parameters) {
     x <- values[, nm]
     info <- parameters$info[parameters$info$name == nm, ]
     prior <- parameters$prior[parameters$prior$name == nm, ]
-    fit_prior(x, info, prior)
+    if (length(unique(x)) > 1) {
+      new_prior <- fit_prior(x, info, prior)
+    } else {
+      ## if all values of the parameter are the same, keep the original prior
+      new_prior <- prior
+    }
+    new_prior
   }
 
   res <- lapply(nms, wrapper)
