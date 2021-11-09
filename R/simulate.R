@@ -1565,16 +1565,6 @@ spim_prepare_npi_key <- function(schools, schools_modifier, country,
     }
   }
 
-  # for (ad in unique(npi_key$scenario)) {
-  #   obj <- get(sprintf("overwrite_%s", ad))
-  #   if (!is.null(obj)) {
-  #     for (i in seq_along(obj)) {
-  #       j <- npi_key$npi == names(obj)[[i]] & npi_key$scenario == ad
-  #       npi_key[j, "Rt"] <- obj[[i]]
-  #     }
-  #   }
-  # }
-
   npi_key <- dplyr::bind_rows(
     npi_key,
     npi_key %>%
