@@ -24,8 +24,6 @@
 ##'
 ##' @param data Vaccination data (TODO: DESCRIBE CONTENTS)
 ##'
-##' @param data_booster Booster data
-##'
 ##' @param booster_proportion Proportion of the groups in
 ##'  `priority_population` to boost, default is all groups; ignored if
 ##'  `booster_daily_doses_value` is NULL.
@@ -38,8 +36,7 @@
 ##' @export
 spim_vaccination_data <- function(date, region, uptake, end_date,
                                   mean_days_between_doses, efficacy,
-                                  data, data_booster = NULL,
-                                  booster_proportion = rep(1L, 19)) {
+                                  data, booster_proportion = rep(1L, 19)) {
   if (region == "scotland") {
     data$age_band_min[data$age_band_min == 16] <- 15
   }
@@ -115,8 +112,8 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
       ## no boosters data for Scotland currently
       boosters <- 0
       booster_start_date <- NULL
-    } else if (region == "wales") {
-      ## Welsh booster data is age specific, but we do not have support for
+    } else {
+      ## booster data is age specific, but we do not have support for
       ## this in sircovid yet
       data_booster <- data %>%
         dplyr::group_by(.data$date) %>%
@@ -125,16 +122,6 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
       booster_start_date <-
         data_booster$date[min(which(data_booster$dose3 > 0))]
       boosters <- data_booster$dose3[data_booster$date >= booster_start_date]
-    } else {
-      ## NHS English regions
-      data_booster <-
-        data_booster[tolower(gsub(" ", "_", data_booster$region)) == region, ]
-      data_booster$date <- data_booster$date - 1
-      data_booster$booster <- c(data_booster$cumul_booster[1L],
-                                head(data_booster$booster, -1L))
-      data_booster <- data_booster[data_booster$date <= as.Date(date), ]
-      booster_start_date <- min(data_booster$date)
-      boosters <- data_booster$booster
     }
 
     data <- data %>%
