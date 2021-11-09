@@ -479,7 +479,7 @@ aggregate_outputs_by_age <- function(object, what) {
 
 
 extract_age_class_state <- function(state) {
-  n_groups <- sircovid:::carehomes_n_groups()
+  n_groups <- sircovid:::lancelot_n_groups()
   names_index <- c("cum_infections_disag", "diagnoses_admitted", "D_all")
 
   ## output cumulative states by
