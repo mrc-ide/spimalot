@@ -650,7 +650,7 @@ spim_plot_prop_susceptible_region <- function(region, dat, ymin,
   eff_S_col <- cols$blue
   alpha <- 0.3
 
-  N0 <- sum(sircovid::carehomes_parameters(1, region)$population)
+  N0 <- sum(sircovid::lancelot_parameters(1, region)$population)
 
   trajectories <- sample$trajectories$state
 
@@ -713,7 +713,7 @@ spim_plot_incidence_region <- function(region, dat, per_1000 = FALSE) {
 
   res <- sample$trajectories$state["infections_inc", , -1L]
   if (per_1000) {
-    res <- res / sum(sircovid::carehomes_parameters(1, region)$N_tot) * 1000
+    res <- res / sum(sircovid::lancelot_parameters(1, region)$N_tot) * 1000
   }
   x <- sircovid::sircovid_date_as_date(sample$trajectories$date[-1L])
 
