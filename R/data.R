@@ -57,6 +57,10 @@ spim_data <- function(date, region, model_type, rtm, serology,
 spim_data_single <- function(date, region, model_type, rtm, serology,
                              trim_deaths, trim_pillar2, full_data,
                              fit_to_variants, sircovid_model) {
+
+  pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
+  pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
+
   ## TODO: verify that rtm has consecutive days
   if (sircovid_model == "carehomes") {
     rtm <- spim_carehomes_data_rtm(date, region, model_type, rtm, full_data,
@@ -64,7 +68,8 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
   } else if (sircovid_model == "lancelot") {
     ## TODO: verify that rtm has consecutive days
     rtm <- spim_lancelot_data_rtm(date, region, model_type, rtm, full_data,
-                                  fit_to_variants)
+                                  fit_to_variants, pillar2_over25_age_bands,
+                                  pillar2_age_bands)
   }
   serology <- spim_data_serology(date, region, serology)
 
@@ -96,10 +101,14 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 
   ## Set last 'trim_pillar2' days with pillar 2 reported to NA, as these
   ## are too likely to be back-filled to be reliable
+  ## TODO: this works only for Lancelot - carehomes will be soon removed
   i <- seq(to = nrow(data), length.out = trim_pillar2)
   cols_pillar2 <- c("pillar2_tot", "pillar2_pos", "pillar2_cases",
                     "pillar2_over25_tot", "pillar2_over25_pos",
-                    "pillar2_over25_cases")
+                    "pillar2_over25_cases",
+                    paste0("pillar2_", pillar2_age_bands, "_tot"),
+                    paste0("pillar2_", pillar2_age_bands, "_pos"),
+                    paste0("pillar2_", pillar2_age_bands, "_cases"))
   data[i, cols_pillar2] <- NA_integer_
 
   data
@@ -384,10 +393,8 @@ spim_carehomes_data_rtm <- function(date, region, model_type, data, full_data,
 
 ##' @importFrom dplyr %>%
 spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
-                                   fit_to_variants) {
-
-  pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
-  pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
+                                   fit_to_variants, pillar2_over25_age_bands,
+                                   pillar2_age_bands) {
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
@@ -613,6 +620,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
 
   # ignore pillar 2 testing before 2020-06-18
   data[which(data$date < "2020-06-18"), cols_pillar2] <- NA_integer_
+  # after that date turn NAs to zeroes for columns where data is available
+  for (i in cols_pillar2) {
+    if (!all(is.na(data[, i]))) {
+      data[which(data$date >= "2020-06-18"), i] <- 0
+    }
+  }
 
   last_week <- seq(to = nrow(data), length.out = 7)
   ## Remove last week admissions for Wales (due to backfill)
