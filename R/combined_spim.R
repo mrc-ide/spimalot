@@ -298,9 +298,7 @@ spim_summary_region_prevalence <-  function(region, dat, time_series_date,
   colnames(d) <- names(qs)
 
   ## Scale by total population
-  if (sircovid_model == "carehomes") {
-    pop_size <- sum(sircovid::carehomes_parameters(1, region)$N_tot[2:18])
-  } else if (sircovid_model == "lancelot") {
+  if (sircovid_model == "lancelot") {
     pop_size <- sum(sircovid::lancelot_parameters(1, region)$N_tot[2:18])
   }
 
@@ -354,9 +352,7 @@ spim_summary_region_forecast_trajectory <- function(region, dat, name, as,
   sample_date <- sircovid::sircovid_date_as_date(trajectories$date[i])
 
   if (name == "react_pos") {
-    if (sircovid_model == "carehomes") {
-      pop_size <- sum(sircovid::carehomes_parameters(1, region)$N_tot[2:18])
-    } else if (sircovid_model == "lancelot") {
+    if (sircovid_model == "lancelot") {
       pop_size <- sum(sircovid::lancelot_parameters(1, region)$N_tot[2:18])
     }
     d <- d / pop_size * 100
