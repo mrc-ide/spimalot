@@ -9,6 +9,9 @@
 ##'
 ##' @param n_chains The number of chains to run
 ##'
+##' @param deterministic Logical, indicating if the model to fit to
+##'   data is run deterministically or stochastically
+##'
 ##' @param date_restart Optionally, dates save restart data in the
 ##'   pmcmc (see [mcstate::pmcmc]
 ##'
@@ -32,7 +35,7 @@
 ##'
 ##' @return A list of options
 ##' @export
-spim_control <- function(short_run, n_chains, date_restart = NULL,
+spim_control <- function(short_run, n_chains, deterministic = FALSE, date_restart = NULL,
                          n_particles = 192, n_mcmc = 1500, burnin = 500,
                          forecast_days = 57, workers = TRUE,
                          n_threads = NULL) {
@@ -70,6 +73,16 @@ spim_control <- function(short_run, n_chains, date_restart = NULL,
                                   rerun_every = rerun_every,
                                   rerun_random = TRUE,
                                   filter_early_exit = TRUE)
+
+  if (deterministic) {
+    ## Disable early exit, if it's been set up, as we also don't support that
+    pmcmc$filter_early_exit <- FALSE
+
+    ## Increase the number of workers because each will be running
+    ##   separately. If running on a laptop this probably does not want
+    ##   increasing
+    pmcmc$n_workers <- control$pmcmc$n_chains
+  }
 
   particle_filter <- list(n_particles = n_particles,
                           n_threads = parallel$n_threads_total,
