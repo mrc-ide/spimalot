@@ -37,12 +37,37 @@
 spim_vaccination_data <- function(date, region, uptake, end_date,
                                   mean_days_between_doses, efficacy,
                                   data, booster_proportion = rep(1L, 19)) {
-  if (region == "scotland") {
-    data$age_band_min[data$age_band_min == 16] <- 15
-  }
+
+  browser()
 
   data$region <- tolower(data$region)
   data$region <- gsub(" ", "_", data$region)
+
+  ## We have a 16-19 age band for Scotland
+  data$age_band_min[data$age_band_min == 16] <- 15
+
+  ## Summing over vaccine types
+  data <- data %>%
+    dplyr::group_by(.data$date, .data$region,
+                    .data$age_band_min, .data$age_band_max) %>%
+    dplyr::summarise(
+      dose1 = sum(.data$first_dose, na.rm = TRUE),
+      dose2 = sum(.data$second_dose, na.rm = TRUE),
+      dose3 = sum(.data$third_dose, na.rm = TRUE))
+
+  ## This will ensure all regions have data over the same dates,
+  ## and age bands (including age_band_min = NA - which corresponds
+  ## to any non-age specific doses)
+  data <- data %>%
+    tidyr::pivot_longer(cols = starts_with("dose"),
+                        names_to = "dose",
+                        names_prefix = "dose",
+                        values_to = "count") %>%
+    tidyr::pivot_wider(names_from = c(date, region),
+                       values_from = count,
+                       values_fill = 0) %>%
+
+
   data <- data[data$region == region, ]
   data$date <- as.Date(data$date)
   data <- dplyr::arrange(data, date)
