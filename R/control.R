@@ -79,7 +79,7 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE, date_restar
     pmcmc$filter_early_exit <- FALSE
 
     ## Disable restart, as the deterministic fit does not support this yet
-    control$pmcmc$save_restart <- NULL
+    pmcmc$save_restart <- NULL
 
     ## Increase the number of workers because each will be running
     ##   separately. If running on a laptop this probably does not want
