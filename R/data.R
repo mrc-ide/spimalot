@@ -530,6 +530,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
 
   data$pillar2_cases <- data$pillar2_positives
   data$pillar2_cases_over25 <- data$pillar2_positives_over25
+  data[, paste0("pillar2_cases_", pillar2_age_bands)] <-
+    data[, paste0("pillar2_positives_", pillar2_age_bands)]
 
   ## Use symp PCR only for cases where available
   if (!all(is.na(data$pillar2_positives_symp_pcr_only))) {
