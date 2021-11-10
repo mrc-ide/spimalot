@@ -103,12 +103,7 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
   ## are too likely to be back-filled to be reliable
   ## TODO: this works only for Lancelot - carehomes will be soon removed
   i <- seq(to = nrow(data), length.out = trim_pillar2)
-  cols_pillar2 <- c("pillar2_tot", "pillar2_pos", "pillar2_cases",
-                    "pillar2_over25_tot", "pillar2_over25_pos",
-                    "pillar2_over25_cases",
-                    paste0("pillar2_", pillar2_age_bands, "_tot"),
-                    paste0("pillar2_", pillar2_age_bands, "_pos"),
-                    paste0("pillar2_", pillar2_age_bands, "_cases"))
+  cols_pillar2 <- grep("pillar2", colnames(data), value = TRUE)
   data[i, cols_pillar2] <- NA_integer_
 
   data
