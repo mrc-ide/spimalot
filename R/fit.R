@@ -21,11 +21,7 @@ spim_particle_filter <- function(data, pars, control, model = "carehomes") {
   initial_step <- 1 # replaced later
   data <- mcstate::particle_filter_data(data, "date", steps_per_day,
                                         initial_step)
-  if (model == "carehomes") {
-    sircovid::carehomes_particle_filter(data, control$n_particles,
-                                        control$n_threads, control$seed,
-                                        control$compiled_compare)
-  } else if (model == "lancelot") {
+  if (model == "lancelot") {
     sircovid::lancelot_particle_filter(data, control$n_particles,
                                        control$n_threads, control$seed,
                                        control$compiled_compare)
