@@ -57,6 +57,7 @@ spim_data <- function(date, region, model_type, rtm, serology,
 spim_data_single <- function(date, region, model_type, rtm, serology,
                              trim_deaths, trim_pillar2, full_data,
                              fit_to_variants, sircovid_model) {
+
   ## TODO: verify that rtm has consecutive days
   if (sircovid_model == "carehomes") {
     rtm <- spim_carehomes_data_rtm(date, region, model_type, rtm, full_data,
@@ -96,10 +97,9 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 
   ## Set last 'trim_pillar2' days with pillar 2 reported to NA, as these
   ## are too likely to be back-filled to be reliable
+  ## TODO: this works only for Lancelot - carehomes will be soon removed
   i <- seq(to = nrow(data), length.out = trim_pillar2)
-  cols_pillar2 <- c("pillar2_tot", "pillar2_pos", "pillar2_cases",
-                    "pillar2_over25_tot", "pillar2_over25_pos",
-                    "pillar2_over25_cases")
+  cols_pillar2 <- grep("pillar2", colnames(data), value = TRUE)
   data[i, cols_pillar2] <- NA_integer_
 
   data
@@ -530,6 +530,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
 
   data$pillar2_cases <- data$pillar2_positives
   data$pillar2_cases_over25 <- data$pillar2_positives_over25
+  data[, paste0("pillar2_cases_", pillar2_age_bands)] <-
+    data[, paste0("pillar2_positives_", pillar2_age_bands)]
 
   ## Use symp PCR only for cases where available
   if (!all(is.na(data$pillar2_positives_symp_pcr_only))) {
@@ -610,6 +612,13 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
                            c("over25", pillar2_age_bands)),
                     paste0("pillar2_cases_",
                            c("over25", pillar2_age_bands)))
+
+  # Turn NAs to zeroes for pillar 2 columns where data is available
+  for (i in cols_pillar2) {
+    if (!all(is.na(data[, i]))) {
+      data[which(is.na(data[, i])), i] <- 0
+    }
+  }
 
   # ignore pillar 2 testing before 2020-06-18
   data[which(data$date < "2020-06-18"), cols_pillar2] <- NA_integer_
