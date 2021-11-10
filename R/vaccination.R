@@ -55,22 +55,39 @@ spim_vaccination_data <- function(date, region, uptake, end_date,
       dose2 = sum(.data$second_dose, na.rm = TRUE),
       dose3 = sum(.data$third_dose, na.rm = TRUE))
 
-  ## This will ensure all regions have data over the same dates,
-  ## and age bands (including age_band_min = NA - which corresponds
-  ## to any non-age specific doses)
+  ## This will ensure all regions have data over the same date
+  ## and age band combinations (including age_band_min = NA -
+  ## which corresponds to any non-age specific doses)
   data <- data %>%
     tidyr::pivot_longer(cols = starts_with("dose"),
                         names_to = "dose",
-                        names_prefix = "dose",
                         values_to = "count") %>%
-    tidyr::pivot_wider(names_from = c(date, region),
+    tidyr::pivot_wider(names_from = region,
                        values_from = count,
                        values_fill = 0) %>%
+    tidyr::pivot_longer(cols = !c(date, age_band_min, age_band_max, dose),
+                        names_to = "region",
+                        values_to = "count")
 
-
+  ## Filter to region and make sure all dates include all age bands
   data <- data[data$region == region, ]
+  data <- data %>%
+    tidyr::pivot_wider(names_from = date,
+                       values_from = count,
+                       values_fill = 0) %>%
+    tidyr::pivot_longer(cols = !c(age_band_min, age_band_max, dose, region),
+                        names_to = "date",
+                        values_to = "count") %>%
+    tidyr::pivot_wider(names_from = dose,
+                       values_from = count)
+
+  ## Order columns and rows nicely
   data$date <- as.Date(data$date)
-  data <- dplyr::arrange(data, date)
+  data <- data[, c("date", "region", "age_band_min", "age_band_max",
+                   "dose1", "dose2", "dose3")]
+  data <- dplyr::arrange(data, date, age_band_min)
+
+  ## DONE UP TO HERE
 
   priority_population <- sircovid::vaccine_priority_population(region, uptake)
 
