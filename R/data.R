@@ -618,7 +618,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
   # after that date turn NAs to zeroes for columns where data is available
   for (i in cols_pillar2) {
     if (!all(is.na(data[, i]))) {
-      data[which(data$date >= "2020-06-18"), i] <- 0
+      data[which(data$date >= "2020-06-18"), i][
+        is.na(data[which(data$date >= "2020-06-18"), i])] <- 0
     }
   }
 
