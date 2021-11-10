@@ -12,7 +12,6 @@ spim_vaccination_data(
   mean_days_between_doses,
   efficacy,
   data,
-  data_booster = NULL,
   booster_proportion = rep(1L, 19)
 )
 }
@@ -43,8 +42,6 @@ classes and is shared across all elements). Every number in the
 matrix must be a proportion and decrease across columns.}
 
 \item{data}{Vaccination data (TODO: DESCRIBE CONTENTS)}
-
-\item{data_booster}{Booster data}
 
 \item{booster_proportion}{Proportion of the groups in
 \code{priority_population} to boost, default is all groups; ignored if
