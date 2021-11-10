@@ -121,7 +121,7 @@ spim_lancelot_fit_process <- function(samples, parameters, data, control,
 }
 
 
-##' Collect data sets for use with [spimalot::spim_fit_process]
+##' Collect data sets for use with [spimalot::spim_lancelot_fit_process]
 ##'
 ##' @title Collect data sets
 ##' @param admissions The admissions data set from

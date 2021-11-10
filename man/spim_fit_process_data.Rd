@@ -22,5 +22,5 @@ age-specific data}
 \link{spim_pars}}
 }
 \description{
-Collect data sets for use with \link{spim_fit_process}
+Collect data sets for use with \link{spim_lancelot_fit_process}
 }
