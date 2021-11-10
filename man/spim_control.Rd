@@ -7,6 +7,7 @@
 spim_control(
   short_run,
   n_chains,
+  deterministic = FALSE,
   date_restart = NULL,
   n_particles = 192,
   n_mcmc = 1500,
@@ -21,6 +22,9 @@ spim_control(
 will use freer particles, mcmc steps and a small sample}
 
 \item{n_chains}{The number of chains to run}
+
+\item{deterministic}{Logical, indicating if the model to fit to
+data is run deterministically or stochastically}
 
 \item{date_restart}{Optionally, dates save restart data in the
 pmcmc (see \link[mcstate:pmcmc]{mcstate::pmcmc}}
