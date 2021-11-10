@@ -58,9 +58,6 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
                              trim_deaths, trim_pillar2, full_data,
                              fit_to_variants, sircovid_model) {
 
-  pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
-  pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
-
   ## TODO: verify that rtm has consecutive days
   if (sircovid_model == "carehomes") {
     rtm <- spim_carehomes_data_rtm(date, region, model_type, rtm, full_data,
@@ -68,8 +65,7 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
   } else if (sircovid_model == "lancelot") {
     ## TODO: verify that rtm has consecutive days
     rtm <- spim_lancelot_data_rtm(date, region, model_type, rtm, full_data,
-                                  fit_to_variants, pillar2_over25_age_bands,
-                                  pillar2_age_bands)
+                                  fit_to_variants)
   }
   serology <- spim_data_serology(date, region, serology)
 
@@ -388,8 +384,10 @@ spim_carehomes_data_rtm <- function(date, region, model_type, data, full_data,
 
 ##' @importFrom dplyr %>%
 spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
-                                   fit_to_variants, pillar2_over25_age_bands,
-                                   pillar2_age_bands) {
+                                   fit_to_variants) {
+
+  pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
+  pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
