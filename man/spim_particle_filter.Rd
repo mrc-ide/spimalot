@@ -4,7 +4,13 @@
 \alias{spim_particle_filter}
 \title{Construct a particle filter}
 \usage{
-spim_particle_filter(data, pars, control, model = "carehomes")
+spim_particle_filter(
+  data,
+  pars,
+  control,
+  model = "carehomes",
+  deterministic = FALSE
+)
 }
 \arguments{
 \item{data}{Data, from \link{spim_data}}
@@ -17,6 +23,9 @@ spim_particle_filter(data, pars, control, model = "carehomes")
 \code{\link[=spim_control]{spim_control()}}}
 
 \item{model}{The name of the sircovid model used. Default is \code{"carehomes"}}
+
+\item{deterministic}{Logical, indicating if the particle filter to built
+is to be run deterministically or stochastically}
 }
 \value{
 A \link[mcstate:particle_filter]{mcstate::particle_filter} object
