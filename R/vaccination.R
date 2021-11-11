@@ -79,9 +79,6 @@ spim_vaccination_data <- function(date, region, uptake, end_date, data) {
                    "dose1", "dose2", "dose3")]
   data <- dplyr::arrange(data, date, age_band_min)
 
-  ## TODO: sort this properly in the parameters task
-  uptake <- array(uptake, c(length(uptake), 3))
-
   schedule <- sircovid::vaccine_schedule_from_data(data, region, uptake)
 
   ret <- list(
