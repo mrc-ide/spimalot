@@ -31,9 +31,12 @@ spim_particle_filter <- function(data, pars, control, model = "carehomes",
                                        control$compiled_compare)
     if (deterministic) {
       inputs <- ret$inputs()
-      ret <- mcstate:::particle_deterministic$new(inputs$data, inputs$model,
-                                                     inputs$compare, inputs$index,
-                                                     inputs$initial, inputs$n_threads)
+      ret <- mcstate:::particle_deterministic$new(inputs$data,
+                                                  inputs$model,
+                                                  inputs$compare,
+                                                  inputs$index,
+                                                  inputs$initial,
+                                                  inputs$n_threads)
     }
     ret
   }
