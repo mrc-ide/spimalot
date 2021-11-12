@@ -13,20 +13,33 @@
 ##'
 ##' @param model The name of the sircovid model used. Default is `"carehomes"`
 ##'
+##' @param deterministic Logical, indicating if the particle filter to built
+##'   is to be run deterministically or stochastically
+##'
 ##' @return A [mcstate::particle_filter] object
 ##'
 ##' @export
-spim_particle_filter <- function(data, pars, control, model = "carehomes") {
+spim_particle_filter <- function(data, pars, control, model = "carehomes",
+                                 deterministic = FALSE) {
   steps_per_day <- pars$model(pars$initial())$steps_per_day
   initial_step <- 1 # replaced later
   data <- mcstate::particle_filter_data(data, "date", steps_per_day,
                                         initial_step)
   if (model == "lancelot") {
-    sircovid::lancelot_particle_filter(data, control$n_particles,
+    ret <- sircovid::lancelot_particle_filter(data, control$n_particles,
                                        control$n_threads, control$seed,
                                        control$compiled_compare)
+    if (deterministic) {
+      inputs <- ret$inputs()
+      ret <- mcstate:::particle_deterministic$new(inputs$data,
+                                                  inputs$model,
+                                                  inputs$compare,
+                                                  inputs$index,
+                                                  inputs$initial,
+                                                  inputs$n_threads)
+    }
+    ret
   }
-
 }
 
 
