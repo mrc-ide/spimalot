@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.5</span>
       </span>
     </div>
 
@@ -120,6 +120,7 @@
     <pre class="usage"><span class='fu'>spim_control</span><span class='op'>(</span>
   <span class='va'>short_run</span>,
   <span class='va'>n_chains</span>,
+  deterministic <span class='op'>=</span> <span class='cn'>FALSE</span>,
   date_restart <span class='op'>=</span> <span class='cn'>NULL</span>,
   n_particles <span class='op'>=</span> <span class='fl'>192</span>,
   n_mcmc <span class='op'>=</span> <span class='fl'>1500</span>,
@@ -140,6 +141,11 @@ will use freer particles, mcmc steps and a small sample</p></td>
     <tr>
       <th>n_chains</th>
       <td><p>The number of chains to run</p></td>
+    </tr>
+    <tr>
+      <th>deterministic</th>
+      <td><p>Logical, indicating if the model to fit to
+data is run deterministically or stochastically</p></td>
     </tr>
     <tr>
       <th>date_restart</th>
