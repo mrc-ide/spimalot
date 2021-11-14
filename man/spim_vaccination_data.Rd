@@ -4,16 +4,7 @@
 \alias{spim_vaccination_data}
 \title{Prepare vaccination data}
 \usage{
-spim_vaccination_data(
-  date,
-  region,
-  uptake,
-  end_date,
-  mean_days_between_doses,
-  efficacy,
-  data,
-  booster_proportion = rep(1L, 19)
-)
+spim_vaccination_data(date, region, uptake, end_date, data)
 }
 \arguments{
 \item{date}{The date of the data. This will be the final date}
@@ -29,23 +20,7 @@ be one of the 10 NHS regions (one of
 out the vaccination schedule to this date (if the simulation
 continues beyond that date, it's fine)}
 
-\item{mean_days_between_doses}{The number of days between doses}
-
-\item{efficacy}{Vaccine efficacy data. This will be a list with
-elements \code{rel_susceptibility}, \code{rel_p_sympt},
-\code{rel_p_hosp_if_sympt}, \code{rel_p_death}, \code{rel_infectivity} (relative effect
-of susceptibility, symptomatic disease, hospitalisation conditional
-on symptomatic, death conditional on hospitalisation, and infectivity).
-Each of the list elements must
-be a \verb{19 x n} matrix (where \code{n} is the number of vaccination
-classes and is shared across all elements). Every number in the
-matrix must be a proportion and decrease across columns.}
-
 \item{data}{Vaccination data (TODO: DESCRIBE CONTENTS)}
-
-\item{booster_proportion}{Proportion of the groups in
-\code{priority_population} to boost, default is all groups; ignored if
-\code{booster_daily_doses_value} is NULL.}
 }
 \value{
 A list suitable for passing to \code{spim_pars} as
