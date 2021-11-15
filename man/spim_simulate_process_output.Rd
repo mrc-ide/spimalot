@@ -12,7 +12,7 @@ spim_simulate_process_output(
   reset_states = FALSE,
   rm.rtUK = FALSE,
   output_region = NULL,
-  remove_dates_to = NULL
+  simulation_start_date = NULL
 )
 }
 \arguments{
@@ -33,8 +33,8 @@ removed}
 \item{output_region}{Character vector of regions to output, defaults to
 \code{combined_region}}
 
-\item{remove_dates_to}{If not \code{NULL} then the date to remove all results up
-to}
+\item{simulation_start_date}{If not \code{NULL} then removes all data before
+the given date.}
 }
 \description{
 Process simulation output
