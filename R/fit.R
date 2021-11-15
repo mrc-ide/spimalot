@@ -60,6 +60,9 @@ spim_particle_filter <- function(data, pars, control, model = "carehomes",
 ##' @export
 spim_pmcmc <- function(pars, filter, control) {
   message("Running chains - this will take a while!")
+
+  ## Each chain starts from the initial() result plus an initial proposal step
+  ## Note that it is similar to one MCMC step with p(acceptance) = 1
   initial <- replicate(control$n_chains, pars$propose(pars$initial(), 1))
   ret <- mcstate::pmcmc(pars, filter, initial = initial, control = control)
 
