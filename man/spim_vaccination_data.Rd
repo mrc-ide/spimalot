@@ -4,7 +4,7 @@
 \alias{spim_vaccination_data}
 \title{Prepare vaccination data}
 \usage{
-spim_vaccination_data(date, region, uptake, days_to_effect, end_date, data)
+spim_vaccination_data(date, region, uptake, days_to_effect, data)
 }
 \arguments{
 \item{date}{The date of the data. This will be the final date}
@@ -19,10 +19,6 @@ value being the uptake of dose j for group i. Must have 19 rows.}
 
 \item{days_to_effect}{A vector of the number of days each dose is
 assumed to take to reach effect}
-
-\item{end_date}{The final date of the simulation; we will expand
-out the vaccination schedule to this date (if the simulation
-continues beyond that date, it's fine)}
 
 \item{data}{Vaccination data (TODO: DESCRIBE CONTENTS)}
 }
