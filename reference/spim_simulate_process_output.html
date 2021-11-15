@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.6</span>
       </span>
     </div>
 
@@ -125,7 +125,7 @@
   reset_states <span class='op'>=</span> <span class='cn'>FALSE</span>,
   rm.rtUK <span class='op'>=</span> <span class='cn'>FALSE</span>,
   output_region <span class='op'>=</span> <span class='cn'>NULL</span>,
-  remove_dates_to <span class='op'>=</span> <span class='cn'>NULL</span>
+  simulation_start_date <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -163,9 +163,9 @@ removed</p></td>
 <code>combined_region</code></p></td>
     </tr>
     <tr>
-      <th>remove_dates_to</th>
-      <td><p>If not <code>NULL</code> then the date to remove all results up
-to</p></td>
+      <th>simulation_start_date</th>
+      <td><p>If not <code>NULL</code> then removes all data before
+the given date.</p></td>
     </tr>
     </table>
 
