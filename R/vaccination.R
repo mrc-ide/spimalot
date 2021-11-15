@@ -4,7 +4,11 @@
 ##'
 ##' @inheritParams spim_pars
 ##'
-##' @param uptake A vector of proportion update by age. Must be length 19
+##' @param uptake A matrix of proportion uptake by age, with (i, j) th
+##'   value being the uptake of dose j for group i. Must have 19 rows.
+##'
+##' @param days_to_effect A vector of the number of days each dose is
+##'   assumed to take to reach effect
 ##'
 ##' @param end_date The final date of the simulation; we will expand
 ##'   out the vaccination schedule to this date (if the simulation
@@ -18,7 +22,8 @@
 ##'   elements may be used elsewhere)
 ##'
 ##' @export
-spim_vaccination_data <- function(date, region, uptake, end_date, data) {
+spim_vaccination_data <- function(date, region, uptake, days_to_effect,
+                                  end_date, data) {
 
   data$region <- tolower(data$region)
   data$region <- gsub(" ", "_", data$region)
@@ -37,7 +42,19 @@ spim_vaccination_data <- function(date, region, uptake, end_date, data) {
 
   data <- data[data$region == region, ]
 
+  ## we remove any trailing days with zero doses if they are within
+  ## min(vaccine_days_to_effect) of the end_date
+  agg_data <- data %>%
+    dplyr::group_by(date) %>%
+    summarise(doses = sum(.data$dose1) + sum(.data$dose2) + sum(.data$dose3))
+  dates_remove <-
+    agg_data$date[agg_data$date > max(agg_data$date[agg_data$doses > 0])]
+  dates_remove <-
+    dates_remove[dates_remove > end_date - min(days_to_effect)]
+  data <- data[!(data$date %in% dates_remove), ]
+
   schedule <- sircovid::vaccine_schedule_from_data(data, region, uptake)
+
 
   ret <- list(
     data = data,
