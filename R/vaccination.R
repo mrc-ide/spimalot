@@ -10,10 +10,6 @@
 ##' @param days_to_effect A vector of the number of days each dose is
 ##'   assumed to take to reach effect
 ##'
-##' @param end_date The final date of the simulation; we will expand
-##'   out the vaccination schedule to this date (if the simulation
-##'   continues beyond that date, it's fine)
-##'
 ##' @param data Vaccination data (TODO: DESCRIBE CONTENTS)
 ##'
 ##' @return A list suitable for passing to `spim_pars` as
@@ -22,8 +18,10 @@
 ##'   elements may be used elsewhere)
 ##'
 ##' @export
-spim_vaccination_data <- function(date, region, uptake, days_to_effect,
-                                  end_date, data) {
+spim_vaccination_data <- function(date, region, uptake, days_to_effect, data) {
+
+  ## Remove any data after date parameter
+  data <- data[data$date <= date, ]
 
   data$region <- tolower(data$region)
   data$region <- gsub(" ", "_", data$region)
@@ -42,15 +40,29 @@ spim_vaccination_data <- function(date, region, uptake, days_to_effect,
 
   data <- data[data$region == region, ]
 
+  ## Fill in any missing dates
+  missing_dates <-
+    setdiff(as.character(seq.Date(as.Date(min(data$date)), date, by = 1)),
+                         unique(data$date))
+  data_missing <- data.frame(date = missing_dates,
+                             age_band_min = NA,
+                             age_band_max = NA,
+                             dose1 = 0,
+                             dose2 = 0,
+                             dose3 = 0)
+  data <- rbind(data, data_missing)
+  data <- data %>%
+    dplyr::arrange(date, age_band_min)
+
   ## we remove any trailing days with zero doses if they are within
-  ## min(vaccine_days_to_effect) of the end_date
+  ## min(days_to_effect) of the date parameter
   agg_data <- data %>%
     dplyr::group_by(date) %>%
     summarise(doses = sum(.data$dose1) + sum(.data$dose2) + sum(.data$dose3))
   dates_remove <-
     agg_data$date[agg_data$date > max(agg_data$date[agg_data$doses > 0])]
   dates_remove <-
-    dates_remove[dates_remove > end_date - min(days_to_effect)]
+    dates_remove[dates_remove > date - min(days_to_effect)]
   data <- data[!(data$date %in% dates_remove), ]
 
   schedule <- sircovid::vaccine_schedule_from_data(data, region, uptake)
