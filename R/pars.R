@@ -185,7 +185,8 @@ spim_pars_beta <- function(date, last_beta_days_ago = 21) {
   ## 27. 2021-09-22 - Mid-point between school start and half term
   ##                  (help the model stabilise a long period of time)
   ## 28. 2021-10-01 - Point before recent increase in cases - hospitalisations
-  ## 29. Date - last_beta_days_ago
+  ## 29. 2021-10-22 - School half-term - Point before recent plateau in cases
+  ## 30. Date - last_beta_days_ago
   c("2020-03-16", "2020-03-23", "2020-03-25",
     "2020-05-11", "2020-06-15", "2020-07-04",
     "2020-08-01", "2020-09-01", "2020-09-14",
@@ -195,7 +196,8 @@ spim_pars_beta <- function(date, last_beta_days_ago = 21) {
     "2021-04-19", "2021-05-17", "2021-06-21",
     "2021-07-03", "2021-07-11", "2021-07-19",
     "2021-08-15", "2021-09-01", "2021-09-22",
-    "2021-10-01", as.character(as.Date(date) - last_beta_days_ago))
+    "2021-10-01", "2021-10-22",
+    as.character(as.Date(date) - last_beta_days_ago))
 }
 
 

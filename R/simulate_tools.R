@@ -290,6 +290,8 @@ spim_simulate_remove_dates_to <- function(obj, date) {
     return(obj)
   }
 
+  date <- date - 1
+
   id0 <- seq(which(sircovid::sircovid_date_as_date(obj$date) == date))
   obj$date <- obj$date[-id0]
   obj$state <- obj$state[, , , -id0, drop = FALSE]
@@ -385,24 +387,22 @@ spim_simulate_reset_cumulative_states <- function(res, state_names) {
 ##' removed
 ##' @param output_region Character vector of regions to output, defaults to
 ##' `combined_region`
-##' @param remove_dates_to If not `NULL` then the date to remove all results up
-##'  to
+##' @param simulation_start_date If not `NULL` then removes all data before
+##'  the given date.
 ##' @export
 spim_simulate_process_output <- function(obj, combined_region, regions,
                                          incidence_states,
                                          reset_states = FALSE,
                                          rm.rtUK = FALSE,
                                          output_region = NULL,
-                                         remove_dates_to = NULL) {
+                                         simulation_start_date = NULL) {
 
   output_region <- output_region %||% combined_region
   ret <- spim_simulate_combine_trajectories(obj, combined_region, regions,
                                             rm.rtUK)
   ret <- spim_simulate_simplify_rt(ret)
   ret <- spim_simulate_add_diagnoses_admitted(ret)
-  ret <- spim_simulate_remove_dates_to(ret, remove_dates_to)
   ret <- spim_simulate_add_trajectory_incidence(ret, incidence_states)
-
   if (reset_states) {
     ret <- spim_simulate_reset_cumulative_states(ret, incidence_states)
   }
@@ -418,6 +418,9 @@ spim_simulate_process_output <- function(obj, combined_region, regions,
   ret$n_protected <- lapply(ret$n_protected,
                             function(x) x[, output_region, , drop = FALSE])
   ret$n_doses <- f(ret$n_doses)
+
+  ret <- spim_simulate_remove_dates_to(ret, simulation_start_date)
+
   ret
 }
 

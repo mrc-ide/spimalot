@@ -26,11 +26,13 @@ spim_mtp_summary_to_template <- function(summary_tidy, date, run_grid,
     output_str <- "Stochastic Compartmental Cases"
   }
 
-  regions <- vapply(c(sircovid::regions("all"), "england", "uk"),
+  regions <- vapply(c(sircovid::regions("england"), "england"),
                     spimalot::spim_region_name, "")
 
+  summary_tidy$state$spim_name <- summary_tidy$state$scenario
+
   ## create common template columns
-  lapply(run_grid$spim_name, mtp_template_common,
+  lapply(names(run_grid), mtp_template_common,
          date = date, model_type = output_str) %>%
     dplyr::bind_rows() %>%
     ## join to results
@@ -49,9 +51,9 @@ spim_mtp_summary_to_template <- function(summary_tidy, date, run_grid,
                                   value / pop[as.character(region)] * 100,
                                   value),
                   .after = "Creation Year") %>%
-    dplyr::select(-c(scenario, vaccine_daily_doses, rt_type, rt_future,
-                     date, state, region, group,
-                     vaccine_status)) %>%
+    dplyr::select(-c(scenario, vaccine_daily_doses, analysis,
+                     date, state, region, group, beta_step,
+                     booster_daily_doses, vaccine_status)) %>%
     tidyr::pivot_wider(names_from = quantile, values_from = value,
                        names_prefix = "Quantile ") %>%
     dplyr::mutate(Value = `Quantile 0.5`, .after = ValueType)
