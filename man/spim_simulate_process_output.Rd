@@ -12,6 +12,7 @@ spim_simulate_process_output(
   reset_states = FALSE,
   rm.rtUK = FALSE,
   output_region = NULL,
+  output_region_only = FALSE,
   simulation_start_date = NULL
 )
 }
@@ -32,6 +33,9 @@ removed}
 
 \item{output_region}{Character vector of regions to output, defaults to
 \code{combined_region}}
+
+\item{output_region_only}{Logical, indicating whether to output results
+only for \code{output_region} as opposed to \code{regions}}
 
 \item{simulation_start_date}{If not \code{NULL} then removes all data before
 the given date.}
