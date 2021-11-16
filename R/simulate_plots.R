@@ -293,14 +293,14 @@ spim_plot_check_state <- function(summary_state, combined_state) {
     dplyr::mutate(scenario = as.factor(scenario),
                   analysis = as.factor(analysis)) %>%
     dplyr::filter(state %in% c("diagnoses_admitted_inc",
-                              "deaths_inc", "deaths_hosp_inc",
+                              "deaths_inc", "infections_inc",
                               "hosp"),
                   group == "all") %>%
     tidyr::pivot_wider(names_from = quantile)
 
   combined_state <- dplyr::filter(combined_state, region == "england") %>%
     dplyr::filter(state %in% c("diagnoses_admitted_inc",
-                              "deaths_inc", "deaths_hosp_inc",
+                              "deaths_inc", "infections_inc",
                               "hosp"),
                   group == "all") %>%
     tidyr::pivot_wider(names_from = quantile)
