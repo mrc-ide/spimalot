@@ -44,13 +44,15 @@ spim_vaccination_data <- function(date, region, uptake, days_to_effect, data) {
   missing_dates <-
     setdiff(as.character(seq.Date(as.Date(min(data$date)), date, by = 1)),
                          unique(data$date))
-  data_missing <- data.frame(date = missing_dates,
-                             age_band_min = NA,
-                             age_band_max = NA,
-                             dose1 = 0,
-                             dose2 = 0,
-                             dose3 = 0)
-  data <- rbind(data, data_missing)
+  if (length(missing_dates) > 0) {
+    data_missing <- data.frame(date = missing_dates,
+                               age_band_min = NA,
+                               age_band_max = NA,
+                               dose1 = 0,
+                               dose2 = 0,
+                               dose3 = 0)
+    data <- rbind(data, data_missing)
+  }
   data <- data %>%
     dplyr::arrange(date, age_band_min)
 
