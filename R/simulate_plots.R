@@ -254,10 +254,9 @@ spim_plot_check_rt <- function(summary_state, combined_state, dates) {
                     state %in% c("Rt_general_both", "eff_Rt_general_both")) %>%
       tidyr::pivot_wider(names_from = quantile)
 
+  # TODO:: for SPI-M we report 90% CI, hence 5% and 95% here but
+  # default below; shall we change default?
   summary_state %>%
-
-    ## TODO: for SPI-M we report 90% CI, hence 5% and 95% here but
-    ## default below; shall we change default?
     ggplot(aes(x = date, y = `50%`, colour = scenario)) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -305,9 +304,9 @@ spim_plot_check_state <- function(summary_state, combined_state) {
                   group == "all") %>%
     tidyr::pivot_wider(names_from = quantile)
 
+  # TODO:: for SPI-M we report 90% CI, hence 5% and 95% here but
+  # default below; shall we change default?
   summary_state %>%
-    ## TODO: for SPI-M we report 90% CI, hence 5% and 95% here but
-    ## default below; shall we change default?
     ggplot(aes(x = date)) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
