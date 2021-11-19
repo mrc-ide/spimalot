@@ -399,8 +399,6 @@ spim_simulate_reset_cumulative_states <- function(res, state_names) {
 ##' removed
 ##' @param output_region Character vector of regions to output, defaults to
 ##' `combined_region`
-##' @param output_region_only Logical, indicating whether to output results
-##'  only for `output_region` as opposed to `regions`
 ##' @param simulation_start_date If not `NULL` then removes all data before
 ##'  the given date.
 ##' @export
@@ -409,9 +407,12 @@ spim_simulate_process_output <- function(obj, combined_region, regions,
                                          reset_states = FALSE,
                                          rm.rtUK = FALSE,
                                          output_region = NULL,
-                                         output_region_only = FALSE,
                                          simulation_start_date = NULL) {
 
+  # IF output_region is NULL, outputs for all regions and national aggregation
+  # will be processed. Else, only the output_region's results will (e.g.
+  # aggregation to the England or UK level)
+  output_region_only <- !is.null(output_region)
   output_region <- output_region %||% combined_region
   ret <- spim_simulate_combine_trajectories(obj, combined_region, regions,
                                             rm.rtUK)
