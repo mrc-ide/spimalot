@@ -291,9 +291,15 @@ spim_simulate_remove_dates_to <- function(obj, date) {
   }
 
   if (min(obj$date) == sircovid::sircovid_date(date)) {
+    # For most simulations, we include state variables from the date of the
+    # simulation start onward
     date <- date
+
   } else if (min(obj$date) < sircovid::sircovid_date(date)) {
+    # e.g. for an MTP that is run off fits from Friday, we would remove
+    # state variables prior to the Monday when submission is due
     date <- date - 1
+
   } else {
     stop(message("Error, obj$date cannot be greater than date"))
   }
