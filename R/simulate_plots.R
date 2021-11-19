@@ -254,14 +254,15 @@ spim_plot_check_rt <- function(summary_state, combined_state, dates) {
                     state %in% c("Rt_general_both", "eff_Rt_general_both")) %>%
       tidyr::pivot_wider(names_from = quantile)
 
+  # TODO:: for SPI-M we report 90% CI, hence 5% and 95% here but
+  # default below; shall we change default?
   summary_state %>%
-
     ggplot(aes(x = date, y = `50%`, colour = scenario)) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     geom_ribbon(alpha = 0.3,
-                aes(ymin = `2.5%`,
-                    ymax = `97.5%`,
+                aes(ymin = `5%`,
+                    ymax = `95%`,
                     fill = scenario)) +
     geom_line() +
 
@@ -291,25 +292,27 @@ spim_plot_check_state <- function(summary_state, combined_state) {
     dplyr::mutate(scenario = as.factor(scenario),
                   analysis = as.factor(analysis)) %>%
     dplyr::filter(state %in% c("diagnoses_admitted_inc",
-                              "deaths_inc", "deaths_hosp_inc",
+                              "deaths_inc", "infections_inc",
                               "hosp"),
                   group == "all") %>%
     tidyr::pivot_wider(names_from = quantile)
 
   combined_state <- dplyr::filter(combined_state, region == "england") %>%
     dplyr::filter(state %in% c("diagnoses_admitted_inc",
-                              "deaths_inc", "deaths_hosp_inc",
+                              "deaths_inc", "infections_inc",
                               "hosp"),
                   group == "all") %>%
     tidyr::pivot_wider(names_from = quantile)
 
+  # TODO:: for SPI-M we report 90% CI, hence 5% and 95% here but
+  # default below; shall we change default?
   summary_state %>%
     ggplot(aes(x = date)) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     geom_ribbon(alpha = 0.3,
-                aes(ymin = `2.5%`,
-                    ymax = `97.5%`,
+                aes(ymin = `5%`,
+                    ymax = `95%`,
                     fill = scenario)) +
 
     geom_line(aes(y = `50%`, color = scenario)) +

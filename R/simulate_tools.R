@@ -290,9 +290,21 @@ spim_simulate_remove_dates_to <- function(obj, date) {
     return(obj)
   }
 
-  date <- date - 1
+  if (min(obj$date) == sircovid::sircovid_date(date)) {
+    # For most simulations, we include state variables from the date of the
+    # simulation start onward
+    remove_to_date <- date
 
-  id0 <- seq(which(sircovid::sircovid_date_as_date(obj$date) == date))
+  } else if (min(obj$date) < sircovid::sircovid_date(date)) {
+    # e.g. for an MTP that is run off fits from Friday, we would remove
+    # state variables prior to the Monday when submission is due
+    remove_to_date <- date - 1
+
+  } else {
+    stop(message("Error, obj$date cannot be greater than date"))
+  }
+
+  id0 <- seq(which(sircovid::sircovid_date_as_date(obj$date) == remove_to_date))
   obj$date <- obj$date[-id0]
   obj$state <- obj$state[, , , -id0, drop = FALSE]
   obj$state_by_age <- lapply(obj$state_by_age, function(x)
@@ -397,6 +409,10 @@ spim_simulate_process_output <- function(obj, combined_region, regions,
                                          output_region = NULL,
                                          simulation_start_date = NULL) {
 
+  # IF output_region is NULL, outputs for all regions and national aggregation
+  # will be processed. Else, only the output_region's results will (e.g.
+  # aggregation to the England or UK level)
+  output_region_only <- !is.null(output_region)
   output_region <- output_region %||% combined_region
   ret <- spim_simulate_combine_trajectories(obj, combined_region, regions,
                                             rm.rtUK)
@@ -409,15 +425,17 @@ spim_simulate_process_output <- function(obj, combined_region, regions,
   ret$multivariant_Rt_general <- NULL
   ret$multivariant_eff_Rt_general <- NULL
 
-  f <- function(x) x[, , output_region, , drop = FALSE]
+  if (output_region_only) {
+    f <- function(x) x[, , output_region, , drop = FALSE]
 
-  ret$summary_state <- f(ret$summary_state)
-  ret$state <- f(ret$state)
-  ret$state_by_age <- lapply(ret$state_by_age, f)
-  ret$n_vaccinated <- f(ret$n_vaccinated)
-  ret$n_protected <- lapply(ret$n_protected,
-                            function(x) x[, output_region, , drop = FALSE])
-  ret$n_doses <- f(ret$n_doses)
+    ret$summary_state <- f(ret$summary_state)
+    ret$state <- f(ret$state)
+    ret$state_by_age <- lapply(ret$state_by_age, f)
+    ret$n_vaccinated <- f(ret$n_vaccinated)
+    ret$n_protected <- lapply(ret$n_protected,
+                              function(x) x[, output_region, , drop = FALSE])
+    ret$n_doses <- f(ret$n_doses)
+  }
 
   ret <- spim_simulate_remove_dates_to(ret, simulation_start_date)
 
