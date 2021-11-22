@@ -1778,8 +1778,8 @@ spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
 #' npi (name of corresponding npi in npi_key), nation
 #'
 #' @export
-spim_create_rt_scenario <- function(path, region, scenario, schedule) {
-  sched <- read.csv(path) %>%
+spim_create_rt_scenario <- function(sched, region, scenario, schedule) {
+  sched <- sched %>%
     dplyr::filter(nation %in% region) %>%
     dplyr::mutate(date = as.Date(sprintf("%s-%s-%s", year, month, day))) %>%
     dplyr::arrange(date)
