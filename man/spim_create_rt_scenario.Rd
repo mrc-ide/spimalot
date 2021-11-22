@@ -4,10 +4,10 @@
 \alias{spim_create_rt_scenario}
 \title{Create Rt schedule scenario}
 \usage{
-spim_create_rt_scenario(path, region, scenario, schedule)
+spim_create_rt_scenario(sched, region, scenario, schedule)
 }
 \arguments{
-\item{path}{Path to a csv with school closure schedule. Expect
+\item{sched}{A data frame with school closure schedule. Expect
 columns: nation; year; month; day; schools ('open' if open on that day
 otherwise 'closed')}
 
