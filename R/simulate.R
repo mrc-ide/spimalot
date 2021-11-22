@@ -1769,7 +1769,7 @@ spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
 #' Create a scenario for Rt schedule
 #'
 #' @title Create Rt schedule scenario
-#' @param path Path to a csv with school closure schedule. Expect
+#' @param sched A data frame with school closure schedule. Expect
 #' columns: nation; year; month; day; schools ('open' if open on that day
 #' otherwise 'closed')
 #' @param region Region to filter csv by
@@ -1778,8 +1778,8 @@ spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
 #' npi (name of corresponding npi in npi_key), nation
 #'
 #' @export
-spim_create_rt_scenario <- function(path, region, scenario, schedule) {
-  sched <- read.csv(path) %>%
+spim_create_rt_scenario <- function(sched, region, scenario, schedule) {
+  sched <- sched %>%
     dplyr::filter(nation %in% region) %>%
     dplyr::mutate(date = as.Date(sprintf("%s-%s-%s", year, month, day))) %>%
     dplyr::arrange(date)
