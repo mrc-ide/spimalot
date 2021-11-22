@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.9</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.10</span>
       </span>
     </div>
 
@@ -117,14 +117,14 @@
     <p>Create a scenario for Rt schedule</p>
     </div>
 
-    <pre class="usage"><span class='fu'>spim_create_rt_scenario</span><span class='op'>(</span><span class='va'>path</span>, <span class='va'>region</span>, <span class='va'>scenario</span>, <span class='va'>schedule</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>spim_create_rt_scenario</span><span class='op'>(</span><span class='va'>sched</span>, <span class='va'>region</span>, <span class='va'>scenario</span>, <span class='va'>schedule</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>path</th>
-      <td><p>Path to a csv with school closure schedule. Expect
+      <th>sched</th>
+      <td><p>A data frame with school closure schedule. Expect
 columns: nation; year; month; day; schools ('open' if open on that day
 otherwise 'closed')</p></td>
     </tr>
