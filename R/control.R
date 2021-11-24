@@ -79,13 +79,10 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
     ## Disable early exit, if it's been set up, as we also don't support that
     pmcmc$filter_early_exit <- FALSE
 
-    ## Disable restart, as the deterministic fit does not support this yet
-    pmcmc$save_restart <- NULL
-
     ## Increase the number of workers because each will be running
     ##   separately. If running on a laptop this probably does not want
     ##   increasing
-    pmcmc$n_workers <- pmcmc$n_chains
+    pmcmc$n_workers <- min(pmcmc$n_chains, pmcmc$n_threads_total)
   }
 
   particle_filter <- list(n_particles = n_particles,
