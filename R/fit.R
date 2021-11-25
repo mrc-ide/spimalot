@@ -22,7 +22,7 @@
 spim_particle_filter <- function(data, pars, control, model = "carehomes",
                                  deterministic = FALSE) {
   steps_per_day <- pars$model(pars$initial())$steps_per_day
-  initial_step <- 1 # replaced later
+  initial_step <- 0 # replaced later
   data <- mcstate::particle_filter_data(data, "date", steps_per_day,
                                         initial_step)
   if (model == "lancelot") {
