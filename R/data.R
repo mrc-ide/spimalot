@@ -502,6 +502,9 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     data$strain_non_variant <- data$n_symp_non_delta_variant
     data$strain_tot <- data$n_symp_delta_variant + data$n_symp_non_delta_variant
   }
+  ## Only fit to variant data until end of July
+  data$strain_non_variant[data$date >= as.Date("2021-08-01")] <- NA_integer_
+  data$strain_tot[data$date >= as.Date("2021-08-01")] <- NA_integer_
 
   # Use positives/negatives as Pillar 2 for Scotland
   # Set data$phe_patients to NA between 2020-06-01 and 2020-09-09 (inclusive)
@@ -751,7 +754,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     }
     if (model_type == "NB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
-                "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos",
+                "pillar2_over25_tot", "pillar2_over25_pos",
                 paste0("pillar2_", pillar2_age_bands, "_tot"),
                 paste0("pillar2_", pillar2_age_bands, "_pos"))
 
