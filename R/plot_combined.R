@@ -407,7 +407,7 @@ spim_plot_log_traj_by_age <- function(dat, regions, yield, model_type) {
 ##'
 ##' @param date_min Starting date for plot
 ##'
-##' @param date_min End date for plot
+##' @param date_max End date for plot
 ##'
 ##' @export
 spim_plot_variant <- function(dat, regions, date_min = NULL, date_max = NULL) {
@@ -417,7 +417,7 @@ spim_plot_variant <- function(dat, regions, date_min = NULL, date_max = NULL) {
   on.exit(par(oo))
 
   for (r in regions) {
-    spim_plot_variant_region(r, dat, date_min)
+    spim_plot_variant_region(r, dat, date_min, date_max)
   }
 }
 
