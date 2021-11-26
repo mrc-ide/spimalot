@@ -4,7 +4,7 @@
 \alias{spim_plot_variant}
 \title{Plot variant}
 \usage{
-spim_plot_variant(dat, regions, date_min = NULL)
+spim_plot_variant(dat, regions, date_min = NULL, date_max = NULL)
 }
 \arguments{
 \item{dat}{Combined data set}
@@ -12,6 +12,8 @@ spim_plot_variant(dat, regions, date_min = NULL)
 \item{regions}{Vector of regions to plot}
 
 \item{date_min}{Starting date for plot}
+
+\item{date_max}{End date for plot}
 }
 \description{
 Plot variant
