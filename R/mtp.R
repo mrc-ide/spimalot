@@ -26,7 +26,7 @@ spim_mtp_summary_to_template <- function(summary_tidy, date, run_grid,
     output_str <- "Stochastic Compartmental Cases"
   }
 
-  regions <- vapply(c(sircovid::regions("england"), "england"),
+  regions <- vapply(c(sircovid::regions("all"), "england", "uk"),
                     spimalot::spim_region_name, "")
 
   summary_tidy$state$spim_name <- summary_tidy$state$scenario
