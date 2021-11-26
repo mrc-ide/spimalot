@@ -407,8 +407,10 @@ spim_plot_log_traj_by_age <- function(dat, regions, yield, model_type) {
 ##'
 ##' @param date_min Starting date for plot
 ##'
+##' @param date_min End date for plot
+##'
 ##' @export
-spim_plot_variant <- function(dat, regions, date_min = NULL) {
+spim_plot_variant <- function(dat, regions, date_min = NULL, date_max = NULL) {
 
   oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
             mar = c(3, 3, 3, 1))
@@ -420,7 +422,7 @@ spim_plot_variant <- function(dat, regions, date_min = NULL) {
 }
 
 
-spim_plot_variant_region <- function(region, dat, date_min) {
+spim_plot_variant_region <- function(region, dat, date_min, date_max) {
 
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
@@ -474,9 +476,10 @@ spim_plot_variant_region <- function(region, dat, date_min) {
   on.exit(oo)
 
   date_min <- date_min %||% min(x[-1L])
+  date_max <- date_max %||% dat$info$date
 
   plot(date_min, 0, type = "n",
-       xlim = c(date_min, dat$info$date),
+       xlim = c(date_min, date_max),
        ylim = c(0, 100),
        las = 1,
        main = toupper(spim_region_name(region)),
