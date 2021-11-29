@@ -6,14 +6,18 @@
 \usage{
 spim_simulate_prepare(
   combined,
+  simulate_parameters,
   n_par,
   regions = NULL,
   inflate_strain = FALSE,
-  inflate_booster = FALSE
+  inflate_booster = FALSE,
+  seed_voc = FALSE
 )
 }
 \arguments{
 \item{combined}{A "combined" object}
+
+\item{simulate_parameters}{A nested list of simulation parameters}
 
 \item{n_par}{The number of parameters to sample}
 
@@ -24,6 +28,8 @@ strain should be added}
 
 \item{inflate_booster}{Logical, indicating if an empty booster
 dose should be added}
+
+\item{seed_voc}{Logical, indicating if seeding a new VOC}
 }
 \description{
 Prepare combined output for simulations. This carries out
