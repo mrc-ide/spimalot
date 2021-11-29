@@ -7,6 +7,8 @@
 ##' @title Prepare for simulation
 ##' @param combined A "combined" object
 ##'
+##' @param simulate_parameters A nested list of simulation parameters
+##'
 ##' @param n_par The number of parameters to sample
 ##'
 ##' @param regions Character vector of regions to use
@@ -17,10 +19,13 @@
 ##' @param inflate_booster Logical, indicating if an empty booster
 ##'   dose should be added
 ##'
+##' @param seed_voc Logical, indicating if seeding a new VOC
+##'
 ##' @export
-spim_simulate_prepare <- function(combined, n_par,
+spim_simulate_prepare <- function(combined, simulate_parameters, n_par,
                                   regions = NULL, inflate_strain = FALSE,
-                                  inflate_booster = FALSE) {
+                                  inflate_booster = FALSE,
+                                  seed_voc = FALSE) {
 
   if (is.null(regions)) {
     regions <- sircovid::regions("all")
@@ -28,6 +33,11 @@ spim_simulate_prepare <- function(combined, n_par,
 
   combined <- simulate_prepare_drop_regions(combined, regions)
   combined <- simulate_prepare_upgrade(combined)
+
+  if (seed_voc) {
+    message("Implementing date to seed new VOC")
+    combined <- simulate_seed_parameters(combined, regions, simulate_parameters)
+  }
 
   info <- combined$info
 
@@ -394,6 +404,19 @@ simulate_prepare_upgrade <- function(combined) {
 
   combined
 }
+
+
+simulate_seed_parameters <- function(combined, regions, simulate_parameters) {
+
+  stopifnot("strain_seed_date" %in% names(simulate_parameters))
+  strain_seed_date <- simulate_parameters$strain_seed_date
+  for (i in regions) {
+    combined$pars[[i]][, "strain_seed_date"] <- strain_seed_date
+  }
+  combined
+
+}
+
 
 
 simulate_prepare_drop_regions <- function(combined, regions) {
