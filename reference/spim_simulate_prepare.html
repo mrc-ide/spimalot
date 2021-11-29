@@ -76,7 +76,7 @@ compartments." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.15</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.5.16</span>
       </span>
     </div>
 
@@ -127,10 +127,12 @@ compartments.</p>
 
     <pre class="usage"><span class='fu'>spim_simulate_prepare</span><span class='op'>(</span>
   <span class='va'>combined</span>,
+  <span class='va'>simulate_parameters</span>,
   <span class='va'>n_par</span>,
   regions <span class='op'>=</span> <span class='cn'>NULL</span>,
   inflate_strain <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  inflate_booster <span class='op'>=</span> <span class='cn'>FALSE</span>
+  inflate_booster <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  seed_voc <span class='op'>=</span> <span class='cn'>FALSE</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -139,6 +141,10 @@ compartments.</p>
     <tr>
       <th>combined</th>
       <td><p>A "combined" object</p></td>
+    </tr>
+    <tr>
+      <th>simulate_parameters</th>
+      <td><p>A nested list of simulation parameters</p></td>
     </tr>
     <tr>
       <th>n_par</th>
@@ -157,6 +163,10 @@ strain should be added</p></td>
       <th>inflate_booster</th>
       <td><p>Logical, indicating if an empty booster
 dose should be added</p></td>
+    </tr>
+    <tr>
+      <th>seed_voc</th>
+      <td><p>Logical, indicating if seeding a new VOC</p></td>
     </tr>
     </table>
 
