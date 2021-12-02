@@ -21,9 +21,13 @@
 ##' @export
 spim_particle_filter <- function(data, pars, control, model = "carehomes",
                                  deterministic = FALSE) {
-  steps_per_day <- pars$model(pars$initial())$steps_per_day
+  p <- pars$model(pars$initial())
+  if (inherits(p, "multistage_parameters")) {
+    p <- p[[1]]$pars
+  }
+
   initial_step <- 0 # replaced later
-  data <- mcstate::particle_filter_data(data, "date", steps_per_day,
+  data <- mcstate::particle_filter_data(data, "date", p$steps_per_day,
                                         initial_step)
   if (model == "lancelot") {
     ret <- sircovid::lancelot_particle_filter(data, control$n_particles,
@@ -31,15 +35,17 @@ spim_particle_filter <- function(data, pars, control, model = "carehomes",
                                        control$compiled_compare)
     if (deterministic) {
       inputs <- ret$inputs()
-      ret <- mcstate:::particle_deterministic$new(inputs$data,
-                                                  inputs$model,
-                                                  inputs$compare,
-                                                  inputs$index,
-                                                  inputs$initial,
-                                                  inputs$n_threads)
+      ret <- mcstate::particle_deterministic$new(inputs$data,
+                                                 inputs$model,
+                                                 inputs$compare,
+                                                 inputs$index,
+                                                 inputs$initial,
+                                                 inputs$n_threads)
     }
-    ret
+  } else {
+    stop(sprintf("Unknown model '%s'", model))
   }
+  ret
 }
 
 
