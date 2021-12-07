@@ -859,7 +859,8 @@ create_summary_state <- function(state, keep, dates) {
 
 simulate_rt <- function(steps, S, pars, critical_dates, voc_seeded,
                         R = NULL, prob_strain = NULL, no_seeding = FALSE,
-                        prop_voc = NULL, weight_Rt = TRUE) {
+                        prop_voc = NULL, weight_Rt = TRUE,
+                        rt_type = c("Rt_general", "eff_Rt_general")) {
   dim_S <- dim(S)
   region_names <- dimnames(S)[[3]]
   ## TODO: add mcstate::array_combine(S, 2:3)
@@ -886,8 +887,6 @@ simulate_rt <- function(steps, S, pars, critical_dates, voc_seeded,
                           dim_prob_strain[[2]] * dim_prob_strain[[3]],
                           dim_prob_strain[[4]])
   }
-
-  rt_type <- c("Rt_general", "eff_Rt_general")
 
   rt <- sircovid::lancelot_Rt_trajectories(
     steps, S, pars, type = rt_type,
