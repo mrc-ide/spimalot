@@ -29,44 +29,29 @@
 ##'
 ##' @param full_data Not sure yet, we'll find out
 ##'
-##' @param fit_to_variants Logical, whether to fit to variants data or not
-##'
-##' @param sircovid_model The name of the sircovid model used.
-##'   Default is `"carehomes"`
-##'
 ##' @return A [data.frame()] TODO: describe columns
 ##'
 ##' @export
 spim_data <- function(date, region, model_type, rtm, serology,
-                      trim_deaths, trim_pillar2, full_data = FALSE,
-                      fit_to_variants = FALSE, sircovid_model = "carehomes") {
+                      trim_deaths, trim_pillar2, full_data = FALSE) {
   check_region(region)
   spim_check_model_type(model_type)
-  spim_check_sircovid_model(sircovid_model)
 
   if (length(region) > 1) {
     ## See the original task
     stop("Not yet supported")
   } else {
     spim_data_single(date, region, model_type, rtm, serology, trim_deaths,
-                     trim_pillar2, full_data, fit_to_variants, sircovid_model)
+                     trim_pillar2, full_data)
   }
 }
 
 
 spim_data_single <- function(date, region, model_type, rtm, serology,
-                             trim_deaths, trim_pillar2, full_data,
-                             fit_to_variants, sircovid_model) {
+                             trim_deaths, trim_pillar2, full_data) {
 
   ## TODO: verify that rtm has consecutive days
-  if (sircovid_model == "carehomes") {
-    rtm <- spim_carehomes_data_rtm(date, region, model_type, rtm, full_data,
-                                   fit_to_variants)
-  } else if (sircovid_model == "lancelot") {
-    ## TODO: verify that rtm has consecutive days
-    rtm <- spim_lancelot_data_rtm(date, region, model_type, rtm, full_data,
-                                  fit_to_variants)
-  }
+  rtm <- spim_lancelot_data_rtm(date, region, model_type, rtm, full_data)
   serology <- spim_data_serology(date, region, serology)
 
   ## Merge the two datasets on date
@@ -107,284 +92,7 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 
 
 ##' @importFrom dplyr %>%
-spim_carehomes_data_rtm <- function(date, region, model_type, data, full_data,
-                                    fit_to_variants) {
-
-  vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
-            "admitted", "new", "phe_admissions", "all_admission",
-            "death2", "death3", "death_chr", "death_comm",
-            "ons_death_carehome", "ons_death_noncarehome",
-            "pillar2_positives", "pillar2_negatives",
-            "positives", "negatives", "react_positive", "react_samples",
-            "pillar2_negatives_total_pcr_over25", "pillar2_negatives_total_pcr",
-            "pillar2_positives_over25", "pillar2_negatives_over25",
-            "positives_over25", "pillar2_positives_symp_pcr_only",
-            "pillar2_positives_symp_pcr_only_over25",
-            "pillar2_positives_pcr_all", "pillar2_positives_pcr_all_over25",
-            "n_delta_variant", "n_non_delta_variant",
-            "n_symp_delta_variant", "n_symp_non_delta_variant")
-  data <- data[c("region", "date", vars)]
-
-  ## Remove any data after the date parameter
-  data <- data[as.Date(data$date) <= as.Date(date), ]
-
-  ## TODO: de-deplyr this and/or make it function-safe
-  ## Make sure the dates for each region match up
-  rows_out <- data %>%
-    dplyr::group_by(date) %>%
-    dplyr::summarise(rows = dplyr::n())
-  all_regions <- unique(data$region)
-
-  dates_incomplete <- which(rows_out$rows < length(all_regions))
-
-  if (length(dates_incomplete > 0)) {
-    for (d in rows_out$date[dates_incomplete]) {
-      missing_regions <- all_regions[!all_regions %in%
-                                      data[data$date == d, "region"]]
-
-      tmp <-  data %>% filter(date == d)
-      tmp_add <- tmp[seq_along(missing_regions), ]
-      tmp_add[3:ncol(tmp_add)] <- NA
-      tmp_add$region <- missing_regions
-      tmp_add$date <- d
-      data <- data %>% dplyr::bind_rows(tmp_add)
-    }
-  }
-
-  # Set NA deaths to 0
-  data[which(is.na(data$death2)), "death2"] <- 0
-  data[which(is.na(data$death3)), "death3"] <- 0
-  data[which(is.na(data$death_chr)), "death_chr"] <- 0
-  data[which(is.na(data$death_comm)), "death_comm"] <- 0
-  data[which(is.na(data$ons_death_carehome)), "ons_death_carehome"] <- 0
-  data[which(is.na(data$ons_death_noncarehome)), "ons_death_noncarehome"] <- 0
-
-  if (region == "uk") {
-    ## This might be better done in the upstream task
-    nations <- c("scotland", "england", "northern_ireland", "wales")
-    sub <- data[data$region %in% nations, ]
-    data <- aggregate(sub[vars], sub["date"], sum)
-  } else {
-    data <- data[data$region == region, ]
-  }
-
-  if (region %in% c("northern_ireland", "scotland", "wales", "uk")) {
-    data$deaths <- data$death2
-    data$deaths_hosp <- NA_integer_
-    data$deaths_comm <- NA_integer_
-    data$deaths_carehomes <- NA_integer_
-    data$deaths_non_hosp <- NA_integer_
-  } else {
-    data$deaths <- NA_integer_
-    data$deaths_hosp <- data$death3
-    data$deaths_non_hosp <- NA_integer_
-
-    if (!full_data) {
-      date_death_change <- "2020-09-01"
-      data$deaths_carehomes <- dplyr::case_when(
-        data$date < date_death_change ~ as.integer(data$ons_death_carehome),
-        data$date >= date_death_change ~ NA_integer_
-      )
-      data$deaths_comm <- dplyr::case_when(
-        data$date < date_death_change ~ as.integer(data$ons_death_noncarehome),
-        data$date >= date_death_change ~ NA_integer_
-      )
-    } else {
-      ## due to ONS data being lagged, in the full_data version (not used in
-      ## fitting) we will use death linelist data for recent care home and
-      ## community deaths
-      date_death_change <- as.Date(date) - 45
-      data$deaths_carehomes <- dplyr::case_when(
-        data$date < date_death_change ~ as.integer(data$ons_death_carehome),
-        data$date >= date_death_change ~ as.integer(data$death_chr)
-      )
-      data$deaths_comm <- dplyr::case_when(
-        data$date < date_death_change ~ as.integer(data$ons_death_noncarehome),
-        data$date >= date_death_change ~ as.integer(data$death_comm)
-      )
-    }
-  }
-
-  # Use VAM data available
-  if (region %in% c("scotland", "wales", "northern_ireland")) {
-    data$strain_non_variant <- data$n_non_delta_variant
-    data$strain_tot <- data$n_delta_variant + data$n_non_delta_variant
-  } else {
-    data$strain_non_variant <- data$n_symp_non_delta_variant
-    data$strain_tot <- data$n_symp_delta_variant + data$n_symp_non_delta_variant
-  }
-
-  # Use positives/negatives as Pillar 2 for Scotland
-  # Set data$phe_patients to NA between 2020-06-01 and 2020-09-09 (inclusive)
-  if (region == "scotland") {
-    data$pillar2_positives <- data$positives
-    ## Scotland negatives are by report date (while positives are by specimen
-    ## date). We assume a 2 day reporting delay.
-    data$pillar2_negatives <- c(data$negatives[-c(1, 2)], rep(NA_integer_, 2))
-    data$pillar2_positives_over25 <- data$positives_over25
-    ## We do not have any age breakdown for negatives for Scotland
-    data$pillar2_negatives_over25 <- NA_integer_
-
-    data$phe_patients[data$date >= as.Date("2020-06-01") &
-                      data$date <= as.Date("2020-09-10")] <- NA_integer_
-  }
-
-  # Use positives/negatives as Pillar 2 for NI
-  if (region == "northern_ireland") {
-    data$pillar2_positives <- data$positives
-    data$pillar2_negatives <- data$negatives
-  }
-
-  data$pillar2_cases <- data$pillar2_positives
-  data$pillar2_cases_over25 <- data$pillar2_positives_over25
-
-  ## Use symp PCR only for cases where available
-  if (!all(is.na(data$pillar2_positives_symp_pcr_only))) {
-    data$pillar2_cases <- data$pillar2_positives_symp_pcr_only
-  }
-  if (!all(is.na(data$pillar2_positives_symp_pcr_only_over25))) {
-    data$pillar2_cases_over25 <- data$pillar2_positives_symp_pcr_only_over25
-  }
-
-  ## Use PCR all for positives where available
-  if (!all(is.na(data$pillar2_positives_pcr_all))) {
-    data$pillar2_positives <- data$pillar2_positives_pcr_all
-  }
-  if (!all(is.na(data$pillar2_positives_pcr_all_over25))) {
-    data$pillar2_positives_over25 <- data$pillar2_positives_pcr_all_over25
-  }
-
-  ## Use total PCR for negatives where available
-  if (!all(is.na(data$pillar2_negatives_total_pcr))) {
-    data$pillar2_negatives <- data$pillar2_negatives_total_pcr
-  }
-  if (!all(is.na(data$pillar2_negatives_total_pcr_over25))) {
-    data$pillar2_negatives_over25 <- data$pillar2_negatives_total_pcr_over25
-  }
-
-  # Use hospital data from dashboard for all except Wales (linelist)
-  if (region == "wales") {
-    data$final_admissions <- data$all_admission
-    data$final_icu <- data$icu
-    data$final_general <- data$general
-    data$final_hosp <- data$icu + data$general
-
-  } else {
-    data$final_admissions <- data$phe_admissions
-    data$final_icu <- data$phe_occupied_mv_beds
-    data$final_general <- data$phe_patients - data$phe_occupied_mv_beds
-    data$final_hosp <- data$phe_patients
-  }
-
-  cols_pillar2 <- c("pillar2_positives", "pillar2_negatives", "pillar2_cases",
-                    "pillar2_positives_over25", "pillar2_negatives_over25",
-                    "pillar2_cases_over25")
-
-  # ignore pillar 2 testing before 2020-06-18
-  data[which(data$date < "2020-06-18"), cols_pillar2] <- NA_integer_
-
-  last_week <- seq(to = nrow(data), length.out = 7)
-  ## Remove last week admissions for Wales (due to backfill)
-  if (region == "wales") {
-    data[last_week, "final_admissions"] <- NA_integer_
-  }
-
-  ## Remove implausible value for MV beds occupancy in east_of_england
-  ## on 2020-09-11
-  if (region == "east_of_england") {
-    data[which(data$final_general < 0), "final_general"] <- NA_integer_
-  }
-
-  ## Remove implausible values for pillar2_negatives data
-  data[which(data$pillar2_negatives < 0), "pillar2_negatives"] <- NA_integer_
-  data[which(data$pillar2_negatives_over25 < 0), "pillar2_negatives_over25"] <-
-    NA_integer_
-
-  stopifnot(
-    all(data$pillar2_negatives >= 0, na.rm = TRUE),
-    all(data$pillar2_positives >= 0, na.rm = TRUE),
-    all(data$pillar2_cases >= 0, na.rm = TRUE),
-    all(data$pillar2_negatives_over25 >= 0, na.rm = TRUE),
-    all(data$pillar2_positives_over25 >= 0, na.rm = TRUE),
-    all(data$pillar2_cases_over25 >= 0, na.rm = TRUE))
-
-  ## TODO: with a stripped down compare function wee could drop the NA
-  ## columns here.
-  ret <- data_frame(
-    date = sircovid::as_date(data$date),
-    deaths_hosp = data$deaths_hosp,
-    deaths_comm = data$deaths_comm,
-    deaths_carehomes = data$deaths_carehomes,
-    deaths_non_hosp = data$deaths_non_hosp,
-    icu = data$final_icu,
-    general = data$final_general,
-    hosp = data$final_hosp,
-    deaths = data$deaths,
-    admitted = data$admitted,
-    diagnoses = data$new,
-    all_admission = data$final_admissions,
-    pillar2_tot = data$pillar2_positives + data$pillar2_negatives,
-    pillar2_pos = data$pillar2_positives,
-    pillar2_cases = data$pillar2_cases,
-    pillar2_over25_tot = data$pillar2_positives_over25 +
-      data$pillar2_negatives_over25,
-    pillar2_over25_pos = data$pillar2_positives_over25,
-    pillar2_over25_cases = data$pillar2_cases_over25,
-    react_pos = data$react_positive,
-    react_tot = data$react_samples,
-    strain_non_variant = data$strain_non_variant,
-    strain_tot = data$strain_tot,
-    strain_over25_non_variant = NA_integer_,
-    strain_over25_tot = NA_integer_)
-
-  if (!fit_to_variants) {
-    ret$strain_non_variant <- NA_integer_
-    ret$strain_tot <- NA_integer_
-    ret$strain_over25_non_variant <- NA_integer_
-    ret$strain_over25_tot <- NA_integer_
-  }
-
-  if (!full_data) {
-    ## Typically we do not fit to this
-    ret$strain_over25_non_variant <- NA_integer_
-    ret$strain_over25_tot <- NA_integer_
-
-    if (model_type == "BB") {
-      omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
-                "pillar2_cases", "pillar2_over25_cases")
-      for (i in omit) {
-        ret[[i]] <- NA_integer_
-      }
-      if (all(is.na(ret$pillar2_over25_tot))) {
-        ret$pillar2_tot <- data$pillar2_positives + data$pillar2_negatives
-        ret$pillar2_pos <- data$pillar2_positives
-        ret$pillar2_over25_tot <- NA_integer_
-        ret$pillar2_over25_pos <- NA_integer_
-      }
-    }
-    if (model_type == "NB") {
-      omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
-                "pillar2_cases", "pillar2_over25_tot", "pillar2_over25_pos")
-      for (i in omit) {
-        ret[[i]] <- NA_integer_
-      }
-      if (all(is.na(ret$pillar2_over25_cases))) {
-        ret$pillar2_cases <- data$pillar2_positives
-      }
-    }
-  }
-
-  stopifnot(
-    all(ret$deaths_carehomes >= 0, na.rm = TRUE),
-    all(ret$general >= 0, na.rm = TRUE))
-
-  ret
-}
-
-
-##' @importFrom dplyr %>%
-spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
-                                   fit_to_variants) {
+spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
 
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
@@ -502,9 +210,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     data$strain_non_variant <- data$n_symp_non_delta_variant
     data$strain_tot <- data$n_symp_delta_variant + data$n_symp_non_delta_variant
   }
-  ## Only fit to variant data until end of July
-  data$strain_non_variant[data$date >= as.Date("2021-08-01")] <- NA_integer_
-  data$strain_tot[data$date >= as.Date("2021-08-01")] <- NA_integer_
+
+  ## Only fit to Alpha/Delta variant data between 2021-03-08 and 2021-07-31
+  na_strain_dates <-
+    data$date < as.Date("2021-03-08") | data$date > as.Date("2021-07-31")
+  data$strain_non_variant[na_strain_dates] <- NA_integer_
+  data$strain_tot[na_strain_dates] <- NA_integer_
 
   # Use positives/negatives as Pillar 2 for Scotland
   # Set data$phe_patients to NA between 2020-06-01 and 2020-09-09 (inclusive)
@@ -710,13 +421,6 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data,
     strain_tot = data$strain_tot,
     strain_over25_non_variant = NA_integer_,
     strain_over25_tot = NA_integer_)
-
-  if (!fit_to_variants) {
-    ret$strain_non_variant <- NA_integer_
-    ret$strain_tot <- NA_integer_
-    ret$strain_over25_non_variant <- NA_integer_
-    ret$strain_over25_tot <- NA_integer_
-  }
 
   if (!full_data) {
     ## Typically we do not fit to this
