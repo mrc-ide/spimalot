@@ -361,8 +361,8 @@ extract_age_class_state <- function(state) {
 
 reduce_trajectories <- function(samples) {
   ## Remove unused trajectories for predict function in combined
-  remove_strings <- c("prob_strain", "^R_", "I_weighted_", "D_hosp_", "D_all_",
-                      "diagnoses_admitted_", "cum_infections_disag_",
+  remove_strings <- c("prob_strain", "^S_", "^R_", "I_weighted_", "D_hosp_",
+                      "D_all_", "diagnoses_admitted_", "cum_infections_disag_",
                       "cum_n_vaccinated")
 
   pars <- samples$predict$transform(samples$pars[1, ])
@@ -375,35 +375,6 @@ reduce_trajectories <- function(samples) {
     grep(paste0("^", s), rownames(state))
   })
   state <- state[-unlist(index_remove), , ]
-
-
-  ## Add index_S
-  nms_S <- grep("^S_", rownames(state), value = TRUE)
-  S <- state[nms_S, , ]
-
-  ## calculate the effective number of susceptibles
-  calc_eff_S <- function(i) {
-    p <- samples$predict$transform(samples$pars[i, ])
-    rel_susceptibility <- p$rel_susceptibility
-    apply(S[, i, ], 2, function(x) sum(x * c(rel_susceptibility)))
-  }
-
-  eff_S <- t(vapply(seq_len(dim(S)[2]), calc_eff_S, numeric(dim(S)[3])))
-  eff_S <- array(eff_S, c(1, dim(eff_S)))
-  row.names(eff_S) <- "eff_S"
-  state <- abind1(state, eff_S)
-
-  samples$trajectories$state <- abind1(samples$trajectories$state, eff_S)
-  ## sum across vaccine stages for S
-  if (n_groups != length(nms_S)) {
-    ## sum across vacc classes
-    S <- mcstate::array_reshape(S, i = 1, d = c(n_groups, n_vacc_classes))
-    S <- apply(S, c(1, 3, 4), sum)
-    rownames(S) <- paste0("S_", seq_len(n_groups))
-  }
-
-  samples$trajectories$state <-
-    abind1(state[setdiff(rownames(state), nms_S), , ], S)
 
   ## Calculate Pillar 2 positivity and cases
   if (samples$info$model_type == "BB") {
@@ -637,10 +608,13 @@ calculate_positivity <- function(samples) {
   x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
 
   base_pars <- samples$predict$transform(samples$pars[1, ])
+  base_pars <- base_pars[[length(base_pars)]]$pars
 
   pars <- t(vapply(seq_len(nrow(samples$pars)),
-                 function(i) unlist(samples$predict$transform(
-                   samples$pars[i, ])[p_NC_names]),
+                 function(i) {
+                   p <- samples$predict$transform(samples$pars[i, ])
+                   unlist(p[[length(p)]]$pars[p_NC_names])
+                   },
                  numeric(length(p_NC_names))))
 
   pos_under15 <-
