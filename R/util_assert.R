@@ -154,3 +154,20 @@ assert_nonmissing <- function(x, name = deparse(substitute(x))) {
   }
   invisible(x)
 }
+
+
+assert_names_setequal <- function(x, expected, name = deparse(substitute(x))) {
+  extra <- setdiff(names(x), expected)
+  msg <- setdiff(expected, names(x))
+
+  if (length(msg) > 0) {
+    stop(sprintf("Missing required values from '%s': %s",
+                 name, paste(squote(msg), collapse = ", ")))
+  }
+  if (length(extra) > 0) {
+    stop(sprintf("Unsupported extra values from '%s': %s",
+                 name, paste(squote(extra), collapse = ", ")))
+  }
+
+  invisible(x)
+}

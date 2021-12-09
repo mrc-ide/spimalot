@@ -70,3 +70,71 @@ spim_simulate_control_output <- function(keep, time_series = TRUE,
   class(ret) <- c("spim_simulate_control_output", "immutable")
   ret
 }
+
+
+##' Create control parameters to run a set of simulations. This
+##' includes parameters that vary compared with the upstream
+##' simulation and grids of parameter types to loop over.
+##'
+##' @title Create control parameters
+##'
+##' @param flavour The simulation flavour; this is a single string
+##'   (e.g., "mtp" or "add_omicron")
+##'
+##' @param regions A vector of regions to simulate over.  These must
+##'   all be valid values in [sircovid::regions]
+##'
+##' @param start The start date, as an R `Date` object. Typically this
+##'   is the last date of the data/fits.
+##'
+##' @param end The end date of the simulation as an R `Date` object
+##'
+##' @param parameters A list of parameters.  These might be direct
+##'   replacements against the baseline or structured lists of
+##'   parameters with names that correspond to those within `grid`.
+##'   We'll document this more later!
+##'
+##' @param grid The parameter grid, indicating the set of simulations
+##'   to run. It must have at least one row.
+##'
+##' @param output Output control, created by
+##'   [spimalot::spim_simulate_control]
+##'
+##' @export
+spim_simulate_control <- function(flavour, regions, date_start, date_end,
+                                  parameters, grid, output) {
+  assert_scalar_character(flavour)
+
+  assert_character(regions)
+  err <- setdiff(regions, sircovid::regions("all"))
+  if (length(err) > 0) {
+    stop("Invalid region: ", paste(squote(err), collapse = ", "))
+  }
+
+  assert_is(date_start, "Date")
+  assert_is(date_end, "Date")
+  if (date_end <= date_start) {
+    stop("'date_end' must be greater than 'date_start'")
+  }
+
+  assert_is(parameters, "list")
+  assert_is(grid, "data.frame")
+  if (nrow(grid) == 0) {
+    stop("At least one row required in 'grid'")
+  }
+  assert_is(output, "spim_simulate_control_output")
+
+  ret <- list(flavour = flavour,
+              regions = regions,
+              date_start = date_start,
+              date_end = date_end,
+              parameters = parameters,
+              grid = grid,
+              output = output)
+  ## TODO: this one can't be immutable yet because the simulation task
+  ## is in enough of a mess that we need to change these parameters
+  ## too much. Eventually we'd like to add that here though, but it
+  ## will take some time.
+  class(ret) <- "spim_simulate_control"
+  ret
+}
