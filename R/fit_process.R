@@ -177,31 +177,79 @@ create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
 }
 
 
-calculate_lancelot_Rt <- function(samples, multistrain, weight_Rt) {
+calculate_lancelot_Rt <- function(samples, weight_Rt) {
+
   step <- samples$trajectories$step
 
   index_S <- grep("^S_", names(samples$predict$index))
   index_R <- grep("^R_", names(samples$predict$index))
   index_ps <- grep("^prob_strain", names(samples$predict$index))
 
-  if (multistrain) {
-    R <- samples$trajectories$state[index_R, , , drop = FALSE]
-    prob_strain <- samples$trajectories$state[index_ps, , , drop = FALSE]
-  } else {
-    R <- NULL
-    prob_strain <- NULL
+  S <- samples$trajectories$state[index_S, , , drop = FALSE]
+  R <- samples$trajectories$state[index_R, , , drop = FALSE]
+  prob_strain <- samples$trajectories$state[index_ps, , , drop = FALSE]
+
+  pars <-
+    lapply(seq_len(length(samples$info$info)),
+           function (j)
+             lapply(seq_rows(samples$pars),
+                    function(i)
+                      samples$predict$transform(samples$pars[i, ])[[j]]$pars))
+
+
+  dates <- step / 4
+  epoch_dates <- sircovid::sircovid_date(samples$info$epoch_dates)
+
+  rt = list(step = numeric(0),
+            date = numeric(0),
+            beta = numeric(0),
+            eff_Rt_all = numeric(0),
+            eff_Rt_general = numeric(0),
+            Rt_all = numeric(0),
+            Rt_general = numeric(0))
+
+  for (i in seq_len(length(epoch_dates) +1L)) {
+    if (i == 1) {
+      dates1 <- which(dates <= epoch_dates[1])
+    } else  if (i <= length(epoch_dates)) {
+      dates1 <- which(dates > epoch_dates[i - 1] & dates <= epoch_dates[i])
+    } else {
+      dates1 <- which(dates > epoch_dates[i - 1])
+    }
+
+    step1 <- step[dates1]
+    S1 <- S[, , dates1, drop = FALSE]
+
+    n_strains <- pars[[i]][[1]]$n_strains
+
+    if (n_strains == 1) {
+      R1 <- NULL
+      prob_strain1 <- NULL
+    } else {
+      R1 <- R[, , dates1, drop = FALSE]
+      prob_strain1 <- prob_strain[, , dates1, drop = FALSE]
+    }
+
+    if (!(n_strains == 1 && !weight_Rt)) {
+      rt1 <- sircovid::lancelot_Rt_trajectories(
+        step1, S1, pars[[i]],
+        initial_step_from_parameters = TRUE,
+        shared_parameters = FALSE, R = R1, prob_strain = prob_strain1,
+        weight_Rt = weight_Rt)
+      for (nm in names(rt)) {
+        if (length(rt[[nm]]) == 0) {
+          rt[[nm]] <- rt1[[nm]]
+        } else if (weight_Rt) {
+          rt[[nm]] <- rbind(rt[[nm]], rt1[[nm]])
+        } else {
+          rt[[nm]] <- abind1(rt[[nm]], rt1[[nm]])
+        }
+      }
+    }
+
   }
 
-  S <- samples$trajectories$state[index_S, , , drop = FALSE]
-
-  pars <- lapply(seq_rows(samples$pars), function(i)
-    samples$predict$transform(samples$pars[i, ]))
-
-  sircovid::lancelot_Rt_trajectories(
-    step, S, pars,
-    initial_step_from_parameters = TRUE,
-    shared_parameters = FALSE, R = R, prob_strain = prob_strain,
-    weight_Rt = weight_Rt)
+  rt
 }
 
 
