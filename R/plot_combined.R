@@ -264,7 +264,7 @@ spim_plot_pillar2_cases <- function(dat, regions, age_band, date_min,
   on.exit(par(oo))
 
   for (r in regions) {
-    spim_plot_pillar2_cases_region(r, dat, date_min, add_betas)
+    spim_plot_pillar2_cases_region(r, dat, age_band, date_min, add_betas)
   }
 }
 
