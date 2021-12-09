@@ -211,10 +211,13 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
   for (i in seq_len(length(epoch_dates) +1L)) {
     if (i == 1) {
       dates1 <- which(dates <= epoch_dates[1])
+      initial_step_from_parameters <- TRUE
     } else  if (i <= length(epoch_dates)) {
       dates1 <- which(dates > epoch_dates[i - 1] & dates <= epoch_dates[i])
+      initial_step_from_parameters <- FALSE
     } else {
       dates1 <- which(dates > epoch_dates[i - 1])
+      initial_step_from_parameters <- FALSE
     }
 
     step1 <- step[dates1]
@@ -233,7 +236,7 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
     if (!(n_strains == 1 && !weight_Rt)) {
       rt1 <- sircovid::lancelot_Rt_trajectories(
         step1, S1, pars[[i]],
-        initial_step_from_parameters = TRUE,
+        initial_step_from_parameters = initial_step_from_parameters,
         shared_parameters = FALSE, R = R1, prob_strain = prob_strain1,
         weight_Rt = weight_Rt)
       for (nm in names(rt)) {
