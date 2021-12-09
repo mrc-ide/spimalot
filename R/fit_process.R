@@ -692,6 +692,7 @@ calculate_cases <- function(samples) {
   x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
 
   base_pars <- samples$predict$transform(samples$pars[1, ])
+  base_pars <- base_pars[[length(base_pars)]]$pars
 
   pars <- t(vapply(seq_len(nrow(samples$pars)),
                    function(i) unlist(samples$predict$transform(
