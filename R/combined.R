@@ -270,8 +270,7 @@ combine_variant_rt <- function(variant_rt, samples, rank) {
   ## the samples trajectories and the variant_rt do not necessarily have the
   ## same span of dates so we need to filter the trajectories
   dates <- variant_rt[[1]]$date
-  idx_dates <- samples[[1]]$trajectories$date %in% dates[-1L]
-  idx_dates[1] <- TRUE
+  idx_dates <- samples[[1]]$trajectories$date %in% dates
   for (r in names(samples)) {
     samples[[r]]$trajectories$state <-
       samples[[r]]$trajectories$state[, , idx_dates]
