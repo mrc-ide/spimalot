@@ -198,7 +198,7 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
 
 
   dates <- step / 4
-  epoch_dates <- sircovid::sircovid_date(samples$info$epoch_dates)
+  epoch_dates <- samples$info$epoch_dates
 
   rt = list(step = numeric(0),
             date = numeric(0),
