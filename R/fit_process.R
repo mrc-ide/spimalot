@@ -695,9 +695,11 @@ calculate_cases <- function(samples) {
   base_pars <- base_pars[[length(base_pars)]]$pars
 
   pars <- t(vapply(seq_len(nrow(samples$pars)),
-                   function(i) unlist(samples$predict$transform(
-                     samples$pars[i, ])[phi_pillar2_cases_names]),
-                   numeric(length(phi_pillar2_cases_names))))
+                   function(i) {
+                     p <- samples$predict$transform(samples$pars[i, ])
+                     unlist(p[[length(p)]]$pars[p_NC_names])
+                   },
+                   numeric(length(p_NC_names))))
 
   calc_cases <- function(group) {
     cases1 <-
