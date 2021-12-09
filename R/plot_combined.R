@@ -1034,6 +1034,7 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   trajectories <- sample$trajectories$state
 
   model_params <- sample$predict$transform(sample$pars[1, ])
+  model_params <- model_params[[length(model_params)]]$pars
 
   pos <- trajectories["react_pos", , ]
   neg <- (sum(model_params$N_tot_react) - pos)
@@ -1140,6 +1141,7 @@ spim_plot_serology_region <- function(region, dat, sero_flow, ymax,
   }
 
   p <- sample$predict$transform(sample$pars[1, ])
+  p <- p[[length(p)]]$pars
   sero_sensitivity <- p[[paste0("sero_sensitivity_", sero_flow)]]
   sero_specificity <- p[[paste0("sero_specificity_", sero_flow)]]
   sero_pos <- sample$trajectories$state[paste0("sero_pos_", sero_flow), , ]
