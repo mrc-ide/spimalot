@@ -101,13 +101,13 @@ immutable_error <- function(x) {
 }
 
 ##' @export
-`[[<-.immutable` <- function(x, i, value, ...) {
+`[[<-.immutable` <- function(x, i, ..., value) {
   immutable_error(x)
 }
 
 
 ##' @export
-`[<-.immutable` <- function(x, i, value, ...) {
+`[<-.immutable` <- function(x, i, ..., value) {
   immutable_error(x)
 }
 
