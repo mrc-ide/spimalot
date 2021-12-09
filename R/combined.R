@@ -53,11 +53,9 @@ spim_combined_load <- function(path, regions = "all") {
   ## reorder by increasing cumulative incidence:
   rank_cum_inc <- lapply(ret$samples, sircovid::get_sample_rank)
   ret$samples <- Map(sircovid::reorder_sample, ret$samples, rank_cum_inc)
-  # ret$rt <- Map(sircovid::reorder_rt_ifr, ret$rt, rank_cum_inc)
+  ret$rt <- Map(sircovid::reorder_rt_ifr, ret$rt, rank_cum_inc)
   # ret$ifr_t <- Map(sircovid::reorder_rt_ifr, ret$ifr_t, rank_cum_inc)
-  # if (ret$info$multistrain) {
-  #   ret$variant_rt <- Map(reorder_variant_rt, ret$variant_rt, rank_cum_inc)
-  # }
+  ret$variant_rt <- Map(reorder_variant_rt, ret$variant_rt, rank_cum_inc)
 
   message("Aggregating England/UK")
   ## Aggregate some of these to get england/uk entries
@@ -67,10 +65,8 @@ spim_combined_load <- function(path, regions = "all") {
   agg_samples <- combined_aggregate_samples(ret$samples)
   agg_data <- combined_aggregate_data(ret$data)
   # agg_ifr_t <- combined_aggregate_rt(ret$ifr_t, agg_samples)
-  # ret$rt <- combined_aggregate_rt(ret$rt, agg_samples)
-  # if (ret$info$multistrain) {
-  #  ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, agg_samples)
-  # }
+  ret$rt <- combined_aggregate_rt(ret$rt, agg_samples)
+  ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, agg_samples)
 
   ## NOTE: have not ported the "randomise trajectory order" bit over,
   ## but I do not think that we need to.

@@ -249,6 +249,7 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
 
   }
 
+  class(rt) <- c("Rt_trajectories", "Rt")
   rt
 }
 
