@@ -895,7 +895,7 @@ spim_plot_pillar2_cases_region <- function(region, dat, age_band, date_min,
 
   if (age_band == "all") {
     dy <- data$fitted[, "pillar2_cases"]
-    if (all(is.na(ntot))) {
+    if (all(is.na(dy))) {
       dy <- data$full[, "pillar2_cases"]
       dcols[1] <- cols$green2
     }
