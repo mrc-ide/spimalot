@@ -45,12 +45,16 @@ test_that("Disallow invalid values", {
 
 test_that("Can construct a basic simulation control object", {
   output <- spim_simulate_control_output("deaths")
-  grid <- data.frame(vaccine_daily_doses = "mtp")
-  parameters <- list(vaccine_daily_doses = 10000)
+
+  grid <- data.frame(beta_step = "mtp")
+  parameters <- list(beta_step = NULL)
+  expected <- "beta_step"
+
   control <- spim_simulate_control("flavour",
                                    sircovid::regions("england"),
                                    as.Date("2022-01-01"),
                                    as.Date("2022-03-01"),
+                                   expected,
                                    parameters,
                                    grid,
                                    output)

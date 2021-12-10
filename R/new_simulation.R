@@ -89,20 +89,30 @@ spim_simulate_control_output <- function(keep, time_series = TRUE,
 ##'
 ##' @param end The end date of the simulation as an R `Date` object
 ##'
+##' @param expected A character vector of expected parameter names.
+##'   These are the names of things that *must* be present within
+##'   `parameters`, and this will be checked for you.  It will be
+##'   tempting to write `names(parameters)` here, but we suggest not
+##'   doing that as this will provide a human readable description of
+##'   what you are currently looking to simulate against.
+##'
 ##' @param parameters A list of parameters.  These might be direct
 ##'   replacements against the baseline or structured lists of
 ##'   parameters with names that correspond to those within `grid`.
 ##'   We'll document this more later!
 ##'
 ##' @param grid The parameter grid, indicating the set of simulations
-##'   to run. It must have at least one row.
+##'   to run. It must have at least one row.  Not all variables are
+##'   allowed in here; in particular, we disallow most of the `rt_`
+##'   variables.  An error will be thrown if anything unexpected is
+##'   found.
 ##'
 ##' @param output Output control, created by
 ##'   [spimalot::spim_simulate_control]
 ##'
 ##' @export
 spim_simulate_control <- function(flavour, regions, date_start, date_end,
-                                  parameters, grid, output) {
+                                  expected, parameters, grid, output) {
   assert_scalar_character(flavour)
 
   assert_character(regions)
@@ -116,6 +126,8 @@ spim_simulate_control <- function(flavour, regions, date_start, date_end,
   if (date_end <= date_start) {
     stop("'date_end' must be greater than 'date_start'")
   }
+
+  assert_character(expected)
 
   assert_is(parameters, "list")
   ## Handling of beta_step is special because it is typically added
@@ -148,6 +160,7 @@ spim_simulate_control <- function(flavour, regions, date_start, date_end,
               regions = regions,
               date_start = date_start,
               date_end = date_end,
+              expected = expected,
               parameters = parameters,
               grid = grid,
               output = output)
@@ -252,47 +265,68 @@ spim_simulate_parameter_grid <- function(control) {
 validate_simulate_parameters <- function(control, require_beta_step) {
   grid <- control$grid
   parameters <- control$parameters
+  expected <- control$expected
 
-  ## TODO: We'll relax this at some point, and likely need to later
-  ## for the mtps
-  expected_grid <- c("scenario", "vaccine_daily_doses", "booster_daily_doses",
-                     "strain_transmission", "strain_cross_immunity",
-                     "strain_vaccine_efficacy", "analysis", "beta_step")
-  assert_names_setequal(grid, expected_grid)
+  ## These are things that we "know" how to modify.  Most of that
+  ## modification still happens in the simulate task but will move
+  ## (back) into spimalot fairly shortly.  The provided set of
+  ## parameters must be a subset of these.
+  allowed_parameters <- c("vaccine_eligibility_min_age",
+                          "vaccine_booster_eligibility",
+                          "vaccine_daily_doses",
+                          "booster_daily_doses",
+                          "strain_vaccine_efficacy",
+                          "vaccine_uptake",
+                          "strain_cross_immunity",
+                          "strain_transmission",
+                          "strain_seed_date",
+                          "strain_seed_size",
+                          "strain_seed_pattern",
+                          "beta_step",
+                          "rt_sd",
+                          "rt_schools_modifier",
+                          "rt_scenarios",
+                          "rt_seasonality_date_peak",
+                          "rt_seasonality_amplitude")
 
-  ## TODO: We will want to allow some of these to be missing, so that
-  ## this represents some maximal set of things to change.
-  expected_parameters <- c("vaccine_eligibility_min_age",
-                           "vaccine_booster_eligibility",
-                           "vaccine_daily_doses",
-                           "booster_daily_doses",
-                           "strain_vaccine_efficacy",
-                           "vaccine_uptake",
-                           "strain_cross_immunity",
-                           "strain_transmission",
-                           "strain_seed_date",
-                           "strain_seed_size",
-                           "strain_seed_pattern",
-                           "beta_step",
-                           "rt_sd",
-                           "rt_schools_modifier",
-                           "rt_scenarios",
-                           "rt_seasonality_date_peak",
-                           "rt_seasonality_amplitude")
-  assert_names_setequal(parameters, expected_parameters)
+  required_parameters <- "beta_step"
+
+  ## These must not vary across the grid and are constrained to being
+  ## shared.  The rt_scenarios one is special as it implies the
+  ## scenarios that become beta_step eventually.
+  allowed_grid <- setdiff(
+    allowed_parameters,
+    c("rt_sd", "rt_schools_modifier", "rt_scenarios",
+      "rt_seasonality_date_peak", "rt_seasonality_amplitude"))
+
+  err <- setdiff(expected, allowed_parameters)
+  if (length(err) > 0) {
+    stop("Don't know how to work with parameter: ",
+         paste(squote(err), collapse = ", "))
+  }
+  msg <- setdiff(required_parameters, expected)
+  if (length(msg) > 0) {
+    stop("Your expected list must include required parameter: ",
+         paste(squote(msg), collapse = ", "))
+  }
+
+  assert_names_setequal(parameters, expected)
 
   ## TODO: we might make this tuneable when configuring the control
   ## object.
   ignore <- c("analysis", "scenario")
   names_variable <- setdiff(names(grid), ignore)
 
-  ## NOTE: only a simple assertion here, because this is/will be
-  ## tested properly above.
-  msg <- setdiff(names_variable, names(parameters))
-  if (length(msg)) {
-    stop(sprintf(
-      "All parameters in 'grid' must be in 'parameters', but missing: %s",
-      paste(squote(msg), collapse = ", ")))
+  err <- setdiff(names_variable, allowed_grid)
+  if (length(err) > 0) {
+    stop("Disallowed parameter in grid (must be constant across simulations): ",
+         paste(squote(err), collapse = ", "))
+  }
+
+  err <- setdiff(names_variable, expected)
+  if (length(err) > 0) {
+    stop("Unknown parameter in grid not found in parameters: ",
+         paste(squote(err), collapse = ", "))
   }
 
   if (require_beta_step && is.null(parameters$beta_step)) {
@@ -300,6 +334,8 @@ validate_simulate_parameters <- function(control, require_beta_step) {
   }
 
   names_constant <- setdiff(names(parameters), names_variable)
+
+  ## TODO: should we check the levels here? Seems sensible.
 
   list(constant = names_constant, variable = names_variable)
 }

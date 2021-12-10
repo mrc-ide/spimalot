@@ -9,6 +9,7 @@ spim_simulate_control(
   regions,
   date_start,
   date_end,
+  expected,
   parameters,
   grid,
   output
@@ -21,13 +22,23 @@ spim_simulate_control(
 \item{regions}{A vector of regions to simulate over.  These must
 all be valid values in \link[sircovid:regions]{sircovid::regions}}
 
+\item{expected}{A character vector of expected parameter names.
+These are the names of things that \emph{must} be present within
+\code{parameters}, and this will be checked for you.  It will be
+tempting to write \code{names(parameters)} here, but we suggest not
+doing that as this will provide a human readable description of
+what you are currently looking to simulate against.}
+
 \item{parameters}{A list of parameters.  These might be direct
 replacements against the baseline or structured lists of
 parameters with names that correspond to those within \code{grid}.
 We'll document this more later!}
 
 \item{grid}{The parameter grid, indicating the set of simulations
-to run. It must have at least one row.}
+to run. It must have at least one row.  Not all variables are
+allowed in here; in particular, we disallow most of the \code{rt_}
+variables.  An error will be thrown if anything unexpected is
+found.}
 
 \item{output}{Output control, created by
 \link{spim_simulate_control}}
