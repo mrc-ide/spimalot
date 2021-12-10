@@ -411,24 +411,28 @@ spim_plot_log_traj_by_age <- function(dat, regions, yield, model_type) {
 ##'
 ##' @param regions Vector of regions to plot
 ##'
+##' @param voc_name The name of the emerging VOC
+##'
 ##' @param date_min Starting date for plot
 ##'
 ##' @param date_max End date for plot
 ##'
 ##' @export
-spim_plot_variant <- function(dat, regions, date_min = NULL, date_max = NULL) {
+spim_plot_variant <- function(dat, regions, voc_name,
+                              date_min = NULL, date_max = NULL) {
 
   oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
             mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
   for (r in regions) {
-    spim_plot_variant_region(r, dat, date_min, date_max)
+    spim_plot_variant_region(r, dat, voc_name, date_min, date_max)
   }
 }
 
 
-spim_plot_variant_region <- function(region, dat, date_min, date_max) {
+spim_plot_variant_region <- function(region, dat, voc_name, date_min,
+                                     date_max) {
 
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
@@ -490,7 +494,7 @@ spim_plot_variant_region <- function(region, dat, date_min, date_max) {
        las = 1,
        main = toupper(spim_region_name(region)),
        font.main = 1,
-       xlab = "", ylab = "VOC proportion (%)")
+       xlab = "", ylab = print0(voc_name, " proportion (%)"))
 
   ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
            horiz = FALSE, leg = FALSE)

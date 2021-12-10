@@ -40,9 +40,6 @@ back-fill issues. We typically use a value of 4 days.}
 back-fill issues. We typically use a value of 7 days.}
 
 \item{full_data}{Not sure yet, we'll find out}
-
-\item{sircovid_model}{The name of the sircovid model used.
-Default is \code{"carehomes"}}
 }
 \value{
 A \code{\link[=data.frame]{data.frame()}} TODO: describe columns

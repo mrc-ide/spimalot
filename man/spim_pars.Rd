@@ -50,9 +50,6 @@ values. Only has an effect if \code{multistrain} is \code{TRUE} and then
 must have a length of 2 if given.}
 
 \item{waning_rate}{Rate of waning immunity}
-
-\item{sircovid_model}{The name of the sircovid model used.
-Default is \code{"carehomes"}}
 }
 \value{
 An \link[mcstate:pmcmc_parameters]{mcstate::pmcmc_parameters} object which can be used
