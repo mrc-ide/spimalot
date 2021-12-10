@@ -118,11 +118,31 @@ spim_simulate_control <- function(flavour, regions, date_start, date_end,
   }
 
   assert_is(parameters, "list")
+  ## Handling of beta_step is special because it is typically added
+  ## later on.
+  if (!("beta_step" %in% names(parameters))) {
+    parameters["beta_step"] <- list(NULL)
+  }
+
   assert_is(grid, "data.frame")
   if (nrow(grid) == 0) {
     stop("At least one row required in 'grid'")
   }
+  if (inherits(grid, "tbl")) {
+    grid <- as.data.frame(grid)
+  }
+
   assert_is(output, "spim_simulate_control_output")
+
+  ## TODO: we might make this tuneable when configuring the control
+  ## object.
+  ignore <- c("analysis", "scenario")
+  names_variable <- setdiff(names(grid), ignore)
+
+  ## NOTE: only a simple assertion here, because this is/will be
+  ## tested properly above.
+  stopifnot(all(names_variable %in% names(parameters)))
+  names_constant <- setdiff(names(parameters), names_variable)
 
   ret <- list(flavour = flavour,
               regions = regions,
@@ -131,10 +151,135 @@ spim_simulate_control <- function(flavour, regions, date_start, date_end,
               parameters = parameters,
               grid = grid,
               output = output)
+
+  validate_simulate_parameters(ret, FALSE)
+
   ## TODO: this one can't be immutable yet because the simulation task
   ## is in enough of a mess that we need to change these parameters
   ## too much. Eventually we'd like to add that here though, but it
   ## will take some time.
   class(ret) <- "spim_simulate_control"
   ret
+}
+
+
+spim_simulate_set_beta_step <- function(control, beta_step) {
+  if (!is.null(control$parameters$beta_step)) {
+    stop("'beta_step' has already been set")
+  }
+  ## TODO: validate that the given values are sensible.
+  control$parameters$beta_step <- beta_step
+
+  validate_simulate_parameters(control, TRUE)
+  control
+}
+
+
+##' Convert an [spimalot::spim_simulate_control] object into a list of
+##' parmeters for simulation; these will then need to be swapped into
+##' the model too.
+##'
+##' @title Prepare parameter update list
+##'
+##' @param control A [spimalot::spim_simulate_control] object
+##'
+##' @export
+spim_simulate_parameter_grid <- function(control) {
+  grid <- control$grid
+  pars <- control$parameters
+  nms <- validate_simulate_parameters(control, TRUE)
+
+  f <- function(i) {
+    ret <- pars[nms$constant]
+    for (v in nms$variable) {
+      level <- grid[[v]][[i]]
+      value <- pars[[v]][[level]]
+      if (is.null(value)) {
+        stop(sprintf("Did not find level '%s' in control$parameters$%s",
+                     level, variable))
+      }
+      ## This function needs to account for the bug:
+      ##
+      ## When variable == "strain_cross_immunity" we have a list of
+      ## three levels equal_to_ve, lower_than_ve, higher_than_ve Each
+      ## of these has sub-levels of one_, two_, four_, eight_ and
+      ## sixteen_fold
+      ##
+      ## TODO: Why is this a special snowflake? We're in control of
+      ## this, why are we making work for ourselves here?  If for
+      ## some reason this turns out to be unavoidable, then a
+      ## paragraph or two of explanation might help this be less
+      ## obscure.  There's a comment above that I believe relates to
+      ## this.  Providing useful feedback here will be hard in this
+      ## current form, but we could move this *below*
+      if (v == "strain_cross_immunity") {
+        level_ve <- grid[["strain_vaccine_efficacy"]][[i]]
+        value <- value[[level_ve]]
+        if (is.null(value)) {
+          stop(sprintf("Did not find level '%s' in control$parameters$%s$%s",
+                       level, variable, level_ve))
+        }
+      }
+      ret[[v]] <- value
+    }
+    ret
+  }
+
+  lapply(seq_len(nrow(grid)), f)
+}
+
+
+validate_simulate_parameters <- function(control, require_beta_step) {
+  grid <- control$grid
+  parameters <- control$parameters
+
+  ## TODO: We'll relax this at some point, and likely need to later
+  ## for the mtps
+  expected_grid <- c("scenario", "vaccine_daily_doses", "booster_daily_doses",
+                     "strain_transmission", "strain_cross_immunity",
+                     "strain_vaccine_efficacy", "analysis", "beta_step")
+  assert_names_setequal(grid, expected_grid)
+
+  ## TODO: We will want to allow some of these to be missing, so that
+  ## this represents some maximal set of things to change.
+  expected_parameters <- c("vaccine_eligibility_min_age",
+                           "vaccine_booster_eligibility",
+                           "vaccine_daily_doses",
+                           "booster_daily_doses",
+                           "strain_vaccine_efficacy",
+                           "vaccine_uptake",
+                           "strain_cross_immunity",
+                           "strain_transmission",
+                           "strain_seed_date",
+                           "strain_seed_size",
+                           "strain_seed_pattern",
+                           "beta_step",
+                           "rt_sd",
+                           "rt_schools_modifier",
+                           "rt_scenarios",
+                           "rt_seasonality_date_peak",
+                           "rt_seasonality_amplitude")
+  assert_names_setequal(parameters, expected_parameters)
+
+  ## TODO: we might make this tuneable when configuring the control
+  ## object.
+  ignore <- c("analysis", "scenario")
+  names_variable <- setdiff(names(grid), ignore)
+
+  ## NOTE: only a simple assertion here, because this is/will be
+  ## tested properly above.
+  msg <- setdiff(names_variable, names(parameters))
+  if (length(msg)) {
+    stop(sprintf(
+      "All parameters in 'grid' must be in 'parameters', but missing: %s",
+      paste(squote(msg), collapse = ", ")))
+  }
+
+  if (require_beta_step && is.null(parameters$parameters$beta_step)) {
+    stop("beta_step has not been added yet")
+  }
+
+  names_constant <- setdiff(names(parameters), names_variable)
+
+  list(constant = names_constant, variable = names_variable)
 }
