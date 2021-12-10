@@ -494,7 +494,7 @@ spim_plot_variant_region <- function(region, dat, voc_name, date_min,
        las = 1,
        main = toupper(spim_region_name(region)),
        font.main = 1,
-       xlab = "", ylab = print0(voc_name, " proportion (%)"))
+       xlab = "", ylab = paste0(voc_name, " proportion (%)"))
 
   ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
            horiz = FALSE, leg = FALSE)
