@@ -22,6 +22,11 @@ spim_simulate_control(
 \item{regions}{A vector of regions to simulate over.  These must
 all be valid values in \link[sircovid:regions]{sircovid::regions}}
 
+\item{date_start}{The start date, as an R \code{Date} object. Typically this
+is the last date of the data/fits.}
+
+\item{date_end}{The end date of the simulation as an R \code{Date} object}
+
 \item{expected}{A character vector of expected parameter names.
 These are the names of things that \emph{must} be present within
 \code{parameters}, and this will be checked for you.  It will be
@@ -42,11 +47,6 @@ found.}
 
 \item{output}{Output control, created by
 \link{spim_simulate_control}}
-
-\item{start}{The start date, as an R \code{Date} object. Typically this
-is the last date of the data/fits.}
-
-\item{end}{The end date of the simulation as an R \code{Date} object}
 }
 \description{
 Create control parameters to run a set of simulations. This

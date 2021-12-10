@@ -84,10 +84,10 @@ spim_simulate_control_output <- function(keep, time_series = TRUE,
 ##' @param regions A vector of regions to simulate over.  These must
 ##'   all be valid values in [sircovid::regions]
 ##'
-##' @param start The start date, as an R `Date` object. Typically this
+##' @param date_start The start date, as an R `Date` object. Typically this
 ##'   is the last date of the data/fits.
 ##'
-##' @param end The end date of the simulation as an R `Date` object
+##' @param date_end The end date of the simulation as an R `Date` object
 ##'
 ##' @param expected A character vector of expected parameter names.
 ##'   These are the names of things that *must* be present within
