@@ -163,12 +163,32 @@ spim_simulate_control <- function(flavour, regions, date_start, date_end,
 }
 
 
+##' Add `beta_step` into a `spim_simulate_control` object.  Typically
+##' this happens just before running simulations, after the Rt values
+##' have been converted into beta values according to the assumptions
+##' of the simulation.
+##'
+##' @title Add beta_step into control
+##'
+##' @param control A control object from [spimalot::spim_simulate_control]
+##'
+##' @param beta_step Beta values; either a named list (if `beta_step`
+##'   appears in the run grid, which it probably will) or a single
+##'   set. These should be 3d arrays with dimensions corresponding to
+##'   1. particle, 2. region, and 3. step (so time multiplied by
+##'   `steps_per_day`)
+##'
+##' @export
 spim_simulate_set_beta_step <- function(control, beta_step) {
+  assert_is(control, "spim_simulate_control")
   if (!is.null(control$parameters$beta_step)) {
     stop("'beta_step' has already been set")
   }
   ## TODO: validate that the given values are sensible.
   control$parameters$beta_step <- beta_step
+
+  ## TODO: check that beta_step satisfies the above conditions, but
+  ## probably below in validate_simulation_parameters?
 
   validate_simulate_parameters(control, TRUE)
   control
@@ -275,7 +295,7 @@ validate_simulate_parameters <- function(control, require_beta_step) {
       paste(squote(msg), collapse = ", ")))
   }
 
-  if (require_beta_step && is.null(parameters$parameters$beta_step)) {
+  if (require_beta_step && is.null(parameters$beta_step)) {
     stop("beta_step has not been added yet")
   }
 
