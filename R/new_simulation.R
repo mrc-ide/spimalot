@@ -146,16 +146,6 @@ spim_simulate_control <- function(flavour, regions, date_start, date_end,
 
   assert_is(output, "spim_simulate_control_output")
 
-  ## TODO: we might make this tuneable when configuring the control
-  ## object.
-  ignore <- c("analysis", "scenario")
-  names_variable <- setdiff(names(grid), ignore)
-
-  ## NOTE: only a simple assertion here, because this is/will be
-  ## tested properly above.
-  stopifnot(all(names_variable %in% names(parameters)))
-  names_constant <- setdiff(names(parameters), names_variable)
-
   ret <- list(flavour = flavour,
               regions = regions,
               date_start = date_start,
@@ -317,6 +307,11 @@ validate_simulate_parameters <- function(control, require_beta_step) {
   ignore <- c("analysis", "scenario")
   names_variable <- setdiff(names(grid), ignore)
 
+  err <- setdiff(names_variable, expected)
+  if (length(err) > 0) {
+    stop("Unexpected parameter in grid (not found in 'parameters'): ",
+         paste(squote(err), collapse = ", "))
+  }
   err <- setdiff(names_variable, allowed_grid)
   if (length(err) > 0) {
     stop("Disallowed parameter in grid (must be constant across simulations): ",
