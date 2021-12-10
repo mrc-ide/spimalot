@@ -427,6 +427,11 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     ret$strain_over25_non_variant <- NA_integer_
     ret$strain_over25_tot <- NA_integer_
 
+    ## Do not fit to under 15 pillar 2
+    ret$pillar2_under15_tot <- NA_integer_
+    ret$pillar2_under15_pos <- NA_integer_
+    ret$pillar2_under15_cases <- NA_integer_
+
     if (model_type == "BB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_cases",
                 "pillar2_over25_cases",
