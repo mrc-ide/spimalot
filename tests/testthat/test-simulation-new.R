@@ -92,7 +92,8 @@ test_that("Exclude unknown parameters from control", {
   expect_error(
     spim_simulate_control("flavour", regions, start, start + 1, expected[2],
                           parameters[2], grid, output),
-    "Unexpected parameter in grid (not found in 'parameters'): 'favourite_fruit'",
+    paste("Unexpected parameter in grid (not found in 'parameters'):",
+          "'favourite_fruit'"),
     fixed = TRUE)
 })
 
@@ -111,7 +112,8 @@ test_that("Can't change some values in grid", {
   expect_error(
     spim_simulate_control("flavour", regions, start, start + 1, expected,
                           parameters, grid, output),
-    "Disallowed parameter in grid (must be constant across simulations): 'rt_sd'",
+    paste("Disallowed parameter in grid (must be constant across simulations):",
+          "'rt_sd'"),
     fixed = TRUE)
 })
 
@@ -178,7 +180,8 @@ test_that("Disallow invalid values in control", {
     "'grid' must be a data.frame")
   expect_error(
     spim_simulate_control(flavour, sircovid::regions("england"), start, end,
-                          expected, parameters, grid[integer(0), , drop = FALSE], output),
+                          expected, parameters,
+                          grid[integer(0), , drop = FALSE], output),
     "At least one row required in 'grid'")
   expect_error(
     spim_simulate_control(flavour, sircovid::regions("england"), start, end,
