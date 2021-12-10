@@ -426,7 +426,7 @@ reduce_trajectories <- function(samples) {
   index_remove <- lapply(remove_strings, function(s) {
     grep(paste0("^", s), rownames(state))
   })
-  state <- state[-unlist(index_remove), , ]
+  samples$trajectories$state <- state[-unlist(index_remove), , ]
 
   ## Calculate Pillar 2 positivity and cases
   if (samples$info$model_type == "BB") {
