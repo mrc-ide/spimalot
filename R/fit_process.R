@@ -163,8 +163,8 @@ create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
   # add n_protected and n_doses2s
   cross_immunity <- samples$predict$transform(samples$pars[1, ])$cross_immunity
 
-  ret <-
-    c(ret, calculate_vaccination(ret$state, vaccine_efficacy, cross_immunity))
+  # ret <-
+  #   c(ret, calculate_vaccination(ret$state, vaccine_efficacy, cross_immunity))
 
   # thin trajectories
   ret$state <- ret$state[c("deaths", "deaths_comm", "deaths_hosp", "admitted",
