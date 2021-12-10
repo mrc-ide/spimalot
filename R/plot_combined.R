@@ -770,7 +770,6 @@ spim_plot_pillar2_positivity_region <- function(region, dat, age_band,
   date <- dat$info$date
   cols <- spim_colours()
   pos_col <- cols$blue
-  dcols <- c(cols$orange, cols$brown)
   if (is.null(data_by)) {
     data_by <- "standard"
   }
@@ -778,16 +777,20 @@ spim_plot_pillar2_positivity_region <- function(region, dat, age_band,
   if (age_band == "all") {
     npos <- data$fitted[, "pillar2_pos"]
     ntot <- data$fitted[, "pillar2_tot"]
+    dcol <- grDevices::grey(0.2)
     if (all(is.na(ntot))) {
       npos <- data$full[, "pillar2_pos"]
       ntot <- data$full[, "pillar2_tot"]
+      dcol <- grDevices::grey(0.6)
     }
   } else {
     npos <- data$fitted[, paste0("pillar2_", age_band, "_pos")]
     ntot <- data$fitted[, paste0("pillar2_", age_band, "_tot")]
+    dcol <- grDevices::grey(0.2)
     if (all(is.na(ntot))) {
       npos <- data$full[, paste0("pillar2_", age_band, "_pos")]
       ntot <- data$full[, paste0("pillar2_", age_band, "_tot")]
+      dcol <- grDevices::grey(0.6)
     }
   }
 
@@ -871,9 +874,9 @@ spim_plot_pillar2_positivity_region <- function(region, dat, age_band,
            horiz = FALSE, leg = FALSE)
   lines(x, qs["50.0%", ], col = pos_col, lty = 1, lwd = 1.5, lend = 1)
   if (data_by == "rolling week") {
-    lines(dx, dy, col = grDevices::grey(0.2))
+    lines(dx, dy, col = dcol)
   } else {
-    lines(dx, dy, col = grDevices::grey(0.2), lend = 1)
+    lines(dx, dy, col = dcol, lend = 1)
 
   }
 
