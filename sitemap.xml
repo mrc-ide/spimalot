@@ -232,10 +232,19 @@
     <loc>/reference/spim_simulate_complete_doses.html</loc>
   </url>
   <url>
+    <loc>/reference/spim_simulate_control.html</loc>
+  </url>
+  <url>
+    <loc>/reference/spim_simulate_control_output.html</loc>
+  </url>
+  <url>
     <loc>/reference/spim_simulate_create_summary.html</loc>
   </url>
   <url>
     <loc>/reference/spim_simulate_local.html</loc>
+  </url>
+  <url>
+    <loc>/reference/spim_simulate_parameter_grid.html</loc>
   </url>
   <url>
     <loc>/reference/spim_simulate_prepare.html</loc>
@@ -251,6 +260,9 @@
   </url>
   <url>
     <loc>/reference/spim_simulate_rrq.html</loc>
+  </url>
+  <url>
+    <loc>/reference/spim_simulate_set_beta_step.html</loc>
   </url>
   <url>
     <loc>/reference/spim_simulate_simplify_rt.html</loc>
