@@ -262,7 +262,7 @@ validate_simulate_parameters <- function(control, require_beta_step) {
   ## (back) into spimalot fairly shortly.  The provided set of
   ## parameters must be a subset of these.
   allowed_parameters <- c("vaccine_eligibility_min_age",
-                          "vaccine_booster_eligibility",
+                          "booster_eligibility_min_age",
                           "vaccine_daily_doses",
                           "booster_daily_doses",
                           "strain_vaccine_efficacy",
