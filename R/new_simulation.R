@@ -136,6 +136,12 @@ spim_simulate_control <- function(flavour, regions, date_start, date_end,
     parameters["beta_step"] <- list(NULL)
   }
 
+  if (!is.null(parameters$rt_schools_schedule)) {
+    parameters$rt_schools_schedule <-
+      validate_rt_schools_schedule(parameters$rt_schools_schedule,
+                                   regions)
+  }
+
   assert_is(grid, "data.frame")
   if (nrow(grid) == 0) {
     stop("At least one row required in 'grid'")
@@ -326,14 +332,6 @@ validate_simulate_parameters <- function(control, require_beta_step) {
          paste(squote(err), collapse = ", "))
   }
 
-  if (!is.null(parameters$rt_schools_schedule)) {
-    parameters$rt_schools_schedule <-
-      validate_rt_schools_schedule(parameters$rt_schools_schedule)
-    expect_is(parameters$rt_schools_schedule, "data.frame")
-    assert_has_names(parameters$rt_schools_schedule,
-                     c("nation", "year", "month", "day", "schools"))
-  }
-
   if (require_beta_step && is.null(parameters$beta_step)) {
     stop("beta_step has not been added yet")
   }
@@ -346,13 +344,19 @@ validate_simulate_parameters <- function(control, require_beta_step) {
 }
 
 
-validate_rt_schools_schedule <- function(x, name = deparse(substitute(x))) {
-  ## Further checks are of course possible:
-  ## Every closure is followed by an opening
-  ## All regions
-  expect_is(x$rt_schools_schedule, "data.frame")
-  assert_has_names(x$rt_schools_schedule,
-                   c("nation", "year", "month", "day", "schools"))
+validate_rt_schools_schedule <- function(x, regions,
+                                         name = deparse(substitute(x))) {
+  ## Further checks are of course possible, especially:
+  ## * Every closure is followed by an opening
+  assert_is(x, "data.frame", name = name)
+  assert_has_names(x, c("nation", "year", "month", "day", "schools"),
+                   name = name)
+
+  ## Simplify date handling onwards
+  x$date <- as.Date(sprintf("%s-%s-%s", x$year, x$month, x$day))
+  x$year <- NULL
+  x$month <- NULL
+  x$day <- NULL
 
   ## Expand national to regional closures
   stopifnot(is.null(x$region))
@@ -362,6 +366,17 @@ validate_rt_schools_schedule <- function(x, name = deparse(substitute(x))) {
   x_eng <- x[rep(i, length(regions)), ]
   x_eng$region <- rep(regions, each = length(i))
   ret <- rbind(x[-i, ], x_eng)
+
+  ## Check we have all wanted regions:
+  msg <- setdiff(regions, ret$region)
+  if (length(msg) > 0) {
+    stop("Missing school closure information for region: ",
+         paste(squote(msg), collapse = ", "))
+  }
+
+  ## Filter to regions we will simulate with:
+  ret <- ret[ret$region %in% regions, ]
   rownames(ret) <- NULL
+
   ret
 }
