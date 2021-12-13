@@ -17,48 +17,46 @@
 ##'   be used
 ##'
 ##' @export
-spim_lancelot_fit_process <- function(samples, parameters, data, control,
-                                      random_sample = TRUE) {
+spim_fit_process <- function(samples, parameters, data, control,
+                             random_sample = TRUE) {
   region <- samples$info$region
 
+  ## This is just the info/prior/proposal + base of the parameter used
+  ## to fit the model. Below we will also create a refitted
+  ## parameters_new object with new proposal matrix
+  parameters_raw <- parameters$raw
+  parameters_raw$base <- parameters$base
+
   message("Computing restart information")
-  restart <- fit_process_restart(samples, parameters, data, control)
+  restart <- fit_process_restart(
+    samples, parameters_raw, data, control)
   samples$restart <- NULL
 
-  message("Running forecasts")
+  message("Thinning samples")
   incidence_states <- "deaths"
   ## Add 1 to burnin to account for removal of initial parameters
-  forecast <- sircovid::lancelot_forecast(samples,
+  if (random_sample) {
+    samples_thin <- mcstate::pmcmc_sample(samples,
                                           control$n_sample,
-                                          control$burnin + 1L,
-                                          control$forecast_days,
-                                          incidence_states,
-                                          random_sample = random_sample,
-                                          thin = control$thin)
+                                          control$burnin + 1L)
+  } else {
+    samples_thin <- mcstate::pmcmc_thin(samples,
+                                        control$burnin + 1L,
+                                        control$thin)
+  }
+  samples_thin$trajectories$date <-
+    samples_thin$trajectories$step / samples_thin$trajectories$rate
 
-  message("Computing Rt")
-  rt <- calculate_lancelot_Rt(forecast, samples$info$multistrain, TRUE)
+  # message("Computing Rt")
+  rt <- calculate_lancelot_Rt(samples_thin, TRUE)
   # TODO: very slow
-  if (samples$info$multistrain) {
-    variant_rt <-
-      calculate_lancelot_Rt(forecast, samples$info$multistrain, FALSE)
-  } else {
-    variant_rt <- NULL
-  }
-  message("Computing IFR")
-  ifr_t <-
-    calculate_lancelot_ifr_t(forecast, samples$info$multistrain) # a bit slow
 
-  if (is.null(data$admissions)) {
-    admissions <- NULL
-  } else {
-    message("Summarising admissions")
-    admissions <- extract_outputs_by_age(forecast, "cum_admit") # slow
-    admissions[["data"]] <- data$admissions
-  }
+  variant_rt <- calculate_lancelot_Rt(samples_thin, FALSE)
 
+  ## TODO: currently still used to compare outputs of deaths by age (not fitted)
+  ## this will be removed soon, when we introduce fitting to deaths by age
   message("Summarising deaths")
-  deaths <- extract_outputs_by_age(forecast, "D_hosp") # slow
+  deaths <- extract_outputs_by_age(samples_thin, "D_hosp") # slow
   i_deaths_data <- colnames(deaths$output_t)
   deaths$data <- data$rtm[data$rtm$region == region,
                           c("date", "region", i_deaths_data)]
@@ -68,60 +66,73 @@ spim_lancelot_fit_process <- function(samples, parameters, data, control,
   ## filter trajectories to start at this date) and when we might
   ## change it.
   message("Preparing onward simulation object")
-  start_date_sim <- "2021-01-01"
+  start_date_sim <- "2021-06-01"
+  vaccine_efficacy <- parameters_raw$base$vaccine_efficacy[
+    c("rel_susceptibility", "rel_p_sympt", "rel_p_hosp_if_sympt",
+      "rel_p_death", "rel_infectivity")]
   simulate <- create_simulate_object(
-    forecast, samples$vaccine$efficacy, start_date_sim, samples$info$date)
+    samples_thin, vaccine_efficacy, start_date_sim, samples$info$date)
 
-  ## Reduce trajectories in forecast before saving
+  ## Reduce trajectories in samples_thin before saving
   message("Reducing trajectories")
-  forecast <- reduce_trajectories(forecast)
-
-  if (!is.null(restart)) {
-    ## When adding the trajectories, we might as well strip them down
-    ## to the last date in the restart
-    i <- forecast$trajectories$date <= max(restart$state$time)
-    restart$trajectories <- trajectories_filter_time(forecast$trajectories, i)
-  }
+  samples_thin <- reduce_trajectories(samples_thin)
 
   message("Computing parameter MLE and covariance matrix")
-  parameters <- spim_fit_parameters(samples, parameters)
+  parameters_new <- spim_fit_parameters(samples, parameters_raw)
 
   if (!is.null(restart)) {
     ## When adding the trajectories, we might as well strip them down
     ## to the last date in the restart
     restart_date <- max(restart$state$time)
-    i <- forecast$trajectories$date <= restart_date
+    i <- samples_thin$trajectories$date <= restart_date
 
     restart$parent <- list(
-      trajectories = trajectories_filter_time(forecast$trajectories, i),
+      trajectories = trajectories_filter_time(samples_thin$trajectories, i),
       rt = rt_filter_time(rt, i),
-      ifr_t = rt_filter_time(ifr_t, i),
       deaths = deaths_filter_time(deaths, restart_date),
-      admissions = deaths_filter_time(deaths, restart_date),
       ## TODO: check to make sure that this is just the one region's
       ## parameters at this point (see the region column)
-      prior = parameters$prior)
+      prior = parameters_raw$prior)
   }
 
   ## Drop the big objects from the output
   samples[c("state", "trajectories", "predict")] <- list(NULL)
 
-  list(samples = forecast, # note complicated naming change here
-       pmcmc = samples,
-       rt = rt,
-       variant_rt = variant_rt,
-       ifr_t = ifr_t,
-       admissions = admissions,
-       deaths = deaths,
-       simulate = simulate,
-       parameters = parameters,
-       restart = restart,
-       vaccination = data$vaccination,
-       data = list(fitted = data$fitted, full = data$full))
+  ## This list returns:
+  ##
+  ## 1. 'fit' list of;
+  ## samples - reduced mcstate trajectory samples
+  ## pmcmc - information on full chains of fitted parameters without
+  ##         corresponding trajectories
+  ## rt - calculated spimalot lancelot Rt value (calculate_lancelot_Rt output)
+  ## variant_rt - variant specific Rt
+  ## deaths - extract hospital attributed deaths
+  ## simulate - object containing spimalot objects (used for onward simulation)
+  ##            such as; thinned samples, vaccine efficacy, start date of sim,
+  ##            samples date.
+  ## parameters - parameter MLE and covariance matrix
+  ## vaccination - vaccination data
+  ## data - fitted and full data
+  ##
+  ## 2. 'restart' list of;
+  ## restart information from spimalot parent objects (i.e trajectories, prior,
+  ##   rt, etc.)
+  list(
+    fit = list(samples = samples_thin, # note complicated naming change here
+               pmcmc = samples,
+               rt = rt,
+               variant_rt = variant_rt,
+               # ifr_t = ifr_t,
+               deaths = deaths,
+               simulate = simulate,
+               parameters = parameters_new,
+               vaccination = data$vaccination,
+               data = list(fitted = data$fitted, full = data$full)),
+    restart = restart)
 }
 
 
-##' Collect data sets for use with [spimalot::spim_lancelot_fit_process]
+##' Collect data sets for use with [spimalot::spim_fit_process]
 ##'
 ##' @title Collect data sets
 ##' @param admissions The admissions data set from
