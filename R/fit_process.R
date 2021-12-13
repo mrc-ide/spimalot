@@ -188,9 +188,9 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
 
   pars <-
     lapply(seq_len(length(samples$info$info)),
-           function (j)
+           function(j)
              lapply(seq_rows(samples$pars),
-                    function (i)
+                    function(i)
                       samples$predict$transform(samples$pars[i, ])[[j]]$pars))
 
 
