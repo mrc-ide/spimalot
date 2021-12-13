@@ -92,3 +92,27 @@ seq_rows <- function(x) {
 
 
 mean_ci <- function(x) c(mean = mean(x), quantile(x, c(0.025, 0.975)))
+
+
+immutable_error <- function(x) {
+  stop(sprintf(
+    "Objects of class '%s' are immutable and you may not alter them",
+    class(x)[[1]]))
+}
+
+##' @export
+`[[<-.immutable` <- function(x, i, ..., value) {
+  immutable_error(x)
+}
+
+
+##' @export
+`[<-.immutable` <- function(x, i, ..., value) {
+  immutable_error(x)
+}
+
+
+##' @export
+`$<-.immutable` <- function(x, name, value) {
+  immutable_error(x)
+}
