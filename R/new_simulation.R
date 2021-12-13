@@ -267,6 +267,7 @@ validate_simulate_parameters <- function(control, require_beta_step) {
                           "booster_daily_doses",
                           "strain_vaccine_efficacy",
                           "vaccine_uptake",
+                          "serial_interval_scale",
                           "strain_cross_immunity",
                           "strain_transmission",
                           "strain_seed_date",
