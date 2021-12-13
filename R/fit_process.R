@@ -47,7 +47,7 @@ spim_fit_process <- function(samples, parameters, data, control,
   samples_thin$trajectories$date <-
     samples_thin$trajectories$step / samples_thin$trajectories$rate
 
-  # message("Computing Rt")
+  message("Computing Rt")
   rt <- calculate_lancelot_Rt(samples_thin, TRUE)
   # TODO: very slow
 
