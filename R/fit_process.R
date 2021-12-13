@@ -163,9 +163,6 @@ create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
   # add n_protected and n_doses2s
   cross_immunity <- samples$predict$transform(samples$pars[1, ])$cross_immunity
 
-  # ret <-
-  #   c(ret, calculate_vaccination(ret$state, vaccine_efficacy, cross_immunity))
-
   # thin trajectories
   ret$state <- ret$state[c("deaths", "deaths_comm", "deaths_hosp", "admitted",
                            "diagnoses", "infections", "hosp", "icu"), , ]
@@ -193,22 +190,25 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
     lapply(seq_len(length(samples$info$info)),
            function (j)
              lapply(seq_rows(samples$pars),
-                    function(i)
+                    function (i)
                       samples$predict$transform(samples$pars[i, ])[[j]]$pars))
 
 
   dates <- step / 4
   epoch_dates <- samples$info$epoch_dates
 
-  rt = list(step = numeric(0),
-            date = numeric(0),
-            beta = numeric(0),
-            eff_Rt_all = numeric(0),
-            eff_Rt_general = numeric(0),
-            Rt_all = numeric(0),
-            Rt_general = numeric(0))
+  ## TODO: currently we'll just deal with multistage here, but it would
+  ## be good to adapt the sircovid function to deal with multistage
+  ## parameters
+  rt <- list(step = numeric(0),
+             date = numeric(0),
+             beta = numeric(0),
+             eff_Rt_all = numeric(0),
+             eff_Rt_general = numeric(0),
+             Rt_all = numeric(0),
+             Rt_general = numeric(0))
 
-  for (i in seq_len(length(epoch_dates) +1L)) {
+  for (i in seq_len(length(epoch_dates) + 1L)) {
     if (i == 1) {
       dates1 <- which(dates <= epoch_dates[1])
       initial_step_from_parameters <- TRUE
