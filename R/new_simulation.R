@@ -275,6 +275,7 @@ validate_simulate_parameters <- function(control, require_beta_step) {
                           "strain_seed_pattern",
                           "beta_step",
                           "rt_sd",
+                          "rt_schools_schedule",
                           "rt_schools_modifier",
                           "rt_scenarios",
                           "rt_seasonality_date_peak",
@@ -287,7 +288,7 @@ validate_simulate_parameters <- function(control, require_beta_step) {
   ## scenarios that become beta_step eventually.
   allowed_grid <- setdiff(
     allowed_parameters,
-    c("rt_sd", "rt_schools_modifier", "rt_scenarios",
+    c("rt_sd", "rt_schools_modifier", "rt_schools_schedule", "rt_scenarios",
       "rt_seasonality_date_peak", "rt_seasonality_amplitude"))
 
   err <- setdiff(expected, allowed_parameters)
@@ -325,6 +326,14 @@ validate_simulate_parameters <- function(control, require_beta_step) {
          paste(squote(err), collapse = ", "))
   }
 
+  if (!is.null(parameters$rt_schools_schedule)) {
+    parameters$rt_schools_schedule <-
+      validate_rt_schools_schedule(parameters$rt_schools_schedule)
+    expect_is(parameters$rt_schools_schedule, "data.frame")
+    assert_has_names(parameters$rt_schools_schedule,
+                     c("nation", "year", "month", "day", "schools"))
+  }
+
   if (require_beta_step && is.null(parameters$beta_step)) {
     stop("beta_step has not been added yet")
   }
@@ -334,4 +343,25 @@ validate_simulate_parameters <- function(control, require_beta_step) {
   ## TODO: should we check the levels here? Seems sensible.
 
   list(constant = names_constant, variable = names_variable)
+}
+
+
+validate_rt_schools_schedule <- function(x, name = deparse(substitute(x))) {
+  ## Further checks are of course possible:
+  ## Every closure is followed by an opening
+  ## All regions
+  expect_is(x$rt_schools_schedule, "data.frame")
+  assert_has_names(x$rt_schools_schedule,
+                   c("nation", "year", "month", "day", "schools"))
+
+  ## Expand national to regional closures
+  stopifnot(is.null(x$region))
+  x$region <- x$nation
+  i <- which(x$nation == "england")
+  regions <- sircovid::regions("england")
+  x_eng <- x[rep(i, length(regions)), ]
+  x_eng$region <- rep(regions, each = length(i))
+  ret <- rbind(x[-i, ], x_eng)
+  rownames(ret) <- NULL
+  ret
 }
