@@ -253,7 +253,7 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
       for (nm in names(rt)) {
         if (length(rt[[nm]]) == 0) {
           rt[[nm]] <- rt1[[nm]]
-        } else if (weight_Rt) {
+        } else if (length(dim(rt1[[nm]])) == 2) {
           rt[[nm]] <- rbind(rt[[nm]], rt1[[nm]])
         } else {
           rt[[nm]] <- abind1(rt[[nm]], rt1[[nm]])
