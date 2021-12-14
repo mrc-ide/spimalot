@@ -380,3 +380,60 @@ validate_rt_schools_schedule <- function(x, regions,
 
   ret
 }
+
+
+##' Calculate multiplicative beta scaling factor for schools.  We
+##' assume here that schools has come from
+##' [spimalot::spim_simulate_control] but we may add validation later.
+##'
+##' @title Calculate multiplicative beta for schools
+##'
+##' @param dates A sircovid date, fractional dates (e.g. 100.25) are
+##'   allowed.
+##'
+##' @param schedule A data.frame of school open/closed
+##'   information. Required columns are `region`, `date` and
+##'   `schools`; really this should have been sorted out by
+##'   [spimalot::spim_simulate_control]
+##'
+##' @param modifier The amount to *decrease* beta by when schools are
+##'   closed for holidays etc. A value of 0.15 is a 15% reduction in
+##'   contacts, or a multiplicative beta of 0.85
+##'
+##' @param region The region to subset from the schedule.
+##'
+##' @return A vector the same length as `dates` with the scaling
+##'   factor.
+##'
+##' @export
+spim_beta_mult_schools <- function(dates, schedule, modifier, region) {
+  schedule <- schedule[schedule$region == region, ]
+  idx <- findInterval(dates, sircovid::sircovid_date(schedule$date))
+  i <- schedule$schools[idx] == "closed"
+  ret <- rep(1, length(dates))
+  ret[i] <- 1 - modifier
+  ret
+}
+
+
+##' Calculate multiplicative beta scaling factor due to seasonality.
+##'
+##' @title Calculate multiplicative beta due to seasonality
+##'
+##' @inheritParams spim_beta_mult_schools
+##'
+##' @param date_peak Date of peak as a
+##'   [sircovid::sircovid_date] value (a single number)
+##'
+##' @param value Size of the peak to annual average difference. A
+##'   value of 0.1 will produce multiplicative values that range from
+##'   0.9 to 1.1.
+##'
+##' @return A vector the same length as `dates` with the scaling
+##'   factor.
+##'
+##' @export
+spim_beta_mult_seasonality <- function(date, date_peak, value) {
+  delta <- ((date - date_peak) %% 365) / 365
+  1 + cos(2 * pi * delta) * value
+}
