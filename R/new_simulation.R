@@ -433,7 +433,7 @@ spim_beta_mult_schools <- function(dates, schedule, modifier, region) {
 ##'   factor.
 ##'
 ##' @export
-spim_beta_mult_seasonality <- function(date, date_peak, value) {
-  delta <- ((date - date_peak) %% 365) / 365
+spim_beta_mult_seasonality <- function(dates, date_peak, value) {
+  delta <- ((dates - date_peak) %% 365) / 365
   1 + cos(2 * pi * delta) * value
 }

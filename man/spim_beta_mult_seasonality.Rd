@@ -4,9 +4,12 @@
 \alias{spim_beta_mult_seasonality}
 \title{Calculate multiplicative beta due to seasonality}
 \usage{
-spim_beta_mult_seasonality(date, date_peak, value)
+spim_beta_mult_seasonality(dates, date_peak, value)
 }
 \arguments{
+\item{dates}{A sircovid date, fractional dates (e.g. 100.25) are
+allowed.}
+
 \item{date_peak}{Date of peak as a
 \link[sircovid:sircovid_date]{sircovid::sircovid_date} value (a single number)}
 
