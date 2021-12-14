@@ -136,6 +136,12 @@ spim_simulate_control <- function(flavour, regions, date_start, date_end,
     parameters["beta_step"] <- list(NULL)
   }
 
+  if (!is.null(parameters$rt_schools_schedule)) {
+    parameters$rt_schools_schedule <-
+      validate_rt_schools_schedule(parameters$rt_schools_schedule,
+                                   regions)
+  }
+
   assert_is(grid, "data.frame")
   if (nrow(grid) == 0) {
     stop("At least one row required in 'grid'")
@@ -262,7 +268,7 @@ validate_simulate_parameters <- function(control, require_beta_step) {
   ## (back) into spimalot fairly shortly.  The provided set of
   ## parameters must be a subset of these.
   allowed_parameters <- c("vaccine_eligibility_min_age",
-                          "vaccine_booster_eligibility",
+                          "booster_eligibility_min_age",
                           "vaccine_daily_doses",
                           "booster_daily_doses",
                           "strain_vaccine_efficacy",
@@ -275,6 +281,7 @@ validate_simulate_parameters <- function(control, require_beta_step) {
                           "strain_seed_pattern",
                           "beta_step",
                           "rt_sd",
+                          "rt_schools_schedule",
                           "rt_schools_modifier",
                           "rt_scenarios",
                           "rt_seasonality_date_peak",
@@ -287,7 +294,7 @@ validate_simulate_parameters <- function(control, require_beta_step) {
   ## scenarios that become beta_step eventually.
   allowed_grid <- setdiff(
     allowed_parameters,
-    c("rt_sd", "rt_schools_modifier", "rt_scenarios",
+    c("rt_sd", "rt_schools_modifier", "rt_schools_schedule", "rt_scenarios",
       "rt_seasonality_date_peak", "rt_seasonality_amplitude"))
 
   err <- setdiff(expected, allowed_parameters)
@@ -334,4 +341,99 @@ validate_simulate_parameters <- function(control, require_beta_step) {
   ## TODO: should we check the levels here? Seems sensible.
 
   list(constant = names_constant, variable = names_variable)
+}
+
+
+validate_rt_schools_schedule <- function(x, regions,
+                                         name = deparse(substitute(x))) {
+  ## Further checks are of course possible, especially:
+  ## * Every closure is followed by an opening
+  assert_is(x, "data.frame", name = name)
+  assert_has_names(x, c("nation", "year", "month", "day", "schools"),
+                   name = name)
+
+  ## Simplify date handling onwards
+  x$date <- as.Date(sprintf("%s-%s-%s", x$year, x$month, x$day))
+  x$year <- NULL
+  x$month <- NULL
+  x$day <- NULL
+
+  ## Expand national to regional closures
+  stopifnot(is.null(x$region))
+  x$region <- x$nation
+  i <- which(x$nation == "england")
+  regions <- sircovid::regions("england")
+  x_eng <- x[rep(i, length(regions)), ]
+  x_eng$region <- rep(regions, each = length(i))
+  ret <- rbind(x[-i, ], x_eng)
+
+  ## Check we have all wanted regions:
+  msg <- setdiff(regions, ret$region)
+  if (length(msg) > 0) {
+    stop("Missing school closure information for region: ",
+         paste(squote(msg), collapse = ", "))
+  }
+
+  ## Filter to regions we will simulate with:
+  ret <- ret[ret$region %in% regions, ]
+  rownames(ret) <- NULL
+
+  ret
+}
+
+
+##' Calculate multiplicative beta scaling factor for schools.  We
+##' assume here that schools has come from
+##' [spimalot::spim_simulate_control] but we may add validation later.
+##'
+##' @title Calculate multiplicative beta for schools
+##'
+##' @param dates A sircovid date, fractional dates (e.g. 100.25) are
+##'   allowed.
+##'
+##' @param schedule A data.frame of school open/closed
+##'   information. Required columns are `region`, `date` and
+##'   `schools`; really this should have been sorted out by
+##'   [spimalot::spim_simulate_control]
+##'
+##' @param modifier The amount to *decrease* beta by when schools are
+##'   closed for holidays etc. A value of 0.15 is a 15% reduction in
+##'   contacts, or a multiplicative beta of 0.85
+##'
+##' @param region The region to subset from the schedule.
+##'
+##' @return A vector the same length as `dates` with the scaling
+##'   factor.
+##'
+##' @export
+spim_beta_mult_schools <- function(dates, schedule, modifier, region) {
+  schedule <- schedule[schedule$region == region, ]
+  idx <- findInterval(dates, sircovid::sircovid_date(schedule$date))
+  i <- schedule$schools[idx] == "closed"
+  ret <- rep(1, length(dates))
+  ret[i] <- 1 - modifier
+  ret
+}
+
+
+##' Calculate multiplicative beta scaling factor due to seasonality.
+##'
+##' @title Calculate multiplicative beta due to seasonality
+##'
+##' @inheritParams spim_beta_mult_schools
+##'
+##' @param date_peak Date of peak as a
+##'   [sircovid::sircovid_date] value (a single number)
+##'
+##' @param value Size of the peak to annual average difference. A
+##'   value of 0.1 will produce multiplicative values that range from
+##'   0.9 to 1.1.
+##'
+##' @return A vector the same length as `dates` with the scaling
+##'   factor.
+##'
+##' @export
+spim_beta_mult_seasonality <- function(dates, date_peak, value) {
+  delta <- ((dates - date_peak) %% 365) / 365
+  1 + cos(2 * pi * delta) * value
 }
