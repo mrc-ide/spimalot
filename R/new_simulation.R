@@ -273,6 +273,7 @@ validate_simulate_parameters <- function(control, require_beta_step) {
                           "strain_seed_date",
                           "strain_seed_size",
                           "strain_seed_pattern",
+                          "seed_omicron_breakdown",
                           "beta_step",
                           "rt_sd",
                           "rt_schools_modifier",
