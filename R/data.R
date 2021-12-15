@@ -218,11 +218,11 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   data$strain_tot[na_strain_dates] <- NA_integer_
 
   ## Fit to Delta/Omicron using sgtf data
-  data$strain_non_variant[data$date >= "2021-11-10"] <-
-    data$s_positive_adj1[data$date >= "2021-11-10"]
-  data$strain_tot[data$date >= "2021-11-10"] <-
-    data$s_positive_adj1[data$date >= "2021-11-10"] +
-    data$s_negative_adj1[data$date >= "2021-11-10"]
+  data$strain_non_variant[data$date >= "2021-11-20"] <-
+    data$s_positive_adj1[data$date >= "2021-11-20"]
+  data$strain_tot[data$date >= "2021-11-20"] <-
+    data$s_positive_adj1[data$date >= "2021-11-20"] +
+    data$s_negative_adj1[data$date >= "2021-11-20"]
 
   # Use positives/negatives as Pillar 2 for Scotland
   # Set data$phe_patients to NA between 2020-06-01 and 2020-09-09 (inclusive)
