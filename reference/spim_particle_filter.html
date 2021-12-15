@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.5.22</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.5.24</span>
       </span>
     </div>
 
@@ -50,13 +50,7 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">spim_particle_filter</span><span class="op">(</span>
-  <span class="va">data</span>,
-  <span class="va">pars</span>,
-  <span class="va">control</span>,
-  model <span class="op">=</span> <span class="st">"carehomes"</span>,
-  deterministic <span class="op">=</span> <span class="cn">FALSE</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">spim_particle_filter</span><span class="op">(</span><span class="va">data</span>, <span class="va">pars</span>, <span class="va">control</span>, deterministic <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -70,8 +64,6 @@
 <code>n_particles</code>, <code>n_threads</code> and <code>compiled_compare</code>, typically the
 <code>particle_filter</code> element of the result of
 <code><a href="spim_control.html">spim_control()</a></code></p></dd>
-<dt>model</dt>
-<dd><p>The name of the sircovid model used. Default is <code>"carehomes"</code></p></dd>
 <dt>deterministic</dt>
 <dd><p>Logical, indicating if the particle filter to built
 is to be run deterministically or stochastically</p></dd>
