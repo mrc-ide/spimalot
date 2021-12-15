@@ -463,14 +463,9 @@ spim_simulate_create_summary <- function(x, at = c(1, 20, 39) / 40) {
   state <- aperm(apply(x$state, c(1, 3, 4), f), c(2, 1, 3, 4))
   colnames(state) <- paste0(at * 100, "%")
 
-  # round everything except Rt and prop_strain_2
-  nms <- rownames(state)
-  not_to_round <- c(grep("Rt_", nms),
-                    grep("prop", nms))
-  if (any(not_to_round)) {
-    nms <- nms[-not_to_round]
-  }
-  state[nms, , , ] <- round(state[nms, , , ])
+  # round everything except eff_Rt_*, Rt_* and prop_strain_2
+  to_round <- grep("^(eff_Rt|Rt|prop_strain)_", rownames(state), invert = TRUE)
+  state[to_round, , , ] <- round(state[to_round, , , ])
 
   x$state <- state
 
