@@ -54,10 +54,7 @@ spim_combined_load <- function(path, regions = "all") {
   rank_cum_inc <- lapply(ret$samples, sircovid::get_sample_rank)
   ret$samples <- Map(sircovid::reorder_sample, ret$samples, rank_cum_inc)
   ret$rt <- Map(sircovid::reorder_rt_ifr, ret$rt, rank_cum_inc)
-  ret$ifr_t <- Map(sircovid::reorder_rt_ifr, ret$ifr_t, rank_cum_inc)
-  if (ret$info$multistrain) {
-    ret$variant_rt <- Map(reorder_variant_rt, ret$variant_rt, rank_cum_inc)
-  }
+  ret$variant_rt <- Map(reorder_variant_rt, ret$variant_rt, rank_cum_inc)
 
   message("Aggregating England/UK")
   ## Aggregate some of these to get england/uk entries
@@ -66,11 +63,8 @@ spim_combined_load <- function(path, regions = "all") {
   ## as aggregated Rt values are used in onwards simulations
   agg_samples <- combined_aggregate_samples(ret$samples)
   agg_data <- combined_aggregate_data(ret$data)
-  agg_ifr_t <- combined_aggregate_rt(ret$ifr_t, agg_samples)
   ret$rt <- combined_aggregate_rt(ret$rt, agg_samples)
-  if (ret$info$multistrain) {
-    ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, agg_samples)
-  }
+  ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, agg_samples)
 
   ## NOTE: have not ported the "randomise trajectory order" bit over,
   ## but I do not think that we need to.
@@ -90,7 +84,6 @@ spim_combined_load <- function(path, regions = "all") {
   ## other aggregated outputs in ret
   ret$samples <- agg_samples
   ret$data <- agg_data
-  ret$ifr_t <- agg_ifr_t
 
   ret
 }
@@ -130,14 +123,11 @@ spim_combined_onward_simulate <- function(dat) {
 
   state_by_age <- lapply(list_transpose(simulate$state_by_age),
                          abind_quiet, along = 3)
-  n_protected <- lapply(list_transpose(simulate$n_protected),
-                        abind_quiet, along = 2)
 
   ret <- list(date = dates,
               state = state,
-              state_by_age = state_by_age,
-              n_protected = n_protected,
-              n_doses = abind_quiet(simulate$n_doses, along = 3))
+              state_by_age = state_by_age
+              )
 
   ## This is not terrible:
   rt <- list_transpose(dat$rt)[c("Rt_general", "eff_Rt_general")]
@@ -146,38 +136,34 @@ spim_combined_onward_simulate <- function(dat) {
   rt_combined <- lapply(rt, function(x)
     aperm(abind_quiet(x, along = 3), c(2, 3, 1))[, , idx_dates])
 
-  if (dat$info$multistrain) {
-    idx_variant_dates <- dat$variant_rt[[1]]$date[, 1] %in% dates
+  idx_variant_dates <- dat$variant_rt[[1]]$date[, 1] %in% dates
 
-    variant_rt <-
-      list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
-    variant_rt_combined <- lapply(variant_rt, function(x)
-      aperm(abind_quiet(x, along = 4), c(3, 4, 1, 2))[, , idx_variant_dates, ])
+  variant_rt <-
+    list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
+  variant_rt_combined <- lapply(variant_rt, function(x)
+    aperm(abind_quiet(x, along = 4), c(3, 4, 1, 2))[, , idx_variant_dates, ])
 
-    rt_combined <- Map(function(rt, weighted_rt) {
-      x <- abind_quiet(rt, weighted_rt, along = 4)
-      dimnames(x)[[4]] <- c("strain_1", "strain_2", "both")
-      x}, variant_rt_combined, rt_combined)
-  }
+  rt_combined <- Map(function(rt, weighted_rt) {
+    x <- abind_quiet(rt, weighted_rt, along = 4)
+    dimnames(x)[[4]] <- c("strain_1", "strain_2", "both")
+    x}, variant_rt_combined, rt_combined)
 
   ret <- c(ret, rt_combined)
 
-  if (dat$info$multistrain) {
-    idx_dates_mv_rt <- dat$variant_rt[[1]]$date[, 1] %in% dates
+  idx_dates_mv_rt <- dat$variant_rt[[1]]$date[, 1] %in% dates
 
-    ## multivariant_Rt_general and multivariant_eff_Rt_general will have
-    ## dimensions: [n particles x n regions x n variants x n dates]
-    ## TODO: we are putting "multivariant" in the name here for clarity,
-    ## so we may want to rename variant_rt wherever it appears to
-    ## multivariant_rt
-    mv_rt <-
-      list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
-    mv_rt_combined <- lapply(mv_rt, function(x)
-      aperm(abind_quiet(x, along = 4), c(3, 4, 2, 1))[, , , idx_dates_mv_rt])
-    names(mv_rt_combined) <- paste0("multivariant_", names(mv_rt_combined))
+  ## multivariant_Rt_general and multivariant_eff_Rt_general will have
+  ## dimensions: [n particles x n regions x n variants x n dates]
+  ## TODO: we are putting "multivariant" in the name here for clarity,
+  ## so we may want to rename variant_rt wherever it appears to
+  ## multivariant_rt
+  mv_rt <-
+    list_transpose(dat$variant_rt)[c("Rt_general", "eff_Rt_general")]
+  mv_rt_combined <- lapply(mv_rt, function(x)
+    aperm(abind_quiet(x, along = 4), c(3, 4, 2, 1))[, , , idx_dates_mv_rt])
+  names(mv_rt_combined) <- paste0("multivariant_", names(mv_rt_combined))
 
-    ret <- c(ret, mv_rt_combined)
-  }
+  ret <- c(ret, mv_rt_combined)
 
   ret
 }
@@ -274,8 +260,7 @@ combine_variant_rt <- function(variant_rt, samples, rank) {
   ## the samples trajectories and the variant_rt do not necessarily have the
   ## same span of dates so we need to filter the trajectories
   dates <- variant_rt[[1]]$date
-  idx_dates <- samples[[1]]$trajectories$date %in% dates[-1L]
-  idx_dates[1] <- TRUE
+  idx_dates <- samples[[1]]$trajectories$date %in% dates
   for (r in names(samples)) {
     samples[[r]]$trajectories$state <-
       samples[[r]]$trajectories$state[, , idx_dates]

@@ -218,6 +218,8 @@ spim_plot_serology <- function(dat, regions, sero_flow, ymax) {
 ##'
 ##' @param regions Vector of regions to plot
 ##'
+##' @param age_band Age band to plot
+##'
 ##' @param date_min Starting date for plot
 ##'
 ##' @param ymax Maximum percentage on y-axis
@@ -225,15 +227,16 @@ spim_plot_serology <- function(dat, regions, sero_flow, ymax) {
 ##' @param add_betas Logical, indicating if we should add betas
 ##'
 ##' @export
-spim_plot_pillar2_positivity <- function(dat, regions, date_min, ymax,
-                                         add_betas = FALSE) {
+spim_plot_pillar2_positivity <- function(dat, regions, age_band, date_min,
+                                         ymax, add_betas = FALSE) {
 
   oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
             mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
   for (r in regions) {
-    spim_plot_pillar2_positivity_region(r, dat, date_min, ymax, add_betas)
+    spim_plot_pillar2_positivity_region(r, dat, age_band,
+                                        date_min, ymax, add_betas)
   }
 }
 
@@ -246,19 +249,22 @@ spim_plot_pillar2_positivity <- function(dat, regions, date_min, ymax,
 ##'
 ##' @param regions Vector of regions to plot
 ##'
+##' @param age_band Age band to plot
+##'
 ##' @param date_min Starting date for plot
 ##'
 ##' @param add_betas Logical, indicating if we should add betas
 ##'
 ##' @export
-spim_plot_pillar2_cases <- function(dat, regions, date_min, add_betas = FALSE) {
+spim_plot_pillar2_cases <- function(dat, regions, age_band, date_min,
+                                    add_betas = FALSE) {
 
   oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
             mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
   for (r in regions) {
-    spim_plot_pillar2_cases_region(r, dat, date_min, add_betas)
+    spim_plot_pillar2_cases_region(r, dat, age_band, date_min, add_betas)
   }
 }
 
@@ -405,24 +411,28 @@ spim_plot_log_traj_by_age <- function(dat, regions, yield, model_type) {
 ##'
 ##' @param regions Vector of regions to plot
 ##'
+##' @param voc_name The name of the emerging VOC
+##'
 ##' @param date_min Starting date for plot
 ##'
 ##' @param date_max End date for plot
 ##'
 ##' @export
-spim_plot_variant <- function(dat, regions, date_min = NULL, date_max = NULL) {
+spim_plot_variant <- function(dat, regions, voc_name,
+                              date_min = NULL, date_max = NULL) {
 
   oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
             mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
   for (r in regions) {
-    spim_plot_variant_region(r, dat, date_min, date_max)
+    spim_plot_variant_region(r, dat, voc_name, date_min, date_max)
   }
 }
 
 
-spim_plot_variant_region <- function(region, dat, date_min, date_max) {
+spim_plot_variant_region <- function(region, dat, voc_name, date_min,
+                                     date_max) {
 
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
@@ -484,7 +494,7 @@ spim_plot_variant_region <- function(region, dat, date_min, date_max) {
        las = 1,
        main = toupper(spim_region_name(region)),
        font.main = 1,
-       xlab = "", ylab = "VOC proportion (%)")
+       xlab = "", ylab = paste0(voc_name, " proportion (%)"))
 
   ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
            horiz = FALSE, leg = FALSE)
@@ -749,7 +759,8 @@ spim_plot_incidence_region <- function(region, dat, per_1000 = FALSE) {
 }
 
 
-spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
+spim_plot_pillar2_positivity_region <- function(region, dat, age_band,
+                                                date_min, ymax,
                                                 add_betas = FALSE,
                                                 hard_xlim = FALSE,
                                                 data_by = NULL) {
@@ -759,31 +770,27 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
   date <- dat$info$date
   cols <- spim_colours()
   pos_col <- cols$blue
-  dcols <- c(cols$orange, cols$brown)
   if (is.null(data_by)) {
     data_by <- "standard"
   }
 
-  over25 <- TRUE
-
-  npos <- data$fitted[, "pillar2_over25_pos"]
-  ntot <- data$fitted[, "pillar2_over25_tot"]
-  if (all(is.na(ntot))) {
-    npos <- data$full[, "pillar2_over25_pos"]
-    ntot <- data$full[, "pillar2_over25_tot"]
-
-    ## if still na, switch to all ages
+  if (age_band == "all") {
+    npos <- data$fitted[, "pillar2_pos"]
+    ntot <- data$fitted[, "pillar2_tot"]
+    dcol <- grDevices::grey(0.2)
     if (all(is.na(ntot))) {
-      npos <- data$fitted[, "pillar2_pos"]
-      ntot <- data$fitted[, "pillar2_tot"]
-      if (all(is.na(ntot))) {
-        npos <- data$full[, "pillar2_pos"]
-        ntot <- data$full[, "pillar2_tot"]
-        dcols[1] <- cols$green2
-      }
-      over25 <- FALSE
-    } else {
-      dcols[1] <- cols$green2
+      npos <- data$full[, "pillar2_pos"]
+      ntot <- data$full[, "pillar2_tot"]
+      dcol <- grDevices::grey(0.6)
+    }
+  } else {
+    npos <- data$fitted[, paste0("pillar2_", age_band, "_pos")]
+    ntot <- data$fitted[, paste0("pillar2_", age_band, "_tot")]
+    dcol <- grDevices::grey(0.2)
+    if (all(is.na(ntot))) {
+      npos <- data$full[, paste0("pillar2_", age_band, "_pos")]
+      ntot <- data$full[, paste0("pillar2_", age_band, "_tot")]
+      dcol <- grDevices::grey(0.6)
     }
   }
 
@@ -799,10 +806,10 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
     x <- x[!predicted]
   }
 
-  if (over25) {
-    res <- trajectories["pillar2_positivity_over25", , ]
-  } else {
+  if (age_band == "all") {
     res <- trajectories["pillar2_positivity", , ]
+  } else {
+    res <- trajectories[paste0("pillar2_positivity_", age_band), , ]
   }
 
   ps <- seq(0.025, 0.975, 0.005)
@@ -828,25 +835,28 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
     upper <- cis[, "Upper"]
   }
 
-
   #data
   dy[ntot == 0] <- NA
 
   pos_cols <- c(mix_cols(pos_col, "white", 0.7),
                 mix_cols(pos_col, "white", 0.495))
 
-  if (over25) {
-    if (region %in% c("scotland", "northern_ireland")) {
-      ylab <- "Pillar 1 & 2 over 25 proportion positive (%)"
-    } else {
-      ylab <- "Pillar 2 over 25 proportion positive (%)"
-    }
+  if (age_band == "all") {
+    age_lab <- "all ages"
+  } else if (age_band == "over25") {
+    age_lab <- "over 25"
+  } else if (age_band == "under15") {
+    age_lab <- "under15"
+  } else if (age_band == "80_plus") {
+    age_lab <- "80+"
   } else {
-    if (region %in% c("scotland", "northern_ireland")) {
-      ylab <- "Pillar 1 & 2 proportion positive (%)"
-    } else {
-      ylab <- "Pillar 2 proportion positive (%)"
-    }
+    age_lab <- gsub("_", " to ", age_band)
+  }
+
+  if (region %in% c("scotland", "northern_ireland")) {
+    ylab <- paste0("Pillar 1 & 2 ", age_lab, " proportion positive (%)")
+  } else {
+    ylab <- paste0("Pillar 2 ", age_lab, " proportion positive (%)")
   }
 
   oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
@@ -864,9 +874,9 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
            horiz = FALSE, leg = FALSE)
   lines(x, qs["50.0%", ], col = pos_col, lty = 1, lwd = 1.5, lend = 1)
   if (data_by == "rolling week") {
-    lines(dx, dy, col = grDevices::grey(0.2))
+    lines(dx, dy, col = dcol)
   } else {
-    lines(dx, dy, col = grDevices::grey(0.2), lend = 1)
+    lines(dx, dy, col = dcol, lend = 1)
 
   }
 
@@ -880,7 +890,7 @@ spim_plot_pillar2_positivity_region <- function(region, dat, date_min, ymax,
 }
 
 
-spim_plot_pillar2_cases_region <- function(region, dat, date_min,
+spim_plot_pillar2_cases_region <- function(region, dat, age_band, date_min,
                                            add_betas = FALSE) {
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
@@ -889,48 +899,44 @@ spim_plot_pillar2_cases_region <- function(region, dat, date_min,
   pos_col <- cols$blue
   dcols <- c(cols$orange, cols$brown)
 
-  over25 <- TRUE
 
-  dy <- data$fitted[, "pillar2_over25_cases"]
-  if (all(is.na(dy))) {
-    dy <- data$full[, "pillar2_over25_cases"]
-
-    ## if still na, switch to all ages
+  if (age_band == "all") {
+    dy <- data$fitted[, "pillar2_cases"]
     if (all(is.na(dy))) {
-      dy <- data$fitted[, "pillar2_cases"]
-      if (all(is.na(dy))) {
-        dy <- data$full[, "pillar2_cases"]
-        dcols[1] <- cols$green2
-      }
-      over25 <- FALSE
-    } else {
+      dy <- data$full[, "pillar2_cases"]
+      dcols[1] <- cols$green2
+    }
+  } else {
+    dy <- data$fitted[, paste0("pillar2_", age_band, "_cases")]
+    if (all(is.na(dy))) {
+      dy <- data$full[, paste0("pillar2_", age_band, "_cases")]
       dcols[1] <- cols$green2
     }
   }
 
   trajectories <- sample$trajectories$state
-  model_params <- sample$predict$transform(sample$pars[1, ])
-
-  if ("phi_pillar2_cases" %in% colnames(sample$pars)) {
-    phi_pillar2_cases <- sample$pars[, "phi_pillar2_cases"]
+  if (age_band == "all") {
+    res <- trajectories["pillar2_cases", , ]
   } else {
-    phi_pillar2_cases <- model_params$phi_pillar2_cases
+    res <- trajectories[paste0("pillar2_cases_", age_band), , ]
   }
 
-  if (over25) {
-    res <- trajectories["pillar2_cases_over25", , ]
-    if (region %in%  c("scotland", "northern_ireland")) {
-      ylab <- "Pillar 1 & 2 over 25 cases"
-    } else {
-      ylab <- "Pillar 2 over 25 cases"
-    }
+  if (age_band == "all") {
+    age_lab <- "all ages"
+  } else if (age_band == "over25") {
+    age_lab <- "over 25"
+  } else if (age_band == "under15") {
+    age_lab <- "under15"
+  } else if (age_band == "80_plus") {
+    age_lab <- "80+"
   } else {
-    res <- trajectories["pillar2_cases", , ]
-    if (region %in% c("scotland", "northern_ireland")) {
-      ylab <- "Pillar 1 & 2 cases"
-    } else {
-      ylab <- "Pillar 2 cases"
-    }
+    age_lab <- gsub("_", " to ", age_band)
+  }
+
+  if (region %in% c("scotland", "northern_ireland")) {
+    ylab <- paste0("Pillar 1 & 2 ", age_lab, " cases")
+  } else {
+    ylab <- paste0("Pillar 2 ", age_lab, " cases")
   }
 
   x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
@@ -1035,6 +1041,7 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   trajectories <- sample$trajectories$state
 
   model_params <- sample$predict$transform(sample$pars[1, ])
+  model_params <- model_params[[length(model_params)]]$pars
 
   pos <- trajectories["react_pos", , ]
   neg <- (sum(model_params$N_tot_react) - pos)
@@ -1141,6 +1148,7 @@ spim_plot_serology_region <- function(region, dat, sero_flow, ymax,
   }
 
   p <- sample$predict$transform(sample$pars[1, ])
+  p <- p[[length(p)]]$pars
   sero_sensitivity <- p[[paste0("sero_sensitivity_", sero_flow)]]
   sero_specificity <- p[[paste0("sero_specificity_", sero_flow)]]
   sero_pos <- sample$trajectories$state[paste0("sero_pos_", sero_flow), , ]

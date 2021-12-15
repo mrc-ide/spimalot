@@ -4,12 +4,14 @@
 \alias{spim_plot_variant}
 \title{Plot variant}
 \usage{
-spim_plot_variant(dat, regions, date_min = NULL, date_max = NULL)
+spim_plot_variant(dat, regions, voc_name, date_min = NULL, date_max = NULL)
 }
 \arguments{
 \item{dat}{Combined data set}
 
 \item{regions}{Vector of regions to plot}
+
+\item{voc_name}{The name of the emerging VOC}
 
 \item{date_min}{Starting date for plot}
 

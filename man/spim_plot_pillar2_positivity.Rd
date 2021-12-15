@@ -4,12 +4,21 @@
 \alias{spim_plot_pillar2_positivity}
 \title{Plot Pillar 2 positivity}
 \usage{
-spim_plot_pillar2_positivity(dat, regions, date_min, ymax, add_betas = FALSE)
+spim_plot_pillar2_positivity(
+  dat,
+  regions,
+  age_band,
+  date_min,
+  ymax,
+  add_betas = FALSE
+)
 }
 \arguments{
 \item{dat}{Combined data set}
 
 \item{regions}{Vector of regions to plot}
+
+\item{age_band}{Age band to plot}
 
 \item{date_min}{Starting date for plot}
 

@@ -36,6 +36,8 @@
 ##'
 ##' @param waning_rate Rate of waning immunity
 ##'
+##' @param sircovid_model The sircovid model, default is `"carehomes"`
+##'
 ##' @return An [mcstate::pmcmc_parameters] object which can be used
 ##'   with [mcstate::pmcmc]
 ##'
