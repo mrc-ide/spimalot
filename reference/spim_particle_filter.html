@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.5.24</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.5.25</span>
       </span>
     </div>
 
@@ -50,7 +50,14 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">spim_particle_filter</span><span class="op">(</span><span class="va">data</span>, <span class="va">pars</span>, <span class="va">control</span>, deterministic <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">spim_particle_filter</span><span class="op">(</span>
+  <span class="va">data</span>,
+  <span class="va">pars</span>,
+  <span class="va">control</span>,
+  deterministic <span class="op">=</span> <span class="cn">FALSE</span>,
+  initial <span class="op">=</span> <span class="cn">NULL</span>,
+  initial_date <span class="op">=</span> <span class="fl">0</span>
+<span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -67,6 +74,13 @@
 <dt>deterministic</dt>
 <dd><p>Logical, indicating if the particle filter to built
 is to be run deterministically or stochastically</p></dd>
+<dt>initial</dt>
+<dd><p>Optionally a matrix of model state or an initial
+value function.</p></dd>
+<dt>initial_date</dt>
+<dd><p>The initial date to start from.  Typically
+this should be 0 for a parent fit, and be the restart date for a
+restart date.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>
