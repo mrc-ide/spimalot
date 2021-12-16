@@ -14,32 +14,59 @@
 ##' @param deterministic Logical, indicating if the particle filter to built
 ##'   is to be run deterministically or stochastically
 ##'
+##' @param initial Optionally a matrix of model state or an initial
+##'   value function.
+##'
+##' @param initial_date The initial date to start from.  Typically
+##'   this should be 0 for a parent fit, and be the restart date for a
+##'   restart date.
+##'
 ##' @return A [mcstate::particle_filter] object
 ##'
 ##' @export
-spim_particle_filter <- function(data, pars, control, deterministic = FALSE) {
+spim_particle_filter <- function(data, pars, control,
+                                 deterministic = FALSE,
+                                 initial = NULL,
+                                 initial_date = 0) {
+  ## We do need to get the steps per day out regardless.  A lot of
+  ## work considering this is always 4!
   p <- pars$model(pars$initial())
   if (inherits(p, "multistage_parameters")) {
     p <- p[[1]]$pars
   }
+  steps_per_day <- p$steps_per_day
 
-  initial_step <- 0 # replaced later
-  data <- mcstate::particle_filter_data(data, "date", p$steps_per_day,
-                                        initial_step)
-  ret <- sircovid::lancelot_particle_filter(data, control$n_particles,
-                                            control$n_threads, control$seed,
-                                            control$compiled_compare)
-  if (deterministic) {
-    inputs <- ret$inputs()
-    ret <- mcstate::particle_deterministic$new(inputs$data,
-                                               inputs$model,
-                                               inputs$compare,
-                                               inputs$index,
-                                               inputs$initial,
-                                               inputs$n_threads)
+  ## Two rounds of work on data; organise it into mcstate format, then
+  ## double check that the columns are all as expected.
+  initial_date <- sircovid::as_sircovid_date(initial_date)
+  data <- mcstate::particle_filter_data(
+    data, "date", steps_per_day, initial_date)
+  data <- sircovid::lancelot_prepare_data(data)
+
+  ## We might use the built-in compare function, but probably we will
+  ## use the R one from the package.
+  compare <- if (control$compiled_compare) NULL else sircovid::lancelot_compare
+
+  if (is.null(initial)) {
+    initial <- sircovid::lancelot_initial
+  } else if (is.matrix(initial)) {
+    initial <- mcstate::particle_filter_initial(initial)
+  } else {
+    assert_is(initial, "function")
   }
 
-  ret
+  if (deterministic) {
+    mcstate::particle_deterministic$new(
+      data = data, model = sircovid::lancelot, compare = compare,
+      index = sircovid::lancelot_index, initial = initial,
+      n_threads = control$n_threads)
+  } else {
+    mcstate::particle_filter$new(
+      data = data, model = sircovid::lancelot,
+      n_particles = control$n_particles,
+      compare = compare, index = sircovid::lancelot_index, initial = initial,
+      n_threads = control$n_threads, seed = control$seed)
+  }
 }
 
 
