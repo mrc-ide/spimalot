@@ -4,7 +4,14 @@
 \alias{spim_particle_filter}
 \title{Construct a particle filter}
 \usage{
-spim_particle_filter(data, pars, control, deterministic = FALSE)
+spim_particle_filter(
+  data,
+  pars,
+  control,
+  deterministic = FALSE,
+  initial = NULL,
+  initial_date = 0
+)
 }
 \arguments{
 \item{data}{Data, from \link{spim_data}}
@@ -18,6 +25,13 @@ spim_particle_filter(data, pars, control, deterministic = FALSE)
 
 \item{deterministic}{Logical, indicating if the particle filter to built
 is to be run deterministically or stochastically}
+
+\item{initial}{Optionally a matrix of model state or an initial
+value function.}
+
+\item{initial_date}{The initial date to start from.  Typically
+this should be 0 for a parent fit, and be the restart date for a
+restart date.}
 }
 \value{
 A \link[mcstate:particle_filter]{mcstate::particle_filter} object
