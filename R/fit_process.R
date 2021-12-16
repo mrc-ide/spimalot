@@ -231,6 +231,10 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
       initial_step_from_parameters <- FALSE
     }
 
+    if (length(dates1) == 0) {
+      next
+    }
+
     step1 <- step[dates1]
     S1 <- S[, , dates1, drop = FALSE]
 
