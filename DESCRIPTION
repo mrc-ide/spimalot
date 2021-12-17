@@ -62,7 +62,7 @@ Imports:
     khroma,
     lubridate,
     matrixStats,
-    mcstate (>= 0.7.1),
+    mcstate (>= 0.7.2),
     patchwork,
     readxl,
     reshape2,
