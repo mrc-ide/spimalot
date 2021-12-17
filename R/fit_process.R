@@ -86,6 +86,10 @@ spim_fit_process <- function(samples, parameters, data, control,
     restart_date <- max(restart$state$time)
     i <- samples_thin$trajectories$date <= restart_date
 
+    ## This is set of things that go into the restart object that are
+    ## to do with the time-course of the parent object.  It's
+    ## different to what we process with the fit_process_restart which
+    ## needs to happen against the unthinned object.
     restart$parent <- list(
       trajectories = trajectories_filter_time(samples_thin$trajectories, i),
       rt = rt_filter_time(rt, i),
