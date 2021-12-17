@@ -369,13 +369,14 @@ spim_plot_check_state_by_age <- function(summary_agestate, ana, scen) {
 #' Calculate doses given out from simulation
 #' @title Calculate doses given out from simulation
 #' @param summary Output from [spim_simulate_tidy_states]
-#' @param population Vector of England population by 19 age groups
+#' @param population_england Vector of England population by 19 age groups
 #'  and rows are age groups
+#' @param scen Scenario to check, usually central
 #' @export
-spim_calculate_doses <- function(summary, population_england, Scenario) {
+spim_calculate_doses <- function(summary, population_england, scen) {
   doses_g <- summary$n_doses %>%
     dplyr::filter(region == "england",
-                  scenario == Scenario) %>%
+                  scenario == scen) %>%
     tidyr::pivot_wider(names_from = state, names_prefix = "state_") %>%
     dplyr::mutate(state_total_dose_inc = state_first_dose_inc +
                     state_second_dose_inc +
