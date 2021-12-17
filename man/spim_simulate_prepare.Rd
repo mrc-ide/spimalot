@@ -9,8 +9,6 @@ spim_simulate_prepare(
   simulate_parameters,
   n_par,
   regions = NULL,
-  inflate_strain = FALSE,
-  inflate_booster = FALSE,
   seed_voc = FALSE
 )
 }
@@ -22,12 +20,6 @@ spim_simulate_prepare(
 \item{n_par}{The number of parameters to sample}
 
 \item{regions}{Character vector of regions to use}
-
-\item{inflate_strain}{Logical, indicating if an empty second
-strain should be added}
-
-\item{inflate_booster}{Logical, indicating if an empty booster
-dose should be added}
 
 \item{seed_voc}{Logical, indicating if seeding a new VOC}
 }
