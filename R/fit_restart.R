@@ -128,7 +128,8 @@ spim_restart_join_parent <- function(fit, parent) {
   }
 
   fit$rt <- join_rt(parent$rt, fit$rt, i)
-  fit$ifr_t <- join_rt(parent$ifr_t, fit$ifr_t, i)
+  ## NOTE: Previously we've saved ifr here too, but that needs
+  ## reworking for the multistage fits still
 
   ## Here we need things from the parent fit really
   i_data <- which(parent$data$full$date <= restart_date)
