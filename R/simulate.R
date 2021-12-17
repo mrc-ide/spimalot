@@ -26,7 +26,6 @@ spim_simulate_prepare <- function(combined, simulate_parameters, n_par,
                                   regions = NULL, inflate_strain = FALSE,
                                   inflate_booster = FALSE,
                                   seed_voc = FALSE) {
-
   if (is.null(regions)) {
     regions <- sircovid::regions("all")
   }
@@ -61,7 +60,7 @@ spim_simulate_prepare <- function(combined, simulate_parameters, n_par,
     pars_mcmc, combined$transform)
 
   if (inflate_strain) {
-    message("Inflating strains")
+    message("Inflating strains. NOT SURE IF THIS WORKS WITH MULTISTAGE FITTING")
     tmp <- simulate_prepare_inflate_strain(pars, state, info)
     pars <- tmp$pars
     state <- tmp$state
@@ -69,7 +68,7 @@ spim_simulate_prepare <- function(combined, simulate_parameters, n_par,
   }
 
   if (inflate_booster) {
-    message("Inflating vaccination classes")
+    message("Inflating vaccination classes. NOT SURE IF THIS WORKS WITH MULTISTAGE FITTING")
     tmp <- simulate_prepare_inflate_vacc_classes(pars, state, info)
     pars <- tmp$pars
     state <- tmp$state
@@ -392,11 +391,12 @@ simulate_prepare_upgrade <- function(combined) {
       ## NOTE: this won't work well if we have to add new parameters
       ## because we then break the transform function.
       p <- combined$transform[[i]](combined$pars[[i]][1, ])
-      info_new <- sircovid::lancelot$new(p, 0, 1)$info()
+      p_last_epoch <- p[[length(p)]]$pars
+      info_new <- sircovid::lancelot$new(p_last_epoch, 0, 1)$info()
       cmp <- combined$state[[i]]
       combined$state[[i]] <- sircovid::upgrade_state(
         combined$state[[i]],
-        combined$info[[i]]$info,
+        combined$info[[i]]$info[[length(p)]],
         info_new)
       combined$info[[i]]$info <- info_new
     }
