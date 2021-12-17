@@ -211,6 +211,15 @@
     <loc>/reference/spim_restart_initial.html</loc>
   </url>
   <url>
+    <loc>/reference/spim_restart_initial_state.html</loc>
+  </url>
+  <url>
+    <loc>/reference/spim_restart_join_parent.html</loc>
+  </url>
+  <url>
+    <loc>/reference/spim_restart_pars.html</loc>
+  </url>
+  <url>
     <loc>/reference/spim_rrq_controller.html</loc>
   </url>
   <url>
