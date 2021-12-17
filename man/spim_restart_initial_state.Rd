@@ -8,7 +8,7 @@ spim_restart_initial_state(restart, date)
 }
 \arguments{
 \item{restart}{The loaded restart date (processed with
-\link{spim_fit_pocess} in a previous task). We require that
+\link{spim_fit_process} in a previous task). We require that
 \code{restart} has a \code{state} element which is list with elements
 \code{time} (a sircovid date) and \code{state} (a 3d array of model state
 by particle by \code{time}).}

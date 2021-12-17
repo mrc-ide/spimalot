@@ -4,7 +4,7 @@
 \alias{spim_restart_join_parent}
 \title{Join parent and restart fits}
 \usage{
-spim_restart_join_parent(fit, parent, data)
+spim_restart_join_parent(fit, parent)
 }
 \arguments{
 \item{fit}{The new fit. A list with elements \code{samples}, \code{pmcmc},

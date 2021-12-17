@@ -6,7 +6,7 @@
 ##' @title Load restart data
 ##'
 ##' @param restart The loaded restart date (processed with
-##'   [spimalot::spim_fit_pocess] in a previous task). We require that
+##'   [spimalot::spim_fit_process] in a previous task). We require that
 ##'   `restart` has a `state` element which is list with elements
 ##'   `time` (a sircovid date) and `state` (a 3d array of model state
 ##'   by particle by `time`).
@@ -94,7 +94,7 @@ spim_restart_pars <- function(pars, pars_parent, restart_date) {
 ##'   concatenated trajectories as appropriate.
 ##'
 ##' @export
-spim_restart_join_parent <- function(fit, parent, data) {
+spim_restart_join_parent <- function(fit, parent) {
   ## First, fix first step; see
   ## https://github.com/mrc-ide/mcstate/issues/55
   fit$samples$trajectories$step <- fit$samples$trajectories$step[-1L]
