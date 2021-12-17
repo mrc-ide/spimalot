@@ -4,12 +4,12 @@
 \alias{spim_plot_check_state}
 \title{Check states from simulation}
 \usage{
-spim_plot_check_state(summary_state, combined_state)
+spim_plot_check_state(summary_state, combined_state = NULL)
 }
 \arguments{
 \item{summary_state}{State from simulation summary object}
 
-\item{combined_state}{State from combined object}
+\item{combined_state}{Optional state from combined object}
 }
 \description{
 Diagnostic plots for checking states from simulation

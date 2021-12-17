@@ -4,12 +4,12 @@
 \alias{spim_calculate_doses}
 \title{Calculate doses given out from simulation}
 \usage{
-spim_calculate_doses(summary, population)
+spim_calculate_doses(summary, population_england, Scenario)
 }
 \arguments{
 \item{summary}{Output from \link{spim_simulate_tidy_states}}
 
-\item{population}{data.frame of population sizes where columns are regions
+\item{population}{Vector of England population by 19 age groups
 and rows are age groups}
 }
 \description{
