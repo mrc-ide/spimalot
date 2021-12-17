@@ -237,46 +237,56 @@ spim_prepare_aggregated_data <- function(path) {
 ##' Diagnostic plots for checking Rt from simulation
 ##' @title Check Rt from simulation
 ##' @param summary_state State from simulation summary object
-##' @param combined_state State from combined object
 ##' @param dates Dates to plot vertical lines at
+##' @param combined_state Optional state from combined object
+##' @param Rt_state Rt states to plot, default is effective average Rt
 ##' @export
-spim_plot_check_rt <- function(summary_state, combined_state, dates) {
+spim_plot_check_rt <- function(summary_state, dates, combined_state = NULL,
+                              Rt_state = "eff_Rt_general_both") {
 
   summary_state <- summary_state %>%
     dplyr::filter(region == "england",
-                  state %in% c("Rt_general_both", "eff_Rt_general_both")) %>%
+                  state %in% Rt_state) %>%
     dplyr::mutate(scenario = as.factor(scenario),
                   analysis = as.factor(analysis)) %>%
     tidyr::pivot_wider(names_from = quantile)
 
-  combined_state <- combined_state %>%
-      dplyr::filter(region == "england",
-                    state %in% c("Rt_general_both", "eff_Rt_general_both")) %>%
-      tidyr::pivot_wider(names_from = quantile)
+  ddates <- rep(as.Date(Sys.time()), length(dates))
+  ddates[dates != "today"] <- as.Date(dates[dates != "today"])
 
-  # TODO:: for SPI-M we report 90% CI, hence 5% and 95% here but
-  # default below; shall we change default?
-  summary_state %>%
+  p <- summary_state %>%
     ggplot(aes(x = date, y = `50%`, colour = scenario)) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     geom_ribbon(alpha = 0.3,
-                aes(ymin = `5%`,
-                    ymax = `95%`,
+                aes(ymin = `2.5%`,
+                    ymax = `97.5%`,
                     fill = scenario)) +
     geom_line() +
 
-    geom_ribbon(data = combined_state, alpha = 0.3,
-                aes(x = date,
-                    ymin = `2.5%`,
-                    ymax = `97.5%`), inherit.aes = FALSE) +
-    geom_line(data = combined_state, aes(x = date, y = `50%`),
-              inherit.aes = FALSE) +
     facet_grid(cols = vars(analysis), rows = vars(state),
-               scales = "free_y",
-               labeller = label_wrap_gen(width = 7)) +
+              scales = "free_y",
+              labeller = label_wrap_gen(width = 7)) +
     scale_x_date(date_breaks = "1 month") +
-    geom_vline(xintercept = dates, lty = 2, color = "gray")
+    geom_vline(xintercept = ddates, lty = 2, color = "gray")
+
+  if (!is.null(combined_state)) {
+      combined_state <- combined_state %>%
+        dplyr::filter(
+          region == "england",
+          state %in% c("Rt_general_both", "eff_Rt_general_both")) %>%
+        tidyr::pivot_wider(names_from = quantile)
+
+      p <- p +
+        geom_ribbon(data = combined_state, alpha = 0.3,
+                    aes(x = date,
+                        ymin = `2.5%`,
+                        ymax = `97.5%`), inherit.aes = FALSE) +
+        geom_line(data = combined_state, aes(x = date, y = `50%`),
+                  inherit.aes = FALSE)
+  }
+
+  p
 }
 
 
