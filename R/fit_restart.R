@@ -35,6 +35,48 @@ spim_restart_initial_state <- function(restart, date) {
 }
 
 
+##' Create restart parameters
+##' @title Create restart parameters
+##'
+##' @param pars The full set of parameters.  This is a list with the
+##'   baseline (`base`) along with `prior`, `info` and `transform`.
+##'
+##' @param pars_parent The parameters from the parent fit; this must
+##'   be a `spim_pars_mcmc` object
+##'
+##' @param restart_date The date that restart happens, will be pased
+##'   through `spimalot::as_sircovid_date`
+##'
+##' @return An object with the same structure as `pars` but with the
+##'   `prior` element updated and an `mcmc` element added.
+##'
+##' @export
+spim_restart_pars <- function(pars, pars_parent, restart_date) {
+  assert_is(pars_parent, "spim_pars_pmcmc")
+  assert_has_names(pars, c("base", "prior", "info", "transform"))
+
+  ## These are parameters that we no longer will try and fit, and will
+  ## eject from the full parameters object
+  beta_date <- pars$base$beta_date
+  restart_date <- sircovid::as_sircovid_date(restart_date)
+  i <- max(which(beta_date <= restart_date))
+  fixed <- c(sprintf("beta%d", seq_len(i - 1)), "start_date")
+
+  ## These are the ones we should use the prior in the pars object,
+  ## along with anything new. Note the -1 is because the restart data
+  ## contains region (we might remove that)
+  beta_restart <- sprintf("beta%d", seq(i, length(beta_date)))
+  priors_propagate <- setdiff(pars_parent$info$name, beta_restart)
+  pars$prior[match(priors_propagate, pars$prior$name), ] <-
+    pars_parent$prior[match(priors_propagate, pars_parent$prior$name), -1]
+
+  pars_full <- build_parameters(pars)
+
+  pars$mcmc <- pars_full$fix(pars_full$initial()[fixed])
+  pars
+}
+
+
 ##' Join parent and restart fits together
 ##'
 ##' @title Join parent and restart fits
