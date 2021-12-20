@@ -147,10 +147,13 @@ spim_simulate_combine_trajectories <- function(res, name, regions = NULL,
     bind_arrays(x, combined_n_protected, 2L, name)
   }
 
+  ## TODO: this used to come through but currently does not, and
+  ## that's a bit of a surprise.
   if (is.list(res$n_protected)) {
-    n_protected <- lapply(res$n_protected, combine_n_protected, regions, name)
-  } else {
-    n_protected <-
+    res$n_protected <- lapply(res$n_protected, combine_n_protected, regions,
+                              name)
+  } else if (!is.null(res$n_protected)) {
+    res$n_protected <-
       list(strain_1 = combine_n_protected(res$n_protected, regions, name))
   }
 
@@ -163,8 +166,9 @@ spim_simulate_combine_trajectories <- function(res, name, regions = NULL,
 
   ret <- res
   ret$state <- bind_arrays(state, combined_state, dim_region, name)
-  ret$n_protected <- n_protected
-  ret$n_doses <- agg_regions(res$n_doses)
+  if (!is.null(ret$n_doses)) {
+    ret$n_doses <- agg_regions(res$n_doses)
+  }
   if (!is.null(combined_Rt)) {
     ret[rt_names] <- Map(bind_arrays, res[rt_names], combined_Rt, 2, name)
   }
@@ -550,23 +554,30 @@ tidy_state_one <- function(x, common) {
     ret$value <- c(s)
 
     # date, region, strain, state
-    p <- aperm(abind_quiet(x$n_protected, along = 4), c(3, 2, 4, 1))
-    dnp <- set_names(dimnames(p), c("date", "region", "strain", "state"))
-    dnp$date <- sircovid::sircovid_date_as_date(x$date)
-    dnp$quantile <- "mean"
+    if (is.null(x$n_protected)) {
+      ret_p <- NULL
+    } else {
+      p <- aperm(abind_quiet(x$n_protected, along = 4), c(3, 2, 4, 1))
+      dnp <- set_names(dimnames(p), c("date", "region", "strain", "state"))
+      dnp$date <- sircovid::sircovid_date_as_date(x$date)
+      dnp$quantile <- "mean"
 
-    ret_p <- do.call(expand.grid, dnp)[seq(length(dnp), 1)]
-    ret_p$value <- c(p)
+      ret_p <- do.call(expand.grid, dnp)[seq(length(dnp), 1)]
+      ret_p$value <- c(p)
+    }
 
-    # date, [particle] = mean, group, region, state
-    d <- aperm(x$n_doses, c(4, 1, 3, 2))
-    dn$group <- c(sircovid:::sircovid_age_bins()$start, "CHW", "CHR")
-    dn$state <- colnames(x$n_doses)
-    dn$quantile <- "mean"
+    if (is.null(x$n_doses)) {
+      ret_d <- NULL
+    } else {
+      # date, [particle] = mean, group, region, state
+      d <- aperm(x$n_doses, c(4, 1, 3, 2))
+      dn$group <- c(sircovid:::sircovid_age_bins()$start, "CHW", "CHR")
+      dn$state <- colnames(x$n_doses)
+      dn$quantile <- "mean"
 
-    ret_d <- do.call(expand.grid, dn)[seq(length(dn), 1)]
-    ret_d$value <- c(d)
-
+      ret_d <- do.call(expand.grid, dn)[seq(length(dn), 1)]
+      ret_d$value <- c(d)
+    }
 
     # date, [particle] = mean, group, vaccine_status, region, state
     # 'av' is "age and vaccine"
