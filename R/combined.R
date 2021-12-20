@@ -446,7 +446,7 @@ spim_add_forecast_region <- function(samples, forecast_days) {
 ## This is adapted from mcstate::pmcmc_predict
 spim_pmcmc_predict <- function(object, steps, prepend_trajectories = FALSE,
                                n_threads = NULL, seed = NULL) {
-  browser()
+
   if (is.null(object$predict)) {
     stop("mcmc was run with return_state = FALSE, can't predict")
   }
@@ -462,7 +462,8 @@ spim_pmcmc_predict <- function(object, steps, prepend_trajectories = FALSE,
   }
 
   state <- object$state
-  index <- object$predict$index
+  info <- object$info$info[[length(object$info$info)]]
+  index <- sircovid::lancelot_index(info)$state
   model <- object$predict$filter$model
   n_threads <- n_threads %||% object$predict$filter$n_threads
 
@@ -480,10 +481,10 @@ spim_pmcmc_predict <- function(object, steps, prepend_trajectories = FALSE,
   }
   y <- mod$simulate(steps)
 
-  res <- mcstate_trajectories(steps, object$predict$rate, y, TRUE)
+  res <- mcstate:::mcstate_trajectories(steps, object$predict$rate, y, TRUE)
 
   if (prepend_trajectories) {
-    res <- bind_mcstate_trajectories(object$trajectories, res)
+    res <- mcstate:::bind_mcstate_trajectories(object$trajectories, res)
   }
 
   res
