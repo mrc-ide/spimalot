@@ -350,7 +350,9 @@ spim_population <- function(combined, ignore_uk = FALSE, by_age = TRUE,
 ##' @export
 spim_prop_infected <- function(combined, population,
                               regions = sircovid::regions("england")) {
-  idx_cum_infections <- combined$info[[1]]$info$index$cum_infections
+  n_epoch <- length(combined$info[[1]]$info)
+  idx_cum_infections <-
+    combined$info[[1]]$info[[n_epoch]]$index$cum_infections
   prop_infected <- sapply(regions, function(r) {
     mean_ci(combined$state[[r]][idx_cum_infections, ]) / sum(population[[r]])
   })
