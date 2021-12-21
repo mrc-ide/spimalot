@@ -20,6 +20,13 @@
 ##' @export
 spim_vaccination_data <- function(date, region, uptake, days_to_effect, data) {
 
+  ## Vaccination started 2020-12-08. There should be no doses before this
+  ## so we remove dates before this
+  data <- data[data$date >= "2020-12-08", ]
+
+  ## Boosters started 2021-09-15, so ignore any third doses before this date
+  data$third_dose[data$date < "2021-09-15"] <- 0
+
   ## Remove any data after date parameter
   data <- data[data$date <= date, ]
 
