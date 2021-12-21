@@ -257,7 +257,7 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
       R_nms <- get_names("R",
                          list(S = n_strains, V = n_vacc_classes),
                          suffix)
-      R1 <- R[, , dates1, drop = FALSE]
+      R1 <- R[R_nms, , dates1, drop = FALSE]
       prob_strain1 <- prob_strain[, , dates1, drop = FALSE]
     }
 
