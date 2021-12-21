@@ -53,14 +53,7 @@ spim_fit_process <- function(samples, parameters, data, control,
 
   variant_rt <- calculate_lancelot_Rt(samples_thin, FALSE)
 
-  ## TODO: currently still used to compare outputs of deaths by age (not fitted)
-  ## this will be removed soon, when we introduce fitting to deaths by age
-  message("Summarising deaths")
-  deaths <- extract_outputs_by_age(samples_thin, "D_hosp") # slow
-  i_deaths_data <- colnames(deaths$output_t)
-  deaths$data <- data$rtm[data$rtm$region == region,
-                          c("date", "region", i_deaths_data)]
-  deaths$data[is.na(deaths$data)] <- 0
+  ## TODO: process D_hosp states by age before trajectories are reduced below
 
   ## TODO: someone needs to document what this date is for (appears to
   ## filter trajectories to start at this date) and when we might
@@ -93,7 +86,6 @@ spim_fit_process <- function(samples, parameters, data, control,
     restart$parent <- list(
       trajectories = trajectories_filter_time(samples_thin$trajectories, i),
       rt = rt_filter_time(rt, i),
-      deaths = deaths_filter_time(deaths, restart_date),
       data = data,
       ## TODO: check to make sure that this is just the one region's
       ## parameters at this point (see the region column)
@@ -128,7 +120,6 @@ spim_fit_process <- function(samples, parameters, data, control,
                rt = rt,
                variant_rt = variant_rt,
                # ifr_t = ifr_t,
-               deaths = deaths,
                simulate = simulate,
                parameters = parameters_new,
                vaccination = data$vaccination,
@@ -305,78 +296,6 @@ calculate_lancelot_ifr_t <- function(samples, multistrain) {
 
 ## All the functions below here have awful names, but none are
 ## exported so we can tidy this up later.
-extract_outputs_by_age <- function(sample, what) {
-  trajectories <- sample$trajectories$state
-  i <- grep(paste0("^", what), rownames(trajectories))
-  cum_output <- trajectories[i, , , drop = FALSE]
-
-  total_output <- cum_output[, , dim(cum_output)[3]]
-  prop_output <- t(total_output) / colSums(total_output) * 100
-
-  output <- apply(cum_output, 1:2, diff)
-  mean_output <- apply(output, 1:2, mean)
-
-  ## TODO: consider tdigest::tquantile (see quantile_digest in
-  ## globals)
-  out <- list(prop_total_output = prop_output,
-              mean_prop_total_output = colMeans(prop_output),
-              output_t = mean_output,
-              lower_bound = apply(output, 1:2, quantile, 0.025),
-              upper_bound = apply(output, 1:2, quantile, 0.975))
-
-  out <- aggregate_outputs_by_age(out, what)
-
-  if (diff(sample$trajectories$date[1:2]) != 1) {
-    for (i in seq_along(out)) {
-      out[[i]][1, ] <- NA
-    }
-  }
-
-  out$date <- sample$trajectories$date[-1]
-
-  out
-}
-
-
-aggregate_outputs_by_age <- function(object, what) {
-
-  which_df <- c("output_t", "lower_bound", "upper_bound")
-  out <- NULL
-  if (what == "cum_admit") {
-    for (df in which_df) {
-      adm_0 <- rowSums(object[[df]][, 1:5], na.rm = TRUE)
-      adm_25 <- rowSums(object[[df]][, 6:12], na.rm = TRUE) +
-        (object[[df]][, 18] * 0.75)
-      adm_55 <- rowSums(object[[df]][, 12:13], na.rm = TRUE) +
-        (object[[df]][, 18] * 0.25)
-      adm_65 <- rowSums(object[[df]][, 14:15], na.rm = TRUE) +
-        (object[[df]][, 19] * 0.1)
-      adm_75 <- rowSums(object[[df]][, 16:17], na.rm = TRUE) +
-        (object[[df]][, 19] * 0.9)
-
-      out[[df]] <- cbind(adm_0, adm_25, adm_55, adm_65, adm_75)
-    }
-  } else if (what == "D_hosp") {
-    for (df in which_df) {
-
-      death_0 <- rowSums(object[[df]][, 1:11], na.rm = TRUE) +
-        (object[[df]][, 18] * 0.75)
-      death_55 <- rowSums(object[[df]][, 12:13], na.rm = TRUE) +
-        (object[[df]][, 18] * 0.25)
-      death_65 <- rowSums(object[[df]][, 14:15], na.rm = TRUE)
-      death_75 <- rowSums(object[[df]][, 16:17], na.rm = TRUE)
-      death_chr <- object[[df]][, 19]
-
-      out[[df]] <- cbind(death_0, death_55, death_65, death_75, death_chr)
-
-    }
-  } else {
-    stop(sprintf("Can't aggregate '%s'", what))
-  }
-  out
-}
-
-
 extract_age_class_state <- function(state) {
   n_groups <- sircovid:::lancelot_n_groups()
   names_index <- c("cum_infections_disag", "diagnoses_admitted", "D_all")
