@@ -182,7 +182,11 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     data$deaths_non_hosp <- NA_integer_
   } else {
     data$deaths <- NA_integer_
-    data$deaths_hosp <- data$death3
+    if (all(!is.na(data[, deaths_hosp_age]))) {
+      data$deaths_hosp <- NA_integer_
+    } else {
+      data$deaths_hosp <- data$death3
+    }
     data$deaths_non_hosp <- NA_integer_
 
     if (!full_data) {
