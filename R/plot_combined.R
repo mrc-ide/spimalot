@@ -59,13 +59,16 @@ spim_plot_admissions_by_age <- function(dat, region) {
 ##' @param date_min Starting date for plot. If not given, defaults to
 ##'   the beginning of the data.
 ##'
+##' @param age_band Age band to plot
+##'
 ##' @param with_forecast Logical, indicating if we should add the forecast
 ##'
 ##' @param add_betas Logical, indicating if we should add betas
 ##'
 ##' @export
 spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
-                                   with_forecast = TRUE, add_betas = FALSE) {
+                                   age_band = NULL, with_forecast = TRUE,
+                                   add_betas = FALSE) {
 
   n_regions <- length(regions)
   op <- par(mfcol = c(length(what), n_regions),
@@ -74,7 +77,7 @@ spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
   on.exit(par(op))
 
   for (r in regions) {
-    spim_plot_trajectories_region(r, dat, what, date_min,
+    spim_plot_trajectories_region(r, dat, what, date_min, age_band,
                                   with_forecast = with_forecast,
                                   add_betas = add_betas)
   }
@@ -1223,7 +1226,8 @@ spim_plot_serology_region <- function(region, dat, sero_flow, ymax,
 
 
 spim_plot_trajectories_region <- function(region, dat, what = NULL,
-                                          date_min = NULL, with_forecast = TRUE,
+                                          date_min = NULL, age_band = NULL,
+                                          with_forecast = TRUE,
                                           add_betas = FALSE) {
   if (is.null(what)) {
     what <- c("deaths_hosp", "deaths_comm", "deaths_carehomes",
@@ -1231,7 +1235,7 @@ spim_plot_trajectories_region <- function(region, dat, what = NULL,
   }
   for (w in what) {
     spim_plot_trajectories_region1(
-      w, region, dat, date_min,
+      w, region, dat, date_min, age_band,
       with_forecast = with_forecast, add_betas = add_betas)
   }
 }
@@ -1454,7 +1458,7 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
 
 
 spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
-                                           with_forecast = TRUE,
+                                           age_band, with_forecast = TRUE,
                                            add_betas = FALSE) {
   trajectories <- dat$samples[[region]]$trajectories
   date <- dat$info$date
@@ -1482,19 +1486,27 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
             admitted = "Daily admissions",
             all_admission = "Daily admissions (all)")
 
-  ## currently remove first step as the first time period is typically much more
-  ## than one day at the moment
-  if (what == "deaths") {
-    res <-
-      trajectories$state["deaths_hosp_inc", , -1L] +
-      trajectories$state["deaths_comm_inc", , -1L] +
-      trajectories$state["deaths_carehomes_inc", , -1L]
-  } else if (what == "all_admission") {
-    res <-
-      trajectories$state["diagnoses_inc", , -1L] +
-      trajectories$state["admitted_inc", , -1L]
+  if (age_band == "all") {
+    ## currently remove first step as the first time period is typically much more
+    ## than one day at the moment
+    if (what == "deaths") {
+      res <-
+        trajectories$state["deaths_hosp_inc", , -1L] +
+        trajectories$state["deaths_comm_inc", , -1L] +
+        trajectories$state["deaths_carehomes_inc", , -1L]
+    } else if (what == "all_admission") {
+      res <-
+        trajectories$state["diagnoses_inc", , -1L] +
+        trajectories$state["admitted_inc", , -1L]
+    } else {
+      res <- trajectories$state[trajnames[what], , -1L]
+    }
   } else {
-    res <- trajectories$state[trajnames[what], , -1L]
+    if (what != "deaths_hosp") {
+      stop(message(paste_0("Cannot plot ", what, " by age")))
+    }
+    res <- trajectories$state[paste0("deaths_hosp_inc_", age_band), , -1L]
+    labs[what] <- paste(labs[what], gsub("_", " to ", age_band))
   }
 
   x <- sircovid::sircovid_date_as_date(trajectories$date[-1L])
@@ -1514,7 +1526,12 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
 
   data <- dat$data[[region]]
   dx <- as.Date(data$fitted$date_string)
-  dy <- data$fitted[, what]
+
+  if (age_band == "all") {
+    dy <- data$fitted[, what]
+  } else {
+    dy <- data$fitted[, paste0(what, "_", age_band)]
+  }
 
   dy_extra <- data$full[, what]
   dy_extra[!is.na(dy)] <- NA_integer_
