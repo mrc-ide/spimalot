@@ -1,4 +1,4 @@
-fit_process_restart <- function(samples, parameters, data, control) {
+fit_process_restart <- function(samples, parameters, control) {
   if (is.null(samples$restart)) {
     return(NULL)
   }
@@ -15,8 +15,7 @@ fit_process_restart <- function(samples, parameters, data, control) {
 
   list(state = samples$restart,
        info = samples$info,
-       pars = pars,
-       data = data)
+       pars = pars)
 }
 
 

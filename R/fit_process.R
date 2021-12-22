@@ -29,7 +29,7 @@ spim_fit_process <- function(samples, parameters, data, control,
 
   message("Computing restart information")
   restart <- fit_process_restart(
-    samples, parameters_raw, data, control)
+    samples, parameters_raw, control)
   samples$restart <- NULL
 
   message("Thinning samples")
@@ -86,10 +86,15 @@ spim_fit_process <- function(samples, parameters, data, control,
     restart_date <- max(restart$state$time)
     i <- samples_thin$trajectories$date <= restart_date
 
+    ## This is set of things that go into the restart object that are
+    ## to do with the time-course of the parent object.  It's
+    ## different to what we process with the fit_process_restart which
+    ## needs to happen against the unthinned object.
     restart$parent <- list(
       trajectories = trajectories_filter_time(samples_thin$trajectories, i),
       rt = rt_filter_time(rt, i),
       deaths = deaths_filter_time(deaths, restart_date),
+      data = data,
       ## TODO: check to make sure that this is just the one region's
       ## parameters at this point (see the region column)
       prior = parameters_raw$prior)
@@ -127,6 +132,7 @@ spim_fit_process <- function(samples, parameters, data, control,
                simulate = simulate,
                parameters = parameters_new,
                vaccination = data$vaccination,
+               ## NOTE: fit$data$fitted is assumed to exist by the restart
                data = list(fitted = data$fitted, full = data$full)),
     restart = restart)
 }
@@ -229,6 +235,10 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
     } else {
       dates1 <- which(dates > epoch_dates[i - 1])
       initial_step_from_parameters <- FALSE
+    }
+
+    if (length(dates1) == 0) {
+      next
     }
 
     step1 <- step[dates1]

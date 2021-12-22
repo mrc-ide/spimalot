@@ -17,6 +17,8 @@
 ##' @export
 spim_mtp_summary_to_template <- function(summary_tidy, date, run_grid,
                                          combined, spim_state_names) {
+  stopifnot(nrow(run_grid) == 1)
+
   pop <- spim_mtp_population(combined)
 
   model_type <- combined$info[[1]]$model_type
@@ -32,9 +34,7 @@ spim_mtp_summary_to_template <- function(summary_tidy, date, run_grid,
   summary_tidy$state$spim_name <- summary_tidy$state$scenario
 
   ## create common template columns
-  lapply(names(run_grid), mtp_template_common,
-         date = date, model_type = output_str) %>%
-    dplyr::bind_rows() %>%
+  mtp_template_common("mtp", date, output_str) %>%
     ## join to results
     dplyr::left_join(summary_tidy$state, by = c(Scenario = "spim_name")) %>%
     dplyr::filter(state %in% names(spim_state_names),

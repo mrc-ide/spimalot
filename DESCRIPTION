@@ -1,6 +1,6 @@
 Package: spimalot
 Title: Support for 'sircovid'
-Version: 0.5.26
+Version: 0.5.29
 Authors@R:
     c(person(given = "Marc",
            family = "Baguelin",
@@ -62,11 +62,11 @@ Imports:
     khroma,
     lubridate,
     matrixStats,
-    mcstate (>= 0.7.1),
+    mcstate (>= 0.7.2),
     patchwork,
     readxl,
     reshape2,
-    sircovid (>= 0.12.26),
+    sircovid (>= 0.12.27),
     stringr,
     tdigest,
     tibble,
