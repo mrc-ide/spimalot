@@ -414,7 +414,7 @@ spim_add_forecast_region <- function(samples, forecast_days) {
   steps_predict <- seq(samples$predict$step,
                        length.out = forecast_days + 1L,
                        by = samples$predict$rate)
-  forecast <- mcstate::pmcmc_predict(
+  forecast <- spim_pmcmc_predict(
     samples, steps_predict,
     prepend_trajectories = FALSE)
   forecast$date <- forecast$step / forecast$rate
@@ -441,4 +441,49 @@ spim_add_forecast_region <- function(samples, forecast_days) {
 
   samples
 
+}
+
+## This is adapted from mcstate::pmcmc_predict
+spim_pmcmc_predict <- function(object, steps, prepend_trajectories = FALSE,
+                               n_threads = NULL, seed = NULL) {
+
+  if (is.null(object$predict)) {
+    stop("mcmc was run with return_state = FALSE, can't predict")
+  }
+  if (length(steps) < 2) {
+    stop("At least two steps required for predict")
+  }
+  if (steps[[1]] != object$predict$step) {
+    stop(sprintf("Expected steps[1] to be %d", object$predict$step))
+  }
+  if (prepend_trajectories && is.null(object$trajectories)) {
+    stop(paste("mcmc was run with return_trajectories = FALSE,",
+               "can't prepend trajectories"))
+  }
+
+  state <- object$state
+  info <- object$info$info[[length(object$info$info)]]
+  index <- sircovid::lancelot_index(info)$state
+  model <- object$predict$filter$model
+  n_threads <- n_threads %||% object$predict$filter$n_threads
+
+  pars <- lapply(seq_len(nrow(object$pars)), function(i)
+    last(object$predict$transform(object$pars[i, ]))$pars)
+
+  mod <- model$new(pars, steps[[1]], NULL, n_threads = n_threads,
+                   seed = seed, pars_multi = TRUE)
+
+  mod$update_state(state = state)
+  if (!is.null(index)) {
+    mod$set_index(index)
+  }
+  y <- mod$simulate(steps)
+
+  res <- mcstate:::mcstate_trajectories(steps, object$predict$rate, y, TRUE)
+
+  if (prepend_trajectories) {
+    res <- mcstate:::bind_mcstate_trajectories(object$trajectories, res)
+  }
+
+  res
 }
