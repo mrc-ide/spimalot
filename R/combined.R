@@ -467,10 +467,8 @@ spim_pmcmc_predict <- function(object, steps, prepend_trajectories = FALSE,
   model <- object$predict$filter$model
   n_threads <- n_threads %||% object$predict$filter$n_threads
 
-  pars <- apply(object$pars, 1,
-                function(x) {
-                  p <- object$predict$transform(x)
-                  p[[length(p)]]$pars})
+  pars <- lapply(seq_len(nrow(object$pars)), function(i)
+    last(object$predict$transform(object$pars[i, ]))$pars)
 
   mod <- model$new(pars, steps[[1]], NULL, n_threads = n_threads,
                    seed = seed, pars_multi = TRUE)

@@ -232,16 +232,23 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
       next
     }
 
-    step1 <- step[dates1]
-    S1 <- S[, , dates1, drop = FALSE]
-
     n_strains <- pars[[i]][[1]]$n_strains
+    n_vacc_classes <- pars[[i]][[1]]$n_vacc_classes
+
+    suffix <- paste0("_", c(sircovid:::sircovid_age_bins()$start, "CHW", "CHR"))
+    S_nms <- get_names("S", list(n_vacc_classes), suffix)
+
+    step1 <- step[dates1]
+    S1 <- S[S_nms, , dates1, drop = FALSE]
 
     if (n_strains == 1) {
       R1 <- NULL
       prob_strain1 <- NULL
     } else {
-      R1 <- R[, , dates1, drop = FALSE]
+      R_nms <- get_names("R",
+                         list(S = n_strains, V = n_vacc_classes),
+                         suffix)
+      R1 <- R[R_nms, , dates1, drop = FALSE]
       prob_strain1 <- prob_strain[, , dates1, drop = FALSE]
     }
 
@@ -733,4 +740,27 @@ calculate_cases <- function(samples) {
     abind1(samples$trajectories$state, cases)
 
   samples
+}
+
+## adapted from sircovid:::calculate_index
+get_names <- function(state_name, suffix_list, suffix0 = NULL) {
+  if (is.null(suffix0)) {
+    suffixes <- list()
+  } else {
+    suffixes <- list(suffix0)
+  }
+  for (i in seq_along(suffix_list)) {
+    nm <- names(suffix_list)[[i]]
+    if (length(nm) == 0) {
+      nm <- ""
+    }
+    suffixes <- c(suffixes,
+                  list(c("", sprintf("_%s%s", nm,
+                                     seq_len(suffix_list[[i]] - 1L)))))
+  }
+  suffixes <- expand.grid(suffixes)
+  nms <- apply(suffixes, 1,
+               function(x) sprintf("%s%s",
+                                   state_name, paste0(x, collapse = "")))
+  nms
 }
