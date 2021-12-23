@@ -82,3 +82,17 @@ test_that("spim control short run is shorter", {
   expect_equal(ctl_short$particle_filter$n_particles, 10)
   expect_equal(ctl_long$particle_filter$n_particles, 192)
 })
+
+
+test_that("Allow disabling workers for deterministic fit", {
+  suppressMessages(
+    control1 <- spimalot::spim_control(
+      TRUE, 4, TRUE, n_mcmc = 100,
+      burnin = 5, forecast_days = 0, workers = TRUE))
+  expect_equal(control1$pmcmc$n_workers, 4)
+  suppressMessages(
+    control2 <- spimalot::spim_control(
+      TRUE, 4, TRUE, n_mcmc = 100,
+      burnin = 5, forecast_days = 0, workers = FALSE))
+  expect_equal(control2$pmcmc$n_workers, 1)
+})
