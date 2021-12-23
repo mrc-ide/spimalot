@@ -100,7 +100,9 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
 
-  deaths_hosp_age <- paste0("death_", c(0, seq(50, 80, 5)))
+  deaths_hosp_age <- paste0("death_", c(0, seq(50, 80, 5)),
+                            "_", c(seq(49, 79, 5), 120))
+  deaths_hosp_age <- gsub("120", "plus", deaths_hosp_age)
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
@@ -403,14 +405,14 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   ret <- data_frame(
     date = sircovid::as_date(data$date),
     deaths_hosp = data$deaths_hosp,
-    deaths_hosp_0_49 = data$death_0,
-    deaths_hosp_50_54 = data$death_50,
-    deaths_hosp_55_59 = data$death_55,
-    deaths_hosp_60_64 = data$death_60,
-    deaths_hosp_65_69 = data$death_65,
-    deaths_hosp_70_74 = data$death_70,
-    deaths_hosp_75_79 = data$death_75,
-    deaths_hosp_80_plus = data$death_80,
+    deaths_hosp_0_49 = data$death_0_49,
+    deaths_hosp_50_54 = data$death_50_54,
+    deaths_hosp_55_59 = data$death_55_59,
+    deaths_hosp_60_64 = data$death_60_64,
+    deaths_hosp_65_69 = data$death_65_69,
+    deaths_hosp_70_74 = data$death_70_74,
+    deaths_hosp_75_79 = data$death_75_79,
+    deaths_hosp_80_plus = data$death_80_plus,
     deaths_comm = data$deaths_comm,
     deaths_carehomes = data$deaths_carehomes,
     deaths_non_hosp = data$deaths_non_hosp,
