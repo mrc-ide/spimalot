@@ -1487,7 +1487,7 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
             all_admission = "Daily admissions (all)")
 
   if (age_band == "all") {
-    ## currently remove first step as the first time period is typically much more
+    ## remove first step as the first time period is typically much more
     ## than one day at the moment
     if (what == "deaths") {
       res <-
