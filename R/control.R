@@ -82,7 +82,9 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
     ## Increase the number of workers because each will be running
     ##   separately. If running on a laptop this probably does not want
     ##   increasing
-    pmcmc$n_workers <- min(pmcmc$n_chains, pmcmc$n_threads_total)
+    if (workers) {
+      pmcmc$n_workers <- min(pmcmc$n_chains, pmcmc$n_threads_total)
+    }
   }
 
   particle_filter <- list(n_particles = n_particles,
