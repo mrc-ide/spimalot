@@ -469,8 +469,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     ret$pillar2_under15_cases <- NA_integer_
 
     ## Do not fit to aggregated hospital deaths
-    deaths_hosp_age <- gsub("death", "deaths_hosp", ret)
-    if (all(!is.na(ret[, deaths_hosp_age]))) {
+    deaths_hosp_age <- gsub("death", "deaths_hosp", deaths_hosp_age)
+    if (any(!is.na(ret[, deaths_hosp_age]))) {
       ret$deaths_hosp <- NA_integer_
     }
 
