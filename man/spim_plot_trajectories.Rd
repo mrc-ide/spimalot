@@ -9,6 +9,7 @@ spim_plot_trajectories(
   regions,
   what,
   date_min = NULL,
+  age_band = NULL,
   with_forecast = TRUE,
   add_betas = FALSE
 )
@@ -22,6 +23,8 @@ spim_plot_trajectories(
 
 \item{date_min}{Starting date for plot. If not given, defaults to
 the beginning of the data.}
+
+\item{age_band}{Age band to plot}
 
 \item{with_forecast}{Logical, indicating if we should add the forecast}
 

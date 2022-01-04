@@ -76,9 +76,13 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 
   ## Set last 'trim_deaths' days with deaths reported to NA, as these
   ## are too likely to be back-filled to be reliable
+  deaths_hosp_age <- paste0("deaths_hosp_", c(0, seq(50, 80, 5)),
+                            "_", c(seq(49, 79, 5), 120))
+  deaths_hosp_age <- gsub("120", "plus", deaths_hosp_age)
   i <- seq(to = nrow(data), length.out = trim_deaths)
   data[i, c("deaths", "deaths_hosp", "deaths_comm",
-            "deaths_carehomes",  "deaths_non_hosp")] <- NA
+            "deaths_carehomes",  "deaths_non_hosp",
+            deaths_hosp_age)] <- NA
 
   ## Set last 'trim_pillar2' days with pillar 2 reported to NA, as these
   ## are too likely to be back-filled to be reliable
@@ -97,13 +101,18 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
 
+  deaths_hosp_age <- paste0("death_", c(0, seq(50, 80, 5)),
+                            "_", c(seq(49, 79, 5), 120))
+  deaths_hosp_age <- gsub("120", "plus", deaths_hosp_age)
+
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
-            "death2", "death3", "death_chr", "death_comm", "ons_death_carehome",
-            "ons_death_noncarehome", "react_positive", "react_samples",
-            "n_delta_variant", "n_non_delta_variant", "n_symp_delta_variant",
-            "n_symp_non_delta_variant", "n_omicron_variant",
-            "n_non_omicron_variant", "s_positive_adj1", "s_negative_adj1",
+            deaths_hosp_age, "death2", "death3", "death_chr", "death_comm",
+            "ons_death_carehome", "ons_death_noncarehome", "react_positive",
+            "react_samples", "n_delta_variant", "n_non_delta_variant",
+            "n_symp_delta_variant", "n_symp_non_delta_variant",
+            "n_omicron_variant", "n_non_omicron_variant", "s_positive_adj1",
+            "s_negative_adj1",
             # Positives
             "positives", "positives_over25", "pillar2_positives",
             "pillar2_positives_over25",
@@ -152,6 +161,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   # Set NA deaths to 0
   data[which(is.na(data$death2)), "death2"] <- 0
   data[which(is.na(data$death3)), "death3"] <- 0
+  data[, deaths_hosp_age][is.na(data[, deaths_hosp_age])] <- 0
   data[which(is.na(data$death_chr)), "death_chr"] <- 0
   data[which(is.na(data$death_comm)), "death_comm"] <- 0
   data[which(is.na(data$ons_death_carehome)), "ons_death_carehome"] <- 0
@@ -168,6 +178,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
 
   if (region %in% c("northern_ireland", "scotland", "wales", "uk")) {
     data$deaths <- data$death2
+    data[, deaths_hosp_age] <- NA_integer_
     data$deaths_hosp <- NA_integer_
     data$deaths_comm <- NA_integer_
     data$deaths_carehomes <- NA_integer_
@@ -391,6 +402,14 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   ret <- data_frame(
     date = sircovid::as_date(data$date),
     deaths_hosp = data$deaths_hosp,
+    deaths_hosp_0_49 = data$death_0_49,
+    deaths_hosp_50_54 = data$death_50_54,
+    deaths_hosp_55_59 = data$death_55_59,
+    deaths_hosp_60_64 = data$death_60_64,
+    deaths_hosp_65_69 = data$death_65_69,
+    deaths_hosp_70_74 = data$death_70_74,
+    deaths_hosp_75_79 = data$death_75_79,
+    deaths_hosp_80_plus = data$death_80_plus,
     deaths_comm = data$deaths_comm,
     deaths_carehomes = data$deaths_carehomes,
     deaths_non_hosp = data$deaths_non_hosp,
@@ -448,6 +467,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     ret$pillar2_under15_tot <- NA_integer_
     ret$pillar2_under15_pos <- NA_integer_
     ret$pillar2_under15_cases <- NA_integer_
+
+    ## Do not fit to aggregated hospital deaths
+    deaths_hosp_age <- gsub("death", "deaths_hosp", deaths_hosp_age)
+    if (any(!is.na(ret[, deaths_hosp_age]))) {
+      ret$deaths_hosp <- NA_integer_
+    }
 
     if (model_type == "BB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_cases",
