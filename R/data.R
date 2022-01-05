@@ -101,6 +101,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
 
+
   deaths_hosp_age <- paste0("death_", c(0, seq(50, 80, 5)),
                             "_", c(seq(49, 79, 5), 120))
   deaths_hosp_age <- gsub("120", "plus", deaths_hosp_age)
@@ -157,6 +158,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
       data <- data %>% dplyr::bind_rows(tmp_add)
     }
   }
+
+  data <- data %>% dplyr::arrange(date, region)
 
   # Set NA deaths to 0
   data[which(is.na(data$death2)), "death2"] <- 0
