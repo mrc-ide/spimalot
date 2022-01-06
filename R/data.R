@@ -76,12 +76,13 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 
   ## Set last 'trim_deaths' days with deaths reported to NA, as these
   ## are too likely to be back-filled to be reliable
+  deaths_hosp_age <- paste0("deaths_hosp_", c(0, seq(50, 80, 5)),
+                            "_", c(seq(49, 79, 5), 120))
+  deaths_hosp_age <- gsub("120", "plus", deaths_hosp_age)
   i <- seq(to = nrow(data), length.out = trim_deaths)
   data[i, c("deaths", "deaths_hosp", "deaths_comm",
             "deaths_carehomes",  "deaths_non_hosp",
-            "deaths_hosp_0_49", "deaths_hosp_50_54", "deaths_hosp_55_59",
-            "deaths_hosp_60_64", "deaths_hosp_65_69", "deaths_hosp_70_74",
-            "deaths_hosp_75_79", "deaths_hosp_80_plus")] <- NA
+            deaths_hosp_age)] <- NA
 
   ## Set last 'trim_pillar2' days with pillar 2 reported to NA, as these
   ## are too likely to be back-filled to be reliable
@@ -99,6 +100,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
 
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
+
 
   deaths_hosp_age <- paste0("death_", c(0, seq(50, 80, 5)),
                             "_", c(seq(49, 79, 5), 120))
@@ -157,6 +159,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     }
   }
 
+  data <- data %>% dplyr::arrange(date, region)
+
   # Set NA deaths to 0
   data[which(is.na(data$death2)), "death2"] <- 0
   data[which(is.na(data$death3)), "death3"] <- 0
@@ -184,11 +188,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     data$deaths_non_hosp <- NA_integer_
   } else {
     data$deaths <- NA_integer_
-    if (all(!is.na(data[, deaths_hosp_age])) && !full_data) {
-      data$deaths_hosp <- NA_integer_
-    } else {
-      data$deaths_hosp <- data$death3
-    }
+    data$deaths_hosp <- data$death3
     data$deaths_non_hosp <- NA_integer_
 
     if (!full_data) {
@@ -490,6 +490,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     ret$pillar2_under15_tot <- NA_integer_
     ret$pillar2_under15_pos <- NA_integer_
     ret$pillar2_under15_cases <- NA_integer_
+
+    ## Do not fit to aggregated hospital deaths
+    deaths_hosp_age <- gsub("death", "deaths_hosp", deaths_hosp_age)
+    if (any(!is.na(ret[, deaths_hosp_age]))) {
+      ret$deaths_hosp <- NA_integer_
+    }
 
     if (model_type == "BB") {
       omit <- c("hosp", "admitted", "diagnoses", "pillar2_cases",

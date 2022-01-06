@@ -53,8 +53,6 @@ spim_fit_process <- function(samples, parameters, data, control,
 
   variant_rt <- calculate_lancelot_Rt(samples_thin, FALSE)
 
-  ## TODO: process D_hosp states by age before trajectories are reduced below
-
   ## TODO: someone needs to document what this date is for (appears to
   ## filter trajectories to start at this date) and when we might
   ## change it.
