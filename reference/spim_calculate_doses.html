@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.5.34</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.5.35</span>
       </span>
     </div>
 
@@ -50,16 +50,18 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">spim_calculate_doses</span><span class="op">(</span><span class="va">summary</span>, <span class="va">population</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">spim_calculate_doses</span><span class="op">(</span><span class="va">summary</span>, <span class="va">population_england</span>, <span class="va">scen</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>summary</dt>
 <dd><p>Output from <a href="spim_simulate_tidy_states.html">spim_simulate_tidy_states</a></p></dd>
-<dt>population</dt>
-<dd><p>data.frame of population sizes where columns are regions
+<dt>population_england</dt>
+<dd><p>Vector of England population by 19 age groups
 and rows are age groups</p></dd>
+<dt>scen</dt>
+<dd><p>Scenario to check, usually central</p></dd>
 </dl></div>
 
   </div>
@@ -70,7 +72,7 @@ and rows are age groups</p></dd>
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Marc Baguelin, Edward Knock, Lilith Whittles, Rich FitzJohn, Anne Cori, Pablo Perez-Guzman, Raphael Sonabend.</p>
+  <p></p><p>Developed by Marc Baguelin, Edward Knock, Lilith Whittles, Rich FitzJohn, Anne Cori, Pablo Perez-Guzman, Raphael Sonabend, Yasin Elmaci.</p>
 </div>
 
 <div class="pkgdown">
