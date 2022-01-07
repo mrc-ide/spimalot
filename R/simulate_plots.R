@@ -254,14 +254,16 @@ spim_plot_check_rt <- function(summary_state, dates, combined_state = NULL,
   ddates <- rep(as.Date(Sys.time()), length(dates))
   ddates[dates != "today"] <- as.Date(dates[dates != "today"])
 
+  ci_limits <- summary_quantile_range(summary_state)
+
   p <- summary_state %>%
-    ggplot(aes(x = date, y = `50%`, colour = scenario, group = scenario)) +
+    ggplot(aes(x = date, y = `50%`, colour = scenario)) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     geom_ribbon(alpha = 0.3,
-                aes(ymin = `2.5%`,
-                    ymax = `97.5%`,
-                    fill = scenario)) +
+                aes(ymin = get(ci_limits$ymin),
+                    ymax = get(ci_limits$ymax),
+                    fill = "scenario")) +
     geom_line() +
     facet_grid(cols = vars(analysis), rows = vars(state),
               scales = "free_y",
@@ -273,14 +275,10 @@ spim_plot_check_rt <- function(summary_state, dates, combined_state = NULL,
       combined_state <- combined_state %>%
         dplyr::filter(
           region == "england",
-          state %in% c("Rt_general_both", "eff_Rt_general_both")) %>%
+          state %in% Rt_state) %>%
         tidyr::pivot_wider(names_from = quantile)
 
       p <- p +
-        geom_ribbon(data = combined_state, alpha = 0.3,
-                    aes(x = date,
-                        ymin = `2.5%`,
-                        ymax = `97.5%`), inherit.aes = FALSE) +
         geom_line(data = combined_state, aes(x = date, y = `50%`),
                   inherit.aes = FALSE)
   }
@@ -306,6 +304,8 @@ spim_plot_check_state <- function(summary_state, combined_state = NULL) {
                   group == "all") %>%
     tidyr::pivot_wider(names_from = quantile)
 
+  ci_limits <- summary_quantile_range(summary_state)
+
   # TODO:: for SPI-M we report 90% CI, hence 5% and 95% here but
   # default below; shall we change default?
   p <- summary_state %>%
@@ -313,8 +313,8 @@ spim_plot_check_state <- function(summary_state, combined_state = NULL) {
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     geom_ribbon(alpha = 0.3,
-                aes(ymin = `2.5%`,
-                    ymax = `97.5%`,
+                aes(ymin = get(ci_limits$ymin),
+                    ymax = get(ci_limits$ymax),
                     fill = scenario)) +
     geom_line(aes(y = `50%`, color = scenario)) +
     facet_grid(rows = vars(state), cols = vars(analysis), scales = "free",
@@ -330,10 +330,6 @@ spim_plot_check_state <- function(summary_state, combined_state = NULL) {
         tidyr::pivot_wider(names_from = quantile)
 
         p <- p +
-              geom_ribbon(data = combined_state, alpha = 0.3,
-                aes(x = date,
-                    ymin = `2.5%`,
-                    ymax = `97.5%`), inherit.aes = FALSE) +
               geom_line(data = combined_state, aes(x = date, y = `50%`),
                         inherit.aes = FALSE)
     }
@@ -481,4 +477,18 @@ spim_plot_daily_infections <- function(summary_state, ana, scen) {
     facet_grid(rows = vars(state), scales = "free",
               labeller =  label_wrap_gen(width = 30)) +
     scale_x_date(date_breaks = "1 month")
+}
+
+summary_quantile_range <- function(sum_df) {
+  if ("2.5%" %in% colnames(sum_df)) {
+    ymin <- "2.5%"
+    ymax <- "97.5%"
+  } else {
+    ymin <- "5%"
+    ymax <- "95%"
+  }
+  list(
+    ymin = ymin,
+    ymax = ymax
+  )
 }
