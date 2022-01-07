@@ -110,8 +110,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
             "admitted", "new", "phe_admissions", "all_admission",
             deaths_hosp_age, "death2", "death3", "death_chr", "death_comm",
             "ons_death_carehome", "ons_death_noncarehome", "react_positive",
-            "react_samples", "n_delta_variant", "n_non_delta_variant",
+            "react_samples",
+            # VAM data
             "n_symp_delta_variant", "n_symp_non_delta_variant",
+            "n_symp_omicron_variant", "n_symp_non_omicron_variant",
+            # Other VOC data
+            "n_delta_variant", "n_non_delta_variant",
             "n_omicron_variant", "n_non_omicron_variant", "s_positive_adj1",
             "s_negative_adj1",
             # Positives
@@ -232,7 +236,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   data$strain_non_variant[na_strain_dates] <- NA_integer_
   data$strain_tot[na_strain_dates] <- NA_integer_
 
-  ## Fit to Delta/Omicron using sgtf data for England, COG data for S/W/NI
+  ## Fit to Delta/Omicron using VAM data for England, COG data for S/W/NI
   if (region %in% c("scotland", "wales", "northern_ireland")) {
     data$strain_non_variant[data$date >= "2021-11-20"] <-
       data$n_non_omicron_variant[data$date >= "2021-11-20"]
@@ -241,10 +245,10 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
       data$n_non_omicron_variant[data$date >= "2021-11-20"]
   } else {
     data$strain_non_variant[data$date >= "2021-11-20"] <-
-      data$s_positive_adj1[data$date >= "2021-11-20"]
+      data$n_symp_non_omicron_variant[data$date >= "2021-11-20"]
     data$strain_tot[data$date >= "2021-11-20"] <-
-      data$s_positive_adj1[data$date >= "2021-11-20"] +
-      data$s_negative_adj1[data$date >= "2021-11-20"]
+      data$n_symp_non_omicron_variant[data$date >= "2021-11-20"] +
+      data$n_symp_omicron_variant[data$date >= "2021-11-20"]
   }
 
 
