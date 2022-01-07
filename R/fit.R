@@ -39,9 +39,9 @@ spim_particle_filter <- function(data, pars, control,
   ## Two rounds of work on data; organise it into mcstate format, then
   ## double check that the columns are all as expected.
   initial_date <- sircovid::as_sircovid_date(initial_date)
+  sircovid::lancelot_check_data(data)
   data <- mcstate::particle_filter_data(
     data, "date", steps_per_day, initial_date)
-  data <- sircovid::lancelot_prepare_data(data)
 
   ## We might use the built-in compare function, but probably we will
   ## use the R one from the package.
