@@ -255,7 +255,7 @@ spim_plot_check_rt <- function(summary_state, dates, combined_state = NULL,
   ddates[dates != "today"] <- as.Date(dates[dates != "today"])
 
   p <- summary_state %>%
-    ggplot(aes(x = date, y = `50%`, colour = scenario)) +
+    ggplot(aes(x = date, y = `50%`, colour = scenario, group = scenario)) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     geom_ribbon(alpha = 0.3,
