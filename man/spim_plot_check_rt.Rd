@@ -4,14 +4,21 @@
 \alias{spim_plot_check_rt}
 \title{Check Rt from simulation}
 \usage{
-spim_plot_check_rt(summary_state, combined_state, dates)
+spim_plot_check_rt(
+  summary_state,
+  dates,
+  combined_state = NULL,
+  Rt_state = "eff_Rt_general_both"
+)
 }
 \arguments{
 \item{summary_state}{State from simulation summary object}
 
-\item{combined_state}{State from combined object}
-
 \item{dates}{Dates to plot vertical lines at}
+
+\item{combined_state}{Optional state from combined object}
+
+\item{Rt_state}{Rt states to plot, default is effective average Rt}
 }
 \description{
 Diagnostic plots for checking Rt from simulation
