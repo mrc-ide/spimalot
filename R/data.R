@@ -116,6 +116,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
             "n_symp_delta_variant", "n_symp_non_delta_variant",
             "n_symp_omicron_variant", "n_symp_non_omicron_variant",
             # Other VOC data
+            "n_alpha_variant", "n_non_alpha_variant",
             "n_delta_variant", "n_non_delta_variant",
             "n_omicron_variant", "n_non_omicron_variant", "s_positive_adj1",
             "s_negative_adj1",
