@@ -71,7 +71,7 @@ spim_particle_filter <- function(data, pars, control,
     assert_is(initial, "function")
   }
 
-  fit_index <- function (info) {
+  fit_index <- function(info) {
     sircovid::lancelot_index(info, rt = TRUE)
   }
 
