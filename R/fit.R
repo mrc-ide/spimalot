@@ -4,7 +4,7 @@
 ##'
 ##' @param data Data, from [spimalot::spim_data]
 ##'
-##' @param pars Parameters, from [spimalot::spim_pars]
+##' @param pars Parameters, from [spimalot::spim_fit_pars_load]
 ##'
 ##' @param control A list of control parameters including
 ##'   `n_particles`, `n_threads` and `compiled_compare`, typically the

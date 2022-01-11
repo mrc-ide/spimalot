@@ -12,8 +12,7 @@ spim_fit_process(samples, parameters, data, control, random_sample = TRUE)
 \item{parameters}{The parameter specification
 (\link{spim_pars_pmcmc_load})}
 
-\item{data}{Data sets used in fitting, via
-\link{spim_fit_process_data}}
+\item{data}{Data sets used in fitting}
 
 \item{control}{The forecast control from \link{spim_control}}
 

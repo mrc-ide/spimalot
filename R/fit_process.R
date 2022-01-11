@@ -7,8 +7,7 @@
 ##' @param parameters The parameter specification
 ##'   ([spimalot::spim_pars_pmcmc_load])
 ##'
-##' @param data Data sets used in fitting, via
-##'   [spimalot::spim_fit_process_data]
+##' @param data Data sets used in fitting
 ##'
 ##' @param control The forecast control from [spimalot::spim_control]
 ##'
@@ -124,33 +123,6 @@ spim_fit_process <- function(samples, parameters, data, control,
                ## NOTE: fit$data$fitted is assumed to exist by the restart
                data = list(fitted = data$fitted, full = data$full)),
     restart = restart)
-}
-
-
-##' Collect data sets for use with [spimalot::spim_fit_process]
-##'
-##' @title Collect data sets
-##' @param admissions The admissions data set from
-##'   [spimalot::spim_data_admissions]. Set to NULL if not fitting or plotting
-##'   age-specific data
-##'
-##' @param rtm The rtm data set
-##'
-##' @param fitted The data set as passed to
-##'   [spimalot::spim_particle_filter]
-##'
-##' @param full Full data set, before any right-censoring
-##'
-##' @param vaccination The vaccination data set as passed to
-##'   [spimalot::spim_pars]
-##'
-##' @export
-spim_fit_process_data <- function(admissions, rtm, fitted, full, vaccination) {
-  list(admissions = admissions,
-       rtm = rtm,
-       full = full,
-       fitted = fitted,
-       vaccination = vaccination)
 }
 
 

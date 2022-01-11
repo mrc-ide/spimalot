@@ -2,7 +2,7 @@
 ##'
 ##' @title Prepare vaccination data
 ##'
-##' @inheritParams spim_pars
+##' @inheritParams spim_data
 ##'
 ##' @param uptake A matrix of proportion uptake by age, with (i, j) th
 ##'   value being the uptake of dose j for group i. Must have 19 rows.

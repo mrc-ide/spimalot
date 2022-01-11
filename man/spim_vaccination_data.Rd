@@ -7,6 +7,13 @@
 spim_vaccination_data(date, region, uptake, days_to_effect, data)
 }
 \arguments{
+\item{date}{The date of the data. This will be the final date}
+
+\item{region}{The region that we are fitting to. This will either
+be one of the 10 NHS regions (one of
+\code{sircovid::regions("all")}), or an argument to that function
+(e.g., \code{all})}
+
 \item{uptake}{A matrix of proportion uptake by age, with (i, j) th
 value being the uptake of dose j for group i. Must have 19 rows.}
 
