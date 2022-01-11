@@ -237,55 +237,62 @@ spim_prepare_aggregated_data <- function(path) {
 ##' Diagnostic plots for checking Rt from simulation
 ##' @title Check Rt from simulation
 ##' @param summary_state State from simulation summary object
-##' @param combined_state State from combined object
 ##' @param dates Dates to plot vertical lines at
+##' @param combined_state Optional state from combined object
+##' @param Rt_state Rt states to plot, default is effective average Rt
 ##' @export
-spim_plot_check_rt <- function(summary_state, combined_state, dates) {
+spim_plot_check_rt <- function(summary_state, dates, combined_state = NULL,
+                              Rt_state = "eff_Rt_general_both") {
 
   summary_state <- summary_state %>%
     dplyr::filter(region == "england",
-                  state %in% c("Rt_general_both", "eff_Rt_general_both")) %>%
+                  state %in% Rt_state) %>%
     dplyr::mutate(scenario = as.factor(scenario),
                   analysis = as.factor(analysis)) %>%
     tidyr::pivot_wider(names_from = quantile)
 
-  combined_state <- combined_state %>%
-      dplyr::filter(region == "england",
-                    state %in% c("Rt_general_both", "eff_Rt_general_both")) %>%
-      tidyr::pivot_wider(names_from = quantile)
+  ddates <- rep(as.Date(Sys.time()), length(dates))
+  ddates[dates != "today"] <- as.Date(dates[dates != "today"])
 
-  # TODO:: for SPI-M we report 90% CI, hence 5% and 95% here but
-  # default below; shall we change default?
-  summary_state %>%
+  ci_limits <- summary_quantile_range(summary_state)
+
+  p <- summary_state %>%
     ggplot(aes(x = date, y = `50%`, colour = scenario)) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     geom_ribbon(alpha = 0.3,
-                aes(ymin = `5%`,
-                    ymax = `95%`,
-                    fill = scenario)) +
+                aes(ymin = get(ci_limits$ymin),
+                    ymax = get(ci_limits$ymax),
+                    fill = "scenario")) +
     geom_line() +
-
-    geom_ribbon(data = combined_state, alpha = 0.3,
-                aes(x = date,
-                    ymin = `2.5%`,
-                    ymax = `97.5%`), inherit.aes = FALSE) +
-    geom_line(data = combined_state, aes(x = date, y = `50%`),
-              inherit.aes = FALSE) +
     facet_grid(cols = vars(analysis), rows = vars(state),
-               scales = "free_y",
-               labeller = label_wrap_gen(width = 7)) +
+              scales = "free_y",
+              labeller = label_wrap_gen(width = 7)) +
     scale_x_date(date_breaks = "1 month") +
-    geom_vline(xintercept = dates, lty = 2, color = "gray")
+    geom_vline(xintercept = ddates, lty = 2, color = "gray")
+
+  if (!is.null(combined_state)) {
+      combined_state <- combined_state %>%
+        dplyr::filter(
+          region == "england",
+          state %in% Rt_state) %>%
+        tidyr::pivot_wider(names_from = quantile)
+
+      p <- p +
+        geom_line(data = combined_state, aes(x = date, y = `50%`),
+                  inherit.aes = FALSE)
+  }
+
+  p
 }
 
 
 ##' Diagnostic plots for checking states from simulation
 ##' @title Check states from simulation
 ##' @param summary_state State from simulation summary object
-##' @param combined_state State from combined object
+##' @param combined_state Optional state from combined object
 ##' @export
-spim_plot_check_state <- function(summary_state, combined_state) {
+spim_plot_check_state <- function(summary_state, combined_state = NULL) {
 
   summary_state <- summary_state %>%
     dplyr::filter(region == "england") %>%
@@ -297,33 +304,37 @@ spim_plot_check_state <- function(summary_state, combined_state) {
                   group == "all") %>%
     tidyr::pivot_wider(names_from = quantile)
 
-  combined_state <- dplyr::filter(combined_state, region == "england") %>%
-    dplyr::filter(state %in% c("diagnoses_admitted_inc",
-                              "deaths_inc", "infections_inc",
-                              "hosp"),
-                  group == "all") %>%
-    tidyr::pivot_wider(names_from = quantile)
+  ci_limits <- summary_quantile_range(summary_state)
 
   # TODO:: for SPI-M we report 90% CI, hence 5% and 95% here but
   # default below; shall we change default?
-  summary_state %>%
+  p <- summary_state %>%
     ggplot(aes(x = date)) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     geom_ribbon(alpha = 0.3,
-                aes(ymin = `5%`,
-                    ymax = `95%`,
+                aes(ymin = get(ci_limits$ymin),
+                    ymax = get(ci_limits$ymax),
                     fill = scenario)) +
-
     geom_line(aes(y = `50%`, color = scenario)) +
-    geom_ribbon(data = combined_state, alpha = 0.3,
-                aes(x = date,
-                    ymin = `2.5%`,
-                    ymax = `97.5%`), inherit.aes = FALSE) +
-    geom_line(data = combined_state, aes(x = date, y = `50%`),
-              inherit.aes = FALSE) +
     facet_grid(rows = vars(state), cols = vars(analysis), scales = "free",
-              labeller = label_wrap_gen(width = 5))
+              labeller = label_wrap_gen(width = 5)) +
+    scale_x_date(date_breaks = "1 month")
+
+    if (!is.null(combined_state)) {
+      combined_state <- dplyr::filter(combined_state, region == "england") %>%
+        dplyr::filter(state %in% c("diagnoses_admitted_inc",
+                                  "deaths_inc", "infections_inc",
+                                  "hosp"),
+                      group == "all") %>%
+        tidyr::pivot_wider(names_from = quantile)
+
+        p <- p +
+              geom_line(data = combined_state, aes(x = date, y = `50%`),
+                        inherit.aes = FALSE)
+    }
+
+    p
 }
 
 
@@ -338,11 +349,7 @@ spim_plot_check_state_by_age <- function(summary_agestate, ana, scen) {
     dplyr::filter(
       region == "england",
       analysis == ana,
-      scenario == scen,
-      state %in% c(
-        "infections_inc", "diagnoses_admitted_inc",
-        "deaths_inc", "deaths"
-      )
+      scenario == scen
     ) %>%
     ggplot(aes(x = date, y = value, fill = vaccine_status)) +
     geom_area() +
@@ -350,20 +357,22 @@ spim_plot_check_state_by_age <- function(summary_agestate, ana, scen) {
     facet_grid(vars(state), vars(group),
       scales = "free",
       labeller = label_wrap_gen(width = 10)
-    )
+    ) +
+    scale_x_date(date_breaks = "1 month")
 }
 
 
 #' Calculate doses given out from simulation
 #' @title Calculate doses given out from simulation
 #' @param summary Output from [spim_simulate_tidy_states]
-#' @param population data.frame of population sizes where columns are regions
+#' @param population_england Vector of England population by 19 age groups
 #'  and rows are age groups
+#' @param scen Scenario to check, usually central
 #' @export
-spim_calculate_doses <- function(summary, population) {
+spim_calculate_doses <- function(summary, population_england, scen) {
   doses_g <- summary$n_doses %>%
     dplyr::filter(region == "england",
-                  scenario == "July-19") %>%
+                  scenario == scen) %>%
     tidyr::pivot_wider(names_from = state, names_prefix = "state_") %>%
     dplyr::mutate(state_total_dose_inc = state_first_dose_inc +
                     state_second_dose_inc +
@@ -375,8 +384,8 @@ spim_calculate_doses <- function(summary, population) {
     tidyr::pivot_longer(starts_with("group_"), names_to = "group")
 
   pop_df <- data.frame(group = unique(doses_g$group),
-                       pop = c(population$england,
-                               total = sum(population$england)))
+                        pop = c(population_england,
+                                total = sum(population_england)))
 
   doses_g %>%
     dplyr::left_join(pop_df) %>%
@@ -396,7 +405,8 @@ spim_plot_check_doses <- function(doses) {
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     geom_line() +
     facet_grid(rows = vars(state), cols = vars(analysis), scales = "free",
-               labeller = label_wrap_gen(width = 10))
+                labeller = label_wrap_gen(width = 10)) +
+    scale_x_date(date_breaks = "1 month")
 }
 
 
@@ -407,14 +417,14 @@ spim_plot_check_doses <- function(doses) {
 spim_plot_check_total_doses <- function(doses) {
   doses %>%
     dplyr::filter(group == "group_total",
-                  state == "state_total_dose_inc",
-                  region == "england") %>%
+                  state == "state_total_dose_inc") %>%
     ggplot(aes(x = date, y = value * 7, colour = group)) +
     theme_bw() +
     ylab("Weekly doses") +
     geom_line() +
     facet_wrap(vars(analysis)) +
-    theme(legend.position = "n")
+    theme(legend.position = "n") +
+    scale_x_date(date_breaks = "1 month")
 }
 
 
@@ -424,12 +434,61 @@ spim_plot_check_total_doses <- function(doses) {
 #' @export
 spim_plot_check_uptake <- function(doses) {
   doses %>%
-    dplyr::filter(state %in% c("state_first_dose", "state_second_dose",
-                               "state_booster_dose")) %>%
+    dplyr::filter(!grepl("_inc", state)) %>%
     ggplot(aes(x = date, y = prop, colour = group)) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     geom_line() +
     facet_grid(rows = vars(state), cols = vars(analysis), scales = "free",
-               labeller = label_wrap_gen(width = 10))
+              labeller = label_wrap_gen(width = 10)) +
+    scale_x_date(date_breaks = "1 month")
+}
+
+
+#' Diagnostic plots for checking daily infections and proportion of strain 2
+#' @title Check daily infections from simulation
+#' @param summary_state State from simulation summary object
+#' @param scen Scenario to plot
+#' @param ana Analysis to plot
+#' @export
+spim_plot_daily_infections <- function(summary_state, ana, scen) {
+  summary_state %>%
+    dplyr::filter(
+      state %in% c("n_strain_1_inc", "n_strain_2_inc", "prop_strain_2"),
+      region == "england",
+      scenario == scen,
+      analysis == ana
+    ) %>%
+    dplyr::mutate(
+      state = factor(
+        state,
+        labels = c(
+          "Daily infections strain 1", "Daily infections strain 2",
+          "Proportion of strain 2 among daily infections"
+        )
+      )
+    ) %>%
+    tidyr::pivot_wider(names_from = quantile) %>%
+    ggplot(aes(x = date, y = `50%`)) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title.y = element_blank()) +
+    geom_line() +
+    facet_grid(rows = vars(state), scales = "free",
+              labeller =  label_wrap_gen(width = 30)) +
+    scale_x_date(date_breaks = "1 month")
+}
+
+summary_quantile_range <- function(sum_df) {
+  if ("2.5%" %in% colnames(sum_df)) {
+    ymin <- "2.5%"
+    ymax <- "97.5%"
+  } else {
+    ymin <- "5%"
+    ymax <- "95%"
+  }
+  list(
+    ymin = ymin,
+    ymax = ymax
+  )
 }

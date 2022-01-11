@@ -30,6 +30,10 @@ Authors@R:
            family = "Sonabend",
            role = c("aut"),
            email = "r.sonabend@imperial.ac.uk"),
+     person(given = "Yasin",
+           family = "Elmaci",
+           role = c("aut"),
+           email = "yasin.elmaci20@imperial.ac.uk"),
       person("Imperial College of Science, Technology and Medicine",
              role = "cph"))
 Description: Code that supports that use of sircovid for our regular
