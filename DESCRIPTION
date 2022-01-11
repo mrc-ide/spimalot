@@ -83,6 +83,6 @@ Remotes:
     mrc-ide/dust,
     mrc-ide/mcstate,
     mrc-ide/rrq,
-    mrc-ide/sircovid@i384-data
+    mrc-ide/sircovid
 Config/testthat/edition: 3
 Language: en-GB
