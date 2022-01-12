@@ -93,7 +93,6 @@ spim_fit_process <- function(samples, parameters, data) {
     fit = list(samples = samples, # note complicated naming change here
                rt = rt,
                variant_rt = variant_rt,
-               # ifr_t = ifr_t,
                simulate = simulate,
                parameters = parameters_new,
                vaccination = data$vaccination,
