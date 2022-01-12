@@ -35,13 +35,21 @@ spim_particle_filter <- function(data, pars, control,
     p <- p[[1]]$pars
   }
   steps_per_day <- p$steps_per_day
-
-  ## Two rounds of work on data; organise it into mcstate format, then
-  ## double check that the columns are all as expected.
   initial_date <- sircovid::as_sircovid_date(initial_date)
-  data <- mcstate::particle_filter_data(
-    data, "date", steps_per_day, initial_date)
-  data <- sircovid::lancelot_prepare_data(data)
+
+  ## First check that all columns are as expected, and that no data
+  ## double-use is done
+  sircovid::lancelot_check_data(data)
+
+  if (nlevels(data$region) > 1 && length(unique(data$region)) > 1) {
+    population <- "region"
+  } else {
+    population <- NULL
+  }
+
+  ## Then organise into mcstate format:
+  data <- mcstate::particle_filter_data(data, "date", steps_per_day,
+                                        initial_date, population)
 
   ## We might use the built-in compare function, but probably we will
   ## use the R one from the package.
@@ -50,8 +58,16 @@ spim_particle_filter <- function(data, pars, control,
   if (is.null(initial)) {
     initial <- sircovid::lancelot_initial
   } else if (is.matrix(initial)) {
+    ## This likely needs a small tweak in mcstate so that the sampling
+    ## works as expected.  Probably not very difficult to get right.
+    if (!is.null(population)) {
+      stop("restart + multiregion filter will need work")
+    }
     initial <- mcstate::particle_filter_initial(initial)
   } else {
+    ## TODO: is this branch ever used?  I suspect not now that we
+    ## accept a matrix initial, and looks that way from a quick look
+    ## through ncov
     assert_is(initial, "function")
   }
 

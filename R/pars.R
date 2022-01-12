@@ -190,7 +190,8 @@ spim_pars_beta <- function(date, last_beta_days_ago = 21) {
   ## 29. 2021-10-22 - School half-term - Point before recent plateau in cases
   ## 30. 2021-11-01 - Schools return
   ## 31. 2021-12-08 - Announcement of move to Plan B
-  ## 32. Date - last_beta_days_ago
+  ## 32. 2021-12-23 - Starting of X-mas holidays.
+  ## 33. Date - last_beta_days_ago
   c("2020-03-16", "2020-03-23", "2020-03-25",
     "2020-05-11", "2020-06-15", "2020-07-04",
     "2020-08-01", "2020-09-01", "2020-09-14",
@@ -201,7 +202,7 @@ spim_pars_beta <- function(date, last_beta_days_ago = 21) {
     "2021-07-03", "2021-07-11", "2021-07-19",
     "2021-08-15", "2021-09-01", "2021-09-22",
     "2021-10-01", "2021-10-22", "2021-11-01",
-    "2021-12-08",
+    "2021-12-08", "2021-12-23",
     as.character(as.Date(date) - last_beta_days_ago))
 }
 
@@ -350,4 +351,23 @@ spim_add_par_beta <- function(pars) {
   prior <- prior[setdiff(names(prior), c("region", "name"))]
   spim_add_par(pars, name, info$initial, info$min, info$max,
                proposal_variance, prior)
+}
+
+
+spim_pars_mcmc <- function(info, prior, proposal, transform) {
+  pars_mcmc <- Map(
+    mcstate::pmcmc_parameter,
+    name = info$name,
+    initial = info$initial,
+    min = info$min,
+    max = info$max,
+    discrete = info$discrete,
+    prior = lapply(split(prior, prior$name), spimalot:::make_prior))
+
+  ret <- mcstate::pmcmc_parameters$new(pars_mcmc, proposal, transform)
+
+  ## Try and transform a single case and see if it works:
+  ret$model(ret$initial())
+
+  ret
 }
