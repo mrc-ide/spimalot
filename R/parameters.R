@@ -42,17 +42,17 @@
 ##' @return A list.
 ##' @export
 spim_fit_pars_load <- function(path, region, assumptions, kernel_scaling) {
-  parameters <- spimalot::spim_pars_pmcmc_load(path)
   if (length(region) == 1) {
-    spim_fit_pars_load_single(parameters, region, assumptions, kernel_scaling)
+    spim_fit_pars_load_single(path, region, assumptions, kernel_scaling)
   } else {
-    spim_fit_pars_load_nested(parameters, region, assumptions, kernel_scaling)
+    spim_fit_pars_load_nested(path, region, assumptions, kernel_scaling)
   }
 }
 
 
 spim_fit_pars_load_single <- function(path, region, assumptions,
                                       kernel_scaling) {
+  parameters <- spimalot::spim_pars_pmcmc_load(path)
   info <- spim_pars_info_single(region, parameters$info)
   prior <- spim_pars_prior_single(region, info, parameters$prior)
   proposal <- spim_pars_proposal_single(region, info, parameters$proposal,
@@ -78,6 +78,7 @@ spim_fit_pars_load_single <- function(path, region, assumptions,
 
 spim_fit_pars_load_nested <- function(path, region, assumptions,
                                       kernel_scaling) {
+  parameters <- spimalot::spim_pars_pmcmc_load(path)
   info <- spim_pars_info_nested(region, parameters$info)
   prior <- spim_pars_prior_nested(region, info, parameters$prior)
   proposal <- spim_pars_proposal_nested(region, info, parameters$proposal,
