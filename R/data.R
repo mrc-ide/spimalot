@@ -34,22 +34,36 @@
 ##' @export
 spim_data <- function(date, region, model_type, rtm, serology,
                       trim_deaths, trim_pillar2, full_data = FALSE) {
-  check_region(region)
   spim_check_model_type(model_type)
-
-  if (length(region) > 1) {
-    ## See the original task
-    stop("Not yet supported")
-  } else {
+  if (length(region) == 1) {
+    check_region(region)
     spim_data_single(date, region, model_type, rtm, serology, trim_deaths,
                      trim_pillar2, full_data)
+  } else {
+    ## TODO: better error message here:
+    stopifnot(all(region %in% regions("all")))
+    data <- lapply(region, function(r)
+      cbind(
+        region = r,
+        spim_data_single(date, r, model_type, rtm, serology, trim_deaths,
+                         trim_pillar2, full_data),
+        stringsAsFactors = FALSE))
+    if (length(unique(lapply(data, "[[", "date"))) != 1) {
+      ## If this errors, we just need to compute the union set of
+      ## dates, then fill in NA data for the missing entries.  I am
+      ## not actually sure how the filter will behave with this
+      ## though; https://github.com/mrc-ide/mcstate/issues/182
+      stop("Align data dates across regions")
+    }
+    ret <- dplyr::bind_rows(data)
+    ret$region <- factor(ret$region)
+    ret
   }
 }
 
 
 spim_data_single <- function(date, region, model_type, rtm, serology,
                              trim_deaths, trim_pillar2, full_data) {
-
   ## TODO: verify that rtm has consecutive days
   rtm <- spim_lancelot_data_rtm(date, region, model_type, rtm, full_data)
   serology <- spim_data_serology(date, region, serology)
@@ -60,14 +74,6 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
   serology <- serology[i, ]
   rownames(serology) <- NULL
   data <- cbind(rtm, serology[setdiff(names(serology), "date")])
-
-  ## We need a dummy row here so that the sampler stops before the
-  ## first day in order to get the differences in cumulative deaths
-  ## correct.
-  ## TODO: This is no longer needed!
-  data <- rbind(data[1, ], data)
-  data[1, ] <- NA
-  data$date[[1]] <- data$date[[2]] - 1
 
   ## At this point we'll save our "real" date into date_string and
   ## work with "sircovid" dates which are just integer dates into 2020
