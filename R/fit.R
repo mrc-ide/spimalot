@@ -98,7 +98,7 @@ spim_particle_filter <- function(data, pars, control,
     sircovid::lancelot_index(info, rt = rt, cum_admit = cum_admit,
          diagnoses_admitted = diagnoses_admitted,
          cum_infections_disag = cum_infections_disag,
-         cum_n_vaccinated=cum_n_vaccinated)
+         cum_n_vaccinated = cum_n_vaccinated)
   }
 
   if (deterministic) {
