@@ -10,14 +10,12 @@
 ##' @param data Data sets used in fitting, via
 ##'   [spimalot::spim_fit_process_data]
 ##'
-##' @param control The forecast control from [spimalot::spim_control]
-##'
 ##' @param random_sample Logical parameter, if `TRUE` will obtain the
 ##'   posterior samples via random sampling, otherwise thinning will
 ##'   be used
 ##'
 ##' @export
-spim_fit_process <- function(samples, parameters, data, control,
+spim_fit_process <- function(samples, parameters, data,
                              random_sample = TRUE) {
   region <- samples$info$region
 
@@ -28,30 +26,17 @@ spim_fit_process <- function(samples, parameters, data, control,
   parameters_raw$base <- parameters$base
 
   message("Computing restart information")
-  restart <- fit_process_restart(
-    samples, parameters_raw, control)
+  restart <- fit_process_restart(samples, parameters_raw)
   samples$restart <- NULL
 
-  message("Thinning samples")
-  incidence_states <- "deaths"
-  ## Add 1 to burnin to account for removal of initial parameters
-  if (random_sample) {
-    samples_thin <- mcstate::pmcmc_sample(samples,
-                                          control$n_sample,
-                                          control$burnin + 1L)
-  } else {
-    samples_thin <- mcstate::pmcmc_thin(samples,
-                                        control$burnin + 1L,
-                                        control$thin)
-  }
-  samples_thin$trajectories$date <-
-    samples_thin$trajectories$step / samples_thin$trajectories$rate
+  samples$trajectories$date <-
+    samples$trajectories$step / samples$trajectories$rate
 
   message("Computing Rt")
-  rt <- calculate_lancelot_Rt(samples_thin, TRUE)
+  rt <- calculate_lancelot_Rt(samples, TRUE)
   # TODO: very slow
 
-  variant_rt <- calculate_lancelot_Rt(samples_thin, FALSE)
+  variant_rt <- calculate_lancelot_Rt(samples, FALSE)
 
   ## TODO: someone needs to document what this date is for (appears to
   ## filter trajectories to start at this date) and when we might
@@ -62,11 +47,11 @@ spim_fit_process <- function(samples, parameters, data, control,
     c("rel_susceptibility", "rel_p_sympt", "rel_p_hosp_if_sympt",
       "rel_p_death", "rel_infectivity")]
   simulate <- create_simulate_object(
-    samples_thin, vaccine_efficacy, start_date_sim, samples$info$date)
+    samples, vaccine_efficacy, start_date_sim, samples$info$date)
 
-  ## Reduce trajectories in samples_thin before saving
+  ## Reduce trajectories in samples before saving
   message("Reducing trajectories")
-  samples_thin <- reduce_trajectories(samples_thin)
+  samples <- reduce_trajectories(samples)
 
   message("Computing parameter MLE and covariance matrix")
   parameters_new <- spim_fit_parameters(samples, parameters_raw)
@@ -75,14 +60,14 @@ spim_fit_process <- function(samples, parameters, data, control,
     ## When adding the trajectories, we might as well strip them down
     ## to the last date in the restart
     restart_date <- max(restart$state$time)
-    i <- samples_thin$trajectories$date <= restart_date
+    i <- samples$trajectories$date <= restart_date
 
     ## This is set of things that go into the restart object that are
     ## to do with the time-course of the parent object.  It's
     ## different to what we process with the fit_process_restart which
     ## needs to happen against the unthinned object.
     restart$parent <- list(
-      trajectories = trajectories_filter_time(samples_thin$trajectories, i),
+      trajectories = trajectories_filter_time(samples$trajectories, i),
       rt = rt_filter_time(rt, i),
       data = data,
       ## TODO: check to make sure that this is just the one region's
@@ -91,7 +76,8 @@ spim_fit_process <- function(samples, parameters, data, control,
   }
 
   ## Drop the big objects from the output
-  samples[c("state", "trajectories", "predict")] <- list(NULL)
+  pmcmc <- samples
+  pmcmc[c("state", "trajectories", "predict")] <- list(NULL)
 
   ## This list returns:
   ##
@@ -113,8 +99,8 @@ spim_fit_process <- function(samples, parameters, data, control,
   ## restart information from spimalot parent objects (i.e trajectories, prior,
   ##   rt, etc.)
   list(
-    fit = list(samples = samples_thin, # note complicated naming change here
-               pmcmc = samples,
+    fit = list(samples = samples,
+               pmcmc = pmcmc,
                rt = rt,
                variant_rt = variant_rt,
                # ifr_t = ifr_t,
