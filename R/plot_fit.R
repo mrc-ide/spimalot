@@ -75,6 +75,7 @@ spim_plot_fit_forecasts <- function(samples, region = NULL) {
 ##' @rdname spim_plot_fit
 ##' @export
 spim_plot_fit_traces <- function(samples, region = NULL) {
+
   if (is.null(samples$chain)) {
     n_chains <- 1L
   } else {
@@ -108,30 +109,30 @@ spim_plot_fit_traces <- function(samples, region = NULL) {
 
   if (is.null(region)) {
 
-    n_pars <- length(colnames(samples$pars))
+    n_pars <- length(colnames(samples$pars_full))
 
     par(mfrow = rep(ceiling(sqrt(n_pars + 2)), 2),
         mar = c(3, 3, 2, 1),
         mgp = c(2, 0.5, 0),
         oma = c(1, 1, 1, 1))
 
-    for (nm in colnames(samples$pars)) {
-      plot_traces1(samples$pars[, nm], nm)
+    for (nm in colnames(samples$pars_full)) {
+      plot_traces1(samples$pars_full[, nm], nm)
     }
-    plot_traces1(samples$probabilities[, "log_likelihood"], "log_likelihood")
+    plot_traces1(samples$probabilities_full[, "log_likelihood"], "log_likelihood")
   } else {
 
-    n_pars <- length(rownames(samples$pars))
+    n_pars <- length(rownames(samples$pars_full))
 
     par(mfrow = rep(ceiling(sqrt(n_pars + 2)), 2),
         mar = c(3, 3, 2, 1),
         mgp = c(2, 0.5, 0),
         oma = c(1, 1, 1, 1))
 
-    for (nm in rownames(samples$pars)) {
-      plot_traces1(samples$pars[nm, region, ], nm)
+    for (nm in rownames(samples$pars_full)) {
+      plot_traces1(samples$pars_full[nm, region, ], nm)
     }
-    plot_traces1(samples$probabilities["log_likelihood", region, ],
+    plot_traces1(samples$probabilities_full["log_likelihood", region, ],
                  "log_likelihood")
   }
 

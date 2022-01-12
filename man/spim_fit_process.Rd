@@ -4,7 +4,7 @@
 \alias{spim_fit_process}
 \title{Process a fit for \code{lancelot} model}
 \usage{
-spim_fit_process(samples, parameters, data, control, random_sample = TRUE)
+spim_fit_process(samples, parameters, data, random_sample = TRUE)
 }
 \arguments{
 \item{samples}{The pmcmc_samples object from \link[mcstate:pmcmc]{mcstate::pmcmc}}
@@ -14,8 +14,6 @@ spim_fit_process(samples, parameters, data, control, random_sample = TRUE)
 
 \item{data}{Data sets used in fitting, via
 \link{spim_fit_process_data}}
-
-\item{control}{The forecast control from \link{spim_control}}
 
 \item{random_sample}{Logical parameter, if \code{TRUE} will obtain the
 posterior samples via random sampling, otherwise thinning will
