@@ -21,13 +21,35 @@
 ##'   this should be 0 for a parent fit, and be the restart date for a
 ##'   restart date.
 ##'
+##' @param rt logical parameter output trajectories required for
+##'   calculating Rt (default = FALSE)
+##'
+##' @param cum_admit logical parameter whether to output cumulative
+##'   admissions by age (default = FALSE)
+##'
+##' @param diagnoses_admitted logical parameter whether to output
+##'   cumulative combined confirmed admissions and inpatient
+##'   diagnoses by age and vaccine class (default = FALSE)
+##'
+##' @param cum_infections_disag logical parameter whether to output
+##'   cumulative infections by age and vaccine class (default = FALSE)
+##'
+##' @param cum_n_vaccinated logical parameter whether to output
+##'   cumulative number vaccinated by age and vaccine class
+##'   (default = FALSE)
+##'
 ##' @return A [mcstate::particle_filter] object
 ##'
 ##' @export
 spim_particle_filter <- function(data, pars, control,
                                  deterministic = FALSE,
                                  initial = NULL,
-                                 initial_date = 0) {
+                                 initial_date = 0,
+                                 rt = FALSE,
+                                 cum_admit = FALSE,
+                                 diagnoses_admitted = FALSE,
+                                 cum_infections_disag = FALSE,
+                                 cum_n_vaccinated = FALSE) {
   ## We do need to get the steps per day out regardless.  A lot of
   ## work considering this is always 4!
   p <- pars$model(pars$initial())
@@ -71,8 +93,12 @@ spim_particle_filter <- function(data, pars, control,
     assert_is(initial, "function")
   }
 
-  fit_index <- function(info) {
-    sircovid::lancelot_index(info, rt = TRUE)
+  fit_index <- function(info, rt, cum_admit, diagnoses_admitted,
+  cum_infections_disag, cum_n_vaccinated) {
+    sircovid::lancelot_index(info, rt = rt, cum_admit = cum_admit,
+         diagnoses_admitted = diagnoses_admitted,
+         cum_infections_disag = cum_infections_disag,
+         cum_n_vaccinated=cum_n_vaccinated)
   }
 
   if (deterministic) {
