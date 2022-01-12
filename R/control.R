@@ -39,7 +39,10 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                          date_restart = NULL,
                          n_particles = 192, n_mcmc = 1500, burnin = 500,
                          forecast_days = 57, workers = TRUE,
-                         n_threads = NULL) {
+                         n_threads = NULL, rt = rt, cum_admit = cum_admit,
+                         diagnoses_admitted = diagnoses_admitted,
+                         cum_n_vaccinated = cum_n_vaccinated,
+                         cum_infections_disag = cum_infections_disag) {
   if (short_run) {
     n_particles <- min(10, n_particles)
     n_mcmc <- min(20, n_mcmc)
@@ -90,13 +93,18 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
   particle_filter <- list(n_particles = n_particles,
                           n_threads = parallel$n_threads_total,
                           seed = NULL,
-                          compiled_compare = FALSE)
+                          compiled_compare = FALSE,
+                          rt = rt,
+                          cum_admit = cum_admit,
+                          diagnoses_admitted = diagnoses_admitted,
+                          cum_n_vaccinated = cum_n_vaccinated,
+                          cum_infections_disag = cum_infections_disag)
 
   thin <- ceiling(n_chains * (n_mcmc - burnin) / n_sample)
 
   forecast <- list(n_sample = n_sample, burnin = burnin,
                    forecast_days = forecast_days,
-                   thin = thin)
+                   thin = thin)                   
 
   list(pmcmc = pmcmc,
        particle_filter = particle_filter,

@@ -44,12 +44,7 @@
 spim_particle_filter <- function(data, pars, control,
                                  deterministic = FALSE,
                                  initial = NULL,
-                                 initial_date = 0,
-                                 rt = FALSE,
-                                 cum_admit = FALSE,
-                                 diagnoses_admitted = FALSE,
-                                 cum_infections_disag = FALSE,
-                                 cum_n_vaccinated = FALSE) {
+                                 initial_date = 0) {
   ## We do need to get the steps per day out regardless.  A lot of
   ## work considering this is always 4!
   p <- pars$model(pars$initial())
@@ -93,12 +88,13 @@ spim_particle_filter <- function(data, pars, control,
     assert_is(initial, "function")
   }
 
-  fit_index <- function(info, rt, cum_admit, diagnoses_admitted,
-  cum_infections_disag, cum_n_vaccinated) {
-    sircovid::lancelot_index(info, rt = rt, cum_admit = cum_admit,
-         diagnoses_admitted = diagnoses_admitted,
-         cum_infections_disag = cum_infections_disag,
-         cum_n_vaccinated = cum_n_vaccinated)
+  fit_index <- function(info) {
+    sircovid::lancelot_index(info,
+     rt = control$rt,
+     cum_admit = control$cum_admit,
+     diagnoses_admitted = control$diagnoses_admitted,
+     cum_infections_disag = control$cum_infections_disag,
+     cum_n_vaccinated = control$cum_n_vaccinated)
   }
 
   if (deterministic) {
