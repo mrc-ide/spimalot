@@ -104,8 +104,8 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
 
   forecast <- list(n_sample = n_sample, burnin = burnin,
                    forecast_days = forecast_days,
-                   thin = thin)               
-
+                   thin = thin)
+                   
   list(pmcmc = pmcmc,
        particle_filter = particle_filter,
        forecast = forecast)
