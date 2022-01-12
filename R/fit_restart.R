@@ -70,7 +70,8 @@ spim_restart_pars <- function(pars, pars_parent, restart_date) {
   pars$prior[match(priors_propagate, pars$prior$name), ] <-
     pars_parent$prior[match(priors_propagate, pars_parent$prior$name), -1]
 
-  pars_full <- build_parameters(pars)
+  pars_full <- spim_pars_mcmc(pars$info, pars$prior, pars$proposal,
+                              pars$transform)
 
   pars$mcmc <- pars_full$fix(pars_full$initial()[fixed])
   pars

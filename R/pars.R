@@ -352,3 +352,22 @@ spim_add_par_beta <- function(pars) {
   spim_add_par(pars, name, info$initial, info$min, info$max,
                proposal_variance, prior)
 }
+
+
+spim_pars_mcmc <- function(info, prior, proposal, transform) {
+  pars_mcmc <- Map(
+    mcstate::pmcmc_parameter,
+    name = info$name,
+    initial = info$initial,
+    min = info$min,
+    max = info$max,
+    discrete = info$discrete,
+    prior = lapply(split(prior, prior$name), spimalot:::make_prior))
+
+  ret <- mcstate::pmcmc_parameters$new(pars_mcmc, proposal, transform)
+
+  ## Try and transform a single case and see if it works:
+  ret$model(ret$initial())
+
+  ret
+}

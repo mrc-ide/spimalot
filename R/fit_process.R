@@ -274,31 +274,6 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
 }
 
 
-calculate_lancelot_ifr_t <- function(samples, multistrain) {
-  step <- samples$trajectories$step
-
-  index_S <- grep("^S_", names(samples$predict$index))
-  index_I_weighted <- grep("^I_weighted_", names(samples$predict$index))
-  index_R <- grep("^R_", names(samples$predict$index))
-
-  S <- samples$trajectories$state[index_S, , , drop = FALSE]
-  I_weighted <- samples$trajectories$state[index_I_weighted, , , drop = FALSE]
-  if (multistrain) {
-    R <- samples$trajectories$state[index_R, , , drop = FALSE]
-  } else {
-    R <- NULL
-  }
-
-  pars <- lapply(seq_rows(samples$pars), function(i)
-    samples$predict$transform(samples$pars[i, ]))
-
-  sircovid::lancelot_ifr_t_trajectories(
-    step, S, I_weighted, pars, R = R,
-    initial_step_from_parameters = TRUE,
-    shared_parameters = FALSE)
-}
-
-
 ## All the functions below here have awful names, but none are
 ## exported so we can tidy this up later.
 extract_age_class_state <- function(state) {
