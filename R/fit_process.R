@@ -70,9 +70,6 @@ spim_fit_process <- function(samples, parameters, data) {
       prior = parameters_raw$prior)
   }
 
-  ## Drop the big objects from the output
-  samples[c("state", "trajectories", "predict")] <- list(NULL)
-
   ## This list returns:
   ##
   ## 1. 'fit' list of;
@@ -94,7 +91,6 @@ spim_fit_process <- function(samples, parameters, data) {
   ##   rt, etc.)
   list(
     fit = list(samples = samples, # note complicated naming change here
-               pmcmc = samples,
                rt = rt,
                variant_rt = variant_rt,
                # ifr_t = ifr_t,
