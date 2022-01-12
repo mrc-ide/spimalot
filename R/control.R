@@ -96,7 +96,7 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                           seed = NULL,
                           compiled_compare = FALSE)
 
-  ist(pmcmc = pmcmc,
+  list(pmcmc = pmcmc,
        particle_filter = particle_filter)
 }
 
