@@ -89,14 +89,14 @@ test_that("Allow disabling workers for deterministic fit", {
     withr::with_envvar(c(MC_CORES = 2), {
       control1 <- spimalot::spim_control(
         TRUE, 2, TRUE, n_mcmc = 100,
-        burnin = 5, forecast_days = 0, workers = TRUE)
+        burnin = 5, workers = TRUE)
     }))
   expect_equal(control1$pmcmc$n_workers, 2)
   suppressMessages(
     withr::with_envvar(c(MC_CORES = 2), {
     control2 <- spimalot::spim_control(
       TRUE, 4, TRUE, n_mcmc = 100,
-      burnin = 5, forecast_days = 0, workers = FALSE)
+      burnin = 5, workers = FALSE)
     }))
   expect_equal(control2$pmcmc$n_workers, 1)
 })

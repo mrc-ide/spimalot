@@ -12,7 +12,6 @@ spim_control(
   n_particles = 192,
   n_mcmc = 1500,
   burnin = 500,
-  forecast_days = 57,
   workers = TRUE,
   n_threads = NULL
 )
@@ -37,8 +36,6 @@ pmcmc (see \link[mcstate:pmcmc]{mcstate::pmcmc}}
 
 \item{burnin}{number of steps out of \code{n_mcmc} to be used as a burn-in in
 PMCMC if \code{short_run = FALSE}}
-
-\item{forecast_days}{number of days to forecast after the simulation}
 
 \item{workers}{Logical, indicating if we should enable workers. If
 \code{TRUE}, then a number of workers between 1 and 4 will be used
