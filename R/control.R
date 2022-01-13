@@ -24,8 +24,6 @@
 ##' @param burnin number of steps out of `n_mcmc` to be used as a burn-in in
 ##'    PMCMC if `short_run = FALSE`
 ##'
-##' @param forecast_days number of days to forecast after the simulation
-##'
 ##' @param workers Logical, indicating if we should enable workers. If
 ##'   `TRUE`, then a number of workers between 1 and 4 will be used
 ##'   depending on `n_chains` and the detected number of cores.
@@ -38,7 +36,7 @@
 spim_control <- function(short_run, n_chains, deterministic = FALSE,
                          date_restart = NULL,
                          n_particles = 192, n_mcmc = 1500, burnin = 500,
-                         forecast_days = 57, workers = TRUE,
+                         workers = TRUE,
                          n_threads = NULL) {
   if (short_run) {
     n_particles <- min(10, n_particles)
@@ -52,12 +50,12 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
     burnin <- burnin
   }
 
+  n_steps_retain <- ceiling(n_sample / n_chains)
+
   rerun_every <- 100
   if (!is.null(date_restart)) {
     date_restart <- sircovid::sircovid_date(date_restart)
   }
-
-  forecast_days <- forecast_days
 
   parallel <- spim_control_parallel(n_chains, workers, n_threads)
 
@@ -73,7 +71,9 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                                   nested_step_ratio = 1, # ignored if single
                                   rerun_every = rerun_every,
                                   rerun_random = TRUE,
-                                  filter_early_exit = TRUE)
+                                  filter_early_exit = TRUE,
+                                  n_burnin = burnin,
+                                  n_steps_retain = n_steps_retain)
 
   if (deterministic) {
     ## Disable early exit, if it's been set up, as we also don't support that
@@ -92,15 +92,8 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                           seed = NULL,
                           compiled_compare = FALSE)
 
-  thin <- ceiling(n_chains * (n_mcmc - burnin) / n_sample)
-
-  forecast <- list(n_sample = n_sample, burnin = burnin,
-                   forecast_days = forecast_days,
-                   thin = thin)
-
   list(pmcmc = pmcmc,
-       particle_filter = particle_filter,
-       forecast = forecast)
+       particle_filter = particle_filter)
 }
 
 
