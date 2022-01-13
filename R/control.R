@@ -39,7 +39,7 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                          date_restart = NULL,
                          n_particles = 192, n_mcmc = 1500, burnin = 500,
                          forecast_days = 57, workers = TRUE,
-                         n_threads = NULL, rt = rt) {
+                         n_threads = NULL, rt = FALSE) {
   if (short_run) {
     n_particles <- min(10, n_particles)
     n_mcmc <- min(20, n_mcmc)
