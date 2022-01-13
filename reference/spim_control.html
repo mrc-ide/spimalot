@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.6.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.6.2</span>
       </span>
     </div>
 
@@ -58,7 +58,6 @@
   n_particles <span class="op">=</span> <span class="fl">192</span>,
   n_mcmc <span class="op">=</span> <span class="fl">1500</span>,
   burnin <span class="op">=</span> <span class="fl">500</span>,
-  forecast_days <span class="op">=</span> <span class="fl">57</span>,
   workers <span class="op">=</span> <span class="cn">TRUE</span>,
   n_threads <span class="op">=</span> <span class="cn">NULL</span>
 <span class="op">)</span></code></pre></div>
@@ -86,8 +85,6 @@ pmcmc (see <a href="https://rdrr.io/pkg/mcstate/man/pmcmc.html" class="external-
 <dt>burnin</dt>
 <dd><p>number of steps out of <code>n_mcmc</code> to be used as a burn-in in
 PMCMC if <code>short_run = FALSE</code></p></dd>
-<dt>forecast_days</dt>
-<dd><p>number of days to forecast after the simulation</p></dd>
 <dt>workers</dt>
 <dd><p>Logical, indicating if we should enable workers. If
 <code>TRUE</code>, then a number of workers between 1 and 4 will be used
