@@ -118,7 +118,8 @@ spim_plot_fit_traces <- function(samples, region = NULL) {
     for (nm in colnames(samples$pars_full)) {
       plot_traces1(samples$pars_full[, nm], nm)
     }
-    plot_traces1(samples$probabilities_full[, "log_likelihood"], "log_likelihood")
+    plot_traces1(samples$probabilities_full[, "log_likelihood"],
+                 "log_likelihood")
   } else {
 
     n_pars <- length(rownames(samples$pars_full))
