@@ -39,7 +39,10 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                          date_restart = NULL,
                          n_particles = 192, n_mcmc = 1500, burnin = 500,
                          forecast_days = 57, workers = TRUE,
-                         n_threads = NULL, rt = FALSE) {
+                         n_threads = NULL, rt = FALSE, cum_admit = FALSE,
+                         diagnoses_admitted = FALSE,
+                         cum_n_vaccinated = FALSE,
+                         cum_infections_disag = FALSE) {
   if (short_run) {
     n_particles <- min(10, n_particles)
     n_mcmc <- min(20, n_mcmc)
@@ -91,7 +94,11 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                           n_threads = parallel$n_threads_total,
                           seed = NULL,
                           compiled_compare = FALSE,
-                          rt = rt)
+                          rt = rt,
+                          cum_admit = cum_admit,
+                          diagnoses_admitted = diagnoses_admitted,
+                          cum_n_vaccinated = cum_n_vaccinated,
+                          cum_infections_disag = cum_infections_disag)
 
   thin <- ceiling(n_chains * (n_mcmc - burnin) / n_sample)
 
