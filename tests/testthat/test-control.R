@@ -51,7 +51,7 @@ test_that("Overall spim control", {
   expect_message(
     ctl <- spim_control(TRUE, 4, n_threads = 16),
     "Running on 4 workers with 16 threads")
-  expect_setequal(names(ctl), c("pmcmc", "particle_filter", "forecast"))
+  expect_setequal(names(ctl), c("pmcmc", "particle_filter"))
   expect_s3_class(ctl$pmcmc, "pmcmc_control")
 })
 
@@ -73,11 +73,11 @@ test_that("spim control short run is shorter", {
 
   expect_lt(ctl_short$pmcmc$n_steps, ctl_long$pmcmc$n_steps)
 
-  expect_equal(ctl_short$forecast$burnin, 1)
-  expect_equal(ctl_long$forecast$burnin, 500)
+  expect_equal(ctl_short$pmcmc$n_burnin, 7)
+  expect_equal(ctl_long$pmcmc$n_burnin, 503)
 
-  expect_equal(ctl_short$forecast$n_sample, 10)
-  expect_equal(ctl_long$forecast$n_sample, 1000)
+  expect_equal(ctl_short$pmcmc$n_steps_retain, 3)
+  expect_equal(ctl_long$pmcmc$n_steps_retain, 250)
 
   expect_equal(ctl_short$particle_filter$n_particles, 10)
   expect_equal(ctl_long$particle_filter$n_particles, 192)
