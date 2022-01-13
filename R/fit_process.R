@@ -74,11 +74,8 @@ spim_fit_process <- function(samples, parameters, data) {
   ##
   ## 1. 'fit' list of;
   ## samples - reduced mcstate trajectory samples
-  ## pmcmc - information on full chains of fitted parameters without
-  ##         corresponding trajectories
   ## rt - calculated spimalot lancelot Rt value (calculate_lancelot_Rt output)
   ## variant_rt - variant specific Rt
-  ## deaths - extract hospital attributed deaths
   ## simulate - object containing spimalot objects (used for onward simulation)
   ##            such as; thinned samples, vaccine efficacy, start date of sim,
   ##            samples date.

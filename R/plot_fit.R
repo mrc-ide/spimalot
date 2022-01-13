@@ -104,6 +104,7 @@ spim_plot_fit_traces <- function(samples, region = NULL) {
               ylab = name, col = cols,
               main = main,
               font.main = 1)
+    rug(samples$iteration[samples$chain == 1], ticksize = 0.1)
   }
 
   if (is.null(region)) {
