@@ -122,10 +122,13 @@ spim_fit_run <- function(pars, filter, control) {
     data <- pars$mcmc$model(ret$pars[1, , ])[[1]]
     base <- pars$base[[1]]
     region <- names(pars$base)
+    pars_names <- list(fixed = pars$mcmc$names("fixed"),
+                       varied = pars$mcmc$names("varied"))
   } else {
     data <- pars$mcmc$model(ret$pars[1, ])
     base <- pars$base
     region <- base$region
+    pars_names <- pars$mcmc$names()
   }
 
   ## this is a loop over epochs now that we always have a multiregion
@@ -142,7 +145,8 @@ spim_fit_run <- function(pars, filter, control) {
                    beta_date = base$beta_date,
                    epoch_dates = base$epoch_dates,
                    model_type = base$model_type,
-                   restart_date = base$restart_date)
+                   restart_date = base$restart_date,
+                   pars = pars_names)
 
   ret
 }
