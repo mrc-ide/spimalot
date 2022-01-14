@@ -104,7 +104,7 @@ spim_particle_filter <- function(data, pars, control,
 spim_fit_run <- function(pars, filter, control) {
   message("Running chains - this will take a while!")
   if (filter$nested) {
-    initial <- replicate(control$pmcmc$n_chains,
+    initial <- replicate(control$n_chains,
                          pars$mcmc$propose(pars$mcmc$initial(), "both", 1))
   } else {
     initial <- replicate(control$n_chains,
@@ -116,6 +116,8 @@ spim_fit_run <- function(pars, filter, control) {
   ## vaccination projection more robust by preventing us mis-aligning
   ## the updated variables. This will propagate through the forecasts
   if (filter$nested) {
+    ## Will the the same over all regions/samples so take the first of
+    ## each
     data <- pars$mcmc$model(ret$pars[1, , ])[[1]]
     base <- pars$base[[1]]
     region <- names(pars$base)
@@ -124,6 +126,9 @@ spim_fit_run <- function(pars, filter, control) {
     base <- pars$base
     region <- base$region
   }
+
+  ## this is a loop over epochs now that we always have a multiregion
+  ## parameters
   info <- lapply(data, function(d)
     ret$predict$filter$model$new(d$pars, 0, 1)$info())
 
