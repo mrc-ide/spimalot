@@ -601,6 +601,7 @@ calculate_positivity <- function(samples) {
   date <- sircovid::sircovid_date_as_date(samples$trajectories$date)
   state <- samples$trajectories$state
   transform <- samples$predict$transform
+  multiregion <- samples$info$multiregion
 
   if (multiregion) {
     region <- samples$info$region
@@ -699,6 +700,7 @@ calculate_cases <- function(samples) {
   date <- sircovid::sircovid_date_as_date(samples$trajectories$date)
   state <- samples$trajectories$state
   transform <- samples$predict$transform
+  multiregion <- samples$info$multiregion
 
   if (multiregion) {
     region <- samples$info$region
