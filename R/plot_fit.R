@@ -74,7 +74,8 @@ spim_plot_fit_forecasts <- function(samples, region = NULL) {
 
 ##' @rdname spim_plot_fit
 ##' @export
-spim_plot_fit_traces <- function(samples, region = NULL) {
+spim_plot_fit_traces <- function(samples) {
+  multiregion <- samples$info$multiregion
   if (is.null(samples$chain)) {
     n_chains <- 1L
   } else {
@@ -87,18 +88,34 @@ spim_plot_fit_traces <- function(samples, region = NULL) {
   }
   cols <- rev(viridisLite::viridis(n_chains))
 
+  i <- reorder_beta(colnames(samples$pars_full))
+  if (multiregion) {
+    pars <- samples$pars_full[, i, ]
+  } else {
+    pars <- samples$pars_full[, i]
+  }
+  nms <- colnames(pars)
+  probs <- samples$probabilities_full
+
+  op <- par(no.readonly = TRUE)
+  on.exit(par(op))
+
+  new_grid <- function(n, title) {
+    par(mfrow = rep(ceiling(sqrt(n + 1)), 2),
+        mar = c(3, 3, 2, 1),
+        mgp = c(2, 0.5, 0),
+        oma = c(1, 1, 1 + as.integer(title), 1))
+  }
+
   plot_traces1 <- function(p, name) {
     traces <- matrix(p, ncol = n_chains)
-    if (is.null(region)) {
-      ess <- coda::effectiveSize(coda::as.mcmc(traces))
-      main <- ifelse(name == "log_likelihood", "",
-                     paste("ess =", round(sum(ess))))
-    } else {
-      ess <- coda::effectiveSize(coda::as.mcmc(traces))
-      main <- ifelse(name == "log_likelihood", sprintf("Region %s", region),
-                     sprintf("%s; ess = %d", region, round(sum(ess))))
-    }
+    ess <- coda::effectiveSize(coda::as.mcmc(traces))
 
+    if (name == "log_likelihood") {
+      main <- ""
+    } else {
+      main <- sprintf("ess = %s", round(sum(ess)))
+    }
     matplot(traces, type = "l", lty = 1,
               xlab = "Iteration", bty = "n",
               ylab = name, col = cols,
@@ -107,42 +124,34 @@ spim_plot_fit_traces <- function(samples, region = NULL) {
     rug(samples$iteration[samples$chain == 1], ticksize = 0.1)
   }
 
-  if (is.null(region)) {
+  if (multiregion) {
+    ## It's pretty hard to work out which are fixed and varied, but we
+    ## can do it (we should store this in the information, really)
+    nms_fixed <- names(which(apply(pars, 2, function(x) all(diff(t(x)) == 0))))
+    nms_varied <- setdiff(nms, nms_fixed)
+    region <- last(dimnames(pars))
 
-    n_pars <- length(colnames(samples$pars_full))
+    new_grid(length(nms_fixed), TRUE)
+    for (nm in nms_fixed) {
+      plot_traces1(pars[, nm, 1], nm)
+    }
+    plot_traces1(rowSums(probs[, "log_likelihood", ]), "log_likelihood")
+    mtext("Fixed (shared across regions)", outer = TRUE)
 
-    par(mfrow = rep(ceiling(sqrt(n_pars + 2)), 2),
-        mar = c(3, 3, 2, 1),
-        mgp = c(2, 0.5, 0),
-        oma = c(1, 1, 1, 1))
-
-    for (nm in colnames(samples$pars_full)) {
+    for (r in region) {
+      new_grid(length(nms_varied), TRUE)
+      for (nm in nms_varied) {
+        plot_traces1(pars[, nm, r], nm)
+      }
+      plot_traces1(probs[, "log_likelihood", r], "log_likelihood")
+      mtext(r, outer = TRUE)
+    }
+  } else {
+    new_grid(length(nms), FALSE)
+    for (nm in nms) {
       plot_traces1(samples$pars_full[, nm], nm)
     }
-    plot_traces1(samples$probabilities_full[, "log_likelihood"],
-                 "log_likelihood")
-  } else {
-
-    n_pars <- length(rownames(samples$pars_full))
-
-    par(mfrow = rep(ceiling(sqrt(n_pars + 2)), 2),
-        mar = c(3, 3, 2, 1),
-        mgp = c(2, 0.5, 0),
-        oma = c(1, 1, 1, 1))
-
-    for (nm in rownames(samples$pars_full)) {
-      plot_traces1(samples$pars_full[nm, region, ], nm)
-    }
-    plot_traces1(samples$probabilities_full["log_likelihood", region, ],
-                 "log_likelihood")
-  }
-
-  plot.new()
-  legend("left", fill = cols, bty = "n",
-        legend = paste("chain", seq_len(n_chains)))
-  rhat <- gelman_diagnostic(samples, region)
-  if (!is.null(rhat)) {
-    mtext(side = 3, text = paste("Rhat =", round(rhat$mpsrf, 1)))
+    plot_traces1(probs[, "log_likelihood"], "log_likelihood")
   }
 }
 
@@ -244,4 +253,13 @@ gelman_diagnostic <- function(samples, region = NULL) {
   tryCatch(
     coda::gelman.diag(chains),
     error = function(e) NULL)
+}
+
+
+reorder_beta <- function(nms) {
+  i <- grep("^beta[0-9]+$", nms)
+  j <- order(as.integer(sub("^beta", "", nms[i])))
+  k <- seq_along(nms)
+  k[i] <- j
+  k
 }
