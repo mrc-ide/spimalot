@@ -247,7 +247,7 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
 
 reduce_trajectories <- function(samples) {
   ## Remove unused trajectories for predict function in combined
-  remove_strings <- c("prob_strain", "^S_", "^R_", "diagnoses_admitted_", 
+  remove_strings <- c("prob_strain", "^S_", "^R_", "diagnoses_admitted_",
                       "cum_infections_disag_",
                       "cum_n_vaccinated")
 
