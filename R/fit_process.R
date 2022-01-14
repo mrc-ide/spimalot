@@ -57,7 +57,7 @@ spim_fit_process <- function(samples, parameters, data) {
 
     restart$parent <- list(
       trajectories = trajectories_filter_time(samples$trajectories, i),
-      rt = rt_filter_time(rt, i, multiregion),
+      rt = rt_filter_time(rt, i, samples$info$multiregion),
       data = data,
       prior = parameters_raw$prior)
   }
