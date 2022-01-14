@@ -536,13 +536,12 @@ spim_fit_parameters <- function(samples, parameters) {
     i <- which.max(rowSums(samples$probabilities[, "log_posterior", ]))
     initial <- samples$pars[i, , ]
 
+    nms_fixed <- samples$info$pars$fixed
+    nms_varied <- samples$info$pars$varied
+
     ## Spreading these back out is pretty nasty; we need to work out
     ## which are nested and which are not; take the fixed pars from
     ## the first region, then work out the mapping for the rest.
-    nms_all <- unique(info$name)
-    nms_fixed <- info$name[is.na(info$region)]
-    nms_varied <- setdiff(nms_all, nms_fixed)
-
     info$key <- paste(info$name, info$region, sep = "\r")
     info$initial[match(nms_fixed, info$name)] <- unname(initial[nms_fixed, 1])
 
@@ -554,6 +553,7 @@ spim_fit_parameters <- function(samples, parameters) {
     }
 
     ## For the covariance we need to split things up carefully:
+    nms_all <- unique(info$name)
     n_all <- length(nms_all)
     n_fixed <- length(nms_fixed)
     n_varied <- length(nms_varied)

@@ -125,11 +125,9 @@ spim_plot_fit_traces <- function(samples) {
   }
 
   if (multiregion) {
-    ## It's pretty hard to work out which are fixed and varied, but we
-    ## can do it (we should store this in the information, really)
-    nms_fixed <- names(which(apply(pars, 2, function(x) all(diff(t(x)) == 0))))
-    nms_varied <- setdiff(nms, nms_fixed)
-    region <- last(dimnames(pars))
+    nms_fixed <- samples$info$pars$fixed
+    nms_varied <- samples$info$pars$varied
+    region <- samples$info$region
 
     new_grid(length(nms_fixed), TRUE)
     for (nm in nms_fixed) {

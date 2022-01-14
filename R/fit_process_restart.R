@@ -5,6 +5,8 @@ fit_process_restart <- function(samples, parameters) {
 
   ## TODO: this is now done here and also later, but it's fairly fast
   pars <- spim_fit_parameters(samples, parameters)
+  ## TODO: could pass in samples$info$pars, but somehow feels more
+  ## awkward to do so
   pars$prior <- fit_process_restart_priors(samples$pars, pars)
   pars$sample <- samples$pars
   class(pars) <- "spim_pars_pmcmc"
@@ -17,7 +19,7 @@ fit_process_restart <- function(samples, parameters) {
 }
 
 
-fit_process_restart_priors <- function(values, parameters) {
+fit_process_restart_priors <- function(values, parameters, nms) {
   nms <- colnames(values)
   stopifnot(all(nms %in% parameters$info$name))
 
