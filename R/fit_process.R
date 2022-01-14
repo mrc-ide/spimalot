@@ -696,11 +696,37 @@ calculate_positivity_region <- function(state, pars_model, date) {
 
 
 calculate_cases <- function(samples) {
-  if (samples$info$multiregion) {
-    stop("Rewrite in the same style as calculate_positivity")
+  date <- sircovid::sircovid_date_as_date(samples$trajectories$date)
+  state <- samples$trajectories$state
+  transform <- samples$predict$transform
+
+  if (multiregion) {
+    region <- samples$info$region
+    pars_model <- lapply(region, function(r)
+      lapply(seq_len(nrow(samples$pars)), function(i)
+        last(transform[[r]](samples$pars[i, , r]))$pars))
+    cases <- lapply(seq_along(region), function(i)
+      calculate_cases_region(state[, i, , ], pars_model[[i]], date))
+
+    ## Add an extra dimension, then bind together:
+    cases <- lapply(cases, mcstate::array_reshape,
+                    2, c(1, dim(state)[[3]]))
+    cases <- abind_quiet(cases, along = 2)
+  } else {
+    pars_model <- lapply(seq_len(nrow(samples$pars)), function(i)
+      last(transform(samples$pars[i, ]))$pars)
+    cases <- calculate_cases_region(state, pars_model, date)
   }
 
-  phi_pillar2_cases_names <-
+  ## Then bind into the main object:
+  samples$trajectories$state <- abind_quiet(state, cases, along = 1)
+
+  samples
+}
+
+
+calculate_cases_region <- function(state, pars_model, date) {
+  cases_names <-
     c("phi_pillar2_cases_under15", "phi_pillar2_cases_15_24",
       "phi_pillar2_cases_25_49", "phi_pillar2_cases_50_64",
       "phi_pillar2_cases_65_79", "phi_pillar2_cases_80_plus",
@@ -708,22 +734,12 @@ calculate_cases <- function(samples) {
       "phi_pillar2_cases_weekend_25_49", "phi_pillar2_cases_weekend_50_64",
       "phi_pillar2_cases_weekend_65_79", "phi_pillar2_cases_weekend_80_plus")
 
-  x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
 
-  base_pars <- samples$predict$transform(samples$pars[1, ])
-  base_pars <- base_pars[[length(base_pars)]]$pars
-
-  pars <- t(vapply(seq_len(nrow(samples$pars)),
-                   function(i) {
-                     p <- samples$predict$transform(samples$pars[i, ])
-                     unlist(p[[length(p)]]$pars[phi_pillar2_cases_names])
-                   },
-                   numeric(length(phi_pillar2_cases_names))))
+  pars <- t(vapply(pars_model, function(p) unlist(p[cases_names]),
+                   numeric(length(cases_names))))
 
   calc_cases <- function(group) {
-    cases1 <-
-      samples$trajectories$state[paste0("sympt_cases_", group, "_inc"), , ]
-
+    cases1 <- state[paste0("sympt_cases_", group, "_inc"), , ]
     cases1[, grepl("^S", weekdays(x))] <-
       cases1[, grepl("^S", weekdays(x))] *
       pars[, paste0("phi_pillar2_cases_weekend_", group)]
@@ -756,10 +772,7 @@ calculate_cases <- function(samples) {
                              c("", "_over25", "_under15", "_15_24",
                                "_25_49", "_50_64", "_65_79", "_80_plus"))
 
-  samples$trajectories$state <-
-    abind1(samples$trajectories$state, cases)
-
-  samples
+  cases
 }
 
 ## adapted from sircovid:::calculate_index
