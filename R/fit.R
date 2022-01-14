@@ -103,29 +103,35 @@ spim_particle_filter <- function(data, pars, control,
 ##' @export
 spim_fit_run <- function(pars, filter, control) {
   message("Running chains - this will take a while!")
-  initial <- replicate(control$n_chains,
-                       pars$mcmc$propose(pars$mcmc$initial(), 1))
+  if (filter$nested) {
+    initial <- replicate(control$pmcmc$n_chains,
+                         pars$mcmc$propose(pars$mcmc$initial(), "both", 1))
+  } else {
+    initial <- replicate(control$n_chains,
+                         pars$mcmc$propose(pars$mcmc$initial(), 1))
+  }
   ret <- mcstate::pmcmc(pars$mcmc, filter, initial = initial, control = control)
 
   ## Add some additional version information, which will make the
   ## vaccination projection more robust by preventing us mis-aligning
   ## the updated variables. This will propagate through the forecasts
-
-  ## Data here is an odin parameter
-  data <- ret$predict$transform(ret$pars[1, ])
-  info <- lapply(data,
-                 function(d) ret$predict$filter$model$new(d$pars, 0, 1)$info())
-
-  ## Just to make the below a bit less cumbersome.
-  base <- pars$base
+  if (filter$nested) {
+    data <- pars$mcmc$model(ret$pars[1, , ])[[1]]
+    base <- pars$base[[1]]
+    region <- names(pars$base)
+  } else {
+    data <- pars$mcmc$model(ret$pars[1, ])
+    base <- pars$base
+    region <- base$region
+  }
+  info <- lapply(data, function(d)
+    ret$predict$filter$model$new(d$pars, 0, 1)$info())
 
   ret$info <- list(version = packageVersion("sircovid"),
                    info = info,
                    data = data,
-                   ## NOTE: probably we'll change format here soon,
-                   ## but these are the "small" inputs to spim_pars
                    date = base$date,
-                   region = base$region,
+                   region = region,
                    beta_date = base$beta_date,
                    epoch_dates = base$epoch_dates,
                    model_type = base$model_type,
