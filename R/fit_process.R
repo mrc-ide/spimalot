@@ -37,11 +37,7 @@ spim_fit_process <- function(samples, parameters, data) {
   ## change it.
   message("Preparing onward simulation object")
   start_date_sim <- "2021-06-01"
-  vaccine_efficacy <- parameters_raw$base$vaccine_efficacy[
-    c("rel_susceptibility", "rel_p_sympt", "rel_p_hosp_if_sympt",
-      "rel_p_death", "rel_infectivity")]
-  simulate <- create_simulate_object(
-    samples, vaccine_efficacy, start_date_sim, samples$info$date)
+  simulate <- create_simulate_object(samples, start_date_sim, samples$info$date)
 
   ## Reduce trajectories in samples before saving
   message("Reducing trajectories")
@@ -98,54 +94,78 @@ spim_fit_process <- function(samples, parameters, data) {
 }
 
 
-create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
-                                   date) {
+create_simulate_object <- function(samples, start_date_sim, date) {
   start_date_sim <- sircovid::sircovid_date(start_date_sim)
   fit_dates <- samples$trajectories$date
   idx_dates <- (fit_dates >= start_date_sim) &
     (fit_dates <= sircovid::sircovid_date(date))
+  date <- fit_dates[idx_dates]
 
-  # trim dates to only those needed
-  ret <- list(date = fit_dates[idx_dates],
-              state = samples$trajectories$state[, , idx_dates])
-  # add state_by_age
-  ret$state_by_age <- extract_age_class_state(ret$state)
-  # add n_protected and n_doses2s
-  cross_immunity <- samples$predict$transform(samples$pars[1, ])$cross_immunity
+  state_keep <- c("deaths", "deaths_comm", "deaths_hosp", "admitted",
+                  "diagnoses", "infections", "hosp", "icu")
+  state_full <- samples$trajectories$state
 
-  # thin trajectories
-  ret$state <- ret$state[c("deaths", "deaths_comm", "deaths_hosp", "admitted",
-                           "diagnoses", "infections", "hosp", "icu"), , ]
+  if (samples$info$multiregion) {
+    region <- samples$info$region
+    state_by_age <- lapply(region, function(r)
+      extract_age_class_state(state[, r, , idx_dates]))
+    names(state_by_age) <- region
 
-  # reshape to add a regional dimension
-  ret$state <- mcstate::array_reshape(ret$state, i = 2, c(ncol(ret$state), 1))
+    ## thin trajectories, but here we already have a regional dimension
+    state <- state_full[state_keep, , , idx_dates]
+  } else {
+    state_by_age <- extract_age_class_state(state_full[, , , idx_dates])
 
-  ret
+    ## thin trajectories and reshape to add a regional dimension:
+    state <- state_full[state_keep, , idx_dates]
+    state <- mcstate::array_reshape(state, i = 2, c(ncol(ret$state), 1))
+  }
+
+  list(date = date, state = state, state_by_age = state_by_age)
 }
 
 
 calculate_lancelot_Rt <- function(samples, weight_Rt) {
-
   step <- samples$trajectories$step
-
-  index_S <- grep("^S_", names(samples$predict$index))
-  index_R <- grep("^R_", names(samples$predict$index))
-  index_ps <- grep("^prob_strain", names(samples$predict$index))
-
-  S <- samples$trajectories$state[index_S, , , drop = FALSE]
-  R <- samples$trajectories$state[index_R, , , drop = FALSE]
-  prob_strain <- samples$trajectories$state[index_ps, , , drop = FALSE]
-
-  pars <-
-    lapply(seq_len(length(samples$info$info)),
-           function(j)
-             lapply(seq_rows(samples$pars),
-                    function(i)
-                      samples$predict$transform(samples$pars[i, ])[[j]]$pars))
-
-
-  dates <- step / 4
+  info <- samples$info$info
   epoch_dates <- samples$info$epoch_dates
+
+  state <- samples$trajectories$state
+  pars <- samples$pars
+  transform <- samples$predict$transform
+
+  multiregion <- samples$info$multiregion
+
+  if (multiregion) {
+    ## pars, state, step, info, epoch_dates
+    ret <- lapply(samples$info$region, function(r)
+      calculate_lancelot_Rt_region(pars[, , r], state[, r, , ], transform[[r]],
+                                   step, info, epoch_dates, weight_Rt))
+    names(ret) <- samples$info$region
+  } else {
+    ret <- calculate_lancelot_Rt_region(pars, state, transform,
+                                        step, info, epoch_dates, weight_Rt)
+  }
+  ret
+}
+
+
+calculate_lancelot_Rt_region <- function(pars, state, transform,
+                                         step, info, epoch_dates, weight_Rt) {
+  index_S <- grep("^S_", rownames(state))
+  index_R <- grep("^R_", rownames(state))
+  index_ps <- grep("^prob_strain", rownames(state))
+
+  S <- state[index_S, , , drop = FALSE]
+  R <- state[index_R, , , drop = FALSE]
+  prob_strain <- state[index_ps, , , drop = FALSE]
+
+  pars_model <- lapply(seq_len(length(info)), function(j)
+    lapply(seq_rows(pars), function(i)
+      transform(pars[i, ])[[j]]$pars))
+
+  pars_model[[1]]$steps_per_day
+  dates <- step / 4
 
   ## TODO: currently we'll just deal with multistage here, but it would
   ## be good to adapt the sircovid function to deal with multistage
@@ -174,8 +194,8 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
       next
     }
 
-    n_strains <- pars[[i]][[1]]$n_strains
-    n_vacc_classes <- pars[[i]][[1]]$n_vacc_classes
+    n_strains <- pars_model[[i]][[1]]$n_strains
+    n_vacc_classes <- pars_model[[i]][[1]]$n_vacc_classes
 
     suffix <- paste0("_", c(sircovid:::sircovid_age_bins()$start, "CHW", "CHR"))
     S_nms <- get_names("S", list(n_vacc_classes), suffix)
@@ -196,7 +216,7 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
 
     if (!(n_strains == 1 && !weight_Rt)) {
       rt1 <- sircovid::lancelot_Rt_trajectories(
-        step1, S1, pars[[i]],
+        step1, S1, pars_model[[i]],
         initial_step_from_parameters = initial_step_from_parameters,
         shared_parameters = FALSE, R = R1, prob_strain = prob_strain1,
         weight_Rt = weight_Rt)
@@ -210,7 +230,6 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
         }
       }
     }
-
   }
 
   class(rt) <- c("Rt_trajectories", "Rt")
