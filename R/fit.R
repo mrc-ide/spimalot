@@ -28,9 +28,14 @@ spim_particle_filter <- function(data, pars, control,
                                  deterministic = FALSE,
                                  initial = NULL,
                                  initial_date = 0) {
+  is_nested <- inherits(pars, "pmcmc_parameters_nested")
+
   ## We do need to get the steps per day out regardless.  A lot of
   ## work considering this is always 4!
   p <- pars$model(pars$initial())
+  if (is_nested) {
+    p <- p[[1]]
+  }
   if (inherits(p, "multistage_parameters")) {
     p <- p[[1]]$pars
   }
@@ -41,13 +46,8 @@ spim_particle_filter <- function(data, pars, control,
   ## double-use is done
   sircovid::lancelot_check_data(data)
 
-  if (nlevels(data$region) > 1 && length(unique(data$region)) > 1) {
-    population <- "region"
-  } else {
-    population <- NULL
-  }
-
   ## Then organise into mcstate format:
+  population <- if (is_nested) "region" else NULL
   data <- mcstate::particle_filter_data(data, "date", steps_per_day,
                                         initial_date, population)
 
@@ -60,7 +60,7 @@ spim_particle_filter <- function(data, pars, control,
   } else if (is.matrix(initial)) {
     ## This likely needs a small tweak in mcstate so that the sampling
     ## works as expected.  Probably not very difficult to get right.
-    if (!is.null(population)) {
+    if (is_nested) {
       stop("restart + multiregion filter will need work")
     }
     initial <- mcstate::particle_filter_initial(initial)
