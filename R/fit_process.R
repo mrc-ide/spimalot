@@ -72,22 +72,19 @@ spim_fit_process <- function(samples, parameters, data) {
   ## rt - calculated spimalot lancelot Rt value (calculate_lancelot_Rt output)
   ## variant_rt - variant specific Rt
   ## simulate - object containing spimalot objects (used for onward simulation)
-  ##            such as; thinned samples, vaccine efficacy, start date of sim,
-  ##            samples date.
+  ##            such as; thinned samples, start date of sim, samples date.
   ## parameters - parameter MLE and covariance matrix
-  ## vaccination - vaccination data
   ## data - fitted and full data
   ##
   ## 2. 'restart' list of;
   ## restart information from spimalot parent objects (i.e trajectories, prior,
   ##   rt, etc.)
   list(
-    fit = list(samples = samples, # note complicated naming change here
+    fit = list(samples = samples,
                rt = rt,
                variant_rt = variant_rt,
                simulate = simulate,
                parameters = parameters_new,
-               vaccination = data$vaccination,
                ## NOTE: fit$data$fitted is assumed to exist by the restart
                data = list(fitted = data$fitted, full = data$full)),
     restart = restart)
@@ -516,20 +513,76 @@ extract_age_class_outputs <- function(samples) {
 
 
 spim_fit_parameters <- function(samples, parameters) {
-  info <- parameters$info[parameters$info$region == samples$info$region, ]
-  rownames(info) <- NULL
-  i <- which.max(samples$probabilities[, "log_posterior"])
-  initial <- samples$pars[i, ]
-  info$initial[match(names(initial), info$name)] <- unname(initial)
+  keep <- function(x, region) {
+    is.na(x) | x %in% region
+  }
 
-  prior <- parameters$prior[parameters$prior$region == samples$info$region, ]
+  region <- samples$info$region
+  info <- parameters$info[keep(parameters$info$region, region), ]
+  rownames(info) <- NULL
+
+  prior <- parameters$prior[keep(parameters$prior$region, region), ]
   rownames(prior) <- NULL
 
-  covariance <- cov(samples$pars)
-  rownames(covariance) <- NULL
-  proposal <- data_frame(region = samples$info$region,
-                         name = colnames(covariance),
-                         covariance)
+  ## This will certainly want moving elsewhere, possibly mcstate, as
+  ## it's very fiddly.  There's no good reason it needs to be here
+  ## (see https://github.com/mrc-ide/mcstate/issues/189)
+  if (samples$info$multiregion) {
+    i <- which.max(rowSums(samples$probabilities[, "log_posterior", ]))
+    initial <- samples$pars[i, , ]
+
+    ## Spreading these back out is pretty nasty; we need to work out
+    ## which are nested and which are not; take the fixed pars from
+    ## the first region, then work out the mapping for the rest.
+    nms_all <- unique(info$name)
+    nms_fixed <- info$name[is.na(info$region)]
+    nms_varied <- setdiff(nms_all, nms_fixed)
+
+    info$key <- paste(info$name, info$region, sep = "\r")
+    info$initial[match(nms_fixed, info$name)] <- unname(initial[nms_fixed, 1])
+
+    ## Not the fastest, but the clearest...
+    for (r in region) {
+      for (nm in nms_varied) {
+        info$initial[info$region == r & info$name == nm] <- initial[nm, r]
+      }
+    }
+
+    ## For the covariance we need to split things up carefully:
+    n_all <- length(nms_all)
+    n_fixed <- length(nms_fixed)
+    n_varied <- length(nms_varied)
+    cov_fixed <- matrix(0, n_fixed, n_all)
+    colnames(cov_fixed) <- nms_all
+    cov_fixed[, nms_fixed] <- cov(samples$pars[, nms_fixed, 1])
+
+    f <- function(r) {
+      cov_varied <- matrix(0, n_varied, n_all)
+      colnames(cov_varied) <- nms_all
+      cov_varied[, nms_varied] <- cov(samples$pars[, nms_varied, r])
+      cov_varied
+    }
+    cov_varied <- lapply(region, f)
+
+    covariance <- abind_quiet(c(list(cov_fixed), cov_varied), along = 1)
+
+    proposal <- data.frame(
+      region = c(rep(NA, n_fixed), rep(region, each = n_varied)),
+      name = c(nms_fixed, rep(nms_varied, length(region))),
+      covariance,
+      stringsAsFactors = FALSE)
+
+  } else {
+    i <- which.max(samples$probabilities[, "log_posterior"])
+    initial <- samples$pars[i, ]
+    info$initial[match(names(initial), info$name)] <- unname(initial)
+
+    covariance <- cov(samples$pars)
+    rownames(covariance) <- NULL
+    proposal <- data_frame(region = samples$info$region,
+                           name = colnames(covariance),
+                           covariance)
+  }
 
   parameters$info <- info
   parameters$prior <- prior
