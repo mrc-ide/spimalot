@@ -41,7 +41,7 @@ spim_fit_process <- function(samples, parameters, data) {
   vaccine_efficacy <- parameters_raw$base$vaccine_efficacy[
     c("rel_susceptibility", "rel_p_sympt", "rel_p_hosp_if_sympt",
       "rel_p_death", "rel_infectivity")]
-      
+
   simulate <- create_simulate_object(
     samples, vaccine_efficacy, start_date_sim, samples$info$date)
 
@@ -129,7 +129,6 @@ spim_fit_process_data <- function(admissions, rtm, fitted, full, vaccination) {
 
 create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
                                    date) {
-         
   start_date_sim <- sircovid::sircovid_date(start_date_sim)
   fit_dates <- samples$trajectories$date
   idx_dates <- (fit_dates >= start_date_sim) &
