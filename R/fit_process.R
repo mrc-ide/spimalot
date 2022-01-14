@@ -108,17 +108,21 @@ create_simulate_object <- function(samples, start_date_sim, date) {
   if (samples$info$multiregion) {
     region <- samples$info$region
     state_by_age <- lapply(region, function(r)
-      extract_age_class_state(state[, r, , idx_dates]))
+      extract_age_class_state(state_full[, r, , idx_dates]))
     names(state_by_age) <- region
 
     ## thin trajectories, but here we already have a regional dimension
     state <- state_full[state_keep, , , idx_dates]
+    ## However, we have to push it out
   } else {
     state_by_age <- extract_age_class_state(state_full[, , , idx_dates])
 
     ## thin trajectories and reshape to add a regional dimension:
     state <- state_full[state_keep, , idx_dates]
-    state <- mcstate::array_reshape(state, i = 2, c(ncol(ret$state), 1))
+    n_samples <- ncol(state_full)
+    ## TODO: this needs to be moved to be (1, n_samples) (swapping
+    ## dimensions) to match the multiregion filter.
+    state <- mcstate::array_reshape(state, i = 2, c(n_samples, 1))
   }
 
   list(date = date, state = state, state_by_age = state_by_age)
@@ -296,20 +300,23 @@ extract_age_class_state <- function(state) {
 
 reduce_trajectories <- function(samples) {
   ## Remove unused trajectories for predict function in combined
-  remove_strings <- c("prob_strain", "^S_", "^R_", "I_weighted_", "D_hosp_",
+  remove_strings <- c("prob_strain", "S_", "R_", "I_weighted_", "D_hosp_",
                       "D_all_", "diagnoses_admitted_", "cum_infections_disag_",
                       "cum_n_vaccinated")
+  re <- sprintf("^(%s)", paste(remove_strings, collapse = "|"))
 
-  pars <- samples$predict$transform(samples$pars[1, ])
-  n_groups <- pars$n_groups
-  n_vacc_classes <- pars$n_vacc_classes
-
+  multiregion <- samples$info$multiregion
   state <- samples$trajectories$state
+  keep <- !grepl(re, rownames(state))
 
-  index_remove <- lapply(remove_strings, function(s) {
-    grep(paste0("^", s), rownames(state))
-  })
-  samples$trajectories$state <- state[-unlist(index_remove), , ]
+  if (multiregion) {
+    samples$trajectories$state <- samples$trajectories$state[keep, , , ]
+  } else {
+    samples$trajectories$state <- samples$trajectories$state[keep, , ]
+  }
+
+  ## TODO: this should be moved into a function with a more
+  ## appropriate name
 
   ## Calculate Pillar 2 positivity and cases
   if (samples$info$model_type == "BB") {
@@ -533,45 +540,66 @@ spim_fit_parameters <- function(samples, parameters) {
 
 
 calculate_positivity <- function(samples) {
+  date <- sircovid::sircovid_date_as_date(samples$trajectories$date)
+  state <- samples$trajectories$state
+  transform <- samples$predict$transform
 
+  if (multiregion) {
+    region <- samples$info$region
+    pars_model <- lapply(region, function(r)
+      lapply(seq_len(nrow(samples$pars)), function(i)
+        last(transform[[r]](samples$pars[i, , r]))$pars))
+    positivity <- lapply(seq_along(region), function(i)
+      calculate_positivity_region(state[, i, , ], pars_model[[i]], date))
+
+    ## Add an extra dimension, then bind together:
+    positivity <- lapply(positivity, mcstate::array_reshape,
+                         2, c(1, dim(state)[[3]]))
+    positivity <- abind_quiet(positivity, along = 2)
+  } else {
+    pars_model <- lapply(seq_len(nrow(samples$pars)), function(i)
+      last(transform(samples$pars[i, ]))$pars)
+    positivity <- calculate_positivity_region(state, pars_model, date)
+  }
+
+  ## Then bind into the main object:
+  samples$trajectories$state <- abind_quiet(state, positivity, along = 1)
+
+  samples
+}
+
+
+calculate_positivity_region <- function(state, pars_model, date) {
   p_NC_names <- c("p_NC_under15", "p_NC_15_24", "p_NC_25_49",
                   "p_NC_50_64", "p_NC_65_79", "p_NC_80_plus",
                   "p_NC_weekend_under15", "p_NC_weekend_15_24",
                   "p_NC_weekend_25_49", "p_NC_weekend_50_64",
                   "p_NC_weekend_65_79", "p_NC_weekend_80_plus")
 
-  x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
-
-  base_pars <- samples$predict$transform(samples$pars[1, ])
-  base_pars <- base_pars[[length(base_pars)]]$pars
-
-  pars <- t(vapply(seq_len(nrow(samples$pars)),
-                 function(i) {
-                   p <- samples$predict$transform(samples$pars[i, ])
-                   unlist(p[[length(p)]]$pars[p_NC_names])
-                   },
-                 numeric(length(p_NC_names))))
-
-  pos_under15 <-
-    samples$trajectories$state[paste0("sympt_cases_under15_inc"), , ]
-  pos_15_24 <- samples$trajectories$state[paste0("sympt_cases_15_24_inc"), , ]
-  pos_25_49 <- samples$trajectories$state[paste0("sympt_cases_25_49_inc"), , ]
-  pos_50_64 <- samples$trajectories$state[paste0("sympt_cases_50_64_inc"), , ]
-  pos_65_79 <- samples$trajectories$state[paste0("sympt_cases_65_79_inc"), , ]
-  pos_80_plus <-
-    samples$trajectories$state[paste0("sympt_cases_80_plus_inc"), , ]
+  pos_under15 <- state[paste0("sympt_cases_under15_inc"), , ]
+  pos_15_24 <- state[paste0("sympt_cases_15_24_inc"), , ]
+  pos_25_49 <- state[paste0("sympt_cases_25_49_inc"), , ]
+  pos_50_64 <- state[paste0("sympt_cases_50_64_inc"), , ]
+  pos_65_79 <- state[paste0("sympt_cases_65_79_inc"), , ]
+  pos_80_plus <- state[paste0("sympt_cases_80_plus_inc"), , ]
 
   pos_over25 <- pos_25_49 + pos_50_64 + pos_65_79 + pos_80_plus
   pos_all <- pos_under15 + pos_15_24 + pos_over25
 
-  calc_negs <- function(group) {
-    neg <- base_pars[[paste0("N_tot_", group)]] -
-      samples$trajectories$state[paste0("sympt_cases_", group, "_inc"), , ]
+  pars_base <- pars_model[[1]]
+  pars <- t(vapply(pars_model, function(p) unlist(p[p_NC_names]),
+                   numeric(length(p_NC_names))))
 
-    neg[, grepl("^S", weekdays(x))] <-
-      neg[, grepl("^S", weekdays(x))] * pars[, paste0("p_NC_weekend_", group)]
-    neg[, !grepl("^S", weekdays(x))] <-
-      neg[, !grepl("^S", weekdays(x))] * pars[, paste0("p_NC_", group)]
+  calc_negs <- function(group) {
+    neg <- pars_base[[paste0("N_tot_", group)]] -
+      state[paste0("sympt_cases_", group, "_inc"), , ]
+
+    neg[, grepl("^S", weekdays(date))] <-
+      neg[, grepl("^S", weekdays(date))] *
+      pars[, paste0("p_NC_weekend_", group)]
+    neg[, !grepl("^S", weekdays(date))] <-
+      neg[, !grepl("^S", weekdays(date))] *
+      pars[, paste0("p_NC_", group)]
 
     neg
   }
@@ -588,8 +616,8 @@ calculate_positivity <- function(samples) {
 
   calc_pos <- function(pos, neg) {
     positivity1 <-
-      (pos * base_pars$pillar2_sensitivity +
-         neg * (1 - base_pars$pillar2_specificity)) / (pos + neg) * 100
+      (pos * pars_base$pillar2_sensitivity +
+         neg * (1 - pars_base$pillar2_specificity)) / (pos + neg) * 100
     array(positivity1, c(1, dim(positivity1)))
   }
 
@@ -605,12 +633,7 @@ calculate_positivity <- function(samples) {
   row.names(positivity) <- paste0("pillar2_positivity",
                                   c("", "_over25", "_under15", "_15_24",
                                     "_25_49", "_50_64", "_65_79", "_80_plus"))
-
-  samples$trajectories$state <-
-    abind1(samples$trajectories$state, positivity)
-
-
-  samples
+  positivity
 }
 
 
