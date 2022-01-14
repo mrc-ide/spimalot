@@ -33,7 +33,7 @@ spim_fit_process <- function(samples, parameters, data, control,
   samples$restart <- NULL
 
   message("Thinning samples")
-  incidence_states <- "deaths"
+
   ## Add 1 to burnin to account for removal of initial parameters
   if (random_sample) {
     samples_thin <- mcstate::pmcmc_sample(samples,
@@ -50,7 +50,6 @@ spim_fit_process <- function(samples, parameters, data, control,
   message("Computing Rt")
   rt <- calculate_lancelot_Rt(samples_thin, TRUE)
   # TODO: very slow
-
   variant_rt <- calculate_lancelot_Rt(samples_thin, FALSE)
 
   ## TODO: someone needs to document what this date is for (appears to
@@ -61,6 +60,7 @@ spim_fit_process <- function(samples, parameters, data, control,
   vaccine_efficacy <- parameters_raw$base$vaccine_efficacy[
     c("rel_susceptibility", "rel_p_sympt", "rel_p_hosp_if_sympt",
       "rel_p_death", "rel_infectivity")]
+      
   simulate <- create_simulate_object(
     samples_thin, vaccine_efficacy, start_date_sim, samples$info$date)
 
@@ -156,6 +156,7 @@ spim_fit_process_data <- function(admissions, rtm, fitted, full, vaccination) {
 
 create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
                                    date) {
+         
   start_date_sim <- sircovid::sircovid_date(start_date_sim)
   fit_dates <- samples$trajectories$date
   idx_dates <- (fit_dates >= start_date_sim) &
@@ -273,8 +274,9 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
 
 reduce_trajectories <- function(samples) {
   ## Remove unused trajectories for predict function in combined
-  remove_strings <- c("prob_strain", "^S_", "^R_", "diagnoses_admitted_",
-   "cum_infections_disag_", "cum_n_vaccinated")
+  remove_strings <- c("prob_strain", "^S_", "^R_", "diagnoses_admitted_", 
+                      "cum_infections_disag_",
+                      "cum_n_vaccinated")
 
   pars <- samples$predict$transform(samples$pars[1, ])
   n_groups <- pars$n_groups
