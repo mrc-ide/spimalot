@@ -26,10 +26,10 @@ spim_fit_process <- function(samples, parameters, data) {
   samples$trajectories$date <-
     samples$trajectories$step / samples$trajectories$rate
 
+  ## The Rt calculation is slow and runs in serial; it's a surprising
+  ## fraction of the total time.
   message("Computing Rt")
   rt <- calculate_lancelot_Rt(samples, TRUE)
-  # TODO: very slow
-
   variant_rt <- calculate_lancelot_Rt(samples, FALSE)
 
   ## TODO: someone needs to document what this date is for (appears to
@@ -46,22 +46,19 @@ spim_fit_process <- function(samples, parameters, data) {
   message("Computing parameter MLE and covariance matrix")
   parameters_new <- spim_fit_parameters(samples, parameters_raw)
 
+  ## This can possibly merge in with the initial restart processing if
+  ## we're careful now.  We need to have computed Rt first is the only
+  ## trick.
   if (!is.null(restart)) {
     ## When adding the trajectories, we might as well strip them down
     ## to the last date in the restart
     restart_date <- max(restart$state$time)
     i <- samples$trajectories$date <= restart_date
 
-    ## This is set of things that go into the restart object that are
-    ## to do with the time-course of the parent object.  It's
-    ## different to what we process with the fit_process_restart which
-    ## needs to happen against the unthinned object.
     restart$parent <- list(
       trajectories = trajectories_filter_time(samples$trajectories, i),
-      rt = rt_filter_time(rt, i),
+      rt = rt_filter_time(rt, i, multiregion),
       data = data,
-      ## TODO: check to make sure that this is just the one region's
-      ## parameters at this point (see the region column)
       prior = parameters_raw$prior)
   }
 
@@ -330,15 +327,23 @@ trajectories_filter_time <- function(trajectories, i) {
   trajectories$step <- trajectories$step[i]
   trajectories$date <- trajectories$date[i]
   trajectories$predicted <- trajectories$predicted[i]
-  trajectories$state <- trajectories$state[, , i, drop = FALSE]
+  if (length(dim(trajectories$state)) == 3) {
+    trajectories$state <- trajectories$state[, , i, drop = FALSE]
+  } else {
+    trajectories$state <- trajectories$state[, , , i, drop = FALSE]
+  }
   trajectories
 }
 
 
-rt_filter_time <- function(rt, i) {
-  ret <- lapply(rt, function(x) x[i, , drop = FALSE])
-  class(ret) <- class(rt)
-  ret
+rt_filter_time <- function(rt, i, multiregion) {
+  if (multiregion) {
+    lapply(rt, rt_filter_time, i, FALSE)
+  } else {
+    ret <- lapply(rt, function(x) x[i, , drop = FALSE])
+    class(ret) <- class(rt)
+    ret
+  }
 }
 
 
@@ -691,6 +696,9 @@ calculate_positivity_region <- function(state, pars_model, date) {
 
 
 calculate_cases <- function(samples) {
+  if (samples$info$multiregion) {
+    stop("Rewrite in the same style as calculate_positivity")
+  }
 
   phi_pillar2_cases_names <-
     c("phi_pillar2_cases_under15", "phi_pillar2_cases_15_24",
