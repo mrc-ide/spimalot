@@ -10,13 +10,8 @@
 ##' @param data Data sets used in fitting, via
 ##'   [spimalot::spim_fit_process_data]
 ##'
-##' @param random_sample Logical parameter, if `TRUE` will obtain the
-##'   posterior samples via random sampling, otherwise thinning will
-##'   be used
-##'
 ##' @export
-spim_fit_process <- function(samples, parameters, data,
-                             random_sample = TRUE) {
+spim_fit_process <- function(samples, parameters, data) {
   region <- samples$info$region
 
   ## This is just the info/prior/proposal + base of the parameter used
@@ -75,19 +70,12 @@ spim_fit_process <- function(samples, parameters, data,
       prior = parameters_raw$prior)
   }
 
-  ## Drop the big objects from the output
-  pmcmc <- samples
-  pmcmc[c("state", "trajectories", "predict")] <- list(NULL)
-
   ## This list returns:
   ##
   ## 1. 'fit' list of;
   ## samples - reduced mcstate trajectory samples
-  ## pmcmc - information on full chains of fitted parameters without
-  ##         corresponding trajectories
   ## rt - calculated spimalot lancelot Rt value (calculate_lancelot_Rt output)
   ## variant_rt - variant specific Rt
-  ## deaths - extract hospital attributed deaths
   ## simulate - object containing spimalot objects (used for onward simulation)
   ##            such as; thinned samples, vaccine efficacy, start date of sim,
   ##            samples date.
@@ -99,11 +87,9 @@ spim_fit_process <- function(samples, parameters, data,
   ## restart information from spimalot parent objects (i.e trajectories, prior,
   ##   rt, etc.)
   list(
-    fit = list(samples = samples,
-               pmcmc = pmcmc,
+    fit = list(samples = samples, # note complicated naming change here
                rt = rt,
                variant_rt = variant_rt,
-               # ifr_t = ifr_t,
                simulate = simulate,
                parameters = parameters_new,
                vaccination = data$vaccination,
