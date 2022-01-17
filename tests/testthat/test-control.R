@@ -105,5 +105,5 @@ test_that("Allow disabling workers for deterministic fit", {
 test_that("Can change number of samples", {
   suppressMessages(
     ctrl <- spim_control(FALSE, 8, n_sample = 200, n_mcmc = 1000, burnin = 500))
-  expect_equal(ctrl$pmcmc$n_steps_retain, 25) # 25 * 8 == 200
+  expect_equal(ctrl$pmcmc$n_steps_retain, 25) # i.e., 25 * 8 == 200
 })
