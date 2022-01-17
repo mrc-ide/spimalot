@@ -146,68 +146,6 @@ spim_pars_pmcmc_save <- function(p, path) {
 }
 
 
-##' Create vector of beta dates
-##'
-##' @title Create vector of beta dates
-##'
-##' @param date Today's dates (last date is set to last_beta_days_ago)
-##'
-##' @param last_beta_days_ago Number of days in the past for last beta point
-##'
-##' @export
-spim_pars_beta <- function(date, last_beta_days_ago = 21) {
-  ## Dates are as follows
-  ##  1. 2020-03-16 - PM advises WFH, against non-essential travel etc
-  ##  2. 2020-03-23 - PM announces full lockdown
-  ##  3. 2020-03-25 - lockdown into full effect
-  ##  4. 2020-05-11 - initial easing of lockdown
-  ##  5. 2020-06-15 - non-essential shops can open
-  ##  6. 2020-07-04 - restaurants, pubs etc can open
-  ##  7. 2020-08-01 - "Eat out to help out" scheme starts
-  ##  8. 2020-09-01 - Schools reopen
-  ##  9. 2020-09-14 - "Rule of six" introduced
-  ## 10. 2020-10-14 - Tiered system introduced
-  ## 11. 2020-10-31 - lockdown announced
-  ## 12. 2020-11-05 - lockdown 2 starts
-  ## 13. 2020-12-02 - lockdown 2 ends
-  ## 14. 2020-12-18 - school Christmas holidays
-  ## 15. 2020-12-25 - last day of holidays season relaxation
-  ## 16. 2021-01-05 - Lockdown 3 starts
-  ## 17. 2021-03-08 - Step 1 of roadmap: schools reopen
-  ## 18. 2021-04-01 - Semi-arbitrary - school holidays / restart date
-  ## 19. 2021-04-19 - Step 2 of roadmap: outdoors hospitality (04-12)
-  ##                  and schools return (04-19)
-  ## 20. 2021-05-17 - Step 3 of roadmap: indoors hospitality
-  ## 21. 2021-06-21 - Step 3.5 - "freedom day" delayed / Euros last group match
-  ## 22. 2021-07-03 - Euros quarter final
-  ## 23. 2021-07-11 - Euros 2020 final - peak in transmission
-  ## 24. 2021-07-19 - Step 4
-  ## 25. 2021-08-15 - Summer festivals / holidays
-  ## 26. 2021-09-01 - Schools return
-  ## 27. 2021-09-22 - Mid-point between school start and half term
-  ##                  (help the model stabilise a long period of time)
-  ## 28. 2021-10-01 - Point before recent increase in cases - hospitalisations
-  ## 29. 2021-10-22 - School half-term - Point before recent plateau in cases
-  ## 30. 2021-11-01 - Schools return
-  ## 31. 2021-12-08 - Announcement of move to Plan B
-  ## 32. 2021-12-23 - Starting of X-mas holidays.
-  ## 33. Date - last_beta_days_ago
-  c("2020-03-16", "2020-03-23", "2020-03-25",
-    "2020-05-11", "2020-06-15", "2020-07-04",
-    "2020-08-01", "2020-09-01", "2020-09-14",
-    "2020-10-14", "2020-10-31", "2020-11-05",
-    "2020-12-02", "2020-12-18", "2020-12-25",
-    "2021-01-05", "2021-03-08", "2021-04-01",
-    "2021-04-19", "2021-05-17", "2021-06-21",
-    "2021-07-03", "2021-07-11", "2021-07-19",
-    "2021-08-15", "2021-09-01", "2021-09-22",
-    "2021-10-01", "2021-10-22", "2021-11-01",
-    "2021-12-08", "2021-12-23",
-    as.character(as.Date(date) - last_beta_days_ago))
-}
-
-
-
 spim_pars_info <- function(region, info) {
   assert_has_names(info, c("region", "include",
                            "name", "initial", "max", "discrete"))

@@ -34,12 +34,6 @@ test_that("spim_pars_load throws useful error messages", {
 })
 
 
-test_that("spim_pars_beta sets last date in the past", {
-  beta <- spim_pars_beta("2022-01-01")
-  expect_equal(last(beta), "2021-12-11")
-})
-
-
 test_that("filter info by region", {
   dat <- test_dummy_pars_pmcmc(c("a", "b", "c"))
   info <- spim_pars_info("london", dat$info)
