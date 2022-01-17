@@ -155,7 +155,7 @@ spim_pars_pmcmc_save <- function(p, path) {
 ##' @export
 spim_pars_beta <- function(beta_date) {
   assert_date_string(beta_date)
-  assert_increasing(as.Date(beta_date), name = 'beta_date')
+  assert_increasing(as.Date(beta_date), name = "beta_date")
   beta_date
 }
 
