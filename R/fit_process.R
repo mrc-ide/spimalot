@@ -109,7 +109,7 @@ create_simulate_object <- function(samples, start_date_sim, date) {
     state <- state_full[state_keep, , , idx_dates]
     ## However, we have to push it out
   } else {
-    state_by_age <- extract_age_class_state(state_full[, , , idx_dates])
+    state_by_age <- extract_age_class_state(state_full[, , idx_dates])
 
     ## thin trajectories and reshape to add a regional dimension:
     state <- state_full[state_keep, , idx_dates]
@@ -742,11 +742,11 @@ calculate_cases_region <- function(state, pars_model, date) {
 
   calc_cases <- function(group) {
     cases1 <- state[paste0("sympt_cases_", group, "_inc"), , ]
-    cases1[, grepl("^S", weekdays(x))] <-
-      cases1[, grepl("^S", weekdays(x))] *
+    cases1[, grepl("^S", weekdays(date))] <-
+      cases1[, grepl("^S", weekdays(date))] *
       pars[, paste0("phi_pillar2_cases_weekend_", group)]
-    cases1[, !grepl("^S", weekdays(x))] <-
-      cases1[, !grepl("^S", weekdays(x))] *
+    cases1[, !grepl("^S", weekdays(date))] <-
+      cases1[, !grepl("^S", weekdays(date))] *
       pars[, paste0("phi_pillar2_cases_", group)]
 
     array(cases1, c(1, dim(cases1)))
