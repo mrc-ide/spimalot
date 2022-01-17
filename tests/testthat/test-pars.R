@@ -34,6 +34,27 @@ test_that("spim_pars_load throws useful error messages", {
 })
 
 
+test_that("spim_pars_beta validates correctly", {
+  dates <- c("2020-01-01",
+             "2020-06-27",
+             "2021-01-05",
+             "2022-03-28")
+
+  ## Test with valid dates
+  beta <- spim_pars_beta(dates)
+  expect_equal(beta, dates)
+
+  dates2 <- c(dates, "2019-01-01")
+  expect_error(spim_pars_beta(dates2),
+               "'beta_date' must be strictly increasing")
+
+  dates3 <- c(dates, "15th August 2022")
+  expect_error(spim_pars_beta(dates3),
+               "Expected ISO dates or R dates for 'beta_date' - please convert")
+
+})
+
+
 test_that("filter info by region", {
   dat <- test_dummy_pars_pmcmc(c("a", "b", "c"))
   info <- spim_pars_info("london", dat$info)

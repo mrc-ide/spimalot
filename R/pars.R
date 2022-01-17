@@ -146,6 +146,20 @@ spim_pars_pmcmc_save <- function(p, path) {
 }
 
 
+##' Validate vector of beta dates
+##'
+##' @title Validate vector of beta dates
+##'
+##' @param beta_date Vector of beta dates
+##'
+##' @export
+spim_pars_beta <- function(beta_date) {
+  assert_date_string(beta_date)
+  assert_increasing(as.Date(beta_date), name = 'beta_date')
+  beta_date
+}
+
+
 spim_pars_info <- function(region, info) {
   assert_has_names(info, c("region", "include",
                            "name", "initial", "max", "discrete"))
