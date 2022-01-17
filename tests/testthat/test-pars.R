@@ -34,22 +34,22 @@ test_that("spim_pars_load throws useful error messages", {
 })
 
 
-test_that("spim_pars_beta validates correctly", {
+test_that("spim_pars_check_beta_date validates correctly", {
   dates <- c("2020-01-01",
              "2020-06-27",
              "2021-01-05",
              "2022-03-28")
 
   ## Test with valid dates
-  beta <- spim_pars_beta(dates)
+  beta <- spim_pars_check_beta_date(dates)
   expect_equal(beta, dates)
 
   dates2 <- c(dates, "2019-01-01")
-  expect_error(spim_pars_beta(dates2),
+  expect_error(spim_pars_check_beta_date(dates2),
                "'beta_date' must be strictly increasing")
 
   dates3 <- c(dates, "15th August 2022")
-  expect_error(spim_pars_beta(dates3),
+  expect_error(spim_pars_check_beta_date(dates3),
                "Expected ISO dates or R dates for 'beta_date' - please convert")
 
 })
