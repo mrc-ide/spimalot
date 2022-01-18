@@ -3,7 +3,7 @@ test_that("spim_pars_load throws useful error messages", {
   path <- tempfile()
   expect_error(
     spim_pars_pmcmc_load(path),
-    sprintf("File '.+' does not exist", path))
+    sprintf("File '.+' does not exist"))
 
   dir.create(path, FALSE, TRUE)
   expect_error(
@@ -57,29 +57,29 @@ test_that("spim_pars_check_beta_date validates correctly", {
 
 test_that("filter info by region", {
   dat <- test_dummy_pars_pmcmc(c("a", "b", "c"))
-  info <- spim_pars_info("london", dat$info)
+  info <- spim_pars_info_single("london", dat$info)
   expect_equal(nrow(info), 3)
   expect_setequal(names(info), c("name", "initial", "min", "max", "discrete"))
   expect_error(
-    spim_pars_info("islington", dat$info),
+    spim_pars_info_single("islington", dat$info),
     "Did not find region 'islington' in parameter info")
   expect_error(
-    spim_pars_info("london", dat$info[-3]),
+    spim_pars_info_single("london", dat$info[-3]),
     "Required names missing from 'info'")
 })
 
 
 test_that("filter prior by region", {
   dat <- test_dummy_pars_pmcmc(c("a", "b", "c"))
-  info <- spim_pars_info("london", dat$info)
-  prior <- spim_pars_prior("london", info, dat$prior)
+  info <- spim_pars_info_single("london", dat$info)
+  prior <- spim_pars_prior_single("london", info, dat$prior)
   expect_equal(nrow(prior), 3)
   expect_setequal(
     names(prior),
     c("type", "name", "gamma_scale", "gamma_shape", "beta_shape1",
       "beta_shape2"))
   expect_error(
-    spim_pars_prior("london", info, dat$prior[dat$prior$name != "b", ]),
+    spim_pars_prior_single("london", info, dat$prior[dat$prior$name != "b", ]),
     "'prior$name' and 'info$name' are not setequal",
     fixed = TRUE)
 })
@@ -87,9 +87,9 @@ test_that("filter prior by region", {
 
 test_that("filter proposal by region", {
   dat <- test_dummy_pars_pmcmc(c("a", "b", "c"))
-  info <- spim_pars_info("london", dat$info)
-  proposal <- spim_pars_proposal("london", info, dat$proposal, 1)
-  expect_equal(spim_pars_proposal("london", info, dat$proposal, 2),
+  info <- spim_pars_info_single("london", dat$info)
+  proposal <- spim_pars_proposal_single("london", info, dat$proposal, 1)
+  expect_equal(spim_pars_proposal_single("london", info, dat$proposal, 2),
                proposal * 2)
 
   expect_equal(nrow(proposal), 3)
@@ -98,12 +98,12 @@ test_that("filter proposal by region", {
   expect_equal(rownames(proposal), colnames(proposal))
 
   expect_error(
-    spim_pars_proposal("london", info,
+    spim_pars_proposal_single("london", info,
                        dat$proposal[dat$proposal$name != "b", ]),
     "'proposal$name' and 'info$name' are not setequal",
     fixed = TRUE)
   expect_error(
-    spim_pars_proposal("london", info,
+    spim_pars_proposal_single("london", info,
                        dat$proposal[names(dat$proposal) != "b"]),
     "are not setequal",
     fixed = TRUE)
