@@ -17,6 +17,11 @@
 ##' @export
 spim_mtp_summary_to_template <- function(summary_tidy, date, run_grid,
                                          combined, spim_state_names) {
+  ## For R CMD check
+  state <- group <- region <- value <- scenario <- vaccine_daily_doses <- NULL
+  analysis <- beta_step <- booster_daily_doses <- NULL
+  `ValueType` <- `Quantile 0.5` <- NULL
+
   stopifnot(nrow(run_grid) == 1)
 
   pop <- spim_mtp_population(combined)
@@ -40,17 +45,18 @@ spim_mtp_summary_to_template <- function(summary_tidy, date, run_grid,
     dplyr::filter(state %in% names(spim_state_names),
                   date >= !!date,
                   group == "all") %>%
-    dplyr::mutate("Day of Value" = lubridate::day(date),
-                  "Month of Value" = lubridate::month(date),
-                  "Year of Value" = lubridate::year(date),
-                  AgeBand = "All",
-                  Geography = regions[as.character(region)],
-                  ValueType = spim_state_names[as.character(state)],
-                  quantile = as.numeric(gsub("%", "", quantile)) / 100,
-                  value = if_else(state == "react_pos",
-                                  value / pop[as.character(region)] * 100,
-                                  value),
-                  .after = "Creation Year") %>%
+    dplyr::mutate(
+      "Day of Value" = lubridate::day(date),
+      "Month of Value" = lubridate::month(date),
+      "Year of Value" = lubridate::year(date),
+      AgeBand = "All",
+      Geography = regions[as.character(region)],
+      ValueType = spim_state_names[as.character(state)],
+      quantile = as.numeric(gsub("%", "", quantile)) / 100,
+      value = dplyr::if_else(state == "react_pos",
+                             value / pop[as.character(region)] * 100,
+                             value),
+      .after = "Creation Year") %>%
     dplyr::select(-c(scenario, vaccine_daily_doses, analysis,
                      date, state, region, group, beta_step,
                      booster_daily_doses, vaccine_status)) %>%

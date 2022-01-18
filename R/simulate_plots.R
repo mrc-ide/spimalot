@@ -383,7 +383,7 @@ spim_calculate_doses <- function(summary, population_england, scen) {
     dplyr::mutate(state_total_dose_inc = state_first_dose_inc +
                     state_second_dose_inc +
                     state_booster_dose_inc) %>%
-    tidyr::pivot_longer(starts_with("state_"), names_to = "state") %>%
+    tidyr::pivot_longer(dplyr::starts_with("state_"), names_to = "state") %>%
     tidyr::pivot_wider(names_from = group, names_prefix = "group_") %>%
     dplyr::mutate(group_total = rowSums(dplyr::across(starts_with("group")),
                                         na.rm = TRUE)) %>%
