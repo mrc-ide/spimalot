@@ -1503,7 +1503,7 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
     }
   } else {
     if (what != "deaths_hosp") {
-      stop(message(paste_0("Cannot plot ", what, " by age")))
+      stop(message(paste0("Cannot plot ", what, " by age")))
     }
     res <- trajectories$state[paste0("deaths_hosp_", age_band, "_inc"), , -1L]
     labs[what] <- paste(labs[what], gsub("_", " to ", age_band))
