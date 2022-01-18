@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.6.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.6.4</span>
       </span>
     </div>
 
@@ -59,6 +59,7 @@
   n_mcmc <span class="op">=</span> <span class="fl">1500</span>,
   burnin <span class="op">=</span> <span class="fl">500</span>,
   workers <span class="op">=</span> <span class="cn">TRUE</span>,
+  n_sample <span class="op">=</span> <span class="fl">1000</span>,
   n_threads <span class="op">=</span> <span class="cn">NULL</span>
 <span class="op">)</span></code></pre></div>
     </div>
@@ -89,6 +90,9 @@ PMCMC if <code>short_run = FALSE</code></p></dd>
 <dd><p>Logical, indicating if we should enable workers. If
 <code>TRUE</code>, then a number of workers between 1 and 4 will be used
 depending on <code>n_chains</code> and the detected number of cores.</p></dd>
+<dt>n_sample</dt>
+<dd><p>number of steps to retain (across all chains) if
+<code>short_run = FALSE</code></p></dd>
 <dt>n_threads</dt>
 <dd><p>Explicit number of threads, overriding detection
 by <a href="spim_control_cores.html">spim_control_cores</a></p></dd>

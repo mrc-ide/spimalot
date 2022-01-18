@@ -37,6 +37,9 @@
     <loc>/reference/spim_check_model_type.html</loc>
   </url>
   <url>
+    <loc>/reference/spim_check_region.html</loc>
+  </url>
+  <url>
     <loc>/reference/spim_check_sircovid_model.html</loc>
   </url>
   <url>
@@ -76,9 +79,6 @@
     <loc>/reference/spim_fit_process.html</loc>
   </url>
   <url>
-    <loc>/reference/spim_fit_process_data.html</loc>
-  </url>
-  <url>
     <loc>/reference/spim_fit_run.html</loc>
   </url>
   <url>
@@ -92,9 +92,6 @@
   </url>
   <url>
     <loc>/reference/spim_multivariant_rt_plot.html</loc>
-  </url>
-  <url>
-    <loc>/reference/spim_pars.html</loc>
   </url>
   <url>
     <loc>/reference/spim_pars_check_beta_date.html</loc>
