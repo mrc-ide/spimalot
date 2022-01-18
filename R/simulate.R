@@ -1282,42 +1282,6 @@ simulate_extract_age_class_state <- function(state, index) {
 }
 
 
-##' Create expanded run grid for simulation
-##'
-##' @title Create expanded run grid
-##'
-##' @param ... named variables to expand over, should be in
-##'  `simulation_central_analysis`, omitted variables will take central value
-##' @param full_run If `TRUE` saves trajectories for expanded scenarios, this
-##'   should very rarely be `TRUE`, change default with care as this will lead
-##'   to massive objects
-##' @param prefix prefix for analysis name, prefixes row number
-##'
-##' @return A grid of scenarios to run
-##' @export
-spim_expand_grid <- function(..., full_run = FALSE, prefix = "Grid_") {
-
-  central <- simulation_central_analysis(full_run)
-
-  actual <- names(list(...))
-  expected <- setdiff(colnames(central), c("RUN", "full_run"))
-  mtc <- is.na(match(actual, expected))
-  if (any(mtc)) {
-    stop(sprintf("Unexpected variables(s) %s", str_collapse(actual[mtc])))
-  }
-
-  tidyr::expand_grid(
-    RUN = TRUE,
-    full_run,
-    ...
-  ) %>%
-    ## adds central for missing variables
-    tidyr::expand_grid(dplyr::select(central, -names(.)), .) %>%
-    ## add analysis name
-    dplyr::mutate(analysis = paste0(prefix, seq_rows(.)))
-}
-
-
 ##' Create grid of scenarios to run for simulation
 ##'
 ##' @title Create scenario run grid
