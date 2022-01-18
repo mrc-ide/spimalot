@@ -8,6 +8,7 @@ spim_control(
   short_run,
   n_chains,
   deterministic = FALSE,
+  multiregion = FALSE,
   date_restart = NULL,
   n_particles = 192,
   n_mcmc = 1500,
@@ -25,6 +26,10 @@ will use freer particles, mcmc steps and a small sample}
 
 \item{deterministic}{Logical, indicating if the model to fit to
 data is run deterministically or stochastically}
+
+\item{multiregion}{Logical, indicating if we are fitting multiple
+regions at once (in which case even the deterministic model may
+benefit from multithreading).}
 
 \item{date_restart}{Optionally, dates save restart data in the
 pmcmc (see \link[mcstate:pmcmc]{mcstate::pmcmc}}
