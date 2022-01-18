@@ -38,13 +38,15 @@
 ##' @param n_threads Explicit number of threads, overriding detection
 ##'   by [spim_control_cores]
 ##'
+##' @param mcmc_path Path to store the mcmc results in
+##'
 ##' @return A list of options
 ##' @export
 spim_control <- function(short_run, n_chains, deterministic = FALSE,
                          multiregion = FALSE, date_restart = NULL,
                          n_particles = 192, n_mcmc = 1500, burnin = 500,
                          workers = TRUE, n_sample = 1000,
-                         n_threads = NULL) {
+                         n_threads = NULL, mcmc_path = NULL) {
   if (short_run) {
     n_particles <- min(10, n_particles)
     n_mcmc <- min(20, n_mcmc)
@@ -76,7 +78,8 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                                   rerun_random = TRUE,
                                   filter_early_exit = !deterministic,
                                   n_burnin = burnin,
-                                  n_steps_retain = n_steps_retain)
+                                  n_steps_retain = n_steps_retain,
+                                  path = mcmc_path)
 
   particle_filter <- list(n_particles = n_particles,
                           n_threads = parallel$n_threads_total,

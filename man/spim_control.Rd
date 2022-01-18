@@ -15,7 +15,8 @@ spim_control(
   burnin = 500,
   workers = TRUE,
   n_sample = 1000,
-  n_threads = NULL
+  n_threads = NULL,
+  mcmc_path = NULL
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ depending on \code{n_chains} and the detected number of cores.}
 
 \item{n_threads}{Explicit number of threads, overriding detection
 by \link{spim_control_cores}}
+
+\item{mcmc_path}{Path to store the mcmc results in}
 }
 \value{
 A list of options

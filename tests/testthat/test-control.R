@@ -136,3 +136,9 @@ test_that("parallel control", {
     spim_control_parallel(8, FALSE, 10, TRUE, TRUE, FALSE),
     list(n_threads_total = 10, n_workers = 1))
 })
+
+
+test_that("save path into control", {
+  ctl <- spim_control(TRUE, 4, mcmc_path = "mcmc")
+  expect_equal(ctl$mcmc$path, "mcmc")
+})
