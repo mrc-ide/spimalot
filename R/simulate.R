@@ -1397,6 +1397,9 @@ spim_simulation_predictors <- function(summary) {
 ##' @export
 spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
                              reg = "england", wide = FALSE) {
+  state <- region <- analysis <- scenario <- r <- NULL
+  `50%` <- `2.5%` <- `97.5%` <- NULL
+
   ## generation time distribution from STM paper
   ## https://dx.doi.org/10.1126/scitranslmed.abg4262
   if (is.null(scenarios)) {
