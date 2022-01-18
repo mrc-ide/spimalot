@@ -391,9 +391,10 @@ spim_calculate_doses <- function(summary, population_england, scen) {
                     state_booster_dose_inc) %>%
     tidyr::pivot_longer(dplyr::starts_with("state_"), names_to = "state") %>%
     tidyr::pivot_wider(names_from = group, names_prefix = "group_") %>%
-    dplyr::mutate(group_total = rowSums(dplyr::across(starts_with("group")),
-                                        na.rm = TRUE)) %>%
-    tidyr::pivot_longer(starts_with("group_"), names_to = "group")
+    dplyr::mutate(
+      group_total = rowSums(dplyr::across(dplyr::starts_with("group")),
+                            na.rm = TRUE)) %>%
+    tidyr::pivot_longer(dplyr::starts_with("group_"), names_to = "group")
 
   pop_df <- data.frame(group = unique(doses_g$group),
                         pop = c(population_england,
@@ -412,7 +413,7 @@ spim_calculate_doses <- function(summary, population_england, scen) {
 #' @export
 #' @import ggplot2
 spim_plot_check_doses <- function(doses) {
-  value <- group <- NULL
+  value <- group <- state <- analysis <- NULL
   doses %>%
     ggplot(aes(x = date, y = value, colour = group)) +
     theme_bw() +

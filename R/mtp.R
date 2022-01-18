@@ -19,7 +19,7 @@ spim_mtp_summary_to_template <- function(summary_tidy, date, run_grid,
                                          combined, spim_state_names) {
   ## For R CMD check
   state <- group <- region <- value <- scenario <- vaccine_daily_doses <- NULL
-  analysis <- beta_step <- booster_daily_doses <- NULL
+  analysis <- beta_step <- booster_daily_doses <- vaccine_status <- NULL
   `ValueType` <- `Quantile 0.5` <- NULL
 
   stopifnot(nrow(run_grid) == 1)
@@ -108,6 +108,8 @@ spim_mtp_population <- function(combined) {
 ##'
 ##' @export
 spim_mtp_age_vaccine_outputs <- function(res, region = "england") {
+  group <- state <- scenario <- value <- age <- vaccine_status <- n <- NULL
+  `.` <- percentage <- plot_annotation <- NULL
 
   ## Objects for saving list of plots and matrices
   scenario_plots <- NULL

@@ -69,6 +69,11 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
                                       region = "england",
                                       rt_type = "eff_Rt_general",
                                       manuscript = FALSE) {
+  label <- label_y <- dates <- `.` <- NULL
+  rt_weighted <- lb_weighted <- ub_weighted <- NULL
+  rt_variant <- lb_variant <- ub_variant <- NULL
+  rt_non_variant <- lb_non_variant <- ub_non_variant <- NULL
+
   # Get relevant betas to current date and filter out school holidays
   betas <- data.frame(
     dates = sircovid::sircovid_date_as_date(
