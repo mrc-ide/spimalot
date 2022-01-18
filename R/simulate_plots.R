@@ -370,6 +370,12 @@ spim_plot_check_state_by_age <- function(summary_agestate, ana, scen) {
 #' @param scen Scenario to check, usually central
 #' @export
 spim_calculate_doses <- function(summary, population_england, scen) {
+  ## Declare variables in scope so that R CMD check does not warn us
+  region <- scenario <- state <- group <- value <- pop <- NULL
+  state_first_dose_inc <- NULL
+  state_second_dose_inc <- NULL
+  state_booster_dose_inc <- NULL
+
   doses_g <- summary$n_doses %>%
     dplyr::filter(region == "england",
                   scenario == scen) %>%
@@ -398,7 +404,9 @@ spim_calculate_doses <- function(summary, population_england, scen) {
 #' @title Check doses given out from simulation
 #' @param doses Output from [spim_calculate_doses]
 #' @export
+#' @import ggplot2
 spim_plot_check_doses <- function(doses) {
+  value <- group <- NULL
   doses %>%
     ggplot(aes(x = date, y = value, colour = group)) +
     theme_bw() +
