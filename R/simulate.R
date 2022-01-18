@@ -1765,62 +1765,6 @@ spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
 }
 
 
-#' Create a scenario for Rt schedule
-#'
-#' @title Create Rt schedule scenario
-#' @param sched A data frame with school closure schedule. Expect
-#' columns: nation; year; month; day; schools ('open' if open on that day
-#' otherwise 'closed')
-#' @param region Region to filter csv by
-#' @param scenario Name of scenario to create
-#' @param schedule data.frame with columns: date (date of npi change),
-#' npi (name of corresponding npi in npi_key), nation
-#'
-#' @export
-spim_create_rt_scenario <- function(sched, region, scenario, schedule) {
-  sched <- sched %>%
-    dplyr::filter(nation %in% region) %>%
-    dplyr::mutate(date = as.Date(sprintf("%s-%s-%s", year, month, day))) %>%
-    dplyr::arrange(date)
-
-  start <- min(sched$date)
-  end <- max(sched$date)
-
-  if (region %in% sircovid::regions("england")) {
-    nation <- "england"
-  } else {
-    nation <- region
-  }
-  ## create data.frame of all dates
-  out <- data.frame(nation = nation,
-                    scenario_key = scenario,
-                    date = seq.int(start, end, 1),
-                    schools = NA,
-                    npi = NA)
-  ## fill schools
-  for (i in seq(nrow(sched))) {
-    out[seq(which(out$date %in% sched[i, "date"]), nrow(out)), "schools"] <-
-      sched[i, "schools"]
-  }
-
-  ## fill npi
-  schedule$date <- as.Date(schedule$date)
-  for (i in seq(nrow(schedule))) {
-    mtc <- match(schedule[i, "date"], out$date, 1)
-    out[seq(mtc, nrow(out)), "npi"] <- schedule[i, "npi"]
-  }
-
-  out <- out %>%
-    dplyr::mutate(npi = sprintf("%s_schools_%s", npi, schools)) %>%
-    dplyr::select(-schools)
-
-  ## de-duplicate
-  i <- 2:nrow(out)
-  j <- seq(nrow(out) - 1)
-  out[c(TRUE, rowSums(out[i, c(1, 2, 4)] == out[j, c(1, 2, 4)]) < 3), ]
-}
-
-
 #' Calculate when all second doses given out
 #'
 #' @title Calculate final doses date
