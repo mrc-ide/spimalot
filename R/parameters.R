@@ -42,28 +42,72 @@
 ##' @return A list.
 ##' @export
 spim_fit_pars_load <- function(path, region, assumptions, kernel_scaling) {
-  parameters <- spimalot::spim_pars_pmcmc_load(path)
+  if (length(region) == 1) {
+    spim_fit_pars_load_single(path, region, assumptions, kernel_scaling)
+  } else {
+    spim_fit_pars_load_nested(path, region, assumptions, kernel_scaling)
+  }
+}
 
-  info <- spim_pars_info(region, parameters$info)
-  prior <- spim_pars_prior(region, info, parameters$prior)
-  proposal <- spim_pars_proposal(region, info, parameters$proposal,
-                                 kernel_scaling)
-  transform <- load_transform(path, region, assumptions)
-  mcmc <- spim_pars_mcmc(info, prior, proposal, transform$transform)
+
+spim_fit_pars_load_single <- function(path, region, assumptions,
+                                      kernel_scaling) {
+  parameters <- spimalot::spim_pars_pmcmc_load(path)
+  info <- spim_pars_info_single(region, parameters$info)
+  prior <- spim_pars_prior_single(region, info, parameters$prior)
+  proposal <- spim_pars_proposal_single(region, info, parameters$proposal,
+                                        kernel_scaling)
+
+  dat <- load_transform(path, region, assumptions)
+  base <- dat$base
+  transform <- dat$transform
+
+  mcmc <- spim_pars_mcmc_single(info, prior, proposal, transform)
 
   list(region = region,
        assumptions = assumptions,
        info = info,
        prior = prior,
        proposal = proposal,
-       transform = transform$transform,
+       transform = transform,
        raw = parameters,
-       base = transform$base,
+       base = base,
        mcmc = mcmc)
 }
 
 
+spim_fit_pars_load_nested <- function(path, region, assumptions,
+                                      kernel_scaling) {
+  parameters <- spimalot::spim_pars_pmcmc_load(path)
+  info <- spim_pars_info_nested(region, parameters$info)
+  prior <- spim_pars_prior_nested(region, info, parameters$prior)
+  proposal <- spim_pars_proposal_nested(region, info, parameters$proposal,
+                                        kernel_scaling)
+
+  dat <- lapply(region, function(r) load_transform(path, r, assumptions))
+  names(dat) <- region
+  base <- lapply(dat, "[[", "base")
+  transform <- lapply(dat, "[[", "transform")
+
+  mcmc <- spim_pars_mcmc_nested(info, prior, proposal, transform)
+
+  ret <- list(region = region,
+              assumptions = assumptions,
+              info = info,
+              prior = prior,
+              proposal = proposal,
+              transform = transform,
+              raw = parameters,
+              base = base,
+              mcmc = mcmc)
+  ret
+}
+
+
 load_transform <- function(path, region, assumptions) {
+  assert_file_exists("transform.R", path)
+  assert_file_exists("base.rds", path)
+
   e <- new.env()
   sys.source(file.path(path, "transform.R"), e)
   stopifnot(is.function(e$make_transform),

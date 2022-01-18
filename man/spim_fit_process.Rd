@@ -12,8 +12,7 @@ spim_fit_process(samples, parameters, data)
 \item{parameters}{The parameter specification
 (\link{spim_pars_pmcmc_load})}
 
-\item{data}{Data sets used in fitting, via
-\link{spim_fit_process_data}}
+\item{data}{Data sets used in fitting}
 }
 \description{
 Process fit data for \code{lancelot} model
