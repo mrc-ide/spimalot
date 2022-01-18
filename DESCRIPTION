@@ -66,7 +66,7 @@ Imports:
     khroma,
     lubridate,
     matrixStats,
-    mcstate (>= 0.8.2),
+    mcstate (>= 0.8.3),
     patchwork,
     readxl,
     reshape2,
@@ -85,7 +85,7 @@ Suggests:
     withr
 Remotes:
     mrc-ide/dust,
-    mrc-ide/mcstate,
+    mrc-ide/mcstate@i179-chains-path,
     mrc-ide/rrq,
     mrc-ide/sircovid
 Config/testthat/edition: 3
