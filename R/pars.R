@@ -299,7 +299,7 @@ spim_pars_mcmc_single <- function(info, prior, proposal, transform) {
     min = info$min,
     max = info$max,
     discrete = info$discrete,
-    prior = lapply(split(prior, prior$name), spimalot:::make_prior))
+    prior = lapply(split(prior, prior$name), make_prior))
 
   ret <- mcstate::pmcmc_parameters$new(pars_mcmc, proposal, transform)
 
@@ -312,7 +312,7 @@ spim_pars_mcmc_single <- function(info, prior, proposal, transform) {
 
 spim_pars_mcmc_nested <- function(info, prior, proposal, transform) {
   prior_fixed <- lapply(split(prior$fixed, prior$fixed$name),
-                        spimalot:::make_prior)
+                        make_prior)
   pars_fixed <- Map(
     mcstate::pmcmc_parameter,
     name = info$fixed$name,
@@ -326,7 +326,7 @@ spim_pars_mcmc_nested <- function(info, prior, proposal, transform) {
   ## don't really care.  The current approach is clearly pretty messed
   ## here.
   prior_varied <- lapply(prior$varied, function(x)
-    lapply(x, spimalot:::make_prior))
+    lapply(x, make_prior))
   regions <- info$varied[[1]]$region
   pars_varied <- lapply(names(info$varied), function(i)
     mcstate::pmcmc_varied_parameter(
