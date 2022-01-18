@@ -122,6 +122,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
             "n_symp_delta_variant", "n_symp_non_delta_variant",
             "n_symp_omicron_variant", "n_symp_non_omicron_variant",
             # Other VOC data
+            "n_alpha_pred", "n_non_alpha_pred",
             "n_alpha_variant", "n_non_alpha_variant",
             "n_delta_variant", "n_non_delta_variant",
             "n_omicron_variant", "n_non_omicron_variant", "s_positive_adj1",
@@ -235,15 +236,13 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     data$strain_tot <- data$n_alpha_variant + data$n_non_alpha_variant
   } else {
     # Ignore SGTF-neg before the date of the first VAM-reported Alpha sample
-    alpha_ignore <- min(which(!is.na(
-      data$n_symp_alpha_variant /
-        (data$n_symp_alpha_variant + data$n_symp_non_alpha_variant))))
-    date_alpha_ignore <- data$date < data$date[alpha_ignore]
-    data$s_negative_adj1[date_alpha_ignore] <- NA_integer_
-    data$s_positive_adj1[date_alpha_ignore] <- NA_integer_
-
-    data$strain_non_variant <- data$s_positive_adj1
-    data$strain_tot <- data$s_negative_adj1 + data$s_positive_adj1
+    # alpha_ignore <- min(which(!is.na(data$n_symp_alpha_variant)))
+    # date_alpha_ignore <- data$date < data$date[alpha_ignore]
+    # data$s_negative_adj1[date_alpha_ignore] <- NA_integer_
+    # data$s_positive_adj1[date_alpha_ignore] <- NA_integer_
+    # browser()
+    data$strain_non_variant <- data$n_non_alpha_pred
+    data$strain_tot <- data$n_alpha_pred + data$n_non_alpha_pred
   }
 
   # Only use Wildtype/Alpha data between 2020-08-10 and 2021-03-01
