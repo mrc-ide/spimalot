@@ -1295,6 +1295,7 @@ simulate_extract_age_class_state <- function(state, index) {
 ##'
 ##' @export
 spim_simulation_shaps <- function(summary, feats = NULL) {
+  state <- `50%` <- NULL
 
   if (is.null(feats)) {
     feats <- spim_simulation_predictors(summary)
@@ -1458,6 +1459,8 @@ spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
 #'
 #' @export
 spim_simulate_complete_doses <- function(summary) {
+  state <- region <- across <- value <- group <- analysis <- scenario <- NULL
+
   summary$n_doses %>%
     dplyr::filter(state == "second_dose_inc",
                   region == "england") %>%
@@ -1467,76 +1470,4 @@ spim_simulate_complete_doses <- function(summary) {
     dplyr::filter(date == min(date)) %>%
     dplyr::ungroup() %>%
     dplyr::select(analysis, scenario, date, mean)
-}
-
-
-#' Save NPI key with quantiles, mean, and standard deviation
-#' @title Save NPI key
-#' @param npi_key Output from [spim_prepare_npi_key]
-#' @param filename File to save NPI key to
-#' @export
-spim_write_npi_key <- function(npi_key, filename) {
-  unique(npi_key$nation) %>%
-    lapply(function(i) {
-      key <- npi_key %>%
-        dplyr::filter(nation == i) %>%
-        dplyr::select(-nation)
-
-      npi_pars <- mapply(function(mean, sd) {
-        dist <- distr6::dstr("Lognormal", mean = mean, sd = sd)
-        unlist(c(q2.5 = dist$quantile(0.025),
-                 q97.5 = dist$quantile(0.975),
-                 meanlog = dist$parameters("meanlog")$value,
-                 sdlog = dist$parameters("sdlog")$value))
-      }, mean = key$Rt, sd = key$Rt_sd)
-      npi_pars <- cbind(key, signif(t(npi_pars), 3))
-      npi_pars$region <- i
-      npi_pars
-    }) %>%
-    dplyr::bind_rows() %>%
-    write.csv(filename, row.names = FALSE)
-}
-
-
-#' Write first and second dose uptake at a given date
-#' @title Save dose uptake at a given date
-#' @param report_date Date to calculate uptake
-#' @param doses Output from [spim_calculate_doses]
-#' @param filename File to save uptake to
-#' @export
-spim_write_uptake <- function(report_date, doses, filename) {
-  doses %>%
-    dplyr::filter(state %in% c("state_first_dose", "state_second_dose"),
-                  date == report_date) %>%
-    dplyr::select(group, state, analysis, prop) %>%
-    arrange(state, analysis, group, prop) %>%
-    write.csv(filename, row.names = FALSE)
-}
-
-
-#' Get variables used in simulation tasks
-#' @title Get simulation variables
-#' @export
-spim_simulation_vars <- function() {
-  c(
-    "seasonality",
-    "rt_future",
-    "vaccine_daily_doses",
-    "vaccine_booster_daily_doses",
-    "vaccine_efficacy",
-    "vaccine_booster_efficacy",
-    "vaccine_booster_eligibility",
-    "vaccine_eligibility",
-    "vaccine_uptake",
-    "vaccine_lag_groups",
-    "vaccine_lag_days",
-    "strain_transmission",
-    "strain_seed_rate",
-    "strain_vaccine_efficacy",
-    "strain_initial_proportion",
-    "strain_vaccine_booster_efficacy",
-    "strain_cross_immunity",
-    "strain_severity_modifier",
-    "waning_rate"
-  )
 }
