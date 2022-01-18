@@ -139,6 +139,6 @@ test_that("parallel control", {
 
 
 test_that("save path into control", {
-  ctl <- spim_control(TRUE, 4, mcmc_path = "mcmc")
-  expect_equal(ctl$mcmc$path, "mcmc")
+  suppressMessages(ctl <- spim_control(TRUE, 4, mcmc_path = "mcmc"))
+  expect_equal(ctl$pmcmc$path, "mcmc")
 })
