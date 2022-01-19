@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.6.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.6.5</span>
       </span>
     </div>
 
@@ -54,13 +54,15 @@
   <span class="va">short_run</span>,
   <span class="va">n_chains</span>,
   deterministic <span class="op">=</span> <span class="cn">FALSE</span>,
+  multiregion <span class="op">=</span> <span class="cn">FALSE</span>,
   date_restart <span class="op">=</span> <span class="cn">NULL</span>,
   n_particles <span class="op">=</span> <span class="fl">192</span>,
   n_mcmc <span class="op">=</span> <span class="fl">1500</span>,
   burnin <span class="op">=</span> <span class="fl">500</span>,
   workers <span class="op">=</span> <span class="cn">TRUE</span>,
   n_sample <span class="op">=</span> <span class="fl">1000</span>,
-  n_threads <span class="op">=</span> <span class="cn">NULL</span>
+  n_threads <span class="op">=</span> <span class="cn">NULL</span>,
+  mcmc_path <span class="op">=</span> <span class="cn">NULL</span>
 <span class="op">)</span></code></pre></div>
     </div>
 
@@ -74,6 +76,10 @@ will use freer particles, mcmc steps and a small sample</p></dd>
 <dt>deterministic</dt>
 <dd><p>Logical, indicating if the model to fit to
 data is run deterministically or stochastically</p></dd>
+<dt>multiregion</dt>
+<dd><p>Logical, indicating if we are fitting multiple
+regions at once (in which case even the deterministic model may
+benefit from multithreading).</p></dd>
 <dt>date_restart</dt>
 <dd><p>Optionally, dates save restart data in the
 pmcmc (see <a href="https://rdrr.io/pkg/mcstate/man/pmcmc.html" class="external-link">mcstate::pmcmc</a></p></dd>
@@ -96,6 +102,8 @@ depending on <code>n_chains</code> and the detected number of cores.</p></dd>
 <dt>n_threads</dt>
 <dd><p>Explicit number of threads, overriding detection
 by <a href="spim_control_cores.html">spim_control_cores</a></p></dd>
+<dt>mcmc_path</dt>
+<dd><p>Path to store the mcmc results in</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>
