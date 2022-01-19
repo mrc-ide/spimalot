@@ -85,7 +85,7 @@ Suggests:
     withr
 Remotes:
     mrc-ide/dust,
-    mrc-ide/mcstate@i179-chains-path,
+    mrc-ide/mcstate,
     mrc-ide/rrq,
     mrc-ide/sircovid
 Config/testthat/edition: 3
