@@ -264,7 +264,6 @@ reduce_trajectories <- function(samples) {
   samples
 }
 
-
 trajectories_filter_time <- function(trajectories, i) {
   trajectories$step <- trajectories$step[i]
   trajectories$date <- trajectories$date[i]
