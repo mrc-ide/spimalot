@@ -82,6 +82,7 @@ spim_plot_seasonality <- function(peak_date = as.Date("2020-02-15"),
 ##'
 ##' @export
 spim_plot_voc_range <- function(R1, R1_sd, epsilon_range, epsilon_central) {
+  NPI <- central <- variant <- NULL
 
     R1_range <- as.list(
         distr6::dstrs(
@@ -243,6 +244,7 @@ spim_prepare_aggregated_data <- function(path) {
 ##' @export
 spim_plot_check_rt <- function(summary_state, dates, combined_state = NULL,
                               Rt_state = "eff_Rt_general_both") {
+  region <- state <- scenario <- analysis <- `50%` <- NULL
 
   summary_state <- summary_state %>%
     dplyr::filter(region == "england",
@@ -293,6 +295,7 @@ spim_plot_check_rt <- function(summary_state, dates, combined_state = NULL,
 ##' @param combined_state Optional state from combined object
 ##' @export
 spim_plot_check_state <- function(summary_state, combined_state = NULL) {
+  region <- scenario <- analysis <- state <- group <- `50%` <- NULL
 
   summary_state <- summary_state %>%
     dplyr::filter(region == "england") %>%
@@ -345,6 +348,9 @@ spim_plot_check_state <- function(summary_state, combined_state = NULL) {
 ##' @param scen Scenario to check, usually central
 ##' @export
 spim_plot_check_state_by_age <- function(summary_agestate, ana, scen) {
+  region <- analysis <- scenario <- value <- vaccine_status <- NULL
+  state <- group <- NULL
+
   summary_agestate %>%
     dplyr::filter(
       region == "england",
@@ -370,6 +376,12 @@ spim_plot_check_state_by_age <- function(summary_agestate, ana, scen) {
 #' @param scen Scenario to check, usually central
 #' @export
 spim_calculate_doses <- function(summary, population_england, scen) {
+  ## Declare variables in scope so that R CMD check does not warn us
+  region <- scenario <- state <- group <- value <- pop <- NULL
+  state_first_dose_inc <- NULL
+  state_second_dose_inc <- NULL
+  state_booster_dose_inc <- NULL
+
   doses_g <- summary$n_doses %>%
     dplyr::filter(region == "england",
                   scenario == scen) %>%
@@ -377,11 +389,12 @@ spim_calculate_doses <- function(summary, population_england, scen) {
     dplyr::mutate(state_total_dose_inc = state_first_dose_inc +
                     state_second_dose_inc +
                     state_booster_dose_inc) %>%
-    tidyr::pivot_longer(starts_with("state_"), names_to = "state") %>%
+    tidyr::pivot_longer(dplyr::starts_with("state_"), names_to = "state") %>%
     tidyr::pivot_wider(names_from = group, names_prefix = "group_") %>%
-    dplyr::mutate(group_total = rowSums(dplyr::across(starts_with("group")),
-                                        na.rm = TRUE)) %>%
-    tidyr::pivot_longer(starts_with("group_"), names_to = "group")
+    dplyr::mutate(
+      group_total = rowSums(dplyr::across(dplyr::starts_with("group")),
+                            na.rm = TRUE)) %>%
+    tidyr::pivot_longer(dplyr::starts_with("group_"), names_to = "group")
 
   pop_df <- data.frame(group = unique(doses_g$group),
                         pop = c(population_england,
@@ -398,7 +411,9 @@ spim_calculate_doses <- function(summary, population_england, scen) {
 #' @title Check doses given out from simulation
 #' @param doses Output from [spim_calculate_doses]
 #' @export
+#' @import ggplot2
 spim_plot_check_doses <- function(doses) {
+  value <- group <- state <- analysis <- NULL
   doses %>%
     ggplot(aes(x = date, y = value, colour = group)) +
     theme_bw() +
@@ -415,6 +430,7 @@ spim_plot_check_doses <- function(doses) {
 #' @param doses Output from [spim_calculate_doses]
 #' @export
 spim_plot_check_total_doses <- function(doses) {
+  group <- state <- value <- analysis <- NULL
   doses %>%
     dplyr::filter(group == "group_total",
                   state == "state_total_dose_inc") %>%
@@ -433,6 +449,7 @@ spim_plot_check_total_doses <- function(doses) {
 #' @param doses Output from [spim_calculate_doses]
 #' @export
 spim_plot_check_uptake <- function(doses) {
+  state <- prop <- group <- analysis <- NULL
   doses %>%
     dplyr::filter(!grepl("_inc", state)) %>%
     ggplot(aes(x = date, y = prop, colour = group)) +
@@ -452,6 +469,8 @@ spim_plot_check_uptake <- function(doses) {
 #' @param ana Analysis to plot
 #' @export
 spim_plot_daily_infections <- function(summary_state, ana, scen) {
+  state <- region <- scenario <- analysis <- `50%` <- NULL
+
   summary_state %>%
     dplyr::filter(
       state %in% c("n_strain_1_inc", "n_strain_2_inc", "prop_strain_2"),

@@ -69,6 +69,11 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
                                       region = "england",
                                       rt_type = "eff_Rt_general",
                                       manuscript = FALSE) {
+  label <- label_y <- dates <- `.` <- NULL
+  rt_weighted <- lb_weighted <- ub_weighted <- NULL
+  rt_variant <- lb_variant <- ub_variant <- NULL
+  rt_non_variant <- lb_non_variant <- ub_non_variant <- NULL
+
   # Get relevant betas to current date and filter out school holidays
   betas <- data.frame(
     dates = sircovid::sircovid_date_as_date(
@@ -203,6 +208,7 @@ spim_multivariant_rt_plot <- function(dat, date, last_beta_days_ago = 21,
 ##'
 ##' @export
 spim_plot_seeding_date <- function(dat) {
+  region <- lb <- ub <- NULL
 
   regions <- sircovid::regions("england")
   ylabs <- c("EE", "MID", "LON", "NEY", "NW", "SE", "SW")
@@ -245,6 +251,7 @@ spim_plot_seeding_date <- function(dat) {
 
 
 spim_plot_variant_transmission <- function(dat) {
+  region <- lb <- ub <- NULL
 
   x <- function(x) as.numeric(x)
   y <- function(x) stringr::str_to_title(stringr::str_replace_all(x, "_", " "))
@@ -304,6 +311,9 @@ spim_plot_variant_transmission <- function(dat) {
 ##'
 ##' @export
 spim_plot_voc_proportion <- function(dat, date_restart, region) {
+  ntot <- npos <- dates <- lower <- upper <- n_non_variant <- NULL
+  PointEst <- NULL
+
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
   date <- dat$info$date

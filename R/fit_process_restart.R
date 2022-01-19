@@ -27,7 +27,7 @@ fit_process_restart_priors <- function(values, parameters, nms) {
   prior <- parameters$prior
 
   if (length(dim(values)) == 3) {
-    wrapper <- function(nm, region) {
+    wrapper_multiregion <- function(nm, region) {
       if (is.na(region)) {
         x <- values[, nm, 1]
         prior <- prior[prior$name == nm & is.na(prior$region), ]
@@ -46,13 +46,13 @@ fit_process_restart_priors <- function(values, parameters, nms) {
     nms_fixed <- info$name[is.na(info$region)]
     nms_varied <- setdiff(info$name, nms_fixed)
     region <- last(dimnames(values))
-    prior_fixed <- lapply(nms_fixed, wrapper, NA)
+    prior_fixed <- lapply(nms_fixed, wrapper_multiregion, NA)
     prior_varied <- unlist(lapply(region, function(r)
-      lapply(nms_varied, wrapper, r)),
+      lapply(nms_varied, wrapper_multiregion, r)),
       FALSE, FALSE)
     res <- c(prior_fixed, prior_varied)
   } else {
-    wrapper <- function(nm) {
+    wrapper_single <- function(nm) {
       x <- values[, nm]
       info <- info[info$name == nm, ]
       prior <- prior[prior$name == nm, ]
@@ -61,7 +61,7 @@ fit_process_restart_priors <- function(values, parameters, nms) {
       }
       prior
     }
-    res <- lapply(nms, wrapper)
+    res <- lapply(nms, wrapper_single)
   }
 
   do.call("rbind", res)
