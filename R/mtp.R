@@ -22,8 +22,6 @@ spim_mtp_summary_to_template <- function(summary_tidy, date, run_grid,
   analysis <- beta_step <- booster_daily_doses <- vaccine_status <- NULL
   `ValueType` <- `Quantile 0.5` <- NULL
 
-  stopifnot(nrow(run_grid) == 1)
-
   pop <- spim_mtp_population(combined)
 
   model_type <- combined$info[[1]]$model_type
@@ -39,7 +37,7 @@ spim_mtp_summary_to_template <- function(summary_tidy, date, run_grid,
   summary_tidy$state$spim_name <- summary_tidy$state$scenario
 
   ## create common template columns
-  mtp_template_common("mtp", date, output_str) %>%
+  mtp_template_common(unique(run_grid$scenario), date, output_str) %>%
     ## join to results
     dplyr::left_join(summary_tidy$state, by = c(Scenario = "spim_name")) %>%
     dplyr::filter(state %in% names(spim_state_names),
