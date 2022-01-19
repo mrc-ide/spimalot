@@ -52,16 +52,7 @@
     <loc>/reference/spim_control_cores.html</loc>
   </url>
   <url>
-    <loc>/reference/spim_create_rt_scenario.html</loc>
-  </url>
-  <url>
     <loc>/reference/spim_data.html</loc>
-  </url>
-  <url>
-    <loc>/reference/spim_data_admissions.html</loc>
-  </url>
-  <url>
-    <loc>/reference/spim_expand_grid.html</loc>
   </url>
   <url>
     <loc>/reference/spim_extract_admissions_by_age.html</loc>
@@ -196,12 +187,6 @@
     <loc>/reference/spim_prepare_aggregated_data.html</loc>
   </url>
   <url>
-    <loc>/reference/spim_prepare_npi_key.html</loc>
-  </url>
-  <url>
-    <loc>/reference/spim_prepare_rt_future.html</loc>
-  </url>
-  <url>
     <loc>/reference/spim_prop_infected.html</loc>
   </url>
   <url>
@@ -224,9 +209,6 @@
   </url>
   <url>
     <loc>/reference/spim_rrq_controller.html</loc>
-  </url>
-  <url>
-    <loc>/reference/spim_run_grid.html</loc>
   </url>
   <url>
     <loc>/reference/spim_scenario_cols.html</loc>
@@ -295,19 +277,10 @@
     <loc>/reference/spim_simulation_shaps.html</loc>
   </url>
   <url>
-    <loc>/reference/spim_simulation_vars.html</loc>
-  </url>
-  <url>
     <loc>/reference/spim_summary.html</loc>
   </url>
   <url>
     <loc>/reference/spim_vaccination_data.html</loc>
-  </url>
-  <url>
-    <loc>/reference/spim_write_npi_key.html</loc>
-  </url>
-  <url>
-    <loc>/reference/spim_write_uptake.html</loc>
   </url>
   <url>
     <loc>/reference/tidy_state_one.html</loc>
