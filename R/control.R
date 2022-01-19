@@ -21,6 +21,9 @@
 ##' @param n_mcmc number of steps to be used in PMCMC if
 ##'   `short_run = FALSE`
 ##'
+##' @param n_sample number of steps to retain (across all chains) if
+##'   `short_run = FALSE`
+##'
 ##' @param burnin number of steps out of `n_mcmc` to be used as a burn-in in
 ##'    PMCMC if `short_run = FALSE`
 ##'
@@ -37,7 +40,8 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                          date_restart = NULL,
                          n_particles = 192, n_mcmc = 1500, burnin = 500,
                          forecast_days = 57, workers = TRUE,
-                         n_threads = NULL, rt = FALSE, cum_admit = FALSE,
+                         n_threads = NULL,  n_sample = 1000,
+                         rt = FALSE, cum_admit = FALSE,
                          diagnoses_admitted = FALSE,
                          cum_n_vaccinated = FALSE,
                          cum_infections_disag = FALSE) {
@@ -47,11 +51,6 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
     n_mcmc <- min(20, n_mcmc)
     n_sample <- 10
     burnin <- 1
-  } else {
-    n_particles <- n_particles
-    n_mcmc <- n_mcmc
-    n_sample <- 1000
-    burnin <- burnin
   }
 
   n_steps_retain <- ceiling(n_sample / n_chains)

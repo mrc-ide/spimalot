@@ -13,6 +13,7 @@ spim_control(
   n_mcmc = 1500,
   burnin = 500,
   workers = TRUE,
+  n_sample = 1000,
   n_threads = NULL
 )
 }
@@ -40,6 +41,9 @@ PMCMC if \code{short_run = FALSE}}
 \item{workers}{Logical, indicating if we should enable workers. If
 \code{TRUE}, then a number of workers between 1 and 4 will be used
 depending on \code{n_chains} and the detected number of cores.}
+
+\item{n_sample}{number of steps to retain (across all chains) if
+\code{short_run = FALSE}}
 
 \item{n_threads}{Explicit number of threads, overriding detection
 by \link{spim_control_cores}}

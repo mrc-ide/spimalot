@@ -21,7 +21,7 @@ spim_particle_filter(
 \arguments{
 \item{data}{Data, from \link{spim_data}}
 
-\item{pars}{Parameters, from \link{spim_pars}}
+\item{pars}{Parameters, from \link{spim_fit_pars_load}}
 
 \item{control}{A list of control parameters including
 \code{n_particles}, \code{n_threads} and \code{compiled_compare}, typically the

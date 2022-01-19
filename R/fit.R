@@ -4,7 +4,7 @@
 ##'
 ##' @param data Data, from [spimalot::spim_data]
 ##'
-##' @param pars Parameters, from [spimalot::spim_pars]
+##' @param pars Parameters, from [spimalot::spim_fit_pars_load]
 ##'
 ##' @param control A list of control parameters including
 ##'   `n_particles`, `n_threads` and `compiled_compare`, typically the
@@ -45,9 +45,14 @@ spim_particle_filter <- function(data, pars, control,
                                  deterministic = FALSE,
                                  initial = NULL,
                                  initial_date = 0) {
+  is_nested <- inherits(pars, "pmcmc_parameters_nested")
+
   ## We do need to get the steps per day out regardless.  A lot of
   ## work considering this is always 4!
   p <- pars$model(pars$initial())
+  if (is_nested) {
+    p <- p[[1]]
+  }
   if (inherits(p, "multistage_parameters")) {
     p <- p[[1]]$pars
   }
@@ -58,13 +63,8 @@ spim_particle_filter <- function(data, pars, control,
   ## double-use is done
   sircovid::lancelot_check_data(data)
 
-  if (nlevels(data$region) > 1 && length(unique(data$region)) > 1) {
-    population <- "region"
-  } else {
-    population <- NULL
-  }
-
   ## Then organise into mcstate format:
+  population <- if (is_nested) "region" else NULL
   data <- mcstate::particle_filter_data(data, "date", steps_per_day,
                                         initial_date, population)
 
@@ -77,7 +77,7 @@ spim_particle_filter <- function(data, pars, control,
   } else if (is.matrix(initial)) {
     ## This likely needs a small tweak in mcstate so that the sampling
     ## works as expected.  Probably not very difficult to get right.
-    if (!is.null(population)) {
+    if (is_nested) {
       stop("restart + multiregion filter will need work")
     }
     initial <- mcstate::particle_filter_initial(initial)
@@ -129,33 +129,50 @@ spim_particle_filter <- function(data, pars, control,
 ##' @export
 spim_fit_run <- function(pars, filter, control) {
   message("Running chains - this will take a while!")
-  initial <- replicate(control$n_chains,
-                       pars$mcmc$propose(pars$mcmc$initial(), 1))
+  multiregion <- filter$nested
+  if (multiregion) {
+    initial <- replicate(control$n_chains,
+                         pars$mcmc$propose(pars$mcmc$initial(), "both", 1))
+  } else {
+    initial <- replicate(control$n_chains,
+                         pars$mcmc$propose(pars$mcmc$initial(), 1))
+  }
   ret <- mcstate::pmcmc(pars$mcmc, filter, initial = initial, control = control)
 
   ## Add some additional version information, which will make the
   ## vaccination projection more robust by preventing us mis-aligning
   ## the updated variables. This will propagate through the forecasts
+  if (multiregion) {
+    ## Will the the same over all regions/samples so take the first of
+    ## each
+    data <- pars$mcmc$model(ret$pars[1, , ])[[1]]
+    base <- pars$base[[1]]
+    region <- names(pars$base)
+    pars_names <- list(fixed = pars$mcmc$names("fixed"),
+                       varied = pars$mcmc$names("varied"))
+  } else {
+    data <- pars$mcmc$model(ret$pars[1, ])
+    base <- pars$base
+    region <- base$region
+    pars_names <- pars$mcmc$names()
+  }
 
-  ## Data here is an odin parameter
-  data <- ret$predict$transform(ret$pars[1, ])
-  info <- lapply(data,
-                 function(d) ret$predict$filter$model$new(d$pars, 0, 1)$info())
-
-  ## Just to make the below a bit less cumbersome.
-  base <- pars$base
+  ## this is a loop over epochs now that we always have a multiregion
+  ## parameters
+  info <- lapply(data, function(d)
+    ret$predict$filter$model$new(d$pars, 0, 1)$info())
 
   ret$info <- list(version = packageVersion("sircovid"),
                    info = info,
                    data = data,
-                   ## NOTE: probably we'll change format here soon,
-                   ## but these are the "small" inputs to spim_pars
                    date = base$date,
-                   region = base$region,
+                   multiregion = multiregion,
+                   region = region,
                    beta_date = base$beta_date,
                    epoch_dates = base$epoch_dates,
                    model_type = base$model_type,
-                   restart_date = base$restart_date)
+                   restart_date = base$restart_date,
+                   pars = pars_names)
 
   ret
 }

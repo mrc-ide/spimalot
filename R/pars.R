@@ -1,98 +1,3 @@
-## Our main parameter function is a bit of a beast because there are
-## many many things that go into it. It's not totally obvious that
-## this can be greatly simplified in the interface as these really are
-## separate bits of inputs.
-
-##' Create parameters object for use with [mcstate::pmcmc]. This
-##' function is very data-hungry as it (alongside
-##' [spimalot::spim_data()]) is the main point at which data enters
-##' into the model. Here we end up setting a lot of data that are are
-##' not fitting to, but taking as fixed inputs (vaccination over time)
-##' as well as information on the parameters that the model will vary
-##' (their names, ranges, priors and their proposal distributions).
-##'
-##' @title Create parameters object
-##'
-##' @inheritParams spim_data
-##'
-##' @param multistrain Logical, indicating if the model is a
-##'   "multistrain" model allowing for multiple competing strains.
-##'
-##' @param beta_date A vector of date (strings) for the beta
-##'   parameters. Must align with parameters
-##'
-##' @param vaccination Vaccination data, from
-##'   [spimalot::spim_vaccination_data]
-##'
-##' @param parameters Parameter information, from
-##'   [spimalot::spim_pars_pmcmc_load]
-##'
-##' @param kernel_scaling Kernel scaling factor. Typically a number
-##'   between 0 and 1 for scaling the proposal VCV
-##'
-##' @param cross_immunity Optional vector of cross immunity
-##'   values. Only has an effect if `multistrain` is `TRUE` and then
-##'   must have a length of 2 if given.
-##'
-##' @param waning_rate Rate of waning immunity
-##'
-##' @param sircovid_model The sircovid model, default is `"carehomes"`
-##'
-##' @return An [mcstate::pmcmc_parameters] object which can be used
-##'   with [mcstate::pmcmc]
-##'
-##' @export
-spim_pars <- function(date, region, model_type, multistrain,
-                      beta_date, vaccination, parameters,
-                      kernel_scaling = 1, cross_immunity = NULL,
-                      waning_rate, sircovid_model = "carehomes") {
-  assert_is(parameters, "spim_pars_pmcmc")
-  spim_check_sircovid_model(sircovid_model)
-
-  ## We take 'info' as the canonical source of names, then check that
-  ## prior and proposal align correctly.
-  info <- spim_pars_info(region, parameters$info)
-  prior <- spim_pars_prior(region, info, parameters$prior)
-  proposal <- spim_pars_proposal(region, info, parameters$proposal,
-                                 kernel_scaling)
-
-  pars <- Map(
-    mcstate::pmcmc_parameter,
-    name = info$name,
-    initial = info$initial,
-    min = info$min,
-    max = info$max,
-    discrete = info$discrete,
-    prior = lapply(split(prior, prior$name), make_prior))
-
-  if (sircovid_model == "carehomes") {
-    transform <-
-      spim_carehomes_transform(region, model_type, multistrain, beta_date,
-                               vaccination, cross_immunity, waning_rate)
-  } else if (sircovid_model == "lancelot") {
-    transform <-
-      spim_lancelot_transform(region, model_type, multistrain, beta_date,
-                              vaccination, cross_immunity, waning_rate)
-  }
-
-
-  ret <- mcstate::pmcmc_parameters$new(pars, proposal, transform)
-
-  ## This will allow us to recreate things later in the restart
-  inputs <- list(date = date,
-                 region = region,
-                 model_type = model_type,
-                 multistrain = multistrain,
-                 beta_date = beta_date,
-                 vaccination = vaccination,
-                 parameters = parameters)
-
-  attr(ret, "inputs") <- inputs
-
-  ret
-}
-
-
 ##' Load the pmcmc parameters from disk. We expect three files; one
 ##' for the overall parameters (`info`), one with details of the priors
 ##' (`prior`) and one describing the proposal kernel (`proposal`).
@@ -146,69 +51,21 @@ spim_pars_pmcmc_save <- function(p, path) {
 }
 
 
-##' Create vector of beta dates
+##' Validate vector of beta dates
 ##'
-##' @title Create vector of beta dates
+##' @title Validate vector of beta dates
 ##'
-##' @param date Today's dates (last date is set to last_beta_days_ago)
-##'
-##' @param last_beta_days_ago Number of days in the past for last beta point
+##' @param beta_date Vector of beta dates
 ##'
 ##' @export
-spim_pars_beta <- function(date, last_beta_days_ago = 21) {
-  ## Dates are as follows
-  ##  1. 2020-03-16 - PM advises WFH, against non-essential travel etc
-  ##  2. 2020-03-23 - PM announces full lockdown
-  ##  3. 2020-03-25 - lockdown into full effect
-  ##  4. 2020-05-11 - initial easing of lockdown
-  ##  5. 2020-06-15 - non-essential shops can open
-  ##  6. 2020-07-04 - restaurants, pubs etc can open
-  ##  7. 2020-08-01 - "Eat out to help out" scheme starts
-  ##  8. 2020-09-01 - Schools reopen
-  ##  9. 2020-09-14 - "Rule of six" introduced
-  ## 10. 2020-10-14 - Tiered system introduced
-  ## 11. 2020-10-31 - lockdown announced
-  ## 12. 2020-11-05 - lockdown 2 starts
-  ## 13. 2020-12-02 - lockdown 2 ends
-  ## 14. 2020-12-18 - school Christmas holidays
-  ## 15. 2020-12-25 - last day of holidays season relaxation
-  ## 16. 2021-01-05 - Lockdown 3 starts
-  ## 17. 2021-03-08 - Step 1 of roadmap: schools reopen
-  ## 18. 2021-04-01 - Semi-arbitrary - school holidays / restart date
-  ## 19. 2021-04-19 - Step 2 of roadmap: outdoors hospitality (04-12)
-  ##                  and schools return (04-19)
-  ## 20. 2021-05-17 - Step 3 of roadmap: indoors hospitality
-  ## 21. 2021-06-21 - Step 3.5 - "freedom day" delayed / Euros last group match
-  ## 22. 2021-07-03 - Euros quarter final
-  ## 23. 2021-07-11 - Euros 2020 final - peak in transmission
-  ## 24. 2021-07-19 - Step 4
-  ## 25. 2021-08-15 - Summer festivals / holidays
-  ## 26. 2021-09-01 - Schools return
-  ## 27. 2021-09-22 - Mid-point between school start and half term
-  ##                  (help the model stabilise a long period of time)
-  ## 28. 2021-10-01 - Point before recent increase in cases - hospitalisations
-  ## 29. 2021-10-22 - School half-term - Point before recent plateau in cases
-  ## 30. 2021-11-01 - Schools return
-  ## 31. 2021-12-08 - Announcement of move to Plan B
-  ## 32. 2021-12-23 - Starting of X-mas holidays.
-  ## 33. Date - last_beta_days_ago
-  c("2020-03-16", "2020-03-23", "2020-03-25",
-    "2020-05-11", "2020-06-15", "2020-07-04",
-    "2020-08-01", "2020-09-01", "2020-09-14",
-    "2020-10-14", "2020-10-31", "2020-11-05",
-    "2020-12-02", "2020-12-18", "2020-12-25",
-    "2021-01-05", "2021-03-08", "2021-04-01",
-    "2021-04-19", "2021-05-17", "2021-06-21",
-    "2021-07-03", "2021-07-11", "2021-07-19",
-    "2021-08-15", "2021-09-01", "2021-09-22",
-    "2021-10-01", "2021-10-22", "2021-11-01",
-    "2021-12-08", "2021-12-23",
-    as.character(as.Date(date) - last_beta_days_ago))
+spim_pars_check_beta_date <- function(beta_date) {
+  assert_date_string(beta_date)
+  assert_increasing(as.Date(beta_date), name = "beta_date")
+  beta_date
 }
 
 
-
-spim_pars_info <- function(region, info) {
+spim_pars_info_single <- function(region, info) {
   assert_has_names(info, c("region", "include",
                            "name", "initial", "max", "discrete"))
   if (!(region %in% info$region)) {
@@ -222,7 +79,42 @@ spim_pars_info <- function(region, info) {
 }
 
 
-spim_pars_prior <- function(region, info, prior) {
+spim_pars_info_nested <- function(region, info) {
+  assert_has_names(info, c("region", "include", "name", "initial",
+                           "max", "discrete"))
+  msg <- setdiff(region, info$region)
+  if (length(msg) > 0) {
+    stop(sprintf("Did not find region %s in parameter info",
+                 paste(squote(msg), collapse = ", ")))
+  }
+
+  nms_varied <- unique(info$name[!is.na(info$region)])
+  nms_fixed <- info$name[is.na(info$region)]
+
+  if (length(nms_fixed) == 0) {
+    stop("Did not find any fixed parameters, seems unlikely")
+  }
+
+  info_fixed <- info[is.na(info$region) & info$include, ]
+  info_fixed$region <- NULL
+  info_fixed$include <- NULL
+
+  ## This won't include great error messages if things go wrong.
+  f <- function(x) {
+    assert_setequal(x$region, region)
+    x <- x[match(region, x$region), setdiff(names(x), "include")]
+    ret <- as.list(x)
+    ret$name <- ret$name[[1]]
+    ret
+  }
+  info_varied <- info[info$region %in% region & info$include, ]
+  info_varied <- lapply(split(info_varied, info_varied$name), f)
+
+  list(fixed = info_fixed, varied = info_varied)
+}
+
+
+spim_pars_prior_single <- function(region, info, prior) {
   prior_cols <- c("region", "type", "name", "gamma_scale", "gamma_shape",
                   "beta_shape1", "beta_shape2")
   assert_has_names(prior, prior_cols)
@@ -234,7 +126,52 @@ spim_pars_prior <- function(region, info, prior) {
 }
 
 
-spim_pars_proposal <- function(region, info, proposal, kernel_scaling) {
+spim_pars_prior_nested <- function(region, info, prior) {
+  prior_cols <- c("region", "type", "name", "gamma_scale",
+                  "gamma_shape", "beta_shape1", "beta_shape2")
+  assert_has_names(prior, prior_cols)
+
+  prior_fixed <- prior[is.na(prior$region), ]
+  assert_setequal(prior_fixed$name, info$fixed$name)
+  prior_fixed$region <- NULL
+
+  f <- function(x) {
+    assert_setequal(x$region, region)
+    lapply(split(x, x$region), as.list)
+  }
+  prior_varied <- prior[prior$region %in% region, ]
+  prior_varied <- lapply(split(prior_varied, prior_varied$name), f)
+
+  list(fixed = prior_fixed, varied = prior_varied)
+}
+
+
+spim_pars_proposal_nested <- function(region, info, proposal, kernel_scaling) {
+  proposal_fixed <- proposal[is.na(proposal$region), ]
+  assert_setequal(proposal_fixed$name, info$fixed$name)
+  i <- match(info$fixed$name, proposal_fixed$name)
+  proposal_fixed <- as.matrix(proposal_fixed[i, info$fixed$name]) *
+    kernel_scaling
+  rownames(proposal_fixed) <- info$fixed$name
+
+  f <- function(x) {
+    assert_setequal(x$name, names(info$varied))
+    i <- match(names(info$varied), x$name)
+    m <- as.matrix(x[i, names(info$varied)]) * kernel_scaling
+    rownames(m) <- names(info$varied)
+    m
+  }
+  proposal_varied <- proposal[proposal$region %in% region, ]
+  proposal_varied <- lapply(split(proposal_varied, proposal_varied$region), f)
+  nms <- c(dimnames(proposal_varied[[1]]), list(region))
+  proposal_varied <-
+    array(unlist(proposal_varied, FALSE, FALSE), lengths(nms), nms)
+
+  list(fixed = proposal_fixed, varied = proposal_varied)
+}
+
+
+spim_pars_proposal_single <- function(region, info, proposal, kernel_scaling) {
   proposal <- proposal[proposal$region == region, ]
   assert_setequal(proposal$name, info$name)
   assert_setequal(setdiff(names(proposal), c("name", "region")), info$name)
@@ -354,7 +291,7 @@ spim_add_par_beta <- function(pars) {
 }
 
 
-spim_pars_mcmc <- function(info, prior, proposal, transform) {
+spim_pars_mcmc_single <- function(info, prior, proposal, transform) {
   pars_mcmc <- Map(
     mcstate::pmcmc_parameter,
     name = info$name,
@@ -365,6 +302,48 @@ spim_pars_mcmc <- function(info, prior, proposal, transform) {
     prior = lapply(split(prior, prior$name), spimalot:::make_prior))
 
   ret <- mcstate::pmcmc_parameters$new(pars_mcmc, proposal, transform)
+
+  ## Try and transform a single case and see if it works:
+  ret$model(ret$initial())
+
+  ret
+}
+
+
+spim_pars_mcmc_nested <- function(info, prior, proposal, transform) {
+  prior_fixed <- lapply(split(prior$fixed, prior$fixed$name),
+                        spimalot:::make_prior)
+  pars_fixed <- Map(
+    mcstate::pmcmc_parameter,
+    name = info$fixed$name,
+    initial = info$fixed$initial,
+    min = info$fixed$min,
+    max = info$fixed$max,
+    discrete = info$fixed$discrete,
+    prior = prior_fixed)
+
+  ## These could be done per region, or could be done separately.  I
+  ## don't really care.  The current approach is clearly pretty messed
+  ## here.
+  prior_varied <- lapply(prior$varied, function(x)
+    lapply(x, spimalot:::make_prior))
+  regions <- info$varied[[1]]$region
+  pars_varied <- lapply(names(info$varied), function(i)
+    mcstate::pmcmc_varied_parameter(
+      name = i,
+      populations = regions,
+      initial = info$varied[[i]]$initial,
+      min = info$varied[[i]]$min,
+      max = info$varied[[i]]$max,
+      discrete = info$varied[[i]]$discrete[[1]],
+      prior = prior_varied[[i]]))
+  names(pars_varied) <- names(info$varied)
+
+  ret <- mcstate::pmcmc_parameters_nested$new(
+    parameters = c(pars_varied, pars_fixed),
+    proposal_varied = proposal$varied,
+    proposal_fixed = proposal$fixed,
+    transform = transform)
 
   ## Try and transform a single case and see if it works:
   ret$model(ret$initial())
