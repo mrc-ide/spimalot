@@ -10,7 +10,6 @@ spim_simulate_control_output(
   rt = TRUE,
   rt_weighted = rt,
   rt_type = NULL,
-  state_by_age = TRUE,
   vaccination = TRUE
 )
 }
@@ -31,11 +30,6 @@ calculated. This is also quite slow. Only allowed if \code{rt} is
 \item{rt_type}{Character vecrtor of Rt types to use, passed to
 \link[sircovid:lancelot_Rt]{sircovid::lancelot_Rt}.  Can be any or all of \code{eff_Rt_all},
 \code{eff_Rt_general}, \code{Rt_all} and \code{Rt_general}.}
-
-\item{state_by_age}{Logical, indicating if state by age should be
-output. These are really large and \emph{will} cause memory issues
-for you if you try to run with long time series unless you have
-a lot of RAM.}
 
 \item{vaccination}{Logical, indicating if vaccination information
 should be output.}

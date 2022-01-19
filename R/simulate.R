@@ -167,7 +167,7 @@ simulate_args_names <- function(multistrain = TRUE) {
       "end_date", "seed", "n_threads",
       ## Output control
       "output_keep", "output_rt", "output_time_series", "output_vaccination",
-      "output_state_by_age", "output_weight_rt",
+      "output_weight_rt",
       ## Rt control
       "rt_type",
       "rt_future",
@@ -274,10 +274,6 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
     ret$state <- state[args$output_keep, , , ]
   }
 
-  if (args$output_state_by_age) {
-
-    ret$state_by_age <- simulate_extract_age_class_state(state, index)
-  }
 
   if (args$output_rt) {
     critical_dates <- unique(sircovid::sircovid_date(args$rt_future$date))
@@ -1088,7 +1084,6 @@ simulate_validate_args1 <- function(args, regions, multistrain) {
   assert_scalar_logical(args$output_rt)
   assert_scalar_logical(args$output_time_series)
   assert_scalar_logical(args$output_vaccination)
-  assert_scalar_logical(args$output_state_by_age)
   assert_scalar_logical(args$output_weight_rt)
   match_value(args$rt_type, c("Rt_general", "eff_Rt_general"))
 
@@ -1226,59 +1221,6 @@ validate_rt_future <- function(x, regions, name = deparse(substitute(x))) {
   }
   assert_numeric(x$Rt, sprintf("%s$Rt", name))
   assert_numeric(x$Rt_sd, sprintf("%s$Rt_sd", name))
-}
-
-
-simulate_extract_age_class_state <- function(state, index) {
-  n_groups <- sircovid:::lancelot_n_groups()
-
-  ## output cumulative states by
-  ## age / vaccine class / sample / region / time
-  arrays <- list(
-    deaths <- state[names(index$D), , , ],
-    infections <- state[names(index$I), , , ],
-    admissions <- state[names(index$A), , , ]
-  )
-  names(arrays) <- c("deaths", "infections", "diagnoses_admitted")
-  strata <- nrow(arrays$deaths) / n_groups
-
-  f <- function(array) {
-
-    x <- mcstate::array_reshape(array, 1L, c(n_groups, strata))
-
-    if (ncol(x) == 3) {
-      colnames(x) <- c("unvaccinated", "partial_protection", "full_protection")
-    } else  if (ncol(x) == 5) {
-      colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
-                       "waned_protection", "booster")
-    }
-
-    ## aggregate age groups
-    groups <- list(age_0 = 1:6, # 0-4, 5-9, 10-14, 15-19, 20-24, 25-29
-                   age_30 = 7:10,  # 30-34, 35-39, 40-44, 45-49
-                   age_50 = 11:15, # 50-54, 55-59, 60-64, 65-69, 70-74
-                   age_75 = 16:17, # 75-79, 80+
-                   chw = 18, chr = 19)
-
-    res <- lapply(groups,
-                  function(i) apply(x[i, , , , , drop = FALSE], 2:5, sum))
-
-    # distribute CHW between 30-49 and 50-74 age groups
-    # distribute CHR between 50-74 and 75+ age groups
-    res$age_30 <- res$age_30 + 0.75 * res$chw
-    res$age_50 <- res$age_50 + 0.25 * res$chw + 0.1 * res$chr
-    res$age_75 <- res$age_75 + 0.9 * res$chr
-    res$chw <- NULL
-    res$chr <- NULL
-
-    # take mean across particles
-    ret <- apply(abind_quiet(res, along = 5), c(1, 3, 4, 5), mean)
-
-    # [age, vaccine status, region, time]
-    round(aperm(ret, c(4, 1, 2, 3)))
-  }
-
-  lapply(arrays, f)
 }
 
 

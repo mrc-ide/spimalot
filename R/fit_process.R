@@ -99,17 +99,10 @@ create_simulate_object <- function(samples, start_date_sim, date) {
   state_full <- samples$trajectories$state
 
   if (samples$info$multiregion) {
-    region <- samples$info$region
-    state_by_age <- lapply(region, function(r)
-      extract_age_class_state(state_full[, r, , idx_dates]))
-    names(state_by_age) <- region
-
     ## thin trajectories, but here we already have a regional dimension
     state <- state_full[state_keep, , , idx_dates]
     ## However, we have to push it out
   } else {
-    state_by_age <- extract_age_class_state(state_full[, , idx_dates])
-
     ## thin trajectories and reshape to add a regional dimension:
     state <- state_full[state_keep, , idx_dates]
     n_samples <- ncol(state_full)
@@ -118,7 +111,7 @@ create_simulate_object <- function(samples, start_date_sim, date) {
     state <- mcstate::array_reshape(state, i = 2, c(n_samples, 1))
   }
 
-  list(date = date, state = state, state_by_age = state_by_age)
+  list(date = date, state = state)
 }
 
 
