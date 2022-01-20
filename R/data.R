@@ -247,7 +247,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
 
   # Only use Wildtype/Alpha data between 2020-08-10 and 2021-03-01
   na_strain_dates <-
-    data$date < as.Date("2020-08-10") | data$date > as.Date("2021-03-01")
+    data$date < as.Date("2020-09-17") | data$date > as.Date("2021-03-01")
   data$strain_non_variant[na_strain_dates] <- NA_integer_
   data$strain_tot[na_strain_dates] <- NA_integer_
 
