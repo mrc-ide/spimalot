@@ -2,7 +2,7 @@
 ##'
 ##' @title Prepare vaccination data
 ##'
-##' @inheritParams spim_pars
+##' @inheritParams spim_data
 ##'
 ##' @param uptake A matrix of proportion uptake by age, with (i, j) th
 ##'   value being the uptake of dose j for group i. Must have 19 rows.
@@ -61,13 +61,14 @@ spim_vaccination_data <- function(date, region, uptake, days_to_effect, data) {
     data <- rbind(data, data_missing)
   }
   data <- data %>%
-    dplyr::arrange(date, age_band_min)
+    dplyr::arrange(date, .data$age_band_min)
 
   ## we remove any trailing days with zero doses if they are within
   ## min(days_to_effect) of the date parameter
   agg_data <- data %>%
     dplyr::group_by(date) %>%
-    summarise(doses = sum(.data$dose1) + sum(.data$dose2) + sum(.data$dose3))
+    dplyr::summarise(
+      doses = sum(.data$dose1) + sum(.data$dose2) + sum(.data$dose3))
   dates_remove <-
     agg_data$date[agg_data$date > max(agg_data$date[agg_data$doses > 0])]
   dates_remove <-

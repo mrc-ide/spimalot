@@ -7,8 +7,7 @@
 ##' @param parameters The parameter specification
 ##'   ([spimalot::spim_pars_pmcmc_load])
 ##'
-##' @param data Data sets used in fitting, via
-##'   [spimalot::spim_fit_process_data]
+##' @param data Data sets used in fitting
 ##'
 ##' @export
 spim_fit_process <- function(samples, parameters, data) {
@@ -27,10 +26,10 @@ spim_fit_process <- function(samples, parameters, data) {
   samples$trajectories$date <-
     samples$trajectories$step / samples$trajectories$rate
 
+  ## The Rt calculation is slow and runs in serial; it's a surprising
+  ## fraction of the total time.
   message("Computing Rt")
   rt <- calculate_lancelot_Rt(samples, TRUE)
-  # TODO: very slow
-
   variant_rt <- calculate_lancelot_Rt(samples, FALSE)
 
   ## TODO: someone needs to document what this date is for (appears to
@@ -38,11 +37,7 @@ spim_fit_process <- function(samples, parameters, data) {
   ## change it.
   message("Preparing onward simulation object")
   start_date_sim <- "2021-06-01"
-  vaccine_efficacy <- parameters_raw$base$vaccine_efficacy[
-    c("rel_susceptibility", "rel_p_sympt", "rel_p_hosp_if_sympt",
-      "rel_p_death", "rel_infectivity")]
-  simulate <- create_simulate_object(
-    samples, vaccine_efficacy, start_date_sim, samples$info$date)
+  simulate <- create_simulate_object(samples, start_date_sim, samples$info$date)
 
   ## Reduce trajectories in samples before saving
   message("Reducing trajectories")
@@ -51,22 +46,19 @@ spim_fit_process <- function(samples, parameters, data) {
   message("Computing parameter MLE and covariance matrix")
   parameters_new <- spim_fit_parameters(samples, parameters_raw)
 
+  ## This can possibly merge in with the initial restart processing if
+  ## we're careful now.  We need to have computed Rt first is the only
+  ## trick.
   if (!is.null(restart)) {
     ## When adding the trajectories, we might as well strip them down
     ## to the last date in the restart
     restart_date <- max(restart$state$time)
     i <- samples$trajectories$date <= restart_date
 
-    ## This is set of things that go into the restart object that are
-    ## to do with the time-course of the parent object.  It's
-    ## different to what we process with the fit_process_restart which
-    ## needs to happen against the unthinned object.
     restart$parent <- list(
       trajectories = trajectories_filter_time(samples$trajectories, i),
-      rt = rt_filter_time(rt, i),
+      rt = rt_filter_time(rt, i, samples$info$multiregion),
       data = data,
-      ## TODO: check to make sure that this is just the one region's
-      ## parameters at this point (see the region column)
       prior = parameters_raw$prior)
   }
 
@@ -77,103 +69,101 @@ spim_fit_process <- function(samples, parameters, data) {
   ## rt - calculated spimalot lancelot Rt value (calculate_lancelot_Rt output)
   ## variant_rt - variant specific Rt
   ## simulate - object containing spimalot objects (used for onward simulation)
-  ##            such as; thinned samples, vaccine efficacy, start date of sim,
-  ##            samples date.
+  ##            such as; thinned samples, start date of sim, samples date.
   ## parameters - parameter MLE and covariance matrix
-  ## vaccination - vaccination data
   ## data - fitted and full data
   ##
   ## 2. 'restart' list of;
   ## restart information from spimalot parent objects (i.e trajectories, prior,
   ##   rt, etc.)
   list(
-    fit = list(samples = samples, # note complicated naming change here
+    fit = list(samples = samples,
                rt = rt,
                variant_rt = variant_rt,
                simulate = simulate,
                parameters = parameters_new,
-               vaccination = data$vaccination,
                ## NOTE: fit$data$fitted is assumed to exist by the restart
                data = list(fitted = data$fitted, full = data$full)),
     restart = restart)
 }
 
 
-##' Collect data sets for use with [spimalot::spim_fit_process]
-##'
-##' @title Collect data sets
-##' @param admissions The admissions data set from
-##'   [spimalot::spim_data_admissions]. Set to NULL if not fitting or plotting
-##'   age-specific data
-##'
-##' @param rtm The rtm data set
-##'
-##' @param fitted The data set as passed to
-##'   [spimalot::spim_particle_filter]
-##'
-##' @param full Full data set, before any right-censoring
-##'
-##' @param vaccination The vaccination data set as passed to
-##'   [spimalot::spim_pars]
-##'
-##' @export
-spim_fit_process_data <- function(admissions, rtm, fitted, full, vaccination) {
-  list(admissions = admissions,
-       rtm = rtm,
-       full = full,
-       fitted = fitted,
-       vaccination = vaccination)
-}
-
-
-create_simulate_object <- function(samples, vaccine_efficacy, start_date_sim,
-                                   date) {
+create_simulate_object <- function(samples, start_date_sim, date) {
   start_date_sim <- sircovid::sircovid_date(start_date_sim)
   fit_dates <- samples$trajectories$date
   idx_dates <- (fit_dates >= start_date_sim) &
     (fit_dates <= sircovid::sircovid_date(date))
+  date <- fit_dates[idx_dates]
 
-  # trim dates to only those needed
-  ret <- list(date = fit_dates[idx_dates],
-              state = samples$trajectories$state[, , idx_dates])
-  # add state_by_age
-  ret$state_by_age <- extract_age_class_state(ret$state)
-  # add n_protected and n_doses2s
-  cross_immunity <- samples$predict$transform(samples$pars[1, ])$cross_immunity
+  state_keep <- c("deaths", "deaths_comm", "deaths_hosp", "admitted",
+                  "diagnoses", "infections", "hosp", "icu")
+  state_full <- samples$trajectories$state
 
-  # thin trajectories
-  ret$state <- ret$state[c("deaths", "deaths_comm", "deaths_hosp", "admitted",
-                           "diagnoses", "infections", "hosp", "icu"), , ]
+  if (samples$info$multiregion) {
+    region <- samples$info$region
+    state_by_age <- lapply(region, function(r)
+      extract_age_class_state(state_full[, r, , idx_dates]))
+    names(state_by_age) <- region
 
-  # reshape to add a regional dimension
-  ret$state <- mcstate::array_reshape(ret$state, i = 2, c(ncol(ret$state), 1))
+    ## thin trajectories, but here we already have a regional dimension
+    state <- state_full[state_keep, , , idx_dates]
+    ## However, we have to push it out
+  } else {
+    state_by_age <- extract_age_class_state(state_full[, , idx_dates])
 
-  ret
+    ## thin trajectories and reshape to add a regional dimension:
+    state <- state_full[state_keep, , idx_dates]
+    n_samples <- ncol(state_full)
+    ## TODO: this needs to be moved to be (1, n_samples) (swapping
+    ## dimensions) to match the multiregion filter.
+    state <- mcstate::array_reshape(state, i = 2, c(n_samples, 1))
+  }
+
+  list(date = date, state = state, state_by_age = state_by_age)
 }
 
 
 calculate_lancelot_Rt <- function(samples, weight_Rt) {
-
   step <- samples$trajectories$step
-
-  index_S <- grep("^S_", names(samples$predict$index))
-  index_R <- grep("^R_", names(samples$predict$index))
-  index_ps <- grep("^prob_strain", names(samples$predict$index))
-
-  S <- samples$trajectories$state[index_S, , , drop = FALSE]
-  R <- samples$trajectories$state[index_R, , , drop = FALSE]
-  prob_strain <- samples$trajectories$state[index_ps, , , drop = FALSE]
-
-  pars <-
-    lapply(seq_len(length(samples$info$info)),
-           function(j)
-             lapply(seq_rows(samples$pars),
-                    function(i)
-                      samples$predict$transform(samples$pars[i, ])[[j]]$pars))
-
-
-  dates <- step / 4
+  info <- samples$info$info
   epoch_dates <- samples$info$epoch_dates
+
+  state <- samples$trajectories$state
+  pars <- samples$pars
+  transform <- samples$predict$transform
+
+  multiregion <- samples$info$multiregion
+
+  if (multiregion) {
+    ## pars, state, step, info, epoch_dates
+    ret <- lapply(samples$info$region, function(r)
+      calculate_lancelot_Rt_region(pars[, , r], state[, r, , ], transform[[r]],
+                                   step, info, epoch_dates, weight_Rt))
+    names(ret) <- samples$info$region
+  } else {
+    ret <- calculate_lancelot_Rt_region(pars, state, transform,
+                                        step, info, epoch_dates, weight_Rt)
+  }
+  ret
+}
+
+
+calculate_lancelot_Rt_region <- function(pars, state, transform,
+                                         step, info, epoch_dates, weight_Rt) {
+  index_S <- grep("^S_", rownames(state))
+  index_R <- grep("^R_", rownames(state))
+  index_ps <- grep("^prob_strain", rownames(state))
+
+  S <- state[index_S, , , drop = FALSE]
+  R <- state[index_R, , , drop = FALSE]
+  prob_strain <- state[index_ps, , , drop = FALSE]
+
+  pars_model <- lapply(seq_len(length(info)), function(j)
+    lapply(seq_rows(pars), function(i)
+      transform(pars[i, ])[[j]]$pars))
+
+  pars_model[[1]]$steps_per_day
+  dates <- step / 4
 
   ## TODO: currently we'll just deal with multistage here, but it would
   ## be good to adapt the sircovid function to deal with multistage
@@ -202,8 +192,8 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
       next
     }
 
-    n_real_strains <- pars[[i]][[1]]$n_real_strains
-    n_vacc_classes <- pars[[i]][[1]]$n_vacc_classes
+    n_strains <- pars_model[[i]][[1]]$n_real_strains
+    n_vacc_classes <- pars_model[[i]][[1]]$n_vacc_classes
 
     suffix <- paste0("_", c(sircovid:::sircovid_age_bins()$start, "CHW", "CHR"))
     S_nms <- get_names("S", list(n_vacc_classes), suffix)
@@ -224,7 +214,7 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
 
     if (!(n_strains == 1 && !weight_Rt)) {
       rt1 <- sircovid::lancelot_Rt_trajectories(
-        step1, S1, pars[[i]],
+        step1, S1, pars_model[[i]],
         initial_step_from_parameters = initial_step_from_parameters,
         shared_parameters = FALSE, R = R1, prob_strain = prob_strain1,
         weight_Rt = weight_Rt)
@@ -238,7 +228,6 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
         }
       }
     }
-
   }
 
   class(rt) <- c("Rt_trajectories", "Rt")
@@ -305,20 +294,23 @@ extract_age_class_state <- function(state) {
 
 reduce_trajectories <- function(samples) {
   ## Remove unused trajectories for predict function in combined
-  remove_strings <- c("prob_strain", "^S_", "^R_", "I_weighted_", "D_hosp_",
+  remove_strings <- c("prob_strain", "S_", "R_", "I_weighted_", "D_hosp_",
                       "D_all_", "diagnoses_admitted_", "cum_infections_disag_",
                       "cum_n_vaccinated")
+  re <- sprintf("^(%s)", paste(remove_strings, collapse = "|"))
 
-  pars <- samples$predict$transform(samples$pars[1, ])
-  n_groups <- pars$n_groups
-  n_vacc_classes <- pars$n_vacc_classes
-
+  multiregion <- samples$info$multiregion
   state <- samples$trajectories$state
+  keep <- !grepl(re, rownames(state))
 
-  index_remove <- lapply(remove_strings, function(s) {
-    grep(paste0("^", s), rownames(state))
-  })
-  samples$trajectories$state <- state[-unlist(index_remove), , ]
+  if (multiregion) {
+    samples$trajectories$state <- samples$trajectories$state[keep, , , ]
+  } else {
+    samples$trajectories$state <- samples$trajectories$state[keep, , ]
+  }
+
+  ## TODO: this should be moved into a function with a more
+  ## appropriate name
 
   ## Calculate Pillar 2 positivity and cases
   if (samples$info$model_type == "BB") {
@@ -335,15 +327,23 @@ trajectories_filter_time <- function(trajectories, i) {
   trajectories$step <- trajectories$step[i]
   trajectories$date <- trajectories$date[i]
   trajectories$predicted <- trajectories$predicted[i]
-  trajectories$state <- trajectories$state[, , i, drop = FALSE]
+  if (length(dim(trajectories$state)) == 3) {
+    trajectories$state <- trajectories$state[, , i, drop = FALSE]
+  } else {
+    trajectories$state <- trajectories$state[, , , i, drop = FALSE]
+  }
   trajectories
 }
 
 
-rt_filter_time <- function(rt, i) {
-  ret <- lapply(rt, function(x) x[i, , drop = FALSE])
-  class(ret) <- class(rt)
-  ret
+rt_filter_time <- function(rt, i, multiregion) {
+  if (multiregion) {
+    lapply(rt, rt_filter_time, i, FALSE)
+  } else {
+    ret <- lapply(rt, function(x) x[i, , drop = FALSE])
+    class(ret) <- class(rt)
+    ret
+  }
 }
 
 
@@ -518,20 +518,76 @@ extract_age_class_outputs <- function(samples) {
 
 
 spim_fit_parameters <- function(samples, parameters) {
-  info <- parameters$info[parameters$info$region == samples$info$region, ]
-  rownames(info) <- NULL
-  i <- which.max(samples$probabilities[, "log_posterior"])
-  initial <- samples$pars[i, ]
-  info$initial[match(names(initial), info$name)] <- unname(initial)
+  keep <- function(x, region) {
+    is.na(x) | x %in% region
+  }
 
-  prior <- parameters$prior[parameters$prior$region == samples$info$region, ]
+  region <- samples$info$region
+  info <- parameters$info[keep(parameters$info$region, region), ]
+  rownames(info) <- NULL
+
+  prior <- parameters$prior[keep(parameters$prior$region, region), ]
   rownames(prior) <- NULL
 
-  covariance <- cov(samples$pars)
-  rownames(covariance) <- NULL
-  proposal <- data_frame(region = samples$info$region,
-                         name = colnames(covariance),
-                         covariance)
+  ## This will certainly want moving elsewhere, possibly mcstate, as
+  ## it's very fiddly.  There's no good reason it needs to be here
+  ## (see https://github.com/mrc-ide/mcstate/issues/189)
+  if (samples$info$multiregion) {
+    i <- which.max(rowSums(samples$probabilities[, "log_posterior", ]))
+    initial <- samples$pars[i, , ]
+
+    nms_fixed <- samples$info$pars$fixed
+    nms_varied <- samples$info$pars$varied
+
+    ## Spreading these back out is pretty nasty; we need to work out
+    ## which are nested and which are not; take the fixed pars from
+    ## the first region, then work out the mapping for the rest.
+    info$key <- paste(info$name, info$region, sep = "\r")
+    info$initial[match(nms_fixed, info$name)] <- unname(initial[nms_fixed, 1])
+
+    ## Not the fastest, but the clearest...
+    for (r in region) {
+      for (nm in nms_varied) {
+        info$initial[info$region == r & info$name == nm] <- initial[nm, r]
+      }
+    }
+
+    ## For the covariance we need to split things up carefully:
+    nms_all <- unique(info$name)
+    n_all <- length(nms_all)
+    n_fixed <- length(nms_fixed)
+    n_varied <- length(nms_varied)
+    cov_fixed <- matrix(0, n_fixed, n_all)
+    colnames(cov_fixed) <- nms_all
+    cov_fixed[, nms_fixed] <- cov(samples$pars[, nms_fixed, 1])
+
+    f <- function(r) {
+      cov_varied <- matrix(0, n_varied, n_all)
+      colnames(cov_varied) <- nms_all
+      cov_varied[, nms_varied] <- cov(samples$pars[, nms_varied, r])
+      cov_varied
+    }
+    cov_varied <- lapply(region, f)
+
+    covariance <- abind_quiet(c(list(cov_fixed), cov_varied), along = 1)
+
+    proposal <- data.frame(
+      region = c(rep(NA, n_fixed), rep(region, each = n_varied)),
+      name = c(nms_fixed, rep(nms_varied, length(region))),
+      covariance,
+      stringsAsFactors = FALSE)
+
+  } else {
+    i <- which.max(samples$probabilities[, "log_posterior"])
+    initial <- samples$pars[i, ]
+    info$initial[match(names(initial), info$name)] <- unname(initial)
+
+    covariance <- cov(samples$pars)
+    rownames(covariance) <- NULL
+    proposal <- data_frame(region = samples$info$region,
+                           name = colnames(covariance),
+                           covariance)
+  }
 
   parameters$info <- info
   parameters$prior <- prior
@@ -542,45 +598,67 @@ spim_fit_parameters <- function(samples, parameters) {
 
 
 calculate_positivity <- function(samples) {
+  date <- sircovid::sircovid_date_as_date(samples$trajectories$date)
+  state <- samples$trajectories$state
+  transform <- samples$predict$transform
+  multiregion <- samples$info$multiregion
 
+  if (multiregion) {
+    region <- samples$info$region
+    pars_model <- lapply(region, function(r)
+      lapply(seq_len(nrow(samples$pars)), function(i)
+        last(transform[[r]](samples$pars[i, , r]))$pars))
+    positivity <- lapply(seq_along(region), function(i)
+      calculate_positivity_region(state[, i, , ], pars_model[[i]], date))
+
+    ## Add an extra dimension, then bind together:
+    positivity <- lapply(positivity, mcstate::array_reshape,
+                         2, c(1, dim(state)[[3]]))
+    positivity <- abind_quiet(positivity, along = 2)
+  } else {
+    pars_model <- lapply(seq_len(nrow(samples$pars)), function(i)
+      last(transform(samples$pars[i, ]))$pars)
+    positivity <- calculate_positivity_region(state, pars_model, date)
+  }
+
+  ## Then bind into the main object:
+  samples$trajectories$state <- abind_quiet(state, positivity, along = 1)
+
+  samples
+}
+
+
+calculate_positivity_region <- function(state, pars_model, date) {
   p_NC_names <- c("p_NC_under15", "p_NC_15_24", "p_NC_25_49",
                   "p_NC_50_64", "p_NC_65_79", "p_NC_80_plus",
                   "p_NC_weekend_under15", "p_NC_weekend_15_24",
                   "p_NC_weekend_25_49", "p_NC_weekend_50_64",
                   "p_NC_weekend_65_79", "p_NC_weekend_80_plus")
 
-  x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
-
-  base_pars <- samples$predict$transform(samples$pars[1, ])
-  base_pars <- base_pars[[length(base_pars)]]$pars
-
-  pars <- t(vapply(seq_len(nrow(samples$pars)),
-                 function(i) {
-                   p <- samples$predict$transform(samples$pars[i, ])
-                   unlist(p[[length(p)]]$pars[p_NC_names])
-                   },
-                 numeric(length(p_NC_names))))
-
-  pos_under15 <-
-    samples$trajectories$state[paste0("sympt_cases_under15_inc"), , ]
-  pos_15_24 <- samples$trajectories$state[paste0("sympt_cases_15_24_inc"), , ]
-  pos_25_49 <- samples$trajectories$state[paste0("sympt_cases_25_49_inc"), , ]
-  pos_50_64 <- samples$trajectories$state[paste0("sympt_cases_50_64_inc"), , ]
-  pos_65_79 <- samples$trajectories$state[paste0("sympt_cases_65_79_inc"), , ]
-  pos_80_plus <-
-    samples$trajectories$state[paste0("sympt_cases_80_plus_inc"), , ]
+  pos_under15 <- state[paste0("sympt_cases_under15_inc"), , ]
+  pos_15_24 <- state[paste0("sympt_cases_15_24_inc"), , ]
+  pos_25_49 <- state[paste0("sympt_cases_25_49_inc"), , ]
+  pos_50_64 <- state[paste0("sympt_cases_50_64_inc"), , ]
+  pos_65_79 <- state[paste0("sympt_cases_65_79_inc"), , ]
+  pos_80_plus <- state[paste0("sympt_cases_80_plus_inc"), , ]
 
   pos_over25 <- pos_25_49 + pos_50_64 + pos_65_79 + pos_80_plus
   pos_all <- pos_under15 + pos_15_24 + pos_over25
 
-  calc_negs <- function(group) {
-    neg <- base_pars[[paste0("N_tot_", group)]] -
-      samples$trajectories$state[paste0("sympt_cases_", group, "_inc"), , ]
+  pars_base <- pars_model[[1]]
+  pars <- t(vapply(pars_model, function(p) unlist(p[p_NC_names]),
+                   numeric(length(p_NC_names))))
 
-    neg[, grepl("^S", weekdays(x))] <-
-      neg[, grepl("^S", weekdays(x))] * pars[, paste0("p_NC_weekend_", group)]
-    neg[, !grepl("^S", weekdays(x))] <-
-      neg[, !grepl("^S", weekdays(x))] * pars[, paste0("p_NC_", group)]
+  calc_negs <- function(group) {
+    neg <- pars_base[[paste0("N_tot_", group)]] -
+      state[paste0("sympt_cases_", group, "_inc"), , ]
+
+    neg[, grepl("^S", weekdays(date))] <-
+      neg[, grepl("^S", weekdays(date))] *
+      pars[, paste0("p_NC_weekend_", group)]
+    neg[, !grepl("^S", weekdays(date))] <-
+      neg[, !grepl("^S", weekdays(date))] *
+      pars[, paste0("p_NC_", group)]
 
     neg
   }
@@ -597,8 +675,8 @@ calculate_positivity <- function(samples) {
 
   calc_pos <- function(pos, neg) {
     positivity1 <-
-      (pos * base_pars$pillar2_sensitivity +
-         neg * (1 - base_pars$pillar2_specificity)) / (pos + neg) * 100
+      (pos * pars_base$pillar2_sensitivity +
+         neg * (1 - pars_base$pillar2_specificity)) / (pos + neg) * 100
     array(positivity1, c(1, dim(positivity1)))
   }
 
@@ -614,18 +692,43 @@ calculate_positivity <- function(samples) {
   row.names(positivity) <- paste0("pillar2_positivity",
                                   c("", "_over25", "_under15", "_15_24",
                                     "_25_49", "_50_64", "_65_79", "_80_plus"))
+  positivity
+}
 
-  samples$trajectories$state <-
-    abind1(samples$trajectories$state, positivity)
 
+calculate_cases <- function(samples) {
+  date <- sircovid::sircovid_date_as_date(samples$trajectories$date)
+  state <- samples$trajectories$state
+  transform <- samples$predict$transform
+  multiregion <- samples$info$multiregion
+
+  if (multiregion) {
+    region <- samples$info$region
+    pars_model <- lapply(region, function(r)
+      lapply(seq_len(nrow(samples$pars)), function(i)
+        last(transform[[r]](samples$pars[i, , r]))$pars))
+    cases <- lapply(seq_along(region), function(i)
+      calculate_cases_region(state[, i, , ], pars_model[[i]], date))
+
+    ## Add an extra dimension, then bind together:
+    cases <- lapply(cases, mcstate::array_reshape,
+                    2, c(1, dim(state)[[3]]))
+    cases <- abind_quiet(cases, along = 2)
+  } else {
+    pars_model <- lapply(seq_len(nrow(samples$pars)), function(i)
+      last(transform(samples$pars[i, ]))$pars)
+    cases <- calculate_cases_region(state, pars_model, date)
+  }
+
+  ## Then bind into the main object:
+  samples$trajectories$state <- abind_quiet(state, cases, along = 1)
 
   samples
 }
 
 
-calculate_cases <- function(samples) {
-
-  phi_pillar2_cases_names <-
+calculate_cases_region <- function(state, pars_model, date) {
+  cases_names <-
     c("phi_pillar2_cases_under15", "phi_pillar2_cases_15_24",
       "phi_pillar2_cases_25_49", "phi_pillar2_cases_50_64",
       "phi_pillar2_cases_65_79", "phi_pillar2_cases_80_plus",
@@ -633,27 +736,17 @@ calculate_cases <- function(samples) {
       "phi_pillar2_cases_weekend_25_49", "phi_pillar2_cases_weekend_50_64",
       "phi_pillar2_cases_weekend_65_79", "phi_pillar2_cases_weekend_80_plus")
 
-  x <- sircovid::sircovid_date_as_date(samples$trajectories$date)
 
-  base_pars <- samples$predict$transform(samples$pars[1, ])
-  base_pars <- base_pars[[length(base_pars)]]$pars
-
-  pars <- t(vapply(seq_len(nrow(samples$pars)),
-                   function(i) {
-                     p <- samples$predict$transform(samples$pars[i, ])
-                     unlist(p[[length(p)]]$pars[phi_pillar2_cases_names])
-                   },
-                   numeric(length(phi_pillar2_cases_names))))
+  pars <- t(vapply(pars_model, function(p) unlist(p[cases_names]),
+                   numeric(length(cases_names))))
 
   calc_cases <- function(group) {
-    cases1 <-
-      samples$trajectories$state[paste0("sympt_cases_", group, "_inc"), , ]
-
-    cases1[, grepl("^S", weekdays(x))] <-
-      cases1[, grepl("^S", weekdays(x))] *
+    cases1 <- state[paste0("sympt_cases_", group, "_inc"), , ]
+    cases1[, grepl("^S", weekdays(date))] <-
+      cases1[, grepl("^S", weekdays(date))] *
       pars[, paste0("phi_pillar2_cases_weekend_", group)]
-    cases1[, !grepl("^S", weekdays(x))] <-
-      cases1[, !grepl("^S", weekdays(x))] *
+    cases1[, !grepl("^S", weekdays(date))] <-
+      cases1[, !grepl("^S", weekdays(date))] *
       pars[, paste0("phi_pillar2_cases_", group)]
 
     array(cases1, c(1, dim(cases1)))
@@ -681,10 +774,7 @@ calculate_cases <- function(samples) {
                              c("", "_over25", "_under15", "_15_24",
                                "_25_49", "_50_64", "_65_79", "_80_plus"))
 
-  samples$trajectories$state <-
-    abind1(samples$trajectories$state, cases)
-
-  samples
+  cases
 }
 
 ## adapted from sircovid:::calculate_index

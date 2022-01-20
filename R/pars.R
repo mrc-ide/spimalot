@@ -1,98 +1,3 @@
-## Our main parameter function is a bit of a beast because there are
-## many many things that go into it. It's not totally obvious that
-## this can be greatly simplified in the interface as these really are
-## separate bits of inputs.
-
-##' Create parameters object for use with [mcstate::pmcmc]. This
-##' function is very data-hungry as it (alongside
-##' [spimalot::spim_data()]) is the main point at which data enters
-##' into the model. Here we end up setting a lot of data that are are
-##' not fitting to, but taking as fixed inputs (vaccination over time)
-##' as well as information on the parameters that the model will vary
-##' (their names, ranges, priors and their proposal distributions).
-##'
-##' @title Create parameters object
-##'
-##' @inheritParams spim_data
-##'
-##' @param multistrain Logical, indicating if the model is a
-##'   "multistrain" model allowing for multiple competing strains.
-##'
-##' @param beta_date A vector of date (strings) for the beta
-##'   parameters. Must align with parameters
-##'
-##' @param vaccination Vaccination data, from
-##'   [spimalot::spim_vaccination_data]
-##'
-##' @param parameters Parameter information, from
-##'   [spimalot::spim_pars_pmcmc_load]
-##'
-##' @param kernel_scaling Kernel scaling factor. Typically a number
-##'   between 0 and 1 for scaling the proposal VCV
-##'
-##' @param cross_immunity Optional vector of cross immunity
-##'   values. Only has an effect if `multistrain` is `TRUE` and then
-##'   must have a length of 2 if given.
-##'
-##' @param waning_rate Rate of waning immunity
-##'
-##' @param sircovid_model The sircovid model, default is `"carehomes"`
-##'
-##' @return An [mcstate::pmcmc_parameters] object which can be used
-##'   with [mcstate::pmcmc]
-##'
-##' @export
-spim_pars <- function(date, region, model_type, multistrain,
-                      beta_date, vaccination, parameters,
-                      kernel_scaling = 1, cross_immunity = NULL,
-                      waning_rate, sircovid_model = "carehomes") {
-  assert_is(parameters, "spim_pars_pmcmc")
-  spim_check_sircovid_model(sircovid_model)
-
-  ## We take 'info' as the canonical source of names, then check that
-  ## prior and proposal align correctly.
-  info <- spim_pars_info(region, parameters$info)
-  prior <- spim_pars_prior(region, info, parameters$prior)
-  proposal <- spim_pars_proposal(region, info, parameters$proposal,
-                                 kernel_scaling)
-
-  pars <- Map(
-    mcstate::pmcmc_parameter,
-    name = info$name,
-    initial = info$initial,
-    min = info$min,
-    max = info$max,
-    discrete = info$discrete,
-    prior = lapply(split(prior, prior$name), make_prior))
-
-  if (sircovid_model == "carehomes") {
-    transform <-
-      spim_carehomes_transform(region, model_type, multistrain, beta_date,
-                               vaccination, cross_immunity, waning_rate)
-  } else if (sircovid_model == "lancelot") {
-    transform <-
-      spim_lancelot_transform(region, model_type, multistrain, beta_date,
-                              vaccination, cross_immunity, waning_rate)
-  }
-
-
-  ret <- mcstate::pmcmc_parameters$new(pars, proposal, transform)
-
-  ## This will allow us to recreate things later in the restart
-  inputs <- list(date = date,
-                 region = region,
-                 model_type = model_type,
-                 multistrain = multistrain,
-                 beta_date = beta_date,
-                 vaccination = vaccination,
-                 parameters = parameters)
-
-  attr(ret, "inputs") <- inputs
-
-  ret
-}
-
-
 ##' Load the pmcmc parameters from disk. We expect three files; one
 ##' for the overall parameters (`info`), one with details of the priors
 ##' (`prior`) and one describing the proposal kernel (`proposal`).
@@ -160,7 +65,7 @@ spim_pars_check_beta_date <- function(beta_date) {
 }
 
 
-spim_pars_info <- function(region, info) {
+spim_pars_info_single <- function(region, info) {
   assert_has_names(info, c("region", "include",
                            "name", "initial", "max", "discrete"))
   if (!(region %in% info$region)) {
@@ -174,7 +79,42 @@ spim_pars_info <- function(region, info) {
 }
 
 
-spim_pars_prior <- function(region, info, prior) {
+spim_pars_info_nested <- function(region, info) {
+  assert_has_names(info, c("region", "include", "name", "initial",
+                           "max", "discrete"))
+  msg <- setdiff(region, info$region)
+  if (length(msg) > 0) {
+    stop(sprintf("Did not find region %s in parameter info",
+                 paste(squote(msg), collapse = ", ")))
+  }
+
+  nms_varied <- unique(info$name[!is.na(info$region)])
+  nms_fixed <- info$name[is.na(info$region)]
+
+  if (length(nms_fixed) == 0) {
+    stop("Did not find any fixed parameters, seems unlikely")
+  }
+
+  info_fixed <- info[is.na(info$region) & info$include, ]
+  info_fixed$region <- NULL
+  info_fixed$include <- NULL
+
+  ## This won't include great error messages if things go wrong.
+  f <- function(x) {
+    assert_setequal(x$region, region)
+    x <- x[match(region, x$region), setdiff(names(x), "include")]
+    ret <- as.list(x)
+    ret$name <- ret$name[[1]]
+    ret
+  }
+  info_varied <- info[info$region %in% region & info$include, ]
+  info_varied <- lapply(split(info_varied, info_varied$name), f)
+
+  list(fixed = info_fixed, varied = info_varied)
+}
+
+
+spim_pars_prior_single <- function(region, info, prior) {
   prior_cols <- c("region", "type", "name", "gamma_scale", "gamma_shape",
                   "beta_shape1", "beta_shape2")
   assert_has_names(prior, prior_cols)
@@ -186,7 +126,52 @@ spim_pars_prior <- function(region, info, prior) {
 }
 
 
-spim_pars_proposal <- function(region, info, proposal, kernel_scaling) {
+spim_pars_prior_nested <- function(region, info, prior) {
+  prior_cols <- c("region", "type", "name", "gamma_scale",
+                  "gamma_shape", "beta_shape1", "beta_shape2")
+  assert_has_names(prior, prior_cols)
+
+  prior_fixed <- prior[is.na(prior$region), ]
+  assert_setequal(prior_fixed$name, info$fixed$name)
+  prior_fixed$region <- NULL
+
+  f <- function(x) {
+    assert_setequal(x$region, region)
+    lapply(split(x, x$region), as.list)
+  }
+  prior_varied <- prior[prior$region %in% region, ]
+  prior_varied <- lapply(split(prior_varied, prior_varied$name), f)
+
+  list(fixed = prior_fixed, varied = prior_varied)
+}
+
+
+spim_pars_proposal_nested <- function(region, info, proposal, kernel_scaling) {
+  proposal_fixed <- proposal[is.na(proposal$region), ]
+  assert_setequal(proposal_fixed$name, info$fixed$name)
+  i <- match(info$fixed$name, proposal_fixed$name)
+  proposal_fixed <- as.matrix(proposal_fixed[i, info$fixed$name]) *
+    kernel_scaling
+  rownames(proposal_fixed) <- info$fixed$name
+
+  f <- function(x) {
+    assert_setequal(x$name, names(info$varied))
+    i <- match(names(info$varied), x$name)
+    m <- as.matrix(x[i, names(info$varied)]) * kernel_scaling
+    rownames(m) <- names(info$varied)
+    m
+  }
+  proposal_varied <- proposal[proposal$region %in% region, ]
+  proposal_varied <- lapply(split(proposal_varied, proposal_varied$region), f)
+  nms <- c(dimnames(proposal_varied[[1]]), list(region))
+  proposal_varied <-
+    array(unlist(proposal_varied, FALSE, FALSE), lengths(nms), nms)
+
+  list(fixed = proposal_fixed, varied = proposal_varied)
+}
+
+
+spim_pars_proposal_single <- function(region, info, proposal, kernel_scaling) {
   proposal <- proposal[proposal$region == region, ]
   assert_setequal(proposal$name, info$name)
   assert_setequal(setdiff(names(proposal), c("name", "region")), info$name)
@@ -306,7 +291,7 @@ spim_add_par_beta <- function(pars) {
 }
 
 
-spim_pars_mcmc <- function(info, prior, proposal, transform) {
+spim_pars_mcmc_single <- function(info, prior, proposal, transform) {
   pars_mcmc <- Map(
     mcstate::pmcmc_parameter,
     name = info$name,
@@ -314,9 +299,51 @@ spim_pars_mcmc <- function(info, prior, proposal, transform) {
     min = info$min,
     max = info$max,
     discrete = info$discrete,
-    prior = lapply(split(prior, prior$name), spimalot:::make_prior))
+    prior = lapply(split(prior, prior$name), make_prior))
 
   ret <- mcstate::pmcmc_parameters$new(pars_mcmc, proposal, transform)
+
+  ## Try and transform a single case and see if it works:
+  ret$model(ret$initial())
+
+  ret
+}
+
+
+spim_pars_mcmc_nested <- function(info, prior, proposal, transform) {
+  prior_fixed <- lapply(split(prior$fixed, prior$fixed$name),
+                        make_prior)
+  pars_fixed <- Map(
+    mcstate::pmcmc_parameter,
+    name = info$fixed$name,
+    initial = info$fixed$initial,
+    min = info$fixed$min,
+    max = info$fixed$max,
+    discrete = info$fixed$discrete,
+    prior = prior_fixed)
+
+  ## These could be done per region, or could be done separately.  I
+  ## don't really care.  The current approach is clearly pretty messed
+  ## here.
+  prior_varied <- lapply(prior$varied, function(x)
+    lapply(x, make_prior))
+  regions <- info$varied[[1]]$region
+  pars_varied <- lapply(names(info$varied), function(i)
+    mcstate::pmcmc_varied_parameter(
+      name = i,
+      populations = regions,
+      initial = info$varied[[i]]$initial,
+      min = info$varied[[i]]$min,
+      max = info$varied[[i]]$max,
+      discrete = info$varied[[i]]$discrete[[1]],
+      prior = prior_varied[[i]]))
+  names(pars_varied) <- names(info$varied)
+
+  ret <- mcstate::pmcmc_parameters_nested$new(
+    parameters = c(pars_varied, pars_fixed),
+    proposal_varied = proposal$varied,
+    proposal_fixed = proposal$fixed,
+    transform = transform)
 
   ## Try and transform a single case and see if it works:
   ret$model(ret$initial())

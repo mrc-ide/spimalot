@@ -8,7 +8,7 @@
 \usage{
 spim_plot_fit_forecasts(samples, region = NULL)
 
-spim_plot_fit_traces(samples, region = NULL)
+spim_plot_fit_traces(samples)
 
 spim_plot_fit_posteriors(samples, region = NULL)
 }

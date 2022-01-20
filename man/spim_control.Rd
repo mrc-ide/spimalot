@@ -8,12 +8,15 @@ spim_control(
   short_run,
   n_chains,
   deterministic = FALSE,
+  multiregion = FALSE,
   date_restart = NULL,
   n_particles = 192,
   n_mcmc = 1500,
   burnin = 500,
   workers = TRUE,
-  n_threads = NULL
+  n_sample = 1000,
+  n_threads = NULL,
+  mcmc_path = NULL
 )
 }
 \arguments{
@@ -24,6 +27,10 @@ will use freer particles, mcmc steps and a small sample}
 
 \item{deterministic}{Logical, indicating if the model to fit to
 data is run deterministically or stochastically}
+
+\item{multiregion}{Logical, indicating if we are fitting multiple
+regions at once (in which case even the deterministic model may
+benefit from multithreading).}
 
 \item{date_restart}{Optionally, dates save restart data in the
 pmcmc (see \link[mcstate:pmcmc]{mcstate::pmcmc}}
@@ -41,8 +48,13 @@ PMCMC if \code{short_run = FALSE}}
 \code{TRUE}, then a number of workers between 1 and 4 will be used
 depending on \code{n_chains} and the detected number of cores.}
 
+\item{n_sample}{number of steps to retain (across all chains) if
+\code{short_run = FALSE}}
+
 \item{n_threads}{Explicit number of threads, overriding detection
 by \link{spim_control_cores}}
+
+\item{mcmc_path}{Path to store the mcmc results in}
 }
 \value{
 A list of options

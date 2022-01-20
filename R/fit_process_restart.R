@@ -3,7 +3,10 @@ fit_process_restart <- function(samples, parameters) {
     return(NULL)
   }
 
+  ## TODO: this is now done here and also later, but it's fairly fast
   pars <- spim_fit_parameters(samples, parameters)
+  ## TODO: could pass in samples$info$pars, but somehow feels more
+  ## awkward to do so
   pars$prior <- fit_process_restart_priors(samples$pars, pars)
   pars$sample <- samples$pars
   class(pars) <- "spim_pars_pmcmc"
@@ -16,24 +19,51 @@ fit_process_restart <- function(samples, parameters) {
 }
 
 
-fit_process_restart_priors <- function(values, parameters) {
+fit_process_restart_priors <- function(values, parameters, nms) {
   nms <- colnames(values)
   stopifnot(all(nms %in% parameters$info$name))
 
-  wrapper <- function(nm) {
-    x <- values[, nm]
-    info <- parameters$info[parameters$info$name == nm, ]
-    prior <- parameters$prior[parameters$prior$name == nm, ]
-    if (length(unique(x)) > 1) {
-      new_prior <- fit_prior(x, info, prior)
-    } else {
-      ## if all values of the parameter are the same, keep the original prior
-      new_prior <- prior
+  info <- parameters$info
+  prior <- parameters$prior
+
+  if (length(dim(values)) == 3) {
+    wrapper_multiregion <- function(nm, region) {
+      if (is.na(region)) {
+        x <- values[, nm, 1]
+        prior <- prior[prior$name == nm & is.na(prior$region), ]
+        info <- info[info$name == nm & is.na(info$region), ]
+      } else {
+        x <- values[, nm, region]
+        prior <- prior[prior$name == nm & prior$region == region, ]
+        info <- info[info$name == nm & info$region == region, ]
+      }
+      if (length(unique(x)) > 1) {
+        prior <- fit_prior(x, info, prior)
+      }
+      prior
     }
-    new_prior
+
+    nms_fixed <- info$name[is.na(info$region)]
+    nms_varied <- setdiff(info$name, nms_fixed)
+    region <- last(dimnames(values))
+    prior_fixed <- lapply(nms_fixed, wrapper_multiregion, NA)
+    prior_varied <- unlist(lapply(region, function(r)
+      lapply(nms_varied, wrapper_multiregion, r)),
+      FALSE, FALSE)
+    res <- c(prior_fixed, prior_varied)
+  } else {
+    wrapper_single <- function(nm) {
+      x <- values[, nm]
+      info <- info[info$name == nm, ]
+      prior <- prior[prior$name == nm, ]
+      if (length(unique(x)) > 1) {
+        prior <- fit_prior(x, info, prior)
+      }
+      prior
+    }
+    res <- lapply(nms, wrapper_single)
   }
 
-  res <- lapply(nms, wrapper)
   do.call("rbind", res)
 }
 
