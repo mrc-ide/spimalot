@@ -202,7 +202,7 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
       next
     }
 
-    n_strains <- pars[[i]][[1]]$n_strains
+    n_real_strains <- pars[[i]][[1]]$n_real_strains
     n_vacc_classes <- pars[[i]][[1]]$n_vacc_classes
 
     suffix <- paste0("_", c(sircovid:::sircovid_age_bins()$start, "CHW", "CHR"))
@@ -216,7 +216,7 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
       prob_strain1 <- NULL
     } else {
       R_nms <- get_names("R",
-                         list(S = n_strains, V = n_vacc_classes),
+                         list(S = n_real_strains, V = n_vacc_classes),
                          suffix)
       R1 <- R[R_nms, , dates1, drop = FALSE]
       prob_strain1 <- prob_strain[, , dates1, drop = FALSE]
