@@ -192,7 +192,7 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
       next
     }
 
-    n_strains <- pars_model[[i]][[1]]$n_real_strains
+    n_strains <- pars_model[[i]][[1]]$n_strains
     n_vacc_classes <- pars_model[[i]][[1]]$n_vacc_classes
 
     suffix <- paste0("_", c(sircovid:::sircovid_age_bins()$start, "CHW", "CHR"))
@@ -205,6 +205,7 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
       R1 <- NULL
       prob_strain1 <- NULL
     } else {
+      n_real_strains <- 2
       R_nms <- get_names("R",
                          list(S = n_real_strains, V = n_vacc_classes),
                          suffix)
