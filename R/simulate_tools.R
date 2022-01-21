@@ -63,7 +63,7 @@ spim_simulate_combine_trajectories <- function(res, name, regions = NULL,
   dim_state <- dim(state)
   dim_region <- 3L
 
-  regions <- regions %||% all_regions
+  regions <- regions %||% sircovid::regions("all")
   rt_names <- intersect(grep("Rt", names(res), value = TRUE),
                         grep("multi", names(res), invert = TRUE, value = TRUE))
 

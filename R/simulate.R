@@ -1342,6 +1342,7 @@ spim_run_grid <- function(scenarios, csv = NULL, expand_grid = NULL,
 ##'
 ##' @export
 spim_simulation_shaps <- function(summary, feats = NULL) {
+  state <- `50%` <- NULL
 
   if (is.null(feats)) {
     feats <- spim_simulation_predictors(summary)
@@ -1423,215 +1424,6 @@ spim_simulation_predictors <- function(summary) {
 }
 
 
-##' Prepare csv with NPI keys for simulation task
-##'
-##' @title Prepare NPI key csv for simulation
-##'
-##' @param path File path to a csv containing columns: nation
-##'  (at least one of england, scotland, wales, northern ireland), npi
-##'  (name of NPI step for associated schedule), Rt (mean value for Rt),
-##'  Rt_sd (standard deviation for Rt), adherence (low, central, or high)
-##'
-##' @param schools Should be one of 'open' or 'closed' and specifies which
-##'  state values in the csv correspond to
-##'
-##' @param schools_modifier Amount to modify first strain Rt (excl. immunity).
-##'  If `schools = 'open'` then the modifier will be subtracted
-##'  from the given csv to create `schools = "closed"` scenarios, otherwise
-##'  added - `abs(schools_modifier)` is applied internally
-##'
-##' @param country If `"england"` then all other nations filtered, otherwise
-##'  no filtering.
-##'
-##' @param gradual_start,gradual_end,gradual_steps If all three of these are
-##'  non-NULL then creates a scenario of gradual transition from Rt in scenario
-##'  `gradual_start` to Rt in `gradual_end` in `gradual_steps` number of steps
-##'
-##' @param overwrite_central_adherence
-##'  If non-NULL then a list with names corresponding to `npi` and values to
-##'  overwrite the csv in the central/low/high adherence scenario. This may be
-##'  be useful if automating some, but not all, of the Rt values
-##'
-##' @param overwrite_low_adherence,overwrite_high_adherence As for
-##'   `overwrite_central_adherence`
-##'
-##' @param overwrite_mtp_adherence As for `overwrite_central_adherence`
-##'
-##' @param npi_key Optional data.frame, instead of reading from `path`
-##'
-##' @param modify_gradual Logical, stating whether to adjust gradual `npi`
-##'   values accounting for schools open/close effect
-##'
-##' @return tibble for passing to [spim_prepare_rt_future]
-##'
-##' @export
-spim_prepare_npi_key <- function(schools, schools_modifier, country,
-                                 path = NULL,
-                                 gradual_start = NULL, gradual_end = NULL,
-                                 gradual_steps = NULL,
-                                 overwrite_central_adherence = NULL,
-                                 overwrite_low_adherence = NULL,
-                                 overwrite_high_adherence = NULL,
-                                 overwrite_mtp_adherence = NULL,
-                                 npi_key = NULL, modify_gradual = FALSE) {
-
-  schools_modifier <- abs(schools_modifier)
-
-  all_schools <- c("open", "closed")
-  stopifnot(schools %in% all_schools)
-  stopifnot(length(c(gradual_start, gradual_end, gradual_steps)) %in% c(0, 3))
-  stopifnot(sum(is.null(path), is.null(npi_key)) == 1)
-
-  if (is.null(npi_key)) {
-    npi_key <- read_csv(path)
-  } else {
-    stopifnot(identical(colnames(npi_key),
-                        c("nation", "npi", "Rt", "Rt_sd", "scenario")))
-  }
-
-  npi_key <- npi_key %>%
-    dplyr::filter(nation == case_when(country == "england" ~ "england",
-                                      TRUE ~ nation)) %>%
-    dplyr::mutate(npi = sprintf("%s_schools_%s", npi, schools))
-
-  nations <- unique(npi_key$nation)
-
-  for (ad in unique(npi_key$scenario)) {
-    for (n in unique(npi_key$npi)) {
-      if (sum(npi_key$npi == n & npi_key$scenario == ad) == 0) {
-        tmp <- npi_key[npi_key$npi == n & npi_key$scenario == "central", ]
-        tmp$scenario <- ad
-        npi_key <- rbind(npi_key, tmp)
-      }
-    }
-  }
-
-  npi_key <- dplyr::bind_rows(
-    npi_key,
-    npi_key %>%
-      dplyr::mutate(npi = gsub(schools, setdiff(all_schools, schools), npi),
-                    Rt = case_when(schools == "open" ~ Rt - schools_modifier,
-                                   schools == "closed" ~ Rt + schools_modifier))
-  )
-
-  if (!is.null(gradual_start)) {
-
-    gradualise <- function(start, end, steps, ad) {
-      lapply(unique(npi_key$nation), function(nat) {
-        to <- npi_key %>%
-          dplyr::filter(npi == end, scenario == ad, nation == nat) %>%
-          dplyr::select(Rt) %>%
-          as.numeric()
-        from <- npi_key %>%
-          dplyr::filter(npi == start, scenario == ad, nation == nat) %>%
-          dplyr::select(Rt) %>%
-          as.numeric()
-        sd <- npi_key %>%
-          dplyr::filter(npi == end, scenario == ad, nation == nat) %>%
-          dplyr::select(Rt_sd) %>%
-          as.numeric()
-        steps <- round(seq.int(from, to, length.out = steps + 1)[2:steps], 3)
-
-        npi <- sprintf("p%d_%s", seq_along(steps - 1), end)
-
-        ## check if we've accounted for open or closed
-        end_open <- grepl("open", end)
-
-        if (end_open) {
-          npi <- c(npi, gsub("open", "closed", npi))
-        } else {
-          npi <- c(npi, gsub("closed", "open", npi))
-        }
-
-        ## if modifying gradual then adjust with schools_modifier else
-        ##  use same values
-        if (modify_gradual) {
-          if (end_open) {
-            steps <- c(steps, steps - schools_modifier)
-          } else {
-            steps <- c(steps, steps + schools_modifier)
-          }
-        }
-
-        data.frame(nation = nat, npi = npi, Rt = steps, Rt_sd = sd,
-                   scenario = ad)
-      }) %>%
-        dplyr::bind_rows()
-    }
-
-    f <- function(ad) {
-      gradualise(gradual_start, gradual_end, gradual_steps, ad)
-    }
-    npi_key <- npi_key %>%
-      dplyr::bind_rows(
-        dplyr::bind_rows(
-          lapply(npi_key[npi_key$npi == gradual_end, "scenario"], f)))
-  }
-
-  npi_key %>%
-    dplyr::arrange(scenario, nation, npi) %>%
-    dplyr::mutate(Rt = round(Rt, 3)) %>%
-    `rownames<-`(NULL)
-
-}
-
-
-##' Prepare Rt future grid for simulation task
-##'
-##' @title Prepare Rt future for simulation
-##'
-##' @param npi_key data.frame, rather than reading from `path`
-##'
-##' @param start_date Start date of simulation, all changes in schedule before
-##'  this date are removed.
-##'
-##' @param end_date End date of simulation, all changes in schedule after
-##'  this date are removed.
-##'
-##' @param path File path to a csv containing columns: nation
-##'  (at least one of england, scotland, wales, northern ireland), scenario
-##'  (scenario ID), year (YYYY), month (MM), (DD), npi
-##'  (NPI ID to match npi_key$npi)
-##'
-##' @param schedule data.frame alternative to csv in `path` except with
-##'  `date` column already create (and not year, month, day columns)
-##'
-##' @return tibble which is essentially a column binds of npi_key and
-##'  Rt_schedule datasets after cleaning
-##'
-##' @export
-spim_prepare_rt_future <- function(npi_key, start_date, end_date,
-                                   path = NULL, schedule = NULL) {
-
-  stopifnot(sum(is.null(path), is.null(schedule)) == 1)
-  if (!is.null(path)) {
-    schedule <-
-      read_csv(path) %>%
-      dplyr::mutate(date = as.Date(sprintf("%s-%s-%s", year, month, day))) %>%
-      dplyr::select(-day, -month, -year)
-  }
-
-  schedule <- schedule %>%
-    dplyr::filter(
-      nation %in% unique(npi_key$nation),
-      ## remove all dates after the end date and before the start date
-      date >= as.Date(start_date),
-      date <= as.Date(end_date)
-    ) %>%
-    dplyr::left_join(npi_key, by = c("nation", "npi")) %>%
-    dplyr::mutate(key = paste(scenario_key, scenario, sep = ": "))
-
-  schedule_celtic <- schedule %>%
-    dplyr::filter(nation != "england") %>%
-    dplyr::mutate(region = nation)
-
-  schedule %>%
-    dplyr::filter(nation == "england") %>%
-    tidyr::expand_grid(region = sircovid::regions("england")) %>%
-    dplyr::bind_rows(schedule_celtic)
-}
-
-
 ##' Find little r from big R
 ##'
 ##' @title Find daily little r values from big R
@@ -1652,6 +1444,9 @@ spim_prepare_rt_future <- function(npi_key, start_date, end_date,
 ##' @export
 spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
                              reg = "england", wide = FALSE) {
+  state <- region <- analysis <- scenario <- r <- NULL
+  `50%` <- `2.5%` <- `97.5%` <- NULL
+
   ## generation time distribution from STM paper
   ## https://dx.doi.org/10.1126/scitranslmed.abg4262
   if (is.null(scenarios)) {
@@ -1707,62 +1502,6 @@ spim_rejuvenatoR <- function(summary, dates, scenarios = NULL, analyses = NULL,
 }
 
 
-#' Create a scenario for Rt schedule
-#'
-#' @title Create Rt schedule scenario
-#' @param sched A data frame with school closure schedule. Expect
-#' columns: nation; year; month; day; schools ('open' if open on that day
-#' otherwise 'closed')
-#' @param region Region to filter csv by
-#' @param scenario Name of scenario to create
-#' @param schedule data.frame with columns: date (date of npi change),
-#' npi (name of corresponding npi in npi_key), nation
-#'
-#' @export
-spim_create_rt_scenario <- function(sched, region, scenario, schedule) {
-  sched <- sched %>%
-    dplyr::filter(nation %in% region) %>%
-    dplyr::mutate(date = as.Date(sprintf("%s-%s-%s", year, month, day))) %>%
-    dplyr::arrange(date)
-
-  start <- min(sched$date)
-  end <- max(sched$date)
-
-  if (region %in% sircovid::regions("england")) {
-    nation <- "england"
-  } else {
-    nation <- region
-  }
-  ## create data.frame of all dates
-  out <- data.frame(nation = nation,
-                    scenario_key = scenario,
-                    date = seq.int(start, end, 1),
-                    schools = NA,
-                    npi = NA)
-  ## fill schools
-  for (i in seq(nrow(sched))) {
-    out[seq(which(out$date %in% sched[i, "date"]), nrow(out)), "schools"] <-
-      sched[i, "schools"]
-  }
-
-  ## fill npi
-  schedule$date <- as.Date(schedule$date)
-  for (i in seq(nrow(schedule))) {
-    mtc <- match(schedule[i, "date"], out$date, 1)
-    out[seq(mtc, nrow(out)), "npi"] <- schedule[i, "npi"]
-  }
-
-  out <- out %>%
-    dplyr::mutate(npi = sprintf("%s_schools_%s", npi, schools)) %>%
-    dplyr::select(-schools)
-
-  ## de-duplicate
-  i <- 2:nrow(out)
-  j <- seq(nrow(out) - 1)
-  out[c(TRUE, rowSums(out[i, c(1, 2, 4)] == out[j, c(1, 2, 4)]) < 3), ]
-}
-
-
 #' Calculate when all second doses given out
 #'
 #' @title Calculate final doses date
@@ -1770,6 +1509,8 @@ spim_create_rt_scenario <- function(sched, region, scenario, schedule) {
 #'
 #' @export
 spim_simulate_complete_doses <- function(summary) {
+  state <- region <- across <- value <- group <- analysis <- scenario <- NULL
+
   summary$n_doses %>%
     dplyr::filter(state == "second_dose_inc",
                   region == "england") %>%
@@ -1779,76 +1520,4 @@ spim_simulate_complete_doses <- function(summary) {
     dplyr::filter(date == min(date)) %>%
     dplyr::ungroup() %>%
     dplyr::select(analysis, scenario, date, mean)
-}
-
-
-#' Save NPI key with quantiles, mean, and standard deviation
-#' @title Save NPI key
-#' @param npi_key Output from [spim_prepare_npi_key]
-#' @param filename File to save NPI key to
-#' @export
-spim_write_npi_key <- function(npi_key, filename) {
-  unique(npi_key$nation) %>%
-    lapply(function(i) {
-      key <- npi_key %>%
-        dplyr::filter(nation == i) %>%
-        dplyr::select(-nation)
-
-      npi_pars <- mapply(function(mean, sd) {
-        dist <- distr6::dstr("Lognormal", mean = mean, sd = sd)
-        unlist(c(q2.5 = dist$quantile(0.025),
-                 q97.5 = dist$quantile(0.975),
-                 meanlog = dist$parameters("meanlog")$value,
-                 sdlog = dist$parameters("sdlog")$value))
-      }, mean = key$Rt, sd = key$Rt_sd)
-      npi_pars <- cbind(key, signif(t(npi_pars), 3))
-      npi_pars$region <- i
-      npi_pars
-    }) %>%
-    dplyr::bind_rows() %>%
-    write.csv(filename, row.names = FALSE)
-}
-
-
-#' Write first and second dose uptake at a given date
-#' @title Save dose uptake at a given date
-#' @param report_date Date to calculate uptake
-#' @param doses Output from [spim_calculate_doses]
-#' @param filename File to save uptake to
-#' @export
-spim_write_uptake <- function(report_date, doses, filename) {
-  doses %>%
-    dplyr::filter(state %in% c("state_first_dose", "state_second_dose"),
-                  date == report_date) %>%
-    dplyr::select(group, state, analysis, prop) %>%
-    arrange(state, analysis, group, prop) %>%
-    write.csv(filename, row.names = FALSE)
-}
-
-
-#' Get variables used in simulation tasks
-#' @title Get simulation variables
-#' @export
-spim_simulation_vars <- function() {
-  c(
-    "seasonality",
-    "rt_future",
-    "vaccine_daily_doses",
-    "vaccine_booster_daily_doses",
-    "vaccine_efficacy",
-    "vaccine_booster_efficacy",
-    "vaccine_booster_eligibility",
-    "vaccine_eligibility",
-    "vaccine_uptake",
-    "vaccine_lag_groups",
-    "vaccine_lag_days",
-    "strain_transmission",
-    "strain_seed_rate",
-    "strain_vaccine_efficacy",
-    "strain_initial_proportion",
-    "strain_vaccine_booster_efficacy",
-    "strain_cross_immunity",
-    "strain_severity_modifier",
-    "waning_rate"
-  )
 }
