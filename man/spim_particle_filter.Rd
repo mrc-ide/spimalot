@@ -10,12 +10,7 @@ spim_particle_filter(
   control,
   deterministic = FALSE,
   initial = NULL,
-  initial_date = 0,
-  rt = FALSE,
-  cum_admit = FALSE,
-  diagnoses_admitted = FALSE,
-  cum_infections_disag = FALSE,
-  cum_n_vaccinated = FALSE
+  initial_date = 0
 )
 }
 \arguments{
@@ -37,23 +32,6 @@ value function.}
 \item{initial_date}{The initial date to start from.  Typically
 this should be 0 for a parent fit, and be the restart date for a
 restart date.}
-
-\item{rt}{logical parameter output trajectories required for
-calculating Rt (default = FALSE)}
-
-\item{cum_admit}{logical parameter whether to output cumulative
-admissions by age (default = FALSE)}
-
-\item{diagnoses_admitted}{logical parameter whether to output
-cumulative combined confirmed admissions and inpatient
-diagnoses by age and vaccine class (default = FALSE)}
-
-\item{cum_infections_disag}{logical parameter whether to output
-cumulative infections by age and vaccine class (default = FALSE)}
-
-\item{cum_n_vaccinated}{logical parameter whether to output
-cumulative number vaccinated by age and vaccine class
-(default = FALSE)}
 }
 \value{
 A \link[mcstate:particle_filter]{mcstate::particle_filter} object
