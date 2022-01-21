@@ -454,7 +454,7 @@ spim_pmcmc_predict <- function(object, steps, prepend_trajectories = FALSE,
 
   state <- object$state
   info <- object$info$info[[length(object$info$info)]]
-  index <- sircovid::lancelot_index(info)$state
+  index <- sircovid::lancelot_index(info, rt = TRUE)$state
   model <- object$predict$filter$model
   n_threads <- n_threads %||% object$predict$filter$n_threads
 
