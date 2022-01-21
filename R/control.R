@@ -45,7 +45,7 @@
 spim_control <- function(short_run, n_chains, deterministic = FALSE,
                          multiregion = FALSE, date_restart = NULL,
                          n_particles = 192, n_mcmc = 1500, burnin = 500,
-                         forecast_days = 57, workers = TRUE, n_sample = 1000,
+                         workers = TRUE, n_sample = 1000,
                          n_threads = NULL, mcmc_path = NULL,
                          rt = FALSE, cum_admit = FALSE,
                          diagnoses_admitted = FALSE,
