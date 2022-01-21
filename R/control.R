@@ -47,10 +47,10 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                          n_particles = 192, n_mcmc = 1500, burnin = 500,
                          forecast_days = 57, workers = TRUE, n_sample = 1000,
                          n_threads = NULL, mcmc_path = NULL,
-                         rt = TRUE, cum_admit = TRUE,
-                         diagnoses_admitted = TRUE,
-                         cum_n_vaccinated = TRUE,
-                         cum_infections_disag = TRUE) {
+                         rt = FALSE, cum_admit = FALSE,
+                         diagnoses_admitted = FALSE,
+                         cum_n_vaccinated = FALSE,
+                         cum_infections_disag = FALSE) {
 
   if (short_run) {
     n_particles <- min(10, n_particles)
