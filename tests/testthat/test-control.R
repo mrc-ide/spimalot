@@ -142,3 +142,15 @@ test_that("save path into control", {
   suppressMessages(ctl <- spim_control(TRUE, 4, mcmc_path = "mcmc"))
   expect_equal(ctl$pmcmc$path, "mcmc")
 })
+
+
+test_that("Don't rerun deterministic models", {
+  expect_equal(
+    suppressMessages(
+      spim_control(FALSE, 4, deterministic = FALSE)$pmcmc$rerun_every),
+    100)
+  expect_equal(
+    suppressMessages(
+      spim_control(FALSE, 4, deterministic = TRUE)$pmcmc$rerun_every),
+    Inf)
+})
