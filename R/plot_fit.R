@@ -258,6 +258,6 @@ reorder_beta <- function(nms) {
   i <- grep("^beta[0-9]+$", nms)
   j <- order(as.integer(sub("^beta", "", nms[i])))
   k <- seq_along(nms)
-  k[i] <- j
+  k[i] <- i[j]
   k
 }
