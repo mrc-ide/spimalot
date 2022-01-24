@@ -61,7 +61,7 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
 
   n_steps_retain <- ceiling(n_sample / n_chains)
 
-  rerun_every <- 100
+  rerun_every <- if (deterministic) Inf else 100
   if (!is.null(date_restart)) {
     date_restart <- sircovid::sircovid_date(date_restart)
   }
