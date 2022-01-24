@@ -118,7 +118,8 @@ spim_plot_trajectories_by_age <- function(dat, regions, what, date_min = NULL,
   for (r in regions) {
     spim_plot_trajectories_region1(
       what, r, dat, date_min, age_band,
-      with_forecast = with_forecast, add_betas = add_betas)
+      with_forecast = with_forecast, add_betas = add_betas,
+      main = toupper(spim_region_name(r)))
   }
 }
 
@@ -1494,7 +1495,8 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
 
 spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
                                            age_band, with_forecast = TRUE,
-                                           add_betas = FALSE) {
+                                           add_betas = FALSE,
+                                           main = NULL) {
   trajectories <- dat$samples[[region]]$trajectories
   date <- dat$info$date
   cols <- spim_colours()
@@ -1584,6 +1586,8 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
   plot(xlim[1], 0, type = "n",
        xlim = xlim,
        ylim = ylim,
+       main = main,
+       font.main = 1,
        xlab = "", ylab = labs[what])
   now_cols <- c(mix_cols(cols$now, "white", 0.7),
                 mix_cols(cols$now, "white", 0.495))
