@@ -60,6 +60,23 @@ depending on \code{n_chains} and the detected number of cores.}
 by \link{spim_control_cores}}
 
 \item{mcmc_path}{Path to store the mcmc results in}
+
+\item{rt}{logical parameter output trajectories required for
+calculating Rt (default = FALSE)}
+
+\item{cum_admit}{logical parameter whether to output cumulative
+admissions by age (default = FALSE)}
+
+\item{diagnoses_admitted}{logical parameter whether to output
+cumulative combined confirmed admissions and inpatient
+diagnoses by age and vaccine class (default = FALSE)}
+
+\item{cum_n_vaccinated}{logical parameter whether to output
+cumulative number vaccinated by age and vaccine class
+(default = FALSE)}
+
+\item{cum_infections_disag}{logical parameter whether to output
+cumulative infections by age and vaccine class (default = FALSE)}
 }
 \value{
 A list of options
