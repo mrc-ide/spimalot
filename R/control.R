@@ -40,6 +40,23 @@
 ##'
 ##' @param mcmc_path Path to store the mcmc results in
 ##'
+##' @param rt logical parameter output trajectories required for
+##'   calculating Rt (default = FALSE)
+##'
+##' @param cum_admit logical parameter whether to output cumulative
+##'   admissions by age (default = FALSE)
+##'
+##' @param diagnoses_admitted logical parameter whether to output
+##'   cumulative combined confirmed admissions and inpatient
+##'   diagnoses by age and vaccine class (default = FALSE)
+##'
+##' @param cum_infections_disag logical parameter whether to output
+##'   cumulative infections by age and vaccine class (default = FALSE)
+##'
+##' @param cum_n_vaccinated logical parameter whether to output
+##'   cumulative number vaccinated by age and vaccine class
+##'   (default = FALSE)
+##'
 ##' @return A list of options
 ##' @export
 spim_control <- function(short_run, n_chains, deterministic = FALSE,
