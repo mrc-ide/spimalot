@@ -12,6 +12,10 @@
 ##' @param deterministic Logical, indicating if the model to fit to
 ##'   data is run deterministically or stochastically
 ##'
+##' @param multiregion Logical, indicating if we are fitting multiple
+##'   regions at once (in which case even the deterministic model may
+##'   benefit from multithreading).
+##'
 ##' @param date_restart Optionally, dates save restart data in the
 ##'   pmcmc (see [mcstate::pmcmc]
 ##'
@@ -34,28 +38,31 @@
 ##' @param n_threads Explicit number of threads, overriding detection
 ##'   by [spim_control_cores]
 ##'
+##' @param mcmc_path Path to store the mcmc results in
+##'
 ##' @return A list of options
 ##' @export
 spim_control <- function(short_run, n_chains, deterministic = FALSE,
-                         date_restart = NULL,
+                         multiregion = FALSE, date_restart = NULL,
                          n_particles = 192, n_mcmc = 1500, burnin = 500,
                          workers = TRUE, n_sample = 1000,
-                         n_threads = NULL) {
+                         n_threads = NULL, mcmc_path = NULL) {
   if (short_run) {
     n_particles <- min(10, n_particles)
     n_mcmc <- min(20, n_mcmc)
-    n_sample <- 10
+    n_sample <- min(10, n_mcmc)
     burnin <- 1
   }
 
   n_steps_retain <- ceiling(n_sample / n_chains)
 
-  rerun_every <- 100
+  rerun_every <- if (deterministic) Inf else 100
   if (!is.null(date_restart)) {
     date_restart <- sircovid::sircovid_date(date_restart)
   }
 
-  parallel <- spim_control_parallel(n_chains, workers, n_threads)
+  parallel <- spim_control_parallel(n_chains, workers, n_threads,
+                                    deterministic, multiregion)
 
   pmcmc <- mcstate::pmcmc_control(n_mcmc,
                                   n_chains = n_chains,
@@ -69,21 +76,10 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                                   nested_step_ratio = 1, # ignored if single
                                   rerun_every = rerun_every,
                                   rerun_random = TRUE,
-                                  filter_early_exit = TRUE,
+                                  filter_early_exit = !deterministic,
                                   n_burnin = burnin,
-                                  n_steps_retain = n_steps_retain)
-
-  if (deterministic) {
-    ## Disable early exit, if it's been set up, as we also don't support that
-    pmcmc$filter_early_exit <- FALSE
-
-    ## Increase the number of workers because each will be running
-    ##   separately. If running on a laptop this probably does not want
-    ##   increasing
-    if (workers) {
-      pmcmc$n_workers <- min(pmcmc$n_chains, pmcmc$n_threads_total)
-    }
-  }
+                                  n_steps_retain = n_steps_retain,
+                                  path = mcmc_path)
 
   particle_filter <- list(n_particles = n_particles,
                           n_threads = parallel$n_threads_total,
@@ -95,17 +91,38 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
 }
 
 
-## This is only going to be really useful with the single region fit,
-## as we don't really use workers otherwise.
-spim_control_parallel <- function(n_chains, workers, n_threads = NULL,
+spim_control_parallel <- function(n_chains, workers, n_threads,
+                                  deterministic, multiregion,
                                   verbose = TRUE) {
   n_threads <- n_threads %||% spim_control_cores()
+  max_workers <- 4
+
   if (workers) {
-    pos <- 1:4
-    n_workers <- max(pos[n_threads %% pos == 0 & pos <= n_chains])
+    if (deterministic && !multiregion) {
+      ## Increase the number of workers because each will be running
+      ## separately
+      n_workers <- min(n_chains, n_threads)
+      n_threads <- n_workers
+    } else if (deterministic && multiregion) {
+      ## In the case of the deterministic multiregion case, we get
+      ## more from workers (where available) than from within-particle
+      ## parallelisation, so let's try and get these onto up to max
+      ## workers, then increase the number of threads a bit.
+      n_workers <- min(n_chains, n_threads, max_workers)
+      n_threads_given <- n_threads
+      n_threads <- ceiling(n_threads / n_workers) * n_workers
+      if (verbose && n_threads > n_threads_given) {
+        message(sprintf("Increasing total threads from %d to %d",
+                        n_threads_given, n_threads))
+      }
+    } else {
+      pos <- seq_len(max_workers)
+      n_workers <- max(pos[n_threads %% pos == 0 & pos <= n_chains])
+    }
   } else {
     n_workers <- 1L
   }
+
   if (verbose) {
     message(sprintf("Running on %d workers with %d threads",
                     n_workers, n_threads))

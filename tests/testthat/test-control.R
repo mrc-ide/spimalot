@@ -20,29 +20,29 @@ test_that("Sensible parallel control", {
   mock_cores <- mockery::mock(32, cycle = TRUE)
   mockery::stub(spim_control_parallel, "spim_control_cores", mock_cores)
   expect_equal(
-    spim_control_parallel(4, FALSE, verbose = FALSE),
+    spim_control_parallel(4, FALSE, NULL, FALSE, FALSE, FALSE),
     list(n_threads_total = 32, n_workers = 1))
   mockery::expect_called(mock_cores, 1)
   expect_equal(mockery::mock_args(mock_cores)[[1]], list())
 
   expect_equal(
-    spim_control_parallel(4, FALSE, 32, FALSE),
+    spim_control_parallel(4, FALSE, 32, FALSE, FALSE, FALSE),
     list(n_threads_total = 32, n_workers = 1))
   expect_equal(
-    spim_control_parallel(4, TRUE, 32, FALSE),
+    spim_control_parallel(4, TRUE, 32, FALSE, FALSE, FALSE),
     list(n_threads_total = 32, n_workers = 4))
   expect_equal(
-    spim_control_parallel(8, TRUE, 32, FALSE),
+    spim_control_parallel(8, TRUE, 32, FALSE, FALSE, FALSE),
     list(n_threads_total = 32, n_workers = 4))
   expect_equal(
-    spim_control_parallel(3, TRUE, 32, FALSE),
+    spim_control_parallel(3, TRUE, 32, FALSE, FALSE, FALSE),
     list(n_threads_total = 32, n_workers = 2))
   expect_equal(
-    spim_control_parallel(1, TRUE, 32, FALSE),
+    spim_control_parallel(1, TRUE, 32, FALSE, FALSE, FALSE),
     list(n_threads_total = 32, n_workers = 1))
 
   expect_message(
-    spim_control_parallel(8, TRUE),
+    spim_control_parallel(8, TRUE, 32, FALSE, FALSE, TRUE),
     "Running on 4 workers with 32 threads")
 })
 
@@ -106,4 +106,51 @@ test_that("Can change number of samples", {
   suppressMessages(
     ctrl <- spim_control(FALSE, 8, n_sample = 200, n_mcmc = 1000, burnin = 500))
   expect_equal(ctrl$pmcmc$n_steps_retain, 25) # i.e., 25 * 8 == 200
+})
+
+
+test_that("parallel control", {
+  expect_equal(
+    spim_control_parallel(8, TRUE, 16, FALSE, FALSE, FALSE),
+    list(n_threads_total = 16, n_workers = 4))
+  expect_equal(
+    spim_control_parallel(8, TRUE, 16, TRUE, FALSE, FALSE),
+    list(n_threads_total = 8, n_workers = 8))
+  expect_equal(
+    spim_control_parallel(8, TRUE, 16, TRUE, TRUE, FALSE),
+    list(n_threads_total = 16, n_workers = 4))
+  expect_equal(
+    spim_control_parallel(8, TRUE, 10, TRUE, TRUE, FALSE),
+    list(n_threads_total = 12, n_workers = 4))
+
+  expect_equal(
+    spim_control_parallel(8, FALSE, 16, FALSE, FALSE, FALSE),
+    list(n_threads_total = 16, n_workers = 1))
+  expect_equal(
+    spim_control_parallel(8, FALSE, 16, TRUE, FALSE, FALSE),
+    list(n_threads_total = 16, n_workers = 1))
+  expect_equal(
+    spim_control_parallel(8, FALSE, 16, TRUE, TRUE, FALSE),
+    list(n_threads_total = 16, n_workers = 1))
+  expect_equal(
+    spim_control_parallel(8, FALSE, 10, TRUE, TRUE, FALSE),
+    list(n_threads_total = 10, n_workers = 1))
+})
+
+
+test_that("save path into control", {
+  suppressMessages(ctl <- spim_control(TRUE, 4, mcmc_path = "mcmc"))
+  expect_equal(ctl$pmcmc$path, "mcmc")
+})
+
+
+test_that("Don't rerun deterministic models", {
+  expect_equal(
+    suppressMessages(
+      spim_control(FALSE, 4, deterministic = FALSE)$pmcmc$rerun_every),
+    100)
+  expect_equal(
+    suppressMessages(
+      spim_control(FALSE, 4, deterministic = TRUE)$pmcmc$rerun_every),
+    Inf)
 })

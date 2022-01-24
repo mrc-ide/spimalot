@@ -225,7 +225,7 @@ spim_simulate_parameter_grid <- function(control) {
       value <- pars[[v]][[level]]
       if (is.null(value)) {
         stop(sprintf("Did not find level '%s' in control$parameters$%s",
-                     level, variable))
+                     level, v))
       }
       ## This function needs to account for the bug:
       ##
@@ -246,7 +246,7 @@ spim_simulate_parameter_grid <- function(control) {
         value <- value[[level_ve]]
         if (is.null(value)) {
           stop(sprintf("Did not find level '%s' in control$parameters$%s$%s",
-                       level, variable, level_ve))
+                       level, v, level_ve))
         }
       }
       ret[[v]] <- value
