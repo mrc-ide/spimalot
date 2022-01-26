@@ -201,7 +201,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     data$deaths_hosp <- data$death3
     data$deaths_non_hosp <- NA_integer_
 
-    ## due to ONS data being lagged we will use death linelist data
+    ## due to ONS data being lagged, we will use death linelist data
     ## for recent care home and community deaths
     date_death_change <- as.Date(date) - 45
     data$deaths_carehomes <- dplyr::case_when(
@@ -212,6 +212,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
       data$date < date_death_change ~ as.integer(data$ons_death_noncarehome),
       data$date >= date_death_change ~ as.integer(data$death_comm)
     )
+
+  }
 
   # Use VAM data available
   if (region %in% c("scotland", "wales", "northern_ireland")) {
