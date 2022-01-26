@@ -201,31 +201,17 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     data$deaths_hosp <- data$death3
     data$deaths_non_hosp <- NA_integer_
 
-    if (!full_data) {
-      date_death_change <- "2020-09-01"
-      data$deaths_carehomes <- dplyr::case_when(
-        data$date < date_death_change ~ as.integer(data$ons_death_carehome),
-        data$date >= date_death_change ~ NA_integer_
-      )
-      data$deaths_comm <- dplyr::case_when(
-        data$date < date_death_change ~ as.integer(data$ons_death_noncarehome),
-        data$date >= date_death_change ~ NA_integer_
-      )
-    } else {
-      ## due to ONS data being lagged, in the full_data version (not used in
-      ## fitting) we will use death linelist data for recent care home and
-      ## community deaths
-      date_death_change <- as.Date(date) - 45
-      data$deaths_carehomes <- dplyr::case_when(
-        data$date < date_death_change ~ as.integer(data$ons_death_carehome),
-        data$date >= date_death_change ~ as.integer(data$death_chr)
-      )
-      data$deaths_comm <- dplyr::case_when(
-        data$date < date_death_change ~ as.integer(data$ons_death_noncarehome),
-        data$date >= date_death_change ~ as.integer(data$death_comm)
-      )
-    }
-  }
+    ## due to ONS data being lagged we will use death linelist data
+    ## for recent care home and community deaths
+    date_death_change <- as.Date(date) - 45
+    data$deaths_carehomes <- dplyr::case_when(
+      data$date < date_death_change ~ as.integer(data$ons_death_carehome),
+      data$date >= date_death_change ~ as.integer(data$death_chr)
+    )
+    data$deaths_comm <- dplyr::case_when(
+      data$date < date_death_change ~ as.integer(data$ons_death_noncarehome),
+      data$date >= date_death_change ~ as.integer(data$death_comm)
+    )
 
   # Use VAM data available
   if (region %in% c("scotland", "wales", "northern_ireland")) {
