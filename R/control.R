@@ -38,7 +38,14 @@
 ##' @param n_threads Explicit number of threads, overriding detection
 ##'   by [spim_control_cores]
 ##'
+##' @param compiled_compare Use a compiled compare function (rather
+##'   than the R version).  This can speed things up with the
+##'   deterministic models in particular.
+##'
 ##' @param mcmc_path Path to store the mcmc results in
+##'
+##' @param verbose Logical, indicating if we should print information
+##'   about the parallel configuration
 ##'
 ##' @return A list of options
 ##' @export
@@ -46,7 +53,8 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                          multiregion = FALSE, date_restart = NULL,
                          n_particles = 192, n_mcmc = 1500, burnin = 500,
                          workers = TRUE, n_sample = 1000,
-                         n_threads = NULL, mcmc_path = NULL) {
+                         n_threads = NULL, compiled_compare = FALSE,
+                         mcmc_path = NULL, verbose = TRUE) {
   if (short_run) {
     n_particles <- min(10, n_particles)
     n_mcmc <- min(20, n_mcmc)
@@ -62,7 +70,8 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
   }
 
   parallel <- spim_control_parallel(n_chains, workers, n_threads,
-                                    deterministic, multiregion)
+                                    deterministic, multiregion,
+                                    verbose)
 
   pmcmc <- mcstate::pmcmc_control(n_mcmc,
                                   n_chains = n_chains,
@@ -81,10 +90,11 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                                   n_steps_retain = n_steps_retain,
                                   path = mcmc_path)
 
+  n_threads <- parallel$n_threads_total / parallel$n_workers
   particle_filter <- list(n_particles = n_particles,
-                          n_threads = parallel$n_threads_total,
+                          n_threads = n_threads,
                           seed = NULL,
-                          compiled_compare = FALSE)
+                          compiled_compare = compiled_compare)
 
   list(pmcmc = pmcmc,
        particle_filter = particle_filter)
