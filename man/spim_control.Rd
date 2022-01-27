@@ -16,7 +16,9 @@ spim_control(
   workers = TRUE,
   n_sample = 1000,
   n_threads = NULL,
-  mcmc_path = NULL
+  compiled_compare = FALSE,
+  mcmc_path = NULL,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -54,7 +56,14 @@ depending on \code{n_chains} and the detected number of cores.}
 \item{n_threads}{Explicit number of threads, overriding detection
 by \link{spim_control_cores}}
 
+\item{compiled_compare}{Use a compiled compare function (rather
+than the R version).  This can speed things up with the
+deterministic models in particular.}
+
 \item{mcmc_path}{Path to store the mcmc results in}
+
+\item{verbose}{Logical, indicating if we should print information
+about the parallel configuration}
 }
 \value{
 A list of options
