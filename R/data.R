@@ -235,17 +235,11 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     data$strain_non_variant <- data$n_non_alpha_variant
     data$strain_tot <- data$n_alpha_variant + data$n_non_alpha_variant
   } else {
-    # Ignore SGTF-neg before the date of the first VAM-reported Alpha sample
-    # alpha_ignore <- min(which(!is.na(data$n_symp_alpha_variant)))
-    # date_alpha_ignore <- data$date < data$date[alpha_ignore]
-    # data$s_negative_adj1[date_alpha_ignore] <- NA_integer_
-    # data$s_positive_adj1[date_alpha_ignore] <- NA_integer_
-    # browser()
     data$strain_non_variant <- data$n_non_alpha_pred
     data$strain_tot <- data$n_alpha_pred + data$n_non_alpha_pred
   }
 
-  # Only use Wildtype/Alpha data between 2020-08-10 and 2021-03-01
+  # Only use Wildtype/Alpha data between 2020-09-17 and 2021-03-01
   na_strain_dates <-
     data$date < as.Date("2020-09-17") | data$date > as.Date("2021-03-01")
   data$strain_non_variant[na_strain_dates] <- NA_integer_
