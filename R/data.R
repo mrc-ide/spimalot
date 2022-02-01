@@ -118,13 +118,16 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
             "ons_death_carehome", "ons_death_noncarehome", "react_positive",
             "react_samples",
             # VAM data
+            "n_symp_alpha_variant", "n_symp_non_alpha_variant",
             "n_symp_delta_variant", "n_symp_non_delta_variant",
             "n_symp_omicron_variant", "n_symp_non_omicron_variant",
             # Other VOC data
+            "n_alpha_pred", "n_non_alpha_pred",
+            "n_alpha_variant", "n_non_alpha_variant",
             "n_delta_variant", "n_non_delta_variant",
             "n_omicron_variant", "n_non_omicron_variant", "s_positive_adj1",
             "s_negative_adj1",
-            # Positives
+            # Pillar 2 positives
             "positives", "positives_over25", "pillar2_positives",
             "pillar2_positives_over25",
             paste0("pillar2_positives_", pillar2_age_bands),
@@ -215,18 +218,38 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
 
   }
 
-  # Use VAM data available
+  ## Fit to Wildtype/Alpha using sgtf for England, COG for S/W/NI
   if (region %in% c("scotland", "wales", "northern_ireland")) {
-    data$strain_non_variant <- data$n_non_delta_variant
-    data$strain_tot <- data$n_delta_variant + data$n_non_delta_variant
+    data$strain_non_variant <- data$n_non_alpha_variant
+    data$strain_tot <- data$n_alpha_variant + data$n_non_alpha_variant
   } else {
-    data$strain_non_variant <- data$n_symp_non_delta_variant
-    data$strain_tot <- data$n_symp_delta_variant + data$n_symp_non_delta_variant
+    data$strain_non_variant <- data$n_non_alpha_pred
+    data$strain_tot <- data$n_alpha_pred + data$n_non_alpha_pred
   }
 
-  ## Only fit to Alpha/Delta variant data between 2021-03-08 and 2021-07-31
+  # Only use Wildtype/Alpha data between 2020-09-17 and 2021-03-01
   na_strain_dates <-
-    data$date < as.Date("2021-03-08") | data$date > as.Date("2021-07-31")
+    data$date < as.Date("2020-09-17") | data$date > as.Date("2021-03-01")
+  data$strain_non_variant[na_strain_dates] <- NA_integer_
+  data$strain_tot[na_strain_dates] <- NA_integer_
+
+  # Fit to Alpha/Delta using sgtf data for England, COG data for S/W/NI
+  if (region %in% c("scotland", "wales", "northern_ireland")) {
+    data$strain_non_variant[data$date >= "2021-03-08"] <-
+      data$n_non_delta_variant[data$date >= "2021-03-08"]
+    data$strain_tot[data$date >= "2021-03-08"] <-
+      data$n_delta_variant[data$date >= "2021-03-08"] +
+      data$n_non_delta_variant[data$date >= "2021-03-08"]
+  } else {
+    data$strain_non_variant[data$date >= "2021-03-08"] <-
+      data$n_symp_non_delta_variant[data$date >= "2021-03-08"]
+    data$strain_tot[data$date >= "2021-03-08"] <-
+      data$n_symp_delta_variant[data$date >= "2021-03-08"] +
+      data$n_symp_non_delta_variant[data$date >= "2021-03-08"]
+  }
+
+  ## Only fit to Alpha/Delta up to 2021-07-31
+  na_strain_dates <- data$date > as.Date("2021-07-31")
   data$strain_non_variant[na_strain_dates] <- NA_integer_
   data$strain_tot[na_strain_dates] <- NA_integer_
 
