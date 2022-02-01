@@ -1,6 +1,10 @@
 Package: spimalot
 Title: Support for 'sircovid'
+<<<<<<< HEAD
 Version: 0.6.13
+=======
+Version: 0.6.10
+>>>>>>> parent of e731c1b (Merge branch 'main' into fit_index-function)
 Authors@R:
     c(person(given = "Marc",
            family = "Baguelin",
