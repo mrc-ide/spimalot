@@ -22,6 +22,8 @@ spim_control(
   diagnoses_admitted = FALSE,
   cum_n_vaccinated = FALSE,
   cum_infections_disag = FALSE
+  compiled_compare = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -59,6 +61,10 @@ depending on \code{n_chains} and the detected number of cores.}
 \item{n_threads}{Explicit number of threads, overriding detection
 by \link{spim_control_cores}}
 
+\item{compiled_compare}{Use a compiled compare function (rather
+than the R version).  This can speed things up with the
+deterministic models in particular.}
+
 \item{mcmc_path}{Path to store the mcmc results in}
 
 \item{rt}{logical parameter output trajectories required for
@@ -77,6 +83,8 @@ cumulative number vaccinated by age and vaccine class
 
 \item{cum_infections_disag}{logical parameter whether to output
 cumulative infections by age and vaccine class (default = FALSE)}
+\item{verbose}{Logical, indicating if we should print information
+about the parallel configuration}
 }
 \value{
 A list of options
