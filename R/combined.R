@@ -112,7 +112,7 @@ spim_combined_onward_simulate <- function(dat) {
 
   dates <- dat$simulate[[1]]$date
   idx_dates <- dat$samples[[1]]$trajectories$date %in% dates
-  state_names <- unique(c(rownames(simulate$state[[1]]), "deaths_hosp",
+  state_names <- unique(c(rownames(simulate$state[[1]]),
                           "sero_pos_1", "sero_pos_2"))
   state_names <- intersect(state_names,
                            rownames(dat$samples[[1]]$trajectories$state))
@@ -121,12 +121,8 @@ spim_combined_onward_simulate <- function(dat) {
     x$trajectories$state[state_names, , idx_dates])
   state <- aperm(abind_quiet(state, along = 4), c(1, 2, 4, 3))
 
-  state_by_age <- lapply(list_transpose(simulate$state_by_age),
-                         abind_quiet, along = 3)
-
   ret <- list(date = dates,
-              state = state,
-              state_by_age = state_by_age
+              state = state
               )
 
   ## This is not terrible:
@@ -196,11 +192,6 @@ combined_aggregate_data <- function(data) {
     dim_t <- min(sapply(d, nrow)) # TODO
     d <- lapply(d, function(x) x[seq_len(dim_t), data_names])
     ret <- Reduce("+", d)
-    death_nms <- c("deaths_hosp", "deaths_carehomes", "deaths_comm")
-    ret$deaths <- pmax(ret$deaths,
-                       rowSums(ret[, death_nms], na.rm = TRUE),
-                       na.rm = TRUE)
-    ret[-seq_len(nrow(ret) - 4), death_nms] <- NA
     data_frame(ret, x[, date_names])
   }
 
@@ -463,7 +454,7 @@ spim_pmcmc_predict <- function(object, steps, prepend_trajectories = FALSE,
 
   state <- object$state
   info <- object$info$info[[length(object$info$info)]]
-  index <- sircovid::lancelot_index(info)$state
+  index <- sircovid::lancelot_index(info, cum_admit = TRUE)$state
   model <- object$predict$filter$model
   n_threads <- n_threads %||% object$predict$filter$n_threads
 

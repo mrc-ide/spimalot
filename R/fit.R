@@ -71,16 +71,25 @@ spim_particle_filter <- function(data, pars, control,
     assert_is(initial, "function")
   }
 
+  fit_index <- function(info) {
+    sircovid::lancelot_index(info,
+     rt = control$rt,
+     cum_admit = control$cum_admit,
+     diagnoses_admitted = control$diagnoses_admitted,
+     cum_infections_disag = control$cum_infections_disag,
+     cum_n_vaccinated = control$cum_n_vaccinated)
+  }
+
   if (deterministic) {
     mcstate::particle_deterministic$new(
       data = data, model = sircovid::lancelot, compare = compare,
-      index = sircovid::lancelot_index, initial = initial,
+      index = fit_index, initial = initial,
       n_threads = control$n_threads)
   } else {
     mcstate::particle_filter$new(
       data = data, model = sircovid::lancelot,
       n_particles = control$n_particles,
-      compare = compare, index = sircovid::lancelot_index, initial = initial,
+      compare = compare, index = fit_index, initial = initial,
       n_threads = control$n_threads, seed = control$seed)
   }
 }

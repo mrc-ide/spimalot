@@ -154,12 +154,3 @@ test_that("Don't rerun deterministic models", {
       spim_control(FALSE, 4, deterministic = TRUE)$pmcmc$rerun_every),
     Inf)
 })
-
-
-test_that("Control compiled compare", {
-  ctl <- spim_control(TRUE, 4, verbose = FALSE)
-  expect_false(ctl$particle_filter$compiled_compare)
-
-  ctl <- spim_control(TRUE, 4, compiled_compare = TRUE, verbose = FALSE)
-  expect_true(ctl$particle_filter$compiled_compare)
-})

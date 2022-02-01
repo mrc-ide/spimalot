@@ -88,42 +88,6 @@ spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
 }
 
 
-##' Plot trajectories by age
-##'
-##' @title Plot trajectories by age
-##'
-##' @param dat Combined data set
-##'
-##' @param what Trajectory to plot
-##'
-##' @param regions Vector of regions to plot
-##'
-##' @param date_min Starting date for plot
-##'
-##' @param age_band Age band to plot
-##'
-##' @param with_forecast Logical, indicating if we should add the forecast
-##'
-##' @param add_betas Logical, indicating if we should add betas
-##'
-##' @export
-spim_plot_trajectories_by_age <- function(dat, regions, what, date_min = NULL,
-                                          age_band = NULL, with_forecast = TRUE,
-                                          add_betas = FALSE) {
-
-  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
-            mar = c(3, 3, 3, 1))
-  on.exit(par(oo))
-
-  for (r in regions) {
-    spim_plot_trajectories_region1(
-      what, r, dat, date_min, age_band,
-      with_forecast = with_forecast, add_betas = add_betas,
-      main = toupper(spim_region_name(r)))
-  }
-}
-
-
 ##' Plot Rt
 ##'
 ##' @title Plot Rt
@@ -1495,8 +1459,7 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
 
 spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
                                            age_band, with_forecast = TRUE,
-                                           add_betas = FALSE,
-                                           main = NULL) {
+                                           add_betas = FALSE) {
   trajectories <- dat$samples[[region]]$trajectories
   date <- dat$info$date
   cols <- spim_colours()
@@ -1586,8 +1549,6 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
   plot(xlim[1], 0, type = "n",
        xlim = xlim,
        ylim = ylim,
-       main = main,
-       font.main = 1,
        xlab = "", ylab = labs[what])
   now_cols <- c(mix_cols(cols$now, "white", 0.7),
                 mix_cols(cols$now, "white", 0.495))

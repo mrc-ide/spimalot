@@ -16,9 +16,12 @@ spim_control(
   workers = TRUE,
   n_sample = 1000,
   n_threads = NULL,
-  compiled_compare = FALSE,
   mcmc_path = NULL,
-  verbose = TRUE
+  rt = FALSE,
+  cum_admit = FALSE,
+  diagnoses_admitted = FALSE,
+  cum_n_vaccinated = FALSE,
+  cum_infections_disag = FALSE
 )
 }
 \arguments{
@@ -56,14 +59,24 @@ depending on \code{n_chains} and the detected number of cores.}
 \item{n_threads}{Explicit number of threads, overriding detection
 by \link{spim_control_cores}}
 
-\item{compiled_compare}{Use a compiled compare function (rather
-than the R version).  This can speed things up with the
-deterministic models in particular.}
-
 \item{mcmc_path}{Path to store the mcmc results in}
 
-\item{verbose}{Logical, indicating if we should print information
-about the parallel configuration}
+\item{rt}{logical parameter output trajectories required for
+calculating Rt (default = FALSE)}
+
+\item{cum_admit}{logical parameter whether to output cumulative
+admissions by age (default = FALSE)}
+
+\item{diagnoses_admitted}{logical parameter whether to output
+cumulative combined confirmed admissions and inpatient
+diagnoses by age and vaccine class (default = FALSE)}
+
+\item{cum_n_vaccinated}{logical parameter whether to output
+cumulative number vaccinated by age and vaccine class
+(default = FALSE)}
+
+\item{cum_infections_disag}{logical parameter whether to output
+cumulative infections by age and vaccine class (default = FALSE)}
 }
 \value{
 A list of options

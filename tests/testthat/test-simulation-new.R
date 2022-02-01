@@ -7,7 +7,6 @@ test_that("can construct a control output object", {
   expect_true(output$rt)
   expect_true(output$rt_weighted)
   expect_equal(output$rt_type, c("eff_Rt_general", "Rt_general"))
-  expect_true(output$state_by_age)
   expect_true(output$vaccination)
 })
 
@@ -16,7 +15,6 @@ test_that("Can create minimal output object", {
   output <- spim_simulate_control_output(character(0), time_series = FALSE,
                                          rt = FALSE, rt_weighted = FALSE,
                                          rt_type = "Rt_general",
-                                         state_by_age = FALSE,
                                          vaccination = FALSE)
   expect_s3_class(output, "spim_simulate_control_output")
 
@@ -25,7 +23,6 @@ test_that("Can create minimal output object", {
   expect_false(output$rt)
   expect_false(output$rt_weighted)
   expect_equal(output$rt_type, "Rt_general")
-  expect_false(output$state_by_age)
   expect_false(output$vaccination)
 })
 
