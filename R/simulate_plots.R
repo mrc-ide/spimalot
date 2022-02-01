@@ -341,33 +341,6 @@ spim_plot_check_state <- function(summary_state, combined_state = NULL) {
 }
 
 
-##' Diagnostic plots for checking states by age from simulation
-##' @title Check states by age from simulation
-##' @param summary_agestate State by age from simulation summary object
-##' @param ana Analysis to check, usually central
-##' @param scen Scenario to check, usually central
-##' @export
-spim_plot_check_state_by_age <- function(summary_agestate, ana, scen) {
-  region <- analysis <- scenario <- value <- vaccine_status <- NULL
-  state <- group <- NULL
-
-  summary_agestate %>%
-    dplyr::filter(
-      region == "england",
-      analysis == ana,
-      scenario == scen
-    ) %>%
-    ggplot(aes(x = date, y = value, fill = vaccine_status)) +
-    geom_area() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    facet_grid(vars(state), vars(group),
-      scales = "free",
-      labeller = label_wrap_gen(width = 10)
-    ) +
-    scale_x_date(date_breaks = "1 month")
-}
-
-
 #' Calculate doses given out from simulation
 #' @title Calculate doses given out from simulation
 #' @param summary Output from [spim_simulate_tidy_states]
