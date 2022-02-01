@@ -552,7 +552,7 @@ tidy_state_one <- function(x, common) {
       ret_d <- do.call(expand.grid, dn)[seq(length(dn), 1)]
       ret_d$value <- c(d)
     }
-    
+
     res$state <- ret
     res$n_protected <- ret_p
     res$n_doses <- ret_d
