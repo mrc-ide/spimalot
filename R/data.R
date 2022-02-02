@@ -200,7 +200,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     data$deaths_carehomes <- NA_integer_
     data$deaths_non_hosp <- NA_integer_
   } else {
-    data$deaths <- NA_integer_
+
     data$deaths_hosp <- data$death3
     data$deaths_non_hosp <- NA_integer_
 
@@ -215,7 +215,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
       data$date < date_death_change ~ as.integer(data$ons_death_noncarehome),
       data$date >= date_death_change ~ as.integer(data$death_comm)
     )
-
+    data$deaths <- data$deaths_hosp + data$deaths_comm + data$deaths_carehomes
   }
 
   ## Fit to Wildtype/Alpha using sgtf for England, COG for S/W/NI
@@ -496,6 +496,9 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     deaths_hosp_age <- gsub("death", "deaths_hosp", deaths_hosp_age)
     if (any(!is.na(ret[, deaths_hosp_age]))) {
       ret$deaths_hosp <- NA_integer_
+      ret$deaths <- NA_integer_
+    } else if (any(!is.na(ret[, c("deaths_hosp", "deaths_comm")]))) {
+      ret$deaths <- NA_integer_
     }
 
     if (model_type == "BB") {
