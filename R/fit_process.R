@@ -95,22 +95,16 @@ create_simulate_object <- function(samples, start_date_sim, date) {
     (fit_dates <= sircovid::sircovid_date(date))
   date <- fit_dates[idx_dates]
 
-  state_keep <- c("deaths", "deaths_comm", "deaths_hosp", "admitted",
+  state_keep <- c("deaths", "admitted",
                   "diagnoses", "infections", "hosp", "icu")
   state_full <- samples$trajectories$state
 
   if (samples$info$multiregion) {
     region <- samples$info$region
-    state_by_age <- lapply(region, function(r)
-      extract_age_class_state(state_full[, r, , idx_dates]))
-    names(state_by_age) <- region
-
     ## thin trajectories, but here we already have a regional dimension
     state <- state_full[state_keep, , , idx_dates]
     ## However, we have to push it out
   } else {
-    state_by_age <- extract_age_class_state(state_full[, , idx_dates])
-
     ## thin trajectories and reshape to add a regional dimension:
     state <- state_full[state_keep, , idx_dates]
     n_samples <- ncol(state_full)
@@ -119,7 +113,7 @@ create_simulate_object <- function(samples, start_date_sim, date) {
     state <- mcstate::array_reshape(state, i = 2, c(n_samples, 1))
   }
 
-  list(date = date, state = state, state_by_age = state_by_age)
+  list(date = date, state = state)
 }
 
 
@@ -233,64 +227,6 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
   class(rt) <- c("Rt_trajectories", "Rt")
   rt
 }
-
-
-## All the functions below here have awful names, but none are
-## exported so we can tidy this up later.
-extract_age_class_state <- function(state) {
-  n_groups <- sircovid:::lancelot_n_groups()
-  names_index <- c("cum_infections_disag", "diagnoses_admitted", "D_all")
-
-  ## output cumulative states by
-  ## age / vaccine class / sample / region / time
-  arrays <- lapply(names_index, function(x) state[grep(x, rownames(state)), , ])
-  names(arrays) <- c("infections", "diagnoses_admitted", "deaths")
-  strata <- nrow(arrays$deaths) / n_groups
-
-  f <- function(array) {
-    x <- mcstate::array_reshape(array, 1L, c(n_groups, strata))
-
-    if (ncol(x) == 5) {
-      colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
-                       "waned_protection", "booster_protection")
-    } else {
-      colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
-                       "waned_protection")
-    }
-
-
-    ## aggregate age groups
-    groups <- list(age_0 = 1:6, # 0-4, 5-9, 10-14, 15-19, 20-24, 25-29
-                   age_30 = 7:10,  # 30-34, 35-39, 40-44, 45-49
-                   age_50 = 11:15, # 50-54, 55-59, 60-64, 65-69, 70-74
-                   age_75 = 16:17, # 75-79, 80+
-                   chw = 18, chr = 19)
-
-    res <- lapply(groups,
-                  function(i) apply(x[i, , , , drop = FALSE], 2:4, sum))
-
-    # distribute CHW between 30-49 and 50-74 age groups
-    # distribute CHR between 50-74 and 75+ age groups
-    res$age_30 <- res$age_30 + 0.75 * res$chw
-    res$age_50 <- res$age_50 + 0.25 * res$chw + 0.1 * res$chr
-    res$age_75 <- res$age_75 + 0.9 * res$chr
-    res$chw <- NULL
-    res$chr <- NULL
-
-    # take mean across particles
-    ret <- apply(abind_quiet(res, along = 4), c(1, 3, 4), mean)
-
-    # [age, vaccine status, region, time]
-    ret <- round(aperm(ret, c(3, 1, 2)))
-    ret <- mcstate::array_reshape(ret, 3, c(1, dim(ret)[3]))
-
-    ret
-  }
-
-  lapply(arrays, f)
-
-}
-
 
 reduce_trajectories <- function(samples) {
   ## Remove unused trajectories for predict function in combined
