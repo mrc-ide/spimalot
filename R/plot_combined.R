@@ -1597,8 +1597,10 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
   fore_cols <- c(mix_cols(cols$forecast, "white", 0.7),
                  mix_cols(cols$forecast, "white", 0.495))
 
-  firsts <- x_nowcast[!duplicated(substring(x_nowcast, 1, 7))] #Extract every first date of month from x_nowcast
-  year_firsts <- x_nowcast[!duplicated(substring(x_nowcast, 1, 4))] #Extract every first date of year from x_nowcast
+  #Extract every first date of month from x_nowcast
+  firsts <- x_nowcast[!duplicated(substring(x_nowcast, 1, 7))]
+  #Extract every first date of year from x_nowcast
+  year_firsts <- x_nowcast[!duplicated(substring(x_nowcast, 1, 4))]
   abline(v = firsts[-1], col = "ivory2") #Plot gray line on 1st of every month
   abline(v = year_firsts[-1], col = "gray")
   axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))

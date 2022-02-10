@@ -1,6 +1,6 @@
 Package: spimalot
 Title: Support for 'sircovid'
-Version: 0.6.13
+Version: 0.6.14
 Authors@R:
     c(person(given = "Marc",
            family = "Baguelin",
@@ -30,6 +30,10 @@ Authors@R:
            family = "Sonabend",
            role = c("aut"),
            email = "r.sonabend@imperial.ac.uk"),
+            person(given = "Thomas",
+           family = "Rawson",
+           role = c("aut"),
+           email = "t.rawson@imperial.ac.uk"),
      person(given = "Yasin",
            family = "Elmaci",
            role = c("aut"),
