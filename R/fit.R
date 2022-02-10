@@ -101,15 +101,19 @@ spim_particle_filter <- function(data, pars, control,
 ##' @return A `mcstate_pmcmc` object
 ##'
 ##' @export
-spim_fit_run <- function(pars, filter, control) {
+spim_fit_run <- function(pars, filter, control, initial = NULL) {
   message("Running chains - this will take a while!")
   multiregion <- filter$nested
-  if (multiregion) {
-    initial <- replicate(control$n_chains,
-                         pars$mcmc$propose(pars$mcmc$initial(), "both", 1))
+  if (is.null(initial)) {
+    if (multiregion) {
+      initial <- replicate(control$n_chains,
+                           pars$mcmc$propose(pars$mcmc$initial(), "both", 1))
+    } else {
+      initial <- replicate(control$n_chains,
+                           pars$mcmc$propose(pars$mcmc$initial(), 1))
+    }
   } else {
-    initial <- replicate(control$n_chains,
-                         pars$mcmc$propose(pars$mcmc$initial(), 1))
+    ## TODO: add some checks that initial is in the format we want
   }
   ret <- mcstate::pmcmc(pars$mcmc, filter, initial = initial, control = control)
 
