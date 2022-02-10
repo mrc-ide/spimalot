@@ -527,13 +527,28 @@ spim_plot_variant_region <- function(region, dat, voc_name, date_min,
   date_min <- date_min %||% min(x[-1L])
   date_max <- date_max %||% dat$info$date
 
+  xlim <- c(date_min, date_max)
+  ylim <- c(0, 100)
+
   plot(date_min, 0, type = "n",
-       xlim = c(date_min, date_max),
-       ylim = c(0, 100),
+       xlim = xlim,
+       ylim = ylim,
        las = 1,
        main = toupper(spim_region_name(region)),
        font.main = 1,
-       xlab = "", ylab = paste0(voc_name, " proportion (%)"))
+       xlab = "", ylab = paste0(voc_name, " proportion (%)"),
+       axes = FALSE,
+       xaxs = "i",
+       yaxs = "i")
+
+  #Extract every first date of month from x
+  firsts <- x[!duplicated(substring(x, 1, 7))]
+  #Extract every first date of year from x
+  year_firsts <- x[!duplicated(substring(x, 1, 4))]
+  abline(v = firsts[-1], col = "ivory2") #Plot gray line on 1st of every month
+  abline(v = year_firsts[-1], col = "gray")
+  axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))
+  axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
 
   ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
            horiz = FALSE, leg = FALSE)
@@ -790,7 +805,20 @@ spim_plot_incidence_region <- function(region, dat, per_1000 = FALSE) {
        ylim = ylim,
        main = toupper(title),
        font.main = 1,
-       xlab = "Date", ylab = ylab)
+       xlab = "Date", ylab = ylab,
+       axes = FALSE,
+       xaxs = "i",
+       yaxs = "i")
+
+  #Extract every first date of month from x
+  firsts <- x[!duplicated(substring(x, 1, 7))]
+  #Extract every first date of year from x
+  year_firsts <- x[!duplicated(substring(x, 1, 4))]
+  abline(v = firsts[-1], col = "ivory2") #Plot gray line on 1st of every month
+  abline(v = year_firsts[-1], col = "gray")
+  axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))
+  axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
+
   ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x,
            cols = traj_cols, horiz = FALSE, leg = FALSE)
   lines(x, qs["50.0%", ], col = line_col, lty = 1, lwd = 1.5)
@@ -901,13 +929,28 @@ spim_plot_pillar2_positivity_region <- function(region, dat, age_band,
   oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
   on.exit(oo)
 
+  xlim <- c(date_min, dat$info$date)
+  ylim <- c(0, ymax)
+
   plot(date_min, 0, type = "n",
-       xlim = c(date_min, dat$info$date),
-       ylim = c(0, ymax),
+       xlim = xlim,
+       ylim = ylim,
        las = 1,
        main = toupper(spim_region_name(region)),
        font.main = 1,
-       xlab = "", ylab = ylab)
+       xlab = "", ylab = ylab,
+       axes = FALSE,
+       xaxs = "i",
+       yaxs = "i")
+
+  #Extract every first date of month from x
+  firsts <- x[!duplicated(substring(x, 1, 7))]
+  #Extract every first date of year from x
+  year_firsts <- x[!duplicated(substring(x, 1, 4))]
+  abline(v = firsts[-1], col = "ivory2") #Plot gray line on 1st of every month
+  abline(v = year_firsts[-1], col = "gray")
+  axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))
+  axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
 
   ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
            horiz = FALSE, leg = FALSE)
@@ -1101,12 +1144,27 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
   on.exit(oo)
 
+  xlim <- c(date_min, dat$info$date)
+  ylim <- c(0, ymax)
+
   plot(date_min, 0, type = "n",
-       xlim = c(date_min, dat$info$date),
-       ylim = c(0, ymax),
+       xlim = xlim,
+       ylim = ylim,
        main = toupper(spim_region_name(region)),
        font.main = 1,
-       xlab = "Date", ylab = "REACT proportion positive (%)")
+       xlab = "Date", ylab = "REACT proportion positive (%)",
+       axes = FALSE,
+       xaxs = "i",
+       yaxs = "i")
+
+  #Extract every first date of month from x
+  firsts <- x[!duplicated(substring(x, 1, 7))]
+  #Extract every first date of year from x
+  year_firsts <- x[!duplicated(substring(x, 1, 4))]
+  abline(v = firsts[-1], col = "ivory2") #Plot gray line on 1st of every month
+  abline(v = year_firsts[-1], col = "gray")
+  axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))
+  axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
 
   ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
            horiz = FALSE, leg = FALSE)
@@ -1217,19 +1275,22 @@ spim_plot_serology_region <- function(region, dat, sero_flow, ymax,
        ylim = ylim, las = 1,
        main = "",
        font.main = 1,
-       xlab = "", ylab = "Cumulative proportion (%)")
+       xlab = "", ylab = "Cumulative proportion (%)",
+       axes = FALSE,
+       xaxs = "i",
+       yaxs = "i")
+
+  #Extract every first date of month from x
+  firsts <- x[!duplicated(substring(x, 1, 7))]
+  #Extract every first date of year from x
+  year_firsts <- x[!duplicated(substring(x, 1, 4))]
+  abline(v = firsts[-1], col = "ivory2") #Plot gray line on 1st of every month
+  abline(v = year_firsts[-1], col = "gray")
+  axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))
+  axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
+
   title(main = toupper(spim_region_name(region)), adj = 0, font.main = 1,
         line = 0.5, cex.main = 1)
-
-  if (nrow(sero_dates) > 0) {
-    lapply(X = seq_rows(summ_serodata), FUN = function(i) {
-
-      xx <- rep(unlist(summ_serodata[i, c("start", "end")]), each = 2)
-      yy <- c(ylim, rev(ylim))
-
-      polygon(x = xx, y = yy, col = grDevices::grey(0.9), border = NA)
-    })
-  }
 
   p_labels <- c("2.5%", "25.0%", "75.0%", "97.5%")
 
@@ -1462,7 +1523,19 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
        ylim = ylim,
        main = toupper(spim_region_name(region)),
        font.main = 1,
-       xlab = "Date", ylab = ylab)
+       xlab = "Date", ylab = ylab,
+       axes = FALSE,
+       xaxs = "i",
+       yaxs = "i")
+
+  #Extract every first date of month from x
+  firsts <- x[!duplicated(substring(x, 1, 7))]
+  #Extract every first date of year from x
+  year_firsts <- x[!duplicated(substring(x, 1, 4))]
+  abline(v = firsts[-1], col = "ivory2") #Plot gray line on 1st of every month
+  abline(v = year_firsts[-1], col = "gray")
+  axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))
+  axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
 
   cols <- c(mix_cols(col, "white", 0.7),
             mix_cols(col, "white", 0.495))
