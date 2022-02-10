@@ -930,7 +930,7 @@ spim_plot_pillar2_positivity_region <- function(region, dat, age_band,
   on.exit(oo)
 
   xlim <- c(date_min, dat$info$date)
-  ylim = c(0, ymax)
+  ylim <- c(0, ymax)
 
   plot(date_min, 0, type = "n",
        xlim = xlim,
