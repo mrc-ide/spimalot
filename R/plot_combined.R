@@ -1588,11 +1588,21 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
        ylim = ylim,
        main = main,
        font.main = 1,
-       xlab = "", ylab = labs[what])
+       xlab = "", ylab = labs[what],
+       axes = FALSE,
+       xaxs = "i",
+       yaxs = "i")
   now_cols <- c(mix_cols(cols$now, "white", 0.7),
                 mix_cols(cols$now, "white", 0.495))
   fore_cols <- c(mix_cols(cols$forecast, "white", 0.7),
                  mix_cols(cols$forecast, "white", 0.495))
+
+  firsts <- x_nowcast[!duplicated(substring(x_nowcast, 1, 7))] #Extract every first date of month from x_nowcast
+  year_firsts <- x_nowcast[!duplicated(substring(x_nowcast, 1, 4))] #Extract every first date of year from x_nowcast
+  abline(v = firsts[-1], col = "ivory2") #Plot gray line on 1st of every month
+  abline(v = year_firsts[-1], col = "gray")
+  axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))
+  axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
 
   ci_bands(qs_nowcast[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x_nowcast,
            cols = now_cols, horiz = FALSE, leg = FALSE)
