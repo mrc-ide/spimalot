@@ -3,12 +3,15 @@
 \name{spim_plot_fit_forecasts}
 \alias{spim_plot_fit_forecasts}
 \alias{spim_plot_fit_traces}
+\alias{spim_plot_fit_traces_separate}
 \alias{spim_plot_fit_posteriors}
 \title{Plots for fit}
 \usage{
 spim_plot_fit_forecasts(samples, region = NULL)
 
 spim_plot_fit_traces(samples)
+
+spim_plot_fit_traces_separate(samples)
 
 spim_plot_fit_posteriors(samples, region = NULL)
 }
