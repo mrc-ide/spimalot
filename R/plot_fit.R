@@ -205,24 +205,25 @@ spim_plot_fit_traces_separate <- function(samples) {
     nms_varied <- samples$info$pars$varied
     region <- samples$info$region
 
+    plot_traces2(rowSums(probs[, "log_likelihood", ]), "log_likelihood")
+    mtext("Fixed (shared across regions)", outer = TRUE)
     for (nm in nms_fixed) {
       plot_traces2(pars[, nm, 1], nm)
     }
-    plot_traces2(rowSums(probs[, "log_likelihood", ]), "log_likelihood")
-    mtext("Fixed (shared across regions)", outer = TRUE)
+
 
     for (r in region) {
+      plot_traces2(probs[, "log_likelihood", r], "log_likelihood")
       for (nm in nms_varied) {
         plot_traces2(pars[, nm, r], nm)
       }
-      plot_traces2(probs[, "log_likelihood", r], "log_likelihood")
       mtext(r, outer = TRUE)
     }
   } else {
+    plot_traces2(probs[, "log_likelihood"], "log_likelihood")
     for (nm in nms) {
       plot_traces2(samples$pars_full[, nm], nm)
     }
-    plot_traces2(probs[, "log_likelihood"], "log_likelihood")
   }
 }
 
