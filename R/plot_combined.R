@@ -1612,10 +1612,15 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
       res <- trajectories$state[trajnames[what], , -1L]
     }
   } else {
-    if (what != "deaths_hosp") {
+    if (what == "deaths_hosp") {
+      res <- trajectories$state[paste0("deaths_hosp_", age_band, "_inc"), , -1L]
+    } else if (what == "admitted") {
+      res <-
+        trajectories$state[paste0("diagnoses_", age_band, "_inc"), , -1L] +
+        trajectories$state[paste0("admitted_", age_band, "_inc"), , -1L]
+    } else {
       stop(message(paste0("Cannot plot ", what, " by age")))
     }
-    res <- trajectories$state[paste0("deaths_hosp_", age_band, "_inc"), , -1L]
     labs[what] <- paste(labs[what], gsub("_", " to ", age_band))
   }
 
@@ -1639,11 +1644,16 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
 
   if (age_band == "all") {
     dy <- data$fitted[, what]
+    dy_extra <- data$full[, what]
   } else {
-    dy <- data$fitted[, paste0(what, "_", age_band)]
+    if (what == "admitted") {
+      dy <- data$fitted[, paste0("admissions_", age_band)]
+      dy_extra <- data$full[, paste0("admissions_", age_band)]
+    } else {
+      dy <- data$fitted[, paste0(what, "_", age_band)]
+      dy_extra <- data$full[, what]
+    }
   }
-
-  dy_extra <- data$full[, what]
   dy_extra[!is.na(dy)] <- NA_integer_
 
   oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")

@@ -87,11 +87,11 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 
   ## Set last 'trim_admissions' days with admissions reported to NA, as
   ## these are too likely to be back-filled to be reliable
-  admissions_by_age_bands <- paste0("admissions_",
+  admissions_age_bands <- paste0("admissions_",
                                     c("0_9", "10_19", "20_29", "30_39", "40_49",
                                       "50_59", "60_69", "70_79", "80_plus"))
   i <- seq(to = nrow(data), length.out = trim_admissions)
-  data[i, c(admissions_by_age_bands)] <- NA
+  data[i, c(admissions_age_bands)] <- NA
 
   ## Set last 'trim_deaths' days with deaths reported to NA, as these
   ## are too likely to be back-filled to be reliable
@@ -120,7 +120,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
 
-  admissions_by_age_bands <- paste0(admissions_,
+  admissions_age_bands <- paste0("admissions_",
                                     c("0_9", "10_19", "20_29", "30_39", "40_49",
                                       "50_59", "60_69", "70_79", "80_plus"))
 
@@ -161,7 +161,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
             "pillar2_negatives_total_pcr_over25", "pillar2_negatives_total_pcr",
             paste0("pillar2_negatives_total_pcr_", pillar2_age_bands),
             # Admissions by age from SUS linelist
-            admissions_by_age_bands)
+            admissions_age_bands)
   data <- data[c("region", "date", vars)]
 
   ## Remove any data after the date parameter
@@ -538,12 +538,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     }
 
     # check we have age-specific admissions for England regions, and use if so
-    if (!all(is.na(ret[, admissions_by_age_bands])) &&
+    if (!all(is.na(ret[, admissions_age_bands])) &&
         region %in% sircovid::regions("england")) {
       ret$all_admission <- NA_integer_
 
     } else {
-      ret[, admissions_by_age_bands] <- NA_integer_
+      ret[, admissions_age_bands] <- NA_integer_
     }
 
     if (model_type == "BB") {
