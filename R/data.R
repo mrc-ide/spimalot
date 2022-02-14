@@ -120,8 +120,9 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
 
-  admissions_by_age_bands <- c("0_9", "10_19", "20_29", "30_39", "40_49",
-                               "50_59", "60_69", "70_79", "80_plus")
+  admissions_by_age_bands <- paste0(admissions_,
+                                    c("0_9", "10_19", "20_29", "30_39", "40_49",
+                                      "50_59", "60_69", "70_79", "80_plus"))
 
   deaths_hosp_age <- paste0("death_", c(0, seq(50, 80, 5)),
                             "_", c(seq(49, 79, 5), 120))
@@ -160,7 +161,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
             "pillar2_negatives_total_pcr_over25", "pillar2_negatives_total_pcr",
             paste0("pillar2_negatives_total_pcr_", pillar2_age_bands),
             # Admissions by age from SUS linelist
-            paste0("admissions_", admissions_by_age_bands))
+            admissions_by_age_bands)
   data <- data[c("region", "date", vars)]
 
   ## Remove any data after the date parameter
@@ -537,14 +538,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     }
 
     # check we have age-specific admissions for England regions, and use if so
-    admissions_by_age <- grep("admissions_", colnames(ret), value = TRUE)
-
-    if (!all(is.na(admissions_by_age)) &&
+    if (!all(is.na(ret[, admissions_by_age_bands])) &&
         region %in% sircovid::regions("england")) {
       ret$all_admission <- NA_integer_
 
     } else {
-      ret[ , admissions_by_age] <- NA_integer_
+      ret[, admissions_by_age_bands] <- NA_integer_
     }
 
     if (model_type == "BB") {
