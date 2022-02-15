@@ -156,6 +156,80 @@ spim_plot_fit_traces <- function(samples) {
 
 ##' @rdname spim_plot_fit
 ##' @export
+spim_plot_fit_traces_separate <- function(samples) {
+  multiregion <- samples$info$multiregion
+  if (is.null(samples$chain)) {
+    n_chains <- 1L
+  } else {
+    ## We assume this below
+    n_chains <- length(unique(samples$chain))
+    stopifnot(
+      identical(samples$chain,
+                rep(seq_len(n_chains),
+                    each = length(samples$chain) / n_chains)))
+  }
+  cols <- rev(viridisLite::viridis(n_chains))
+
+  i <- reorder_beta(colnames(samples$pars_full))
+  if (multiregion) {
+    pars <- samples$pars_full[, i, ]
+  } else {
+    pars <- samples$pars_full[, i]
+  }
+  nms <- colnames(pars)
+  probs <- samples$probabilities_full
+
+  op <- par(no.readonly = TRUE)
+  on.exit(par(op))
+
+
+  plot_traces2 <- function(p, name) {
+    traces <- matrix(p, ncol = n_chains)
+    ess <- coda::effectiveSize(coda::as.mcmc(traces))
+
+    if (name == "log_likelihood") {
+      main <- ""
+    } else {
+      main <- sprintf("ess = %s", round(sum(ess)))
+    }
+    matplot(traces, type = "l", lty = 1,
+            xlab = "Iteration", bty = "n",
+            ylab = name, col = cols,
+            main = main,
+            font.main = 1)
+    rug(samples$iteration[samples$chain == 1], ticksize = 0.1)
+  }
+
+  if (multiregion) {
+    nms_fixed <- samples$info$pars$fixed
+    nms_varied <- samples$info$pars$varied
+    region <- samples$info$region
+
+    plot_traces2(rowSums(probs[, "log_likelihood", ]), "log_likelihood")
+    mtext("Fixed (shared across regions)", outer = TRUE)
+    for (nm in nms_fixed) {
+      plot_traces2(pars[, nm, 1], nm)
+    }
+
+
+    for (r in region) {
+      plot_traces2(probs[, "log_likelihood", r], "log_likelihood")
+      for (nm in nms_varied) {
+        plot_traces2(pars[, nm, r], nm)
+      }
+      mtext(r, outer = TRUE)
+    }
+  } else {
+    plot_traces2(probs[, "log_likelihood"], "log_likelihood")
+    for (nm in nms) {
+      plot_traces2(samples$pars_full[, nm], nm)
+    }
+  }
+}
+
+
+##' @rdname spim_plot_fit
+##' @export
 spim_plot_fit_posteriors <- function(samples, region = NULL) {
   if (is.null(samples$chain)) {
     n_chains <- 1L
