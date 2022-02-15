@@ -87,15 +87,6 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
   data$date_string <- data$date
   data$date <- sircovid::sircovid_date(data$date)
 
-  ## Set last 'admissions_backfill' days with admissions reported to NA, as
-  ## these are too likely to be back-filled to be reliable
-  # admissions_age_bands <- paste0("admissions_",
-  #                                   c("0_9", "10_19", "20_29", "30_39", "40_49",
-  #                                     "50_59", "60_69", "70_79", "80_plus"))
-  # i <- seq(to = nrow(data), length.out = admissions_backfill)
-  # data[i, c(admissions_age_bands)] <- NA
-
-  ## Set last 'trim_deaths' days with deaths reported to NA, as these
   ## are too likely to be back-filled to be reliable
   deaths_hosp_age <- paste0("deaths_hosp_", c(0, seq(50, 80, 5)),
                             "_", c(seq(49, 79, 5), 120))
