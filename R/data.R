@@ -246,38 +246,35 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   data$strain_tot[na_strain_dates] <- NA_integer_
 
   # Fit to Alpha/Delta using sgtf data for England, COG data for S/W/NI
+  alpha_delta_dates <- data$date >= "2021-03-08" & data$date <= "2021-07-31"
   if (region %in% c("scotland", "wales", "northern_ireland")) {
-    data$strain_non_variant[data$date >= "2021-03-08"] <-
-      data$n_non_delta_variant[data$date >= "2021-03-08"]
-    data$strain_tot[data$date >= "2021-03-08"] <-
-      data$n_delta_variant[data$date >= "2021-03-08"] +
-      data$n_non_delta_variant[data$date >= "2021-03-08"]
+    data$strain_non_variant[alpha_delta_dates] <-
+      data$n_non_delta_variant[alpha_delta_dates]
+    data$strain_tot[alpha_delta_dates] <-
+      data$n_delta_variant[alpha_delta_dates] +
+      data$n_non_delta_variant[alpha_delta_dates]
   } else {
-    data$strain_non_variant[data$date >= "2021-03-08"] <-
-      data$n_symp_non_delta_variant[data$date >= "2021-03-08"]
-    data$strain_tot[data$date >= "2021-03-08"] <-
-      data$n_symp_delta_variant[data$date >= "2021-03-08"] +
-      data$n_symp_non_delta_variant[data$date >= "2021-03-08"]
+    data$strain_non_variant[alpha_delta_dates] <-
+      data$n_symp_non_delta_variant[alpha_delta_dates]
+    data$strain_tot[alpha_delta_dates] <-
+      data$n_symp_delta_variant[alpha_delta_dates] +
+      data$n_symp_non_delta_variant[alpha_delta_dates]
   }
 
-  ## Only fit to Alpha/Delta up to 2021-07-31
-  na_strain_dates <- data$date > as.Date("2021-07-31")
-  data$strain_non_variant[na_strain_dates] <- NA_integer_
-  data$strain_tot[na_strain_dates] <- NA_integer_
-
   ## Fit to Delta/Omicron using VAM data for England, COG data for S/W/NI
+  delta_omicron_dates <- data$date >= "2021-11-20" & data$date <= "2022-01-15"
   if (region %in% c("scotland", "wales", "northern_ireland")) {
-    data$strain_non_variant[data$date >= "2021-11-20"] <-
-      data$n_non_omicron_variant[data$date >= "2021-11-20"]
-    data$strain_tot[data$date >= "2021-11-20"] <-
-      data$n_omicron_variant[data$date >= "2021-11-20"] +
-      data$n_non_omicron_variant[data$date >= "2021-11-20"]
+    data$strain_non_variant[delta_omicron_dates] <-
+      data$n_non_omicron_variant[delta_omicron_dates]
+    data$strain_tot[delta_omicron_dates] <-
+      data$n_omicron_variant[delta_omicron_dates] +
+      data$n_non_omicron_variant[delta_omicron_dates]
   } else {
-    data$strain_non_variant[data$date >= "2021-11-20"] <-
-      data$n_symp_non_omicron_variant[data$date >= "2021-11-20"]
-    data$strain_tot[data$date >= "2021-11-20"] <-
-      data$n_symp_non_omicron_variant[data$date >= "2021-11-20"] +
-      data$n_symp_omicron_variant[data$date >= "2021-11-20"]
+    data$strain_non_variant[delta_omicron_dates] <-
+      data$n_symp_non_omicron_variant[delta_omicron_dates]
+    data$strain_tot[delta_omicron_dates] <-
+      data$n_symp_non_omicron_variant[delta_omicron_dates] +
+      data$n_symp_omicron_variant[delta_omicron_dates]
   }
 
 
