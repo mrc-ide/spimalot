@@ -281,13 +281,13 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   # Use positives/negatives as Pillar 2 for Scotland
   # Set data$phe_patients to NA between 2020-06-01 and 2020-09-09 (inclusive)
   if (region == "scotland") {
-    data$pillar2_positives <- data$positives
-    ## Scotland negatives are by report date (while positives are by specimen
-    ## date). We assume a 2 day reporting delay.
-    data$pillar2_negatives <- c(data$negatives[-c(1, 2)], rep(NA_integer_, 2))
-    data$pillar2_positives_over25 <- data$positives_over25
-    ## We do not have any age breakdown for negatives for Scotland
-    data$pillar2_negatives_over25 <- NA_integer_
+    ## Scotland PCR positives and negatives are by report date.
+    ## We assume a 2 day reporting delay.
+    data$pillar2_positives <-
+      c(data$positives_pcr[-c(1, 2)], rep(NA_integer_, 2))
+    data$pillar2_negatives <-
+      c(data$negatives_pcr[-c(1, 2)], rep(NA_integer_, 2))
+
     for (i in pillar2_age_bands) {
       data[, paste0("pillar2_positives_", i)] <- NA_integer_
       data[, paste0("pillar2_negatives_", i)] <- NA_integer_
@@ -303,8 +303,13 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     data$pillar2_negatives <- data$negatives
   }
 
-  data$pillar2_cases <- data$pillar2_positives
-  data$pillar2_cases_over25 <- data$pillar2_positives_over25
+  if (region == "scotland") {
+    data$pillar2_cases <- data$positives
+    data$pillar2_cases_over25 <- data$positives_over25
+  } else {
+    data$pillar2_cases <- data$pillar2_positives
+    data$pillar2_cases_over25 <- data$pillar2_positives_over25
+  }
   data[, paste0("pillar2_cases_", pillar2_age_bands)] <-
     data[, paste0("pillar2_positives_", pillar2_age_bands)]
 
