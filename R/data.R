@@ -129,7 +129,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
             "s_negative_adj1",
             # Pillar 2 positives
             "positives", "positives_over25", "pillar2_positives",
-            "pillar2_positives_over25",
+            "pillar2_positives_over25", "positives_pcr",
             paste0("pillar2_positives_", pillar2_age_bands),
             # Pillar 2 positives symptomatic PCR only
             "pillar2_positives_symp_pcr_only",
@@ -140,7 +140,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
             paste0("pillar2_positives_pcr_all_", pillar2_age_bands),
             # Pillar 2 negatives
             "negatives", "pillar2_negatives", "pillar2_negatives_over25",
-            paste0("pillar2_negatives_", pillar2_age_bands),
+            paste0("pillar2_negatives_", pillar2_age_bands), "negatives_pcr",
             # Pillar 2 negative PCR
             "pillar2_negatives_total_pcr_over25", "pillar2_negatives_total_pcr",
             paste0("pillar2_negatives_total_pcr_", pillar2_age_bands))
