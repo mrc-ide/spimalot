@@ -129,7 +129,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
             "s_negative_adj1",
             # Pillar 2 positives
             "positives", "positives_over25", "pillar2_positives",
-            "pillar2_positives_over25",
+            "pillar2_positives_over25", "positives_pcr",
             paste0("pillar2_positives_", pillar2_age_bands),
             # Pillar 2 positives symptomatic PCR only
             "pillar2_positives_symp_pcr_only",
@@ -140,7 +140,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
             paste0("pillar2_positives_pcr_all_", pillar2_age_bands),
             # Pillar 2 negatives
             "negatives", "pillar2_negatives", "pillar2_negatives_over25",
-            paste0("pillar2_negatives_", pillar2_age_bands),
+            paste0("pillar2_negatives_", pillar2_age_bands), "negatives_pcr",
             # Pillar 2 negative PCR
             "pillar2_negatives_total_pcr_over25", "pillar2_negatives_total_pcr",
             paste0("pillar2_negatives_total_pcr_", pillar2_age_bands))
@@ -234,51 +234,48 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   data$strain_tot[na_strain_dates] <- NA_integer_
 
   # Fit to Alpha/Delta using sgtf data for England, COG data for S/W/NI
+  alpha_delta_dates <- data$date >= "2021-03-08" & data$date <= "2021-07-31"
   if (region %in% c("scotland", "wales", "northern_ireland")) {
-    data$strain_non_variant[data$date >= "2021-03-08"] <-
-      data$n_non_delta_variant[data$date >= "2021-03-08"]
-    data$strain_tot[data$date >= "2021-03-08"] <-
-      data$n_delta_variant[data$date >= "2021-03-08"] +
-      data$n_non_delta_variant[data$date >= "2021-03-08"]
+    data$strain_non_variant[alpha_delta_dates] <-
+      data$n_non_delta_variant[alpha_delta_dates]
+    data$strain_tot[alpha_delta_dates] <-
+      data$n_delta_variant[alpha_delta_dates] +
+      data$n_non_delta_variant[alpha_delta_dates]
   } else {
-    data$strain_non_variant[data$date >= "2021-03-08"] <-
-      data$n_symp_non_delta_variant[data$date >= "2021-03-08"]
-    data$strain_tot[data$date >= "2021-03-08"] <-
-      data$n_symp_delta_variant[data$date >= "2021-03-08"] +
-      data$n_symp_non_delta_variant[data$date >= "2021-03-08"]
+    data$strain_non_variant[alpha_delta_dates] <-
+      data$n_symp_non_delta_variant[alpha_delta_dates]
+    data$strain_tot[alpha_delta_dates] <-
+      data$n_symp_delta_variant[alpha_delta_dates] +
+      data$n_symp_non_delta_variant[alpha_delta_dates]
   }
 
-  ## Only fit to Alpha/Delta up to 2021-07-31
-  na_strain_dates <- data$date > as.Date("2021-07-31")
-  data$strain_non_variant[na_strain_dates] <- NA_integer_
-  data$strain_tot[na_strain_dates] <- NA_integer_
-
   ## Fit to Delta/Omicron using VAM data for England, COG data for S/W/NI
+  delta_omicron_dates <- data$date >= "2021-11-20" & data$date <= "2022-01-15"
   if (region %in% c("scotland", "wales", "northern_ireland")) {
-    data$strain_non_variant[data$date >= "2021-11-20"] <-
-      data$n_non_omicron_variant[data$date >= "2021-11-20"]
-    data$strain_tot[data$date >= "2021-11-20"] <-
-      data$n_omicron_variant[data$date >= "2021-11-20"] +
-      data$n_non_omicron_variant[data$date >= "2021-11-20"]
+    data$strain_non_variant[delta_omicron_dates] <-
+      data$n_non_omicron_variant[delta_omicron_dates]
+    data$strain_tot[delta_omicron_dates] <-
+      data$n_omicron_variant[delta_omicron_dates] +
+      data$n_non_omicron_variant[delta_omicron_dates]
   } else {
-    data$strain_non_variant[data$date >= "2021-11-20"] <-
-      data$n_symp_non_omicron_variant[data$date >= "2021-11-20"]
-    data$strain_tot[data$date >= "2021-11-20"] <-
-      data$n_symp_non_omicron_variant[data$date >= "2021-11-20"] +
-      data$n_symp_omicron_variant[data$date >= "2021-11-20"]
+    data$strain_non_variant[delta_omicron_dates] <-
+      data$n_symp_non_omicron_variant[delta_omicron_dates]
+    data$strain_tot[delta_omicron_dates] <-
+      data$n_symp_non_omicron_variant[delta_omicron_dates] +
+      data$n_symp_omicron_variant[delta_omicron_dates]
   }
 
 
   # Use positives/negatives as Pillar 2 for Scotland
   # Set data$phe_patients to NA between 2020-06-01 and 2020-09-09 (inclusive)
   if (region == "scotland") {
-    data$pillar2_positives <- data$positives
-    ## Scotland negatives are by report date (while positives are by specimen
-    ## date). We assume a 2 day reporting delay.
-    data$pillar2_negatives <- c(data$negatives[-c(1, 2)], rep(NA_integer_, 2))
-    data$pillar2_positives_over25 <- data$positives_over25
-    ## We do not have any age breakdown for negatives for Scotland
-    data$pillar2_negatives_over25 <- NA_integer_
+    ## Scotland PCR positives and negatives are by report date.
+    ## We assume a 2 day reporting delay.
+    data$pillar2_positives <-
+      c(data$positives_pcr[-c(1, 2)], rep(NA_integer_, 2))
+    data$pillar2_negatives <-
+      c(data$negatives_pcr[-c(1, 2)], rep(NA_integer_, 2))
+
     for (i in pillar2_age_bands) {
       data[, paste0("pillar2_positives_", i)] <- NA_integer_
       data[, paste0("pillar2_negatives_", i)] <- NA_integer_
@@ -294,8 +291,13 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     data$pillar2_negatives <- data$negatives
   }
 
-  data$pillar2_cases <- data$pillar2_positives
-  data$pillar2_cases_over25 <- data$pillar2_positives_over25
+  if (region == "scotland") {
+    data$pillar2_cases <- data$positives
+    data$pillar2_cases_over25 <- data$positives_over25
+  } else {
+    data$pillar2_cases <- data$pillar2_positives
+    data$pillar2_cases_over25 <- data$pillar2_positives_over25
+  }
   data[, paste0("pillar2_cases_", pillar2_age_bands)] <-
     data[, paste0("pillar2_positives_", pillar2_age_bands)]
 
