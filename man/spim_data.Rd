@@ -12,6 +12,7 @@ spim_data(
   serology,
   trim_deaths,
   trim_pillar2,
+  admissions_backfill,
   full_data = FALSE
 )
 }
@@ -38,6 +39,10 @@ back-fill issues. We typically use a value of 4 days.}
 
 \item{trim_pillar2}{The number of days of pillar 2 data to trim to avoid
 back-fill issues. We typically use a value of 7 days.}
+
+\item{admissions_backfill}{The number of days of admissions by age to trim
+to avoid back-fill issues. We typically use a value of 10 days. Aggregate
+data will instead be used for that same number of days.}
 
 \item{full_data}{Not sure yet, we'll find out}
 }
