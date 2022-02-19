@@ -1594,7 +1594,9 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
             hosp = "Hospital beds",
             diagnoses = "Daily inpatient diagnoses",
             admitted = "Daily admissions",
-            all_admission = "Daily admissions (all)")
+            all_admission = ifelse(age_band == "all",
+                                   "Daily admissions (all)",
+                                   "Daily admissions"))
 
   if (age_band == "all") {
     ## remove first step as the first time period is typically much more
@@ -1614,10 +1616,9 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
   } else {
     if (what == "deaths_hosp") {
       res <- trajectories$state[paste0("deaths_hosp_", age_band, "_inc"), , -1L]
-    } else if (what == "admitted") {
+    } else if (what == "all_admission") {
       res <-
-        trajectories$state[paste0("diagnoses_", age_band, "_inc"), , -1L] +
-        trajectories$state[paste0("admitted_", age_band, "_inc"), , -1L]
+        trajectories$state[paste0("all_admission_", age_band, "_inc"), , -1L]
     } else {
       stop(message(paste0("Cannot plot ", what, " by age")))
     }
@@ -1646,7 +1647,7 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
     dy <- data$fitted[, what]
     dy_extra <- data$full[, what]
   } else {
-    if (what == "admitted") {
+    if (what == "all_admission") {
       dy <- data$fitted[, paste0("admissions_", age_band)]
       dy_extra <- data$full[, paste0("admissions_", age_band)]
     } else {
