@@ -461,6 +461,14 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     deaths_hosp_75_79 = data$death_75_79,
     deaths_hosp_80_plus = data$death_80_plus,
     deaths_comm = data$deaths_comm,
+    deaths_comm_0_49 = NA_integer_,
+    deaths_comm_50_54 = NA_integer_,
+    deaths_comm_55_59 = NA_integer_,
+    deaths_comm_60_64 = NA_integer_,
+    deaths_comm_65_69 = NA_integer_,
+    deaths_comm_70_74 = NA_integer_,
+    deaths_comm_75_79 = NA_integer_,
+    deaths_comm_80_plus = NA_integer_,
     deaths_carehomes = data$deaths_carehomes,
     deaths_non_hosp = data$deaths_non_hosp,
     icu = data$final_icu,
@@ -470,15 +478,15 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     admitted = data$admitted,
     diagnoses = data$new,
     all_admission = data$final_admissions,
-    admissions_0_9 = data$admissions_0_9,
-    admissions_10_19 = data$admissions_10_19,
-    admissions_20_29 = data$admissions_20_29,
-    admissions_30_39 = data$admissions_30_39,
-    admissions_40_49 = data$admissions_40_49,
-    admissions_50_59 = data$admissions_50_59,
-    admissions_60_69 = data$admissions_60_69,
-    admissions_70_79 = data$admissions_70_79,
-    admissions_80_plus = data$admissions_80_plus,
+    all_admission_0_9 = data$admissions_0_9,
+    all_admission_10_19 = data$admissions_10_19,
+    all_admission_20_29 = data$admissions_20_29,
+    all_admission_30_39 = data$admissions_30_39,
+    all_admission_40_49 = data$admissions_40_49,
+    all_admission_50_59 = data$admissions_50_59,
+    all_admission_60_69 = data$admissions_60_69,
+    all_admission_70_79 = data$admissions_70_79,
+    all_admission_80_plus = data$admissions_80_plus,
     pillar2_tot = data$pillar2_positives + data$pillar2_negatives,
     pillar2_pos = data$pillar2_positives,
     pillar2_cases = data$pillar2_cases,
@@ -536,17 +544,18 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     # Check we have age-specific admissions for England regions, and use if so.
     # We will trim out admissions_backfill days and swap to aggregate
     # admissions instead for those days only.
-    if (!all(is.na(ret[, admissions_age_bands])) &&
+    admissions_by_age <- grep("admissions_", colnames(ret), value = TRUE)
+    if (!all(is.na(ret[, admissions_by_age])) &&
         region %in% sircovid::regions("england")) {
       # First replace NAs with zeroes
-      ret[, admissions_age_bands][is.na(ret[, admissions_age_bands])] <- 0
+      ret[, admissions_by_age][is.na(ret[, admissions_by_age])] <- 0
       i <- seq(to = nrow(ret), length.out = admissions_backfill)
-      ret[i, admissions_age_bands] <- NA_integer_
+      ret[i, admissions_by_age] <- NA_integer_
       i <- seq(1, nrow(ret) - admissions_backfill)
       ret[i, "all_admission"] <- NA_integer_
 
     } else {
-      ret[, admissions_age_bands] <- NA_integer_
+      ret[, admissions_by_age] <- NA_integer_
     }
 
     if (model_type == "BB") {
