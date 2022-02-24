@@ -106,8 +106,6 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
 
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
-
-
   deaths_hosp_age <- paste0("death_", c(0, seq(50, 80, 5)),
                             "_", c(seq(49, 79, 5), 120))
   deaths_hosp_age <- gsub("120", "plus", deaths_hosp_age)
@@ -508,6 +506,18 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     pillar2_80_plus_cases = data$pillar2_cases_80_plus,
     react_pos = data$react_positive,
     react_tot = data$react_samples,
+    react_5_24_pos = NA_integer_,
+    react_5_24_tot = NA_integer_,
+    react_25_34_pos = NA_integer_,
+    react_25_34_tot = NA_integer_,
+    react_35_44_pos = NA_integer_,
+    react_35_44_tot = NA_integer_,
+    react_45_54_pos = NA_integer_,
+    react_45_54_tot = NA_integer_,
+    react_55_64_pos = NA_integer_,
+    react_55_64_tot = NA_integer_,
+    react_65_plus_pos = NA_integer_,
+    react_65_plus_tot = NA_integer_,
     strain_non_variant = data$strain_non_variant,
     strain_tot = data$strain_tot,
     strain_over25_non_variant = NA_integer_,
