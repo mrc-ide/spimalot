@@ -235,6 +235,8 @@ reduce_trajectories <- function(samples) {
                       "cum_n_vaccinated")
   re <- sprintf("^(%s)", paste(remove_strings, collapse = "|"))
 
+  samples <- summarise_states(samples)
+
   multiregion <- samples$info$multiregion
   state <- samples$trajectories$state
   keep <- !grepl(re, rownames(state))
@@ -711,6 +713,77 @@ calculate_cases_region <- function(state, pars_model, date) {
                                "_25_49", "_50_64", "_65_79", "_80_plus"))
 
   cases
+}
+
+summarise_states <- function(samples) {
+  date <- sircovid::sircovid_date_as_date(samples$trajectories$date)
+  state <- samples$trajectories$state
+  transform <- samples$predict$transform
+  multiregion <- samples$info$multiregion
+
+  if (multiregion) {
+    region <- samples$info$region
+    pars_model <- lapply(region, function(r)
+      lapply(seq_len(nrow(samples$pars)), function(i)
+        last(transform[[r]](samples$pars[i, , r]))$pars))
+    extra_state <- lapply(seq_along(region), function(i)
+      summarise_states_region(state[, i, , ], pars_model[[i]]))
+
+    ## Add an extra dimension, then bind together:
+    extra_state <- lapply(extra_state, mcstate::array_reshape,
+                          2, c(1, dim(state)[[3]]))
+    extra_state <- abind_quiet(extra_state, along = 2)
+  } else {
+    pars_model <- lapply(seq_len(nrow(samples$pars)), function(i)
+      last(transform(samples$pars[i, ]))$pars)
+    extra_state <- summarise_states_region(state, pars_model)
+  }
+
+  ## Then bind into the main object:
+  samples$trajectories$state <- abind_quiet(state, extra_state, along = 1)
+
+  samples
+}
+
+
+summarise_states_region <- function(state, pars_model) {
+
+  pars <- pars_model[[length(pars_model)]]
+  n_groups <- pars$n_groups
+  n_strains <- pars$n_strains
+  n_vacc_classes <- pars$n_vacc_classes
+
+  susceptible <- apply(state[grep("^S_", rownames(state)), , ], c(2, 3), sum)
+  susceptible <- array(susceptible, c(1, dim(susceptible)))
+  row.names(susceptible) <- "susceptible"
+
+  recovered <- state[grep("^R_", rownames(state)), , ]
+  recovered[is.na(recovered)] <- 0
+  recovered <- array(recovered, c(n_groups, n_strains,
+                                  n_vacc_classes, dim(recovered)[2:3]))
+  recovered <- apply(recovered, c(2, 4, 5), sum)
+  recovered <- recovered[c(1, 2), , ] + recovered[c(4, 3), , ]
+  row.names(recovered) <- c("recovered_1", "recovered_2")
+
+  extra_states <- abind1(susceptible, recovered)
+
+  get_vaccine_status <- function(cum_n_vaccinated) {
+    v <- c(pars$N_tot_all - cum_n_vaccinated[1],
+           -diff(cum_n_vaccinated))
+    v
+  }
+
+  vaccine_status <- state[grep("^cum_n_vaccinated_", rownames(state)), , ]
+  vaccine_status[is.na(vaccine_status)] <- 0
+  vaccine_status <- array(vaccine_status, c(n_groups, n_vacc_classes,
+                                            dim(vaccine_status)[2:3]))
+  vaccine_status <- apply(vaccine_status, c(2, 3, 4), sum)
+  vaccine_status <- apply(vaccine_status, c(2, 3), get_vaccine_status)
+  row.names(vaccine_status) <-
+    paste0("vaccine_status_", seq_len(n_vacc_classes))
+  extra_states <- abind1(extra_states, vaccine_status)
+
+  extra_states
 }
 
 ## adapted from sircovid:::calculate_index
