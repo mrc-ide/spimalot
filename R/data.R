@@ -106,8 +106,6 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
 
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
-
-
   deaths_hosp_age <- paste0("death_", c(0, seq(50, 80, 5)),
                             "_", c(seq(49, 79, 5), 120))
   deaths_hosp_age <- gsub("120", "plus", deaths_hosp_age)
@@ -449,6 +447,14 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     deaths_hosp_75_79 = data$death_75_79,
     deaths_hosp_80_plus = data$death_80_plus,
     deaths_comm = data$deaths_comm,
+    deaths_comm_0_49 = NA_integer_,
+    deaths_comm_50_54 = NA_integer_,
+    deaths_comm_55_59 = NA_integer_,
+    deaths_comm_60_64 = NA_integer_,
+    deaths_comm_65_69 = NA_integer_,
+    deaths_comm_70_74 = NA_integer_,
+    deaths_comm_75_79 = NA_integer_,
+    deaths_comm_80_plus = NA_integer_,
     deaths_carehomes = data$deaths_carehomes,
     deaths_non_hosp = data$deaths_non_hosp,
     icu = data$final_icu,
@@ -458,6 +464,15 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     admitted = data$admitted,
     diagnoses = data$new,
     all_admission = data$final_admissions,
+    all_admission_0_9 = NA_integer_,
+    all_admission_10_19 = NA_integer_,
+    all_admission_20_29 = NA_integer_,
+    all_admission_30_39 = NA_integer_,
+    all_admission_40_49 = NA_integer_,
+    all_admission_50_59 = NA_integer_,
+    all_admission_60_69 = NA_integer_,
+    all_admission_70_79 = NA_integer_,
+    all_admission_80_plus = NA_integer_,
     pillar2_tot = data$pillar2_positives + data$pillar2_negatives,
     pillar2_pos = data$pillar2_positives,
     pillar2_cases = data$pillar2_cases,
@@ -491,6 +506,18 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     pillar2_80_plus_cases = data$pillar2_cases_80_plus,
     react_pos = data$react_positive,
     react_tot = data$react_samples,
+    react_5_24_pos = NA_integer_,
+    react_5_24_tot = NA_integer_,
+    react_25_34_pos = NA_integer_,
+    react_25_34_tot = NA_integer_,
+    react_35_44_pos = NA_integer_,
+    react_35_44_tot = NA_integer_,
+    react_45_54_pos = NA_integer_,
+    react_45_54_tot = NA_integer_,
+    react_55_64_pos = NA_integer_,
+    react_55_64_tot = NA_integer_,
+    react_65_plus_pos = NA_integer_,
+    react_65_plus_tot = NA_integer_,
     strain_non_variant = data$strain_non_variant,
     strain_tot = data$strain_tot,
     strain_over25_non_variant = NA_integer_,
