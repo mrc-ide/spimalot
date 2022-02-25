@@ -1670,8 +1670,8 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
     dy_extra <- data$full[, what]
   } else {
     if (what == "all_admission") {
-      dy <- data$fitted[, paste0("admissions_", age_band)]
-      dy_extra <- data$full[, paste0("admissions_", age_band)]
+      dy <- data$fitted[, paste0("all_admission_", age_band)]
+      dy_extra <- data$full[, paste0("all_admission_", age_band)]
     } else {
       dy <- data$fitted[, paste0(what, "_", age_band)]
       dy_extra <- data$full[, what]
