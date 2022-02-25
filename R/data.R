@@ -113,20 +113,22 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
 
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
-
   admissions_age_bands <- paste0("admissions_",
                                     c("0_9", "10_19", "20_29", "30_39", "40_49",
                                       "50_59", "60_69", "70_79", "80_plus"))
-
   deaths_hosp_age <- paste0("death_", c(0, seq(50, 80, 5)),
                             "_", c(seq(49, 79, 5), 120))
   deaths_hosp_age <- gsub("120", "plus", deaths_hosp_age)
+  react_age_bands <- c("5_24", "25_34", "35_44", "45_54", "55_64", "65_plus")
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
             deaths_hosp_age, "death2", "death3", "death_chr", "death_comm",
-            "ons_death_carehome", "ons_death_noncarehome", "react_positive",
-            "react_samples",
+            "ons_death_carehome", "ons_death_noncarehome",
+            # REACT data
+            "react_positive", "react_samples",
+            paste0("react_positive_", react_age_bands),
+            paste0("react_samples_", react_age_bands),
             # VAM data
             "n_symp_alpha_variant", "n_symp_non_alpha_variant",
             "n_symp_delta_variant", "n_symp_non_delta_variant",
@@ -520,6 +522,18 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     pillar2_80_plus_cases = data$pillar2_cases_80_plus,
     react_pos = data$react_positive,
     react_tot = data$react_samples,
+    react_5_24_pos = data$react_positive_5_24,
+    react_5_24_tot = data$react_samples_5_24,
+    react_25_34_pos = data$react_positive_25_34,
+    react_25_34_tot = data$react_samples_25_34,
+    react_35_44_pos = data$react_positive_35_44,
+    react_35_44_tot = data$react_samples_35_44,
+    react_45_54_pos = data$react_positive_45_54,
+    react_45_54_tot = data$react_samples_45_54,
+    react_55_64_pos = data$react_positive_55_64,
+    react_55_64_tot = data$react_samples_55_64,
+    react_65_plus_pos = data$react_positive_65_plus,
+    react_65_plus_tot = data$react_samples_65_plus,
     strain_non_variant = data$strain_non_variant,
     strain_tot = data$strain_tot,
     strain_over25_non_variant = NA_integer_,
@@ -556,6 +570,17 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
 
     } else {
       ret[, admissions_by_age] <- NA_integer_
+    }
+
+    ## Do not fit to aggregated REACT data
+    react_by_age <- c(paste0("react_", react_age_bands, "_pos"),
+                      paste0("react_", react_age_bands, "_tot"))
+    if (!all(is.na(ret[, react_by_age])) &&
+        region %in% sircovid::regions("england")) {
+      ret$react_pos <- NA_integer_
+      ret$react_tot <- NA_integer_
+    } else {
+      ret[, react_by_age] <- NA_integer_
     }
 
     if (model_type == "BB") {

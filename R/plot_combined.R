@@ -320,17 +320,20 @@ spim_plot_pillar2_cases <- function(dat, regions, age_band, date_min,
 ##'
 ##' @param ymax Maximum percentage on y-axis
 ##'
+##' @param age_band String, indicating which age band to plot
+##'
 ##' @param add_betas Logical, indicating if we should add betas
 ##'
 ##' @export
-spim_plot_react <- function(dat, regions, date_min, ymax, add_betas = FALSE) {
+spim_plot_react <- function(dat, regions, date_min, ymax, age_band = NULL,
+                            add_betas = FALSE) {
 
   oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
             mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
   for (r in regions) {
-    spim_plot_react_region(r, dat, date_min, ymax, add_betas)
+    spim_plot_react_region(r, dat, date_min, ymax, age_band, add_betas)
   }
 }
 
@@ -1064,7 +1067,7 @@ spim_plot_pillar2_cases_region <- function(region, dat, age_band, date_min,
 
 
 spim_plot_react_region <- function(region, dat, date_min, ymax,
-                                   add_betas = FALSE) {
+                                   age_band, add_betas = FALSE) {
 
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
@@ -1075,11 +1078,22 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   pos_col <- cols$blue
   dcols <- c(cols$orange, cols$brown)
 
-  npos <- data$fitted[, "react_pos"]
-  ntot <- data$fitted[, "react_tot"]
+  if (is.null(age_band)) {
+    npos <- data$fitted[, "react_pos"]
+    ntot <- data$fitted[, "react_tot"]
+  } else {
+    npos <- data$fitted[, paste0("react_", age_band, "_pos")]
+    ntot <- data$fitted[, paste0("react_", age_band, "_tot")]
+  }
+
   if (all(is.na(npos))) {
-    npos <- data$full[, "react_pos"]
-    ntot <- data$full[, "react_tot"]
+    if (is.null(age_band)) {
+      npos <- data$full[, "react_pos"]
+      ntot <- data$full[, "react_tot"]
+    } else {
+      npos <- data$full[, paste0("react_", age_band, "_pos")]
+      ntot <- data$full[, paste0("react_", age_band, "_tot")]
+    }
     dcols[1] <- cols$green2
   }
   npos[is.na(npos)] <- 0
@@ -1125,8 +1139,16 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   model_params <- sample$predict$transform(sample$pars[1, ])
   model_params <- model_params[[length(model_params)]]$pars
 
-  pos <- trajectories["react_pos", , ]
-  neg <- (sum(model_params$N_tot_react) - pos)
+  if (is.null(age_band)) {
+    pos <- trajectories["react_pos", , ]
+    neg <- (sum(model_params$N_tot_react) - pos)
+    ylab <- "REACT proportion positive (%)"
+  } else {
+    pos <- trajectories[paste0("react_", age_band, "_pos"), , ]
+    neg <- (sum(model_params[[paste0("N_", age_band, "_react")]]) - pos)
+    age <- gsub("_", " to ", age_band)
+    ylab <- paste0("REACT proportion positive ", age, " (%)")
+  }
 
   res <- (pos * model_params$react_sensitivity +
             neg * (1 - model_params$react_specificity)) / (pos + neg) * 100
@@ -1152,7 +1174,7 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
        ylim = ylim,
        main = toupper(spim_region_name(region)),
        font.main = 1,
-       xlab = "Date", ylab = "REACT proportion positive (%)",
+       xlab = "Date", ylab = ylab,
        axes = FALSE,
        xaxs = "i",
        yaxs = "i")
