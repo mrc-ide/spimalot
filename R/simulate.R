@@ -19,7 +19,7 @@
 spim_simulate_prepare <- function(combined, simulate_parameters, n_par,
                                   regions = NULL, seed_voc = FALSE) {
 
-  regions <- sircovid::regions(regions)
+  regions <- regions %||% sircovid::regions(regions)
 
 
   combined <- simulate_prepare_drop_regions(combined, regions)
