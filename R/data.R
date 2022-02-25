@@ -558,7 +558,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     # Check we have age-specific admissions for England regions, and use if so.
     # We will trim out admissions_backfill days and swap to aggregate
     # admissions instead for those days only.
-    admissions_by_age <- grep("admissions_", colnames(ret), value = TRUE)
+    admissions_by_age <- grep("all_admission_", colnames(ret), value = TRUE)
     if (!all(is.na(ret[, admissions_by_age])) &&
         region %in% sircovid::regions("england")) {
       # First replace NAs with zeroes
