@@ -19,9 +19,9 @@
 spim_simulate_prepare <- function(combined, simulate_parameters, n_par, region,
                                   regions = NULL,
                                   seed_voc = FALSE) {
-  
+
   regions <- sircovid::regions(regions)
-  
+
 
   combined <- simulate_prepare_drop_regions(combined, regions)
   combined <- simulate_prepare_upgrade(combined)
@@ -63,23 +63,11 @@ spim_simulate_prepare <- function(combined, simulate_parameters, n_par, region,
 
   nl <- sircovid:::nlayer(combined$simulate$Rt_general)
   rt <- list(
-    Rt_general_strain_1 = as.numeric(
-      combined$simulate$Rt_general[i, regions, nl, "strain_1"]
+    Rt_general = as.numeric(
+      combined$simulate$Rt_general[i, , nl, , drop = FALSE]
     ),
-    eff_Rt_general_strain_1 = as.numeric(
-      combined$simulate$eff_Rt_general[i, regions, nl, "strain_1"]
-    ),
-    Rt_general_strain_2 = as.numeric(
-      combined$simulate$Rt_general[i, regions, nl, "strain_2"]
-    ),
-    eff_Rt_general_strain_2 = as.numeric(
-      combined$simulate$eff_Rt_general[i, regions, nl, "strain_2"]
-    ),
-    Rt_general_strain_both = as.numeric(
-      combined$simulate$Rt_general[i, regions, nl, "both"]
-    ),
-    eff_Rt_general_strain_both = as.numeric(
-      combined$simulate$eff_Rt_general[i, regions, nl, "both"]
+    eff_Rt_general = as.numeric(
+      combined$simulate$eff_Rt_general[i, , nl, , drop = FALSE]
     )
   )
 
