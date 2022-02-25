@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.3</span>
       </span>
     </div>
 
@@ -50,7 +50,14 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">spim_plot_react</span><span class="op">(</span><span class="va">dat</span>, <span class="va">regions</span>, <span class="va">date_min</span>, <span class="va">ymax</span>, add_betas <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">spim_plot_react</span><span class="op">(</span>
+  <span class="va">dat</span>,
+  <span class="va">regions</span>,
+  <span class="va">date_min</span>,
+  <span class="va">ymax</span>,
+  age_band <span class="op">=</span> <span class="cn">NULL</span>,
+  add_betas <span class="op">=</span> <span class="cn">FALSE</span>
+<span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -63,6 +70,8 @@
 <dd><p>Starting date for plot</p></dd>
 <dt>ymax</dt>
 <dd><p>Maximum percentage on y-axis</p></dd>
+<dt>age_band</dt>
+<dd><p>String, indicating which age band to plot</p></dd>
 <dt>add_betas</dt>
 <dd><p>Logical, indicating if we should add betas</p></dd>
 </dl></div>
