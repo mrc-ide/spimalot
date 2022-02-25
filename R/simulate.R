@@ -16,9 +16,8 @@
 ##' @param seed_voc Logical, indicating if seeding a new VOC
 ##'
 ##' @export
-spim_simulate_prepare <- function(combined, simulate_parameters, n_par, region,
-                                  regions = NULL,
-                                  seed_voc = FALSE) {
+spim_simulate_prepare <- function(combined, simulate_parameters, n_par,
+                                  regions = NULL, seed_voc = FALSE) {
 
   regions <- sircovid::regions(regions)
 
