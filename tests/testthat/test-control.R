@@ -17,6 +17,7 @@ test_that("Detect cores", {
 
 
 test_that("Sensible parallel control", {
+  skip_if_not_installed("mockery")
   mock_cores <- mockery::mock(32, cycle = TRUE)
   mockery::stub(spim_control_parallel, "spim_control_cores", mock_cores)
   expect_equal(
