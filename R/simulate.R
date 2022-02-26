@@ -62,12 +62,8 @@ spim_simulate_prepare <- function(combined, simulate_parameters, n_par,
 
   nl <- sircovid:::nlayer(combined$simulate$Rt_general)
   rt <- list(
-    Rt_general = as.numeric(
-      combined$simulate$Rt_general[i, , nl, , drop = FALSE]
-    ),
-    eff_Rt_general = as.numeric(
-      combined$simulate$eff_Rt_general[i, , nl, , drop = FALSE]
-    )
+    Rt_general = combined$simulate$Rt_general[i, , nl, ],
+    eff_Rt_general = combined$simulate$eff_Rt_general[i, , nl, ]
   )
 
   ## Our final object that we will use in the simulations
