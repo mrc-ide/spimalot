@@ -779,7 +779,7 @@ summarise_states_region <- function(state, pars_model) {
                                             dim(vaccine_status)[2:3]))
   vaccine_status <- apply(vaccine_status, c(2, 3, 4), sum)
   vaccine_status <- apply(vaccine_status, c(2, 3), get_vaccine_status)
-  row.names(vacordercine_status) <-
+  row.names(vaccine_status) <-
     paste0("vaccine_status_", seq_len(n_vacc_classes))
   extra_states <- abind1(extra_states, vaccine_status)
 
