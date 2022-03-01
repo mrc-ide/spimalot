@@ -249,6 +249,87 @@ spim_plot_serology <- function(dat, regions, sero_flow, ymax) {
 }
 
 
+##' Plot serology
+##'
+##' @title Plot serology
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param strain_names Number identifying which serology flow to use (1 or 2)
+##'
+##' @param strain_dates Maximum percentage on y-axis
+##'
+##' @export
+spim_plot_effective_susceptible <- function(dat, regions,
+                                            strain_names, strain_dates) {
+
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in regions) {
+    if (r == regions[length(regions)]) {
+      spim_plot_effective_susceptible_region(r, dat, strain_names,
+                                             strain_dates, TRUE)
+    } else {
+      spim_plot_effective_susceptible_region(r, dat, strain_names, strain_dates)
+    }
+  }
+}
+
+
+##' Plot vaccine status
+##'
+##' @title Plot vaccine status
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @export
+spim_plot_vaccine_status <- function(dat, regions, vacc_names) {
+
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in regions) {
+    if (r == regions[length(regions)]) {
+      spim_plot_vaccine_status_region(r, dat, vacc_names, TRUE)
+    } else {
+      spim_plot_vaccine_status_region(r, dat, vacc_names)
+    }
+  }
+}
+
+
+##' Plot infection status
+##'
+##' @title Plot infection status
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @export
+spim_plot_infection_status <- function(dat, regions, vacc_names) {
+
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in regions) {
+    if (r == regions[length(regions)]) {
+      spim_plot_infection_status_region(r, dat, TRUE)
+    } else {
+      spim_plot_infection_status_region(r, dat)
+    }
+  }
+}
+
+
 ##' Plot Pillar 2 positivity
 ##'
 ##' @title Plot Pillar 2 positivity
@@ -1725,6 +1806,220 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
 }
 
 
+
+spim_plot_effective_susceptible_region <- function(region, dat,
+                                                   strain_names, strain_dates,
+                                                   plot_legend = FALSE) {
+
+  sample <- dat$samples[[region]]
+  data <- dat$data[[region]]
+  date <- dat$info$date
+  cols <- spim_colours()
+  alpha <- 0.35
+
+  p <- sample$predict$transform(sample$pars[1, ])
+  p <- p[[length(p)]]$pars
+
+  state <- sample$trajectories$state
+  state <- state[, , -1L]
+
+  strain_cols <- khroma::colour("bright")(length(strain_names))
+  strain_dates <- c(strain_dates, as.Date(date))
+  res <- array(NA, dim = c(length(strain_names), dim(state)[2:3]))
+
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+  x <- x[-1L]
+
+  res[1, ,  x < strain_dates[2]] <-
+    state["effective_susceptible_1", , x < strain_dates[2]]
+  for (i in seq_along(strain_names)[-1L]) {
+    phase_dates <- (x >= strain_dates[i] & x < strain_dates[i + 1])
+    res[i - 1, , phase_dates] <-
+      state["effective_susceptible_1", , phase_dates]
+    res[i, , phase_dates] <-
+      state["effective_susceptible_2", , phase_dates]
+  }
+
+  res <- res / p$N_tot_all * 100
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(res,  MARGIN = c(1, 3), FUN = quantile, ps, na.rm = TRUE)
+
+  ylim <- c(0, 100)
+  xlim <- c(min(x), max(x))
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = ylim, las = 1,
+       main = "",
+       font.main = 1,
+       xlab = "", ylab = "Effective susceptible proportion (%)",
+       axes = FALSE,
+       xaxs = "i",
+       yaxs = "i")
+
+  #Extract every first date of month from x
+  firsts <- x[!duplicated(substring(x, 1, 7))]
+  #Extract every first date of year from x
+  year_firsts <- x[!duplicated(substring(x, 1, 4))]
+  abline(v = firsts[-1], col = "ivory2") #Plot gray line on 1st of every month
+  abline(v = year_firsts[-1], col = "gray")
+  axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))
+  axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
+
+  title(main = toupper(spim_region_name(region)), adj = 0, font.main = 1,
+        line = 0.5, cex.main = 1)
+
+  p_labels <- c("2.5%", "25.0%", "75.0%", "97.5%")
+
+  for (i in seq_along(strain_names)) {
+    str_col <- strain_cols[i]
+    ci_cols <- c(mix_cols(str_col, "white", 0.7),
+                 mix_cols(str_col, "white", 0.495))
+    ci_bands(qs[p_labels, i, seq_along(x)], x, cols = ci_cols,
+             horiz = FALSE, leg = FALSE)
+    lines(x, qs["50.0%", i, seq_along(x)], col = str_col,
+          lty = 1, lwd = 1.5, lend = 1)
+  }
+
+  if (plot_legend) {
+    leg_cols <- strain_cols
+    legend("bottomleft", legend = strain_names,
+           cex = 1, x.intersp = 2, ncol = 1,
+           fill = add_alpha(leg_cols, alpha * 2),
+           border = leg_cols,
+           bty = "n")
+  }
+
+}
+
+
+spim_plot_vaccine_status_region <- function(region, dat, vacc_names,
+                                            plot_legend = FALSE) {
+  sample <- dat$samples[[region]]
+  date <- dat$info$date
+
+  p <- sample$predict$transform(sample$pars[1, ])
+  p <- p[[length(p)]]$pars
+
+  state <- sample$trajectories$state
+  state <- state[, , -1L]
+
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+  x <- x[-1L]
+
+  vacc_rows <- grep("^vaccine_status", rownames(state))
+  res <- state[vacc_rows, , ]
+  res <- apply(res, c(1, 3), mean)
+
+  xlim <- c(min(x), max(x))
+  ylim <- c(0, 100)
+
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = ylim, las = 1,
+       main = toupper(spim_region_name(region)),
+       font.main = 1,
+       xlab = "", ylab = "Vaccine status (%)",
+       axes = FALSE,
+       xaxs = "i",
+       yaxs = "i")
+
+  cols <- khroma::colour("bright")(length(vacc_names))
+
+  proportion_fill(x, res, p$N_tot_all, cols)
+
+  #Extract every first date of month from x
+  firsts <- x[!duplicated(substring(x, 1, 7))]
+  #Extract every first date of year from x
+  year_firsts <- x[!duplicated(substring(x, 1, 4))]
+  #Plot gray line on 1st of every month
+  abline(v = firsts[-1], col = "ivory2", lwd = 0.5)
+  abline(v = year_firsts[-1], col = "gray")
+  axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))
+  axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
+
+  if (plot_legend) {
+    legend("bottomleft", legend = vacc_names,
+           cex = 0.8, x.intersp = 2, ncol = 1,
+           fill = cols,
+           bty = "o",
+           bg = "white",
+           inset = 0.02)
+  }
+
+}
+
+
+spim_plot_infection_status_region <- function(region, dat,
+                                              plot_legend = FALSE) {
+  sample <- dat$samples[[region]]
+  date <- dat$info$date
+
+  p <- sample$predict$transform(sample$pars[1, ])
+  p <- p[[length(p)]]$pars
+
+  state <- sample$trajectories$state
+  state <- state[, , -1L]
+
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+  x <- x[-1L]
+
+  status_rows <- c("susceptible", "recovered_1", "recovered_2", "deaths")
+  res <- state[status_rows, , ]
+  res <- apply(res, c(1, 3), mean)
+  infected <- p$N_tot_all - colSums(res)
+  res <- rbind(res, infected)
+  res <- res[c("susceptible", "recovered_1", "recovered_2",
+               "infected", "deaths"), ]
+
+  xlim <- c(min(x), max(x))
+  ylim <- c(0, 100)
+
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = ylim, las = 1,
+       main = toupper(spim_region_name(region)),
+       font.main = 1,
+       xlab = "", ylab = "Infection status (%)",
+       axes = FALSE,
+       xaxs = "i",
+       yaxs = "i")
+
+  cols <- khroma::colour("bright")(nrow(res))
+
+  proportion_fill(x, res, p$N_tot_all, cols)
+
+  #Extract every first date of month from x
+  firsts <- x[!duplicated(substring(x, 1, 7))]
+  #Extract every first date of year from x
+  year_firsts <- x[!duplicated(substring(x, 1, 4))]
+  #Plot gray line on 1st of every month
+  abline(v = firsts[-1], col = "ivory2", lwd = 0.5)
+  abline(v = year_firsts[-1], col = "gray")
+  axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))
+  axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
+
+  if (plot_legend) {
+    legend("bottomleft",
+           legend = c("Susceptible",
+                      "Recovered (strain 1)",
+                      "Recovered (strain 2)",
+                      "Infected",
+                      "Dead"),
+           cex = 0.8, x.intersp = 2, ncol = 1,
+           fill = cols,
+           bty = "o",
+           bg = "white",
+           inset = 0.02)
+  }
+
+}
+
+
 ci_bands <- function(quantiles, y, palette = NULL, cols = NULL, leg = TRUE,
                      leg_y = 0, leg_x = 1, horiz = TRUE, ...) {
   yy <- c(y, rev(y))
@@ -1765,5 +2060,22 @@ ci_bands <- function(quantiles, y, palette = NULL, cols = NULL, leg = TRUE,
            legend = leg,
            border = NA,
            bty = "n", ...)
+  }
+}
+
+
+proportion_fill <- function(x, y, y_max, cols) {
+
+  n_y <- nrow(y)
+  y <- apply(y, 2, cumsum)
+  y <- y / y_max * 100
+  y <- rbind(rep(0, dim(y)[2]), y)
+
+  for (i in seq_len(n_y)) {
+    y1 <- y[i, ]
+    y2 <- y[i + 1, ]
+    polygon(x = c(x, rev(x)),
+            y = c(y2, rev(y1)),
+            col = cols[i])
   }
 }
