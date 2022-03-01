@@ -753,7 +753,9 @@ summarise_states_region <- function(state, pars_model) {
   n_strains <- pars$n_strains
   n_vacc_classes <- pars$n_vacc_classes
 
-  susceptible <- apply(state[grep("^S_", rownames(state)), , ], c(2, 3), sum)
+  susceptible <- state[grep("^S_", rownames(state)), , ]
+  susceptible[is.na(susceptible)] <- 0
+  susceptible <- apply(susceptible, c(2, 3), sum)
   susceptible <- array(susceptible, c(1, dim(susceptible)))
   row.names(susceptible) <- "susceptible"
 
