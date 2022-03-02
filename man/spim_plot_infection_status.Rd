@@ -10,8 +10,6 @@ spim_plot_infection_status(dat, regions)
 \item{dat}{Combined data set}
 
 \item{regions}{Vector of regions to plot}
-
-\item{vacc_names}{Character vector of names of vaccine statuses}
 }
 \description{
 Plot infection status

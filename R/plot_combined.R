@@ -315,8 +315,6 @@ spim_plot_vaccine_status <- function(dat, regions, vacc_names) {
 ##'
 ##' @param regions Vector of regions to plot
 ##'
-##' @param vacc_names Character vector of names of vaccine statuses
-##'
 ##' @export
 spim_plot_infection_status <- function(dat, regions) {
 
