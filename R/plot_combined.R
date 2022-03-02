@@ -1879,13 +1879,16 @@ spim_plot_effective_susceptible_region <- function(region, dat,
 
   p_labels <- c("2.5%", "25.0%", "75.0%", "97.5%")
 
+  strain_dates <- c(strain_dates, strain_dates[length(strain_dates)])
+
   for (i in seq_along(strain_names)) {
-    str_col <- strain_cols[i]
+    strain_span <- (x >= strain_dates[i] & x < strain_dates[i + 2])
+      str_col <- strain_cols[i]
     ci_cols <- c(mix_cols(str_col, "white", 0.7),
                  mix_cols(str_col, "white", 0.495))
-    ci_bands(qs[p_labels, i, seq_along(x)], x, cols = ci_cols,
+    ci_bands(qs[p_labels, i, strain_span], x[strain_span], cols = ci_cols,
              horiz = FALSE, leg = FALSE)
-    lines(x, qs["50.0%", i, seq_along(x)], col = str_col,
+    lines(x[strain_span], qs["50.0%", i, strain_span], col = str_col,
           lty = 1, lwd = 1.5, lend = 1)
   }
 
