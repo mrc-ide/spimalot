@@ -374,7 +374,8 @@ spim_plot_infection_status <- function(dat, regions) {
 ##' @export
 spim_plot_cumulative_attack_rate <- function(dat, regions) {
 
-  oo <- par(mfrow = c(2, 6), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
   for (r in regions) {
