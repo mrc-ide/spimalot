@@ -82,13 +82,14 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 
   ## Set last 'trim_deaths' days with deaths reported to NA, as these
   ## are too likely to be back-filled to be reliable
-  deaths_hosp_age <- paste0("deaths_hosp_", c(0, seq(50, 80, 5)),
-                            "_", c(seq(49, 79, 5), 120))
-  deaths_hosp_age <- gsub("120", "plus", deaths_hosp_age)
+  deaths_age_bands <- paste0(c(0, seq(50, 80, 5)), "_", c(seq(49, 79, 5), 120))
+  deaths_age_bands <- gsub("120", "plus", deaths_age_bands)
+  deaths_hosp_age <- paste0("deaths_hosp_", deaths_age_bands)
+  deaths_comm_age <- paste0("deaths_comm_", deaths_age_bands)
   i <- seq(to = nrow(data), length.out = trim_deaths)
   data[i, c("deaths", "deaths_hosp", "deaths_comm",
             "deaths_carehomes",  "deaths_non_hosp",
-            deaths_hosp_age)] <- NA
+            deaths_hosp_age, deaths_comm_age)] <- NA
 
   ## Set last 'trim_pillar2' days with pillar 2 reported to NA, as these
   ## are too likely to be back-filled to be reliable
@@ -106,15 +107,22 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
 
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
-  deaths_hosp_age <- paste0("death_", c(0, seq(50, 80, 5)),
-                            "_", c(seq(49, 79, 5), 120))
+  deaths_age_bands <- paste0(c(0, seq(50, 80, 5)), "_", c(seq(49, 79, 5), 120))
+  deaths_age_bands <- gsub("120", "plus", deaths_age_bands)
+  deaths_hosp_age <- paste0("death_", deaths_age_bands)
+  deaths_non_hosp_age <- paste0("death_non_hosp_", deaths_age_bands)
+  ons_deaths_hosp_age <- paste0("ons_death_", deaths_age_bands)
+  ons_deaths_non_hosp_age <- paste0("ons_death_non_hosp_", deaths_age_bands)
   deaths_hosp_age <- gsub("120", "plus", deaths_hosp_age)
   react_age_bands <- c("5_24", "25_34", "35_44", "45_54", "55_64", "65_plus")
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
-            deaths_hosp_age, "death2", "death3", "death_chr", "death_comm",
+            "death2", "death3", "death_chr", "death_comm", "ons_death_hosp",
             "ons_death_carehome", "ons_death_noncarehome",
+            # Deaths by age
+            deaths_hosp_age, deaths_non_hosp_age, ons_deaths_hosp_age,
+            ons_deaths_non_hosp_age,
             # REACT data
             "react_positive", "react_samples",
             paste0("react_positive_", react_age_bands),
@@ -180,6 +188,9 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   data[which(is.na(data$death2)), "death2"] <- 0
   data[which(is.na(data$death3)), "death3"] <- 0
   data[, deaths_hosp_age][is.na(data[, deaths_hosp_age])] <- 0
+  data[, deaths_non_hosp_age][is.na(data[, deaths_non_hosp_age])] <- 0
+  data[, ons_deaths_hosp_age][is.na(data[, ons_deaths_hosp_age])] <- 0
+  data[, ons_deaths_non_hosp_age][is.na(data[, ons_deaths_non_hosp_age])] <- 0
   data[which(is.na(data$death_chr)), "death_chr"] <- 0
   data[which(is.na(data$death_comm)), "death_comm"] <- 0
   data[which(is.na(data$ons_death_carehome)), "ons_death_carehome"] <- 0
@@ -204,20 +215,24 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   } else {
 
     data$deaths_hosp <- data$death3
+    data$deaths_comm <- data$death_comm + data$death_chr
     data$deaths_non_hosp <- NA_integer_
+    data$deaths_carehomes <- NA_integer_
 
     ## due to ONS data being lagged, we will use death linelist data
     ## for recent care home and community deaths
     date_death_change <- as.Date(date) - 45
-    data$deaths_carehomes <- dplyr::case_when(
-      data$date < date_death_change ~ as.integer(data$ons_death_carehome),
-      data$date >= date_death_change ~ as.integer(data$death_chr)
-    )
-    data$deaths_comm <- dplyr::case_when(
-      data$date < date_death_change ~ as.integer(data$ons_death_noncarehome),
-      data$date >= date_death_change ~ as.integer(data$death_comm)
-    )
-    data$deaths <- data$deaths_hosp + data$deaths_comm + data$deaths_carehomes
+    ons_death_dates <- data$date < date_death_change
+    data$deaths_hosp[ons_death_dates] <- data$ons_death_hosp[ons_death_dates]
+    data$deaths_comm[ons_death_dates] <-
+      data$ons_death_carehome[ons_death_dates] +
+      data$ons_death_noncarehome[ons_death_dates]
+    data[ons_death_dates, deaths_hosp_age] <-
+      data[ons_death_dates, ons_deaths_hosp_age]
+    data[ons_death_dates, deaths_non_hosp_age] <-
+      data[ons_death_dates, ons_deaths_non_hosp_age]
+
+    data$deaths <- data$deaths_hosp + data$deaths_comm
   }
 
   ## Fit to Wildtype/Alpha using sgtf for England, COG for S/W/NI
@@ -438,15 +453,15 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     deaths_hosp_70_74 = data$death_70_74,
     deaths_hosp_75_79 = data$death_75_79,
     deaths_hosp_80_plus = data$death_80_plus,
-    deaths_comm = data$deaths_comm + data$deaths_carehomes,
-    deaths_comm_0_49 = NA_integer_,
-    deaths_comm_50_54 = NA_integer_,
-    deaths_comm_55_59 = NA_integer_,
-    deaths_comm_60_64 = NA_integer_,
-    deaths_comm_65_69 = NA_integer_,
-    deaths_comm_70_74 = NA_integer_,
-    deaths_comm_75_79 = NA_integer_,
-    deaths_comm_80_plus = NA_integer_,
+    deaths_comm = data$deaths_comm,
+    deaths_comm_0_49 = data$death_non_hosp_0_49,
+    deaths_comm_50_54 = data$death_non_hosp_50_54,
+    deaths_comm_55_59 = data$death_non_hosp_55_59,
+    deaths_comm_60_64 = data$death_non_hosp_60_64,
+    deaths_comm_65_69 = data$death_non_hosp_65_69,
+    deaths_comm_70_74 = data$death_non_hosp_70_74,
+    deaths_comm_75_79 = data$death_non_hosp_75_79,
+    deaths_comm_80_plus = data$death_non_hosp_80_plus,
     deaths_carehomes = NA_integer_,
     deaths_non_hosp = data$deaths_non_hosp,
     icu = data$final_icu,
@@ -529,8 +544,16 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     deaths_hosp_age <- gsub("death", "deaths_hosp", deaths_hosp_age)
     if (any(!is.na(ret[, deaths_hosp_age]))) {
       ret$deaths_hosp <- NA_integer_
-      ret$deaths <- NA_integer_
-    } else if (any(!is.na(ret[, c("deaths_hosp", "deaths_comm")]))) {
+    }
+    deaths_comm_age <-
+      gsub("death_non_hosp", "deaths_comm", deaths_non_hosp_age)
+    if (any(!is.na(ret[, deaths_comm_age]))) {
+      ret$deaths_comm <- NA_integer_
+    }
+    set_deaths_to_na <-
+      any(!is.na(ret[, c(deaths_hosp_age, deaths_comm_age,
+                         "deaths_hosp", "deaths_comm")]))
+    if (set_deaths_to_na) {
       ret$deaths <- NA_integer_
     }
 
