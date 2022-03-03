@@ -17,11 +17,10 @@
 ##'
 ##' @export
 spim_simulate_prepare <- function(combined, simulate_parameters, n_par,
-                                  regions = NULL,
-                                  seed_voc = FALSE) {
-  if (is.null(regions)) {
-    regions <- sircovid::regions("all")
-  }
+                                  regions = NULL, seed_voc = FALSE) {
+
+  regions <- regions %||% sircovid::regions(regions)
+
 
   combined <- simulate_prepare_drop_regions(combined, regions)
   combined <- simulate_prepare_upgrade(combined)
@@ -59,13 +58,20 @@ spim_simulate_prepare <- function(combined, simulate_parameters, n_par,
   colnames(pars) <- regions
 
   state <- array(unlist(unname(state)),
-                 c(nrow(state[[1]]), n_par, n_regions))
+                c(nrow(state[[1]]), n_par, n_regions))
+
+  nl <- sircovid:::nlayer(combined$simulate$Rt_general)
+  rt <- list(
+    Rt_general = combined$simulate$Rt_general[i, , nl, ],
+    eff_Rt_general = combined$simulate$eff_Rt_general[i, , nl, ]
+  )
 
   ## Our final object that we will use in the simulations
   ret <- combined[c("step", "date", "dt", "steps_per_day", "base")]
   ret$pars <- pars
   ret$state <- state
   ret$info <- info
+  ret$rt <- rt
   ret
 }
 
