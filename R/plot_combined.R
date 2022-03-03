@@ -363,6 +363,31 @@ spim_plot_infection_status <- function(dat, regions) {
 }
 
 
+##' Plot cumulative attack rate
+##'
+##' @title Plot cumulative attack rate
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @export
+spim_plot_cumulative_attack_rate <- function(dat, regions) {
+
+  oo <- par(mfrow = c(2, 6), oma = c(2, 1, 2, 1), mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in regions) {
+    if (r == regions[length(regions)]) {
+      spim_plot_cumulative_attack_rate_region(r, dat, TRUE)
+    } else {
+      spim_plot_cumulative_attack_rate_region(r, dat)
+    }
+  }
+
+}
+
+
 ##' Plot Pillar 2 positivity
 ##'
 ##' @title Plot Pillar 2 positivity
@@ -2146,6 +2171,76 @@ spim_plot_infection_status_region <- function(region, dat,
            bty = "o",
            bg = "white",
            inset = 0.02)
+  }
+
+}
+
+
+spim_plot_cumulative_attack_rate_region <- function(region, dat,
+                                                    plot_legend = FALSE) {
+
+  sample <- dat$samples[[region]]
+  cols <- spim_colours()
+  cum_AR_col <- cols$purple
+  non_S_col <- cols$blue
+  alpha <- 0.3
+
+  N0 <- sum(sircovid::lancelot_parameters(1, region)$population)
+
+  trajectories <- sample$trajectories$state
+
+  cum_AR <- trajectories["infections", , ] / N0 * 100
+
+  prop_non_S <- (N0 - trajectories["susceptible", , ]) / N0 * 100
+
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs_cum_AR <- apply(cum_AR,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+  qs_non_S <- apply(prop_non_S,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+
+  cum_AR_cols <- add_alpha(rep(cum_AR_col, 2), alpha)
+  non_S_cols <- add_alpha(rep(non_S_col, 2), alpha)
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  xlim <- c(min(x[-1L]), max(x[-1L]))
+  ylim <- c(0, 100)
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = ylim, las = 1,
+       main = toupper(spim_region_name(region)),
+       font.main = 1,
+       xlab = "", ylab = "Infection status (%)",
+       axes = FALSE,
+       xaxs = "i",
+       yaxs = "i")
+
+  #Extract every first date of month from x
+  firsts <- x[!duplicated(substring(x, 1, 7))]
+  #Extract every first date of year from x
+  year_firsts <- x[!duplicated(substring(x, 1, 4))]
+  #Plot gray line on 1st of every month
+  abline(v = firsts[-1], col = "ivory2", lwd = 0.5)
+  abline(v = year_firsts[-1], col = "gray")
+  axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))
+  axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
+
+  ci_bands(qs_cum_AR[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x,
+           cols = cum_AR_cols, horiz = FALSE, leg = FALSE)
+  ci_bands(qs_non_S[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x,
+           cols = non_S_cols, horiz = FALSE, leg = FALSE)
+  lines(x, qs_cum_AR["50.0%", ], col = cum_AR_col, lty = 1, lwd = 1.5, lend = 1)
+  lines(x, qs_non_S["50.0%", ], col = non_S_col, lty = 1, lwd = 1.5, lend = 1)
+
+  if (plot_legend) {
+    leg_cols <- c(cum_AR_col, non_S_col)
+    legend("topright", legend = c("Cumulative AR", "Non-S proportion"),
+           cex = 1, x.intersp = 2, ncol = 1,
+           fill = add_alpha(leg_cols, alpha * 2),
+           border = leg_cols,
+           bty = "n")
   }
 
 }
