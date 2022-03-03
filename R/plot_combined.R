@@ -280,6 +280,37 @@ spim_plot_effective_susceptible <- function(dat, regions,
 }
 
 
+##' Plot infections per strain
+##'
+##' @title Plot infections per strain
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param strain_names Names of strains
+##'
+##' @param strain_dates Dates of strains introduced into model
+##'
+##' @export
+spim_plot_infections_per_strain <- function(dat, regions,
+                                            strain_names, strain_dates) {
+
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in regions) {
+    if (r == regions[length(regions)]) {
+      spim_plot_infections_per_strain_region(r, dat, strain_names,
+                                             strain_dates, TRUE)
+    } else {
+      spim_plot_infections_per_strain_region(r, dat, strain_names, strain_dates)
+    }
+  }
+}
+
+
 ##' Plot vaccine status
 ##'
 ##' @title Plot vaccine status
@@ -1826,7 +1857,7 @@ spim_plot_effective_susceptible_region <- function(region, dat,
   state <- state[, , -1L]
 
   strain_cols <- khroma::colour("bright")(length(strain_names))
-  strain_dates <- c(strain_dates, as.Date(date))
+  strain_dates <- c(strain_dates, as.Date(date) + 1)
   res <- array(NA, dim = c(length(strain_names), dim(state)[2:3]))
 
   x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
@@ -1902,6 +1933,95 @@ spim_plot_effective_susceptible_region <- function(region, dat,
 }
 
 
+spim_plot_infections_per_strain_region <- function(region, dat,
+                                                   strain_names, strain_dates,
+                                                   plot_legend = FALSE) {
+
+  sample <- dat$samples[[region]]
+  data <- dat$data[[region]]
+  date <- dat$info$date
+  cols <- spim_colours()
+  alpha <- 0.35
+
+  p <- sample$predict$transform(sample$pars[1, ])
+  p <- p[[length(p)]]$pars
+
+  state <- sample$trajectories$state
+  state <- state[, , -1L]
+
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+  x <- x[-1L]
+
+  inf_names <- c(rbind(strain_names, paste0(strain_names, " (reinfection)")))
+
+  inf_inc <- state[paste0("infections_inc_strain_", seq_len(4)), , ]
+
+  strain_dates <- c(strain_dates, as.Date(date) + 1)
+  res <- array(0, dim = c(length(strain_names) * 2, dim(inf_inc)[2:3]))
+  row.names(res) <- inf_names
+
+  res[strain_names[1], ,  x < strain_dates[2]] <-
+    inf_inc["infections_inc_strain_1", , x < strain_dates[2]]
+  for (i in seq_along(strain_names)[-1L]) {
+    phase_dates <- (x >= strain_dates[i] & x < strain_dates[i + 1])
+    res[strain_names[i - 1], , phase_dates] <-
+      state["infections_inc_strain_1", , phase_dates]
+    res[strain_names[i], , phase_dates] <-
+      state["infections_inc_strain_2", , phase_dates]
+    res[paste0(strain_names[i], " (reinfection)"), , phase_dates] <-
+      state["infections_inc_strain_3", , phase_dates]
+    res[paste0(strain_names[i - 1], " (reinfection)"), , phase_dates] <-
+      state["infections_inc_strain_4", , phase_dates]
+  }
+
+  res <- apply(res, c(1, 3), mean)
+
+  remove_rows <- rowSums(res) == 0
+  inf_names <- inf_names[!remove_rows]
+  res <- res[!remove_rows, ]
+
+  xlim <- c(min(x), max(x))
+  ylim <- c(0, 100)
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  plot(xlim[1], 0, type = "n",
+       xlim = xlim,
+       ylim = ylim, las = 1,
+       main = toupper(spim_region_name(region)),
+       font.main = 1,
+       xlab = "", ylab = "Proportion of daily infections (%)",
+       axes = FALSE,
+       xaxs = "i",
+       yaxs = "i")
+
+  cols <- khroma::colour("bright")(length(inf_names))
+
+  proportion_fill(x, res, cols)
+
+  #Extract every first date of month from x
+  firsts <- x[!duplicated(substring(x, 1, 7))]
+  #Extract every first date of year from x
+  year_firsts <- x[!duplicated(substring(x, 1, 4))]
+  #Plot gray line on 1st of every month
+  abline(v = firsts[-1], col = "ivory2", lwd = 0.5)
+  abline(v = year_firsts[-1], col = "gray")
+  axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))
+  axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
+
+  if (plot_legend) {
+    legend("bottomleft", legend = inf_names,
+           cex = 0.8, x.intersp = 2, ncol = 1,
+           fill = cols,
+           bty = "o",
+           bg = "white",
+           inset = 0.02)
+  }
+
+}
+
+
 spim_plot_vaccine_status_region <- function(region, dat, vacc_names,
                                             plot_legend = FALSE) {
   sample <- dat$samples[[region]]
@@ -1923,6 +2043,9 @@ spim_plot_vaccine_status_region <- function(region, dat, vacc_names,
   xlim <- c(min(x), max(x))
   ylim <- c(0, 100)
 
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
   plot(xlim[1], 0, type = "n",
        xlim = xlim,
        ylim = ylim, las = 1,
@@ -1935,7 +2058,7 @@ spim_plot_vaccine_status_region <- function(region, dat, vacc_names,
 
   cols <- khroma::colour("bright")(length(vacc_names))
 
-  proportion_fill(x, res, p$N_tot_all, cols)
+  proportion_fill(x, res, cols)
 
   #Extract every first date of month from x
   firsts <- x[!duplicated(substring(x, 1, 7))]
@@ -1984,6 +2107,9 @@ spim_plot_infection_status_region <- function(region, dat,
   xlim <- c(min(x), max(x))
   ylim <- c(0, 100)
 
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
   plot(xlim[1], 0, type = "n",
        xlim = xlim,
        ylim = ylim, las = 1,
@@ -1996,7 +2122,7 @@ spim_plot_infection_status_region <- function(region, dat,
 
   cols <- khroma::colour("bright")(nrow(res))
 
-  proportion_fill(x, res, p$N_tot_all, cols)
+  proportion_fill(x, res, cols)
 
   #Extract every first date of month from x
   firsts <- x[!duplicated(substring(x, 1, 7))]
@@ -2069,12 +2195,11 @@ ci_bands <- function(quantiles, y, palette = NULL, cols = NULL, leg = TRUE,
 }
 
 
-proportion_fill <- function(x, y, y_max, cols) {
-
+proportion_fill <- function(x, y, cols) {
   n_y <- nrow(y)
   y <- apply(y, 2, cumsum)
-  y <- y / y_max * 100
   y <- rbind(rep(0, dim(y)[2]), y)
+  y <- t(t(y) / y[nrow(y), ]) * 100
 
   for (i in seq_len(n_y)) {
     y1 <- y[i, ]
