@@ -106,17 +106,19 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
 
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
-
-
   deaths_hosp_age <- paste0("death_", c(0, seq(50, 80, 5)),
                             "_", c(seq(49, 79, 5), 120))
   deaths_hosp_age <- gsub("120", "plus", deaths_hosp_age)
+  react_age_bands <- c("5_24", "25_34", "35_44", "45_54", "55_64", "65_plus")
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
             deaths_hosp_age, "death2", "death3", "death_chr", "death_comm",
-            "ons_death_carehome", "ons_death_noncarehome", "react_positive",
-            "react_samples",
+            "ons_death_carehome", "ons_death_noncarehome",
+            # REACT data
+            "react_positive", "react_samples",
+            paste0("react_positive_", react_age_bands),
+            paste0("react_samples_", react_age_bands),
             # VAM data
             "n_symp_alpha_variant", "n_symp_non_alpha_variant",
             "n_symp_delta_variant", "n_symp_non_delta_variant",
@@ -437,6 +439,14 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     deaths_hosp_75_79 = data$death_75_79,
     deaths_hosp_80_plus = data$death_80_plus,
     deaths_comm = data$deaths_comm + data$deaths_carehomes,
+    deaths_comm_0_49 = NA_integer_,
+    deaths_comm_50_54 = NA_integer_,
+    deaths_comm_55_59 = NA_integer_,
+    deaths_comm_60_64 = NA_integer_,
+    deaths_comm_65_69 = NA_integer_,
+    deaths_comm_70_74 = NA_integer_,
+    deaths_comm_75_79 = NA_integer_,
+    deaths_comm_80_plus = NA_integer_,
     deaths_carehomes = NA_integer_,
     deaths_non_hosp = data$deaths_non_hosp,
     icu = data$final_icu,
@@ -446,6 +456,15 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     admitted = data$admitted,
     diagnoses = data$new,
     all_admission = data$final_admissions,
+    all_admission_0_9 = NA_integer_,
+    all_admission_10_19 = NA_integer_,
+    all_admission_20_29 = NA_integer_,
+    all_admission_30_39 = NA_integer_,
+    all_admission_40_49 = NA_integer_,
+    all_admission_50_59 = NA_integer_,
+    all_admission_60_69 = NA_integer_,
+    all_admission_70_79 = NA_integer_,
+    all_admission_80_plus = NA_integer_,
     pillar2_tot = data$pillar2_positives + data$pillar2_negatives,
     pillar2_pos = data$pillar2_positives,
     pillar2_cases = data$pillar2_cases,
@@ -479,6 +498,18 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     pillar2_80_plus_cases = data$pillar2_cases_80_plus,
     react_pos = data$react_positive,
     react_tot = data$react_samples,
+    react_5_24_pos = data$react_positive_5_24,
+    react_5_24_tot = data$react_samples_5_24,
+    react_25_34_pos = data$react_positive_25_34,
+    react_25_34_tot = data$react_samples_25_34,
+    react_35_44_pos = data$react_positive_35_44,
+    react_35_44_tot = data$react_samples_35_44,
+    react_45_54_pos = data$react_positive_45_54,
+    react_45_54_tot = data$react_samples_45_54,
+    react_55_64_pos = data$react_positive_55_64,
+    react_55_64_tot = data$react_samples_55_64,
+    react_65_plus_pos = data$react_positive_65_plus,
+    react_65_plus_tot = data$react_samples_65_plus,
     strain_non_variant = data$strain_non_variant,
     strain_tot = data$strain_tot,
     strain_over25_non_variant = NA_integer_,
@@ -501,6 +532,17 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
       ret$deaths <- NA_integer_
     } else if (any(!is.na(ret[, c("deaths_hosp", "deaths_comm")]))) {
       ret$deaths <- NA_integer_
+    }
+
+    ## Do not fit to aggregated REACT data
+    react_by_age <- c(paste0("react_", react_age_bands, "_pos"),
+                      paste0("react_", react_age_bands, "_tot"))
+    if (!all(is.na(ret[, react_by_age])) &&
+        region %in% sircovid::regions("england")) {
+      ret$react_pos <- NA_integer_
+      ret$react_tot <- NA_integer_
+    } else {
+      ret[, react_by_age] <- NA_integer_
     }
 
     if (model_type == "BB") {
