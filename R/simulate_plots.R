@@ -253,9 +253,6 @@ spim_plot_check_rt <- function(summary_state, dates, combined_state = NULL,
                   analysis = as.factor(analysis)) %>%
     tidyr::pivot_wider(names_from = quantile)
 
-  ddates <- rep(as.Date(Sys.time()), length(dates))
-  ddates[dates != "today"] <- as.Date(dates[dates != "today"])
-
   ci_limits <- summary_quantile_range(summary_state)
 
   p <- summary_state %>%
@@ -271,7 +268,7 @@ spim_plot_check_rt <- function(summary_state, dates, combined_state = NULL,
               scales = "free_y",
               labeller = label_wrap_gen(width = 7)) +
     scale_x_date(date_breaks = "1 month") +
-    geom_vline(xintercept = ddates, lty = 2, color = "gray")
+    geom_vline(xintercept = dates, lty = 2, color = "gray")
 
   if (!is.null(combined_state)) {
       combined_state <- combined_state %>%
