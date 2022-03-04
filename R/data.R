@@ -113,7 +113,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
-            deaths_hosp_age, "death2", "death3", "death_chr", "death_comm",
+            deaths_hosp_age, "death2", "deaths2",
+            "death3", "death_chr", "death_comm",
             "ons_death_carehome", "ons_death_noncarehome",
             # REACT data
             "react_positive", "react_samples",
@@ -195,6 +196,9 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   }
 
   if (region %in% c("northern_ireland", "scotland", "wales", "uk")) {
+    if (region == "northern_ireland") {
+      data$deaths <- data$deaths2
+    }
     data$deaths <- data$death2
     data[, deaths_hosp_age] <- NA_integer_
     data$deaths_hosp <- NA_integer_
