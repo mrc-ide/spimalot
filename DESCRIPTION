@@ -74,7 +74,7 @@ Imports:
     patchwork,
     readxl,
     reshape2,
-    sircovid (>= 0.13.4),
+    sircovid (>= 0.13.5),
     stringr,
     tdigest,
     tibble,
