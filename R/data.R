@@ -111,14 +111,14 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   deaths_age_bands <- gsub("120", "plus", deaths_age_bands)
   deaths_hosp_age <- paste0("death_", deaths_age_bands)
   deaths_non_hosp_age <- paste0("death_non_hosp_", deaths_age_bands)
-  ons_deaths_hosp_age <- paste0("ons_death_", deaths_age_bands)
+  ons_deaths_hosp_age <- paste0("ons_death_hosp_", deaths_age_bands)
   ons_deaths_non_hosp_age <- paste0("ons_death_non_hosp_", deaths_age_bands)
   deaths_hosp_age <- gsub("120", "plus", deaths_hosp_age)
   react_age_bands <- c("5_24", "25_34", "35_44", "45_54", "55_64", "65_plus")
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
             "admitted", "new", "phe_admissions", "all_admission",
-            "death2", "death3", "death_chr", "death_comm", "ons_death_hosp",
+            "death2", "death3", "death_chr", "death_comm", "ons_death_hospital",
             "ons_death_carehome", "ons_death_noncarehome",
             # Deaths by age
             deaths_hosp_age, deaths_non_hosp_age, ons_deaths_hosp_age,
@@ -223,7 +223,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
     ## for recent care home and community deaths
     date_death_change <- as.Date(date) - 45
     ons_death_dates <- data$date < date_death_change
-    data$deaths_hosp[ons_death_dates] <- data$ons_death_hosp[ons_death_dates]
+    data$deaths_hosp[ons_death_dates] <-
+      data$ons_death_hospital[ons_death_dates]
     data$deaths_comm[ons_death_dates] <-
       data$ons_death_carehome[ons_death_dates] +
       data$ons_death_noncarehome[ons_death_dates]
