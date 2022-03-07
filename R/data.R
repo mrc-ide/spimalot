@@ -405,6 +405,9 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data, full_data) {
   # ignore pillar 2 testing before 2020-06-18
   data[which(data$date < "2020-06-18"), cols_pillar2] <- NA_integer_
 
+  # ignore pillar 2 testing after 2021-11-30
+  data[which(data$date > "2021-11-30"), cols_pillar2] <- NA_integer_
+
   last_week <- seq(to = nrow(data), length.out = 7)
   ## Remove last week admissions for Wales (due to backfill)
   if (region == "wales") {
