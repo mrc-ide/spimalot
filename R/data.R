@@ -27,8 +27,8 @@
 ##' @param trim_pillar2 The number of days of pillar 2 data to trim to avoid
 ##'   back-fill issues. We typically use a value of 7 days.
 ##'
-##' @param admissions_backfill The number of days of admissions by age to trim
-##'   to avoid back-fill issues. We typically use a value of 10 days. Aggregate
+##' @param admissions_backfill A date string to calculate the number of days
+##'   of admissions by age to trim to avoid back-fill issues. Aggregate
 ##'   data will instead be used for that same number of days.
 ##'
 ##' @param full_data Not sure yet, we'll find out
@@ -559,6 +559,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     # We will trim out admissions_backfill days and swap to aggregate
     # admissions instead for those days only.
     admissions_by_age <- grep("all_admission_", colnames(ret), value = TRUE)
+    admissions_backfill <- as.Date(date) - as.Date(admissions_backfill)
     if (!all(is.na(ret[, admissions_by_age])) &&
         region %in% sircovid::regions("england")) {
       # First replace NAs with zeroes

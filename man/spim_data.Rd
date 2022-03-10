@@ -40,8 +40,8 @@ back-fill issues. We typically use a value of 4 days.}
 \item{trim_pillar2}{The number of days of pillar 2 data to trim to avoid
 back-fill issues. We typically use a value of 7 days.}
 
-\item{admissions_backfill}{The number of days of admissions by age to trim
-to avoid back-fill issues. We typically use a value of 10 days. Aggregate
+\item{admissions_backfill}{A date string to calculate the number of days
+of admissions by age to trim to avoid back-fill issues. Aggregate
 data will instead be used for that same number of days.}
 
 \item{full_data}{Not sure yet, we'll find out}
