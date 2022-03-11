@@ -559,15 +559,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     # We will trim out admissions_backfill days and swap to aggregate
     # admissions instead for those days only.
     admissions_by_age <- grep("all_admission_", colnames(ret), value = TRUE)
-    admissions_backfill <- as.Date(date) - as.Date(admissions_backfill)
     if (!all(is.na(ret[, admissions_by_age])) &&
         region %in% sircovid::regions("england")) {
       # First replace NAs with zeroes
       ret[, admissions_by_age][is.na(ret[, admissions_by_age])] <- 0
-      i <- seq(to = nrow(ret), length.out = admissions_backfill)
-      ret[i, admissions_by_age] <- NA_integer_
-      i <- seq(1, nrow(ret) - admissions_backfill)
-      ret[i, "all_admission"] <- NA_integer_
+      ret[ret$date > admissions_backfill, admissions_by_age] <- NA_integer_
+      ret[ret$date <= admissions_backfill, "all_admission"] <- NA_integer_
 
     } else {
       ret[, admissions_by_age] <- NA_integer_
