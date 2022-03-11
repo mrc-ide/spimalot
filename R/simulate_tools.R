@@ -177,6 +177,10 @@ spim_simulate_combine_trajectories <- function(res, name, regions = NULL,
     ret$n_vaccinated <- agg_regions(res$n_vaccinated)
   }
 
+  if ("state_by_age" %in% names(res)) {
+    ret$state_by_age <- lapply(res$state_by_age, agg_regions)
+  }
+
   ret
 }
 
@@ -308,6 +312,8 @@ spim_simulate_remove_dates_to <- function(obj, date) {
   obj$date <- obj$date[-id0]
   obj$state <- obj$state[, , , -id0, drop = FALSE]
   obj$n_vaccinated <- obj$n_vaccinated[, , , -id0, drop = FALSE]
+  obj$state_by_age <- lapply(obj$state_by_age, function(x)
+                              x[, , , -id0, drop = FALSE])
   obj$n_protected <- lapply(obj$n_protected, function(x)
     x[, , -id0, drop = FALSE])
   obj$n_doses <- obj$n_doses[, , , -id0, drop = FALSE]
@@ -343,6 +349,14 @@ spim_simulate_add_trajectory_incidence <- function(obj, states,
   rownames(traj_inc) <- paste0(states, suffix)
   obj$state <- abind_quiet(obj$state, traj_inc, along = 1L)
 
+  if ("state_by_age" %in% names(obj)) {
+    state_by_age_nms <- intersect(names(obj$state_by_age), states)
+    state_by_age_inc <- lapply(obj$state_by_age[state_by_age_nms],
+                              calc_incidence)
+    names(state_by_age_inc) <- paste0(state_by_age_nms, suffix)
+    obj$state_by_age <- c(obj$state_by_age, state_by_age_inc)
+  }
+
   obj
 }
 
@@ -362,6 +376,12 @@ spim_simulate_reset_cumulative_states <- function(res, state_names) {
   check <- all(res$state[state_names, , , 3] - res$state[state_names, , , 2] ==
                  res$state[paste0(state_names, "_inc"), , , 3])
   stopifnot(check)
+
+  if ("state_by_age" %in% names(res)) {
+    state_by_age_nms <- intersect(names(res$state_by_age), state_names)
+    res$state_by_age[state_by_age_nms] <-
+      lapply(res$state_by_age[state_by_age_nms], f)
+  }
 
   res
 }
@@ -410,6 +430,7 @@ spim_simulate_process_output <- function(obj, combined_region, regions,
     ret$summary_state <- f(ret$summary_state)
     ret$state <- f(ret$state)
     ret$n_vaccinated <- f(ret$n_vaccinated)
+    ret$state_by_age <- lapply(ret$state_by_age, f)
     ret$n_protected <- lapply(ret$n_protected,
                               function(x) x[, output_region, , drop = FALSE])
     ret$n_doses <- f(ret$n_doses)
@@ -553,9 +574,20 @@ tidy_state_one <- function(x, common) {
       ret_d$value <- c(d)
     }
 
+    # date, [particle] = mean, group, vaccine_status, region, state
+    # 'av' is "age and vaccine"
+    av <-
+      unlist(lapply(x$state_by_age, aperm, c(4, 1, 2, 3)), use.names = FALSE)
+    dn$group <- rownames(x$state_by_age[[1]])
+    dn$vaccine_status <- colnames(x$state_by_age[[1]])
+    dn$state <- names(x$state_by_age)
+    ret_av <- do.call(expand.grid, dn)[seq(length(dn), 1)]
+    ret_av$value <- av
+
     res$state <- ret
     res$n_protected <- ret_p
     res$n_doses <- ret_d
+    res$state_by_age <- ret_av
 
     rownames(common) <- NULL
   }
