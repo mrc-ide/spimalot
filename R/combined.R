@@ -89,9 +89,9 @@ spim_combined_load <- function(path, regions = "all") {
 }
 
 
-##' Load multiregion fits
+##' Load multiregion fits as a combined fit object
 ##'
-##' @title Load multiregion fits
+##' @title Load multiregion fits as a combined fit object
 ##'
 ##' @param path Directory name. Within here we expect to see
 ##'   `fits.rds`
@@ -112,8 +112,8 @@ spim_combined_load_multiregion <- function(path) {
 
   region_samples <- function(r) {
     samples <- ret$samples
-    samples$pars <- samples$pars[, , r]
-    samples$probabilities <- samples$probabilities[, , r]
+    samples$pars <- samples$pars_full[, , r]
+    samples$probabilities <- samples$probabilities_full[, , r]
     samples$state <- samples$state[, r, ]
     samples$trajectories$state <- samples$trajectories$state[, r, , ]
     samples$predict$transform <- samples$predict$transform[[r]]
