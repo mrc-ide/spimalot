@@ -89,6 +89,69 @@ spim_combined_load <- function(path, regions = "all") {
 }
 
 
+##' Load multiregion fits
+##'
+##' @title Load multiregion fits
+##'
+##' @param path Directory name. Within here we expect to see
+##'   `fits.rds`
+##'
+##' @return A combined fit object
+##' @export
+spim_combined_load_multiregion <- function(path) {
+
+  message("Reading multiregion fit")
+  filename <- file.path(path, "fit.rds")
+  ret <- readRDS(filename)
+
+  regions <- ret$samples$info$region
+
+  ret$info <- ret$samples$info[c("date", "multistrain", "model_type", "beta_date",
+                     "restart_date")]
+  ret$info$date <- as.Date(ret$info$date)
+
+  region_samples <- function(r) {
+    samples <- ret$samples
+    samples$pars <- samples$pars[, , r]
+    samples$probabilities <- samples$probabilities[, , r]
+    samples$state <- samples$state[, r, ]
+    samples$trajectories$state <- samples$trajectories$state[, r, , ]
+    samples$predict$transform <- samples$predict$transform[[r]]
+    samples
+  }
+
+  ret$samples <- lapply(seq_along(regions), region_samples)
+  names(ret$samples) <- regions
+
+  region_data <- function(region) {
+    data <- ret$data
+    data$fitted <- data$fitted[data$fitted$region == region, ]
+    data$full <- data$full[data$full$region == region, ]
+    data
+  }
+
+  ret$data <- lapply(regions, region_data)
+  names(ret$data) <- regions
+
+  message("Aggregating England/UK")
+  ## Aggregate some of these to get england/uk entries
+  ## Note that we do not store the aggregated outputs in ret yet to avoid
+  ## including in the onward object below. The exception is the Rt values,
+  ## as aggregated Rt values are used in onwards simulations
+  agg_samples <- combined_aggregate_samples(ret$samples)
+  agg_data <- combined_aggregate_data(ret$data)
+  ret$rt <- combined_aggregate_rt(ret$rt, agg_samples)
+  ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, agg_samples)
+
+  ## Now the onward object has been created, we can safely store the
+  ## other aggregated outputs in ret
+  ret$samples <- agg_samples
+  ret$data <- agg_data
+
+  ret
+}
+
+
 spim_combined_onward <- function(dat) {
   date <- dat$info$date
   steps_per_day <- dat$samples[[1]]$info$data$steps_per_day
