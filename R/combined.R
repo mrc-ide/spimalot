@@ -106,8 +106,8 @@ spim_combined_load_multiregion <- function(path) {
 
   regions <- ret$samples$info$region
 
-  ret$info <- ret$samples$info[c("date", "multistrain", "model_type", "beta_date",
-                     "restart_date")]
+  ret$info <- ret$samples$info[c("date", "multistrain", "model_type",
+                                 "beta_date", "restart_date")]
   ret$info$date <- as.Date(ret$info$date)
 
   region_samples <- function(r) {
