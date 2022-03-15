@@ -27,9 +27,10 @@
 ##' @param trim_pillar2 The number of days of pillar 2 data to trim to avoid
 ##'   back-fill issues. We typically use a value of 7 days.
 ##'
-##' @param admissions_backfill A date string to calculate the number of days
-##'   of admissions by age to trim to avoid back-fill issues. Aggregate
-##'   data will instead be used for that same number of days.
+##' @param adm_backfill_date A date string to remove backfilled admissions by
+##'   age data from SUS lineliest. This has to be estimated with every new
+##'   SUS data delivery. Aggregate admissions data from PHE dashboard will
+##'   be used from this date onward.
 ##'
 ##' @param full_data Not sure yet, we'll find out
 ##'
@@ -37,13 +38,13 @@
 ##'
 ##' @export
 spim_data <- function(date, region, model_type, rtm, serology,
-                      trim_deaths, trim_pillar2, admissions_backfill,
+                      trim_deaths, trim_pillar2, adm_backfill_date,
                       full_data = FALSE) {
   spim_check_model_type(model_type)
   if (length(region) == 1) {
     check_region(region)
     spim_data_single(date, region, model_type, rtm, serology, trim_deaths,
-                     trim_pillar2, admissions_backfill, full_data)
+                     trim_pillar2, adm_backfill_date, full_data)
   } else {
     ## TODO: better error message here:
     stopifnot(all(region %in% sircovid::regions("all")))
@@ -51,7 +52,7 @@ spim_data <- function(date, region, model_type, rtm, serology,
       cbind(
         region = r,
         spim_data_single(date, r, model_type, rtm, serology, trim_deaths,
-                         trim_pillar2, admissions_backfill, full_data),
+                         trim_pillar2, adm_backfill_date, full_data),
         stringsAsFactors = FALSE))
     if (length(unique(lapply(data, "[[", "date"))) != 1) {
       ## If this errors, we just need to compute the union set of
@@ -69,10 +70,10 @@ spim_data <- function(date, region, model_type, rtm, serology,
 
 spim_data_single <- function(date, region, model_type, rtm, serology,
                              trim_deaths, trim_pillar2,
-                             admissions_backfill, full_data) {
+                             adm_backfill_date, full_data) {
   ## TODO: verify that rtm has consecutive days
   rtm <- spim_lancelot_data_rtm(date, region, model_type, rtm,
-                                admissions_backfill, full_data)
+                                adm_backfill_date, full_data)
   serology <- spim_data_serology(date, region, serology)
 
   ## Merge the two datasets on date
@@ -109,7 +110,7 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 
 ##' @importFrom dplyr %>%
 spim_lancelot_data_rtm <- function(date, region, model_type, data,
-                                   admissions_backfill, full_data) {
+                                   adm_backfill_date, full_data) {
 
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
@@ -556,15 +557,15 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     }
 
     # Check we have age-specific admissions for England regions, and use if so.
-    # We will trim out admissions_backfill days and swap to aggregate
+    # We will trim out adm_backfill_date days and swap to aggregate
     # admissions instead for those days only.
     admissions_by_age <- grep("all_admission_", colnames(ret), value = TRUE)
     if (!all(is.na(ret[, admissions_by_age])) &&
         region %in% sircovid::regions("england")) {
       # First replace NAs with zeroes
       ret[, admissions_by_age][is.na(ret[, admissions_by_age])] <- 0
-      ret[ret$date > admissions_backfill, admissions_by_age] <- NA_integer_
-      ret[ret$date <= admissions_backfill, "all_admission"] <- NA_integer_
+      ret[ret$date > adm_backfill_date, admissions_by_age] <- NA_integer_
+      ret[ret$date <= adm_backfill_date, "all_admission"] <- NA_integer_
 
     } else {
       ret[, admissions_by_age] <- NA_integer_

@@ -12,7 +12,7 @@ spim_data(
   serology,
   trim_deaths,
   trim_pillar2,
-  admissions_backfill,
+  adm_backfill_date,
   full_data = FALSE
 )
 }
@@ -40,9 +40,10 @@ back-fill issues. We typically use a value of 4 days.}
 \item{trim_pillar2}{The number of days of pillar 2 data to trim to avoid
 back-fill issues. We typically use a value of 7 days.}
 
-\item{admissions_backfill}{A date string to calculate the number of days
-of admissions by age to trim to avoid back-fill issues. Aggregate
-data will instead be used for that same number of days.}
+\item{adm_backfill_date}{A date string to remove backfilled admissions by
+age data from SUS lineliest. This has to be estimated with every new
+SUS data delivery. Aggregate admissions data from PHE dashboard will
+be used from this date onward.}
 
 \item{full_data}{Not sure yet, we'll find out}
 }
