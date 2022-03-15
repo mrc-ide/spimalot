@@ -88,6 +88,7 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
   data$date_string <- data$date
   data$date <- sircovid::sircovid_date(data$date)
 
+  ## Set last 'trim_deaths' days with deaths reported to NA, as these
   ## are too likely to be back-filled to be reliable
   deaths_hosp_age <- paste0("deaths_hosp_", c(0, seq(50, 80, 5)),
                             "_", c(seq(49, 79, 5), 120))
