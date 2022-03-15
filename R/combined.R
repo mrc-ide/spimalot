@@ -184,8 +184,12 @@ spim_combined_onward_simulate <- function(dat) {
     x$trajectories$state[state_names, , idx_dates])
   state <- aperm(abind_quiet(state, along = 4), c(1, 2, 4, 3))
 
+  state_by_age <- lapply(list_transpose(simulate$state_by_age),
+                        abind_quiet, along = 3)
+
   ret <- list(date = dates,
-              state = state)
+              state = state,
+              state_by_age = state_by_age)
 
   ## This is not terrible:
   rt <- list_transpose(dat$rt)[c("Rt_general", "eff_Rt_general")]

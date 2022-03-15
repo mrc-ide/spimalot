@@ -173,7 +173,7 @@ simulate_args_names <- function(multistrain = TRUE) {
       "end_date", "seed", "n_threads",
       ## Output control
       "output_keep", "output_rt", "output_time_series", "output_vaccination",
-      "output_weight_rt",
+      "output_weight_rt", "output_state_by_age",
       ## Rt control
       "rt_type",
       "rt_future",
@@ -278,6 +278,10 @@ spim_simulate_one <- function(args, combined, move_between_strains = FALSE) {
 
   if (args$output_time_series) {
     ret$state <- state[args$output_keep, , , ]
+  }
+
+  if (args$output_state_by_age) {
+    ret$state_by_age <- simulate_extract_age_class_state(state, index)
   }
 
   if (args$output_rt) {
@@ -1087,6 +1091,7 @@ simulate_validate_args1 <- function(args, regions, multistrain) {
   assert_scalar_positive_integer(args$n_threads)
   assert_character(args$output_keep)
   assert_scalar_logical(args$output_rt)
+  assert_scalar_logical(args$output_state_by_age)
   assert_scalar_logical(args$output_time_series)
   assert_scalar_logical(args$output_vaccination)
   assert_scalar_logical(args$output_weight_rt)
