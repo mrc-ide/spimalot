@@ -81,50 +81,6 @@ spim_summary_write <- function(result, path_template, path_save) {
 }
 
 
-##' Extract admissions by age
-##'
-##' @title Extract admissions by age
-##'
-##' @param dat Combined data set
-##'
-##' @export
-spim_extract_demography_outputs <- function(dat) {
-
-  demo <- lapply(dat$samples, spim_extract_demography_outputs_region)
-
-  vapply(demo, "[[", numeric(19L), "mean_prop_total_admissions")
-
-}
-
-spim_extract_demography_outputs_region <- function(sample) {
-
-  trajectories <- sample$trajectories$state
-
-  admissions <- trajectories[grep("^cum_admit", rownames(trajectories)), , ]
-  deaths_hosp <- trajectories[grep("deaths_hosp_", rownames(trajectories)), , ]
-
-  process <- function(x, what) {
-    total <- x[, , dim(x)[3]]
-    prop_total <- t(total) / colSums(total) * 100
-
-    if (what == "admissions") {
-      daily <- apply(x, 1:2, diff)
-      mean <- apply(daily, 1:2, mean)
-    } else if (what == "deaths_hosp") {
-      mean <- apply(x[, , -1L], c(3, 1), mean)
-    }
-
-    list(total = total,
-         prop_total = prop_total,
-         mean_prop_total = colMeans(prop_total),
-         mean_t = mean)
-  }
-
-  output <- list(
-    admissions = process(admissions, "admissions"),
-    deaths_hosp = process(deaths_hosp, "deaths_hosp"))
-}
-
 ##' Extract current Rt by variant
 ##'
 ##' @title Extract multivariant Rt
