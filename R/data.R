@@ -559,10 +559,9 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     }
 
     # Check we have age-specific admissions for England regions, and use if so.
-    # admissions_by_age is a date string, representing the date that we start
-    # using age-aggregated admissions from the PHE dashboard for England NHS
-    # regions instead of admissions by age from the SUS linelist (which are
-    # used before this date). This is to account for backfill.
+    # Due to backfill issues with the sus linelist, we only fit admissions by
+    # age up until (and including) adm_backfill_date, after which we switch to
+    # age-aggregated admissions
     admissions_by_age <- grep("all_admission_", colnames(ret), value = TRUE)
     if (!all(is.na(ret[, admissions_by_age])) &&
         region %in% sircovid::regions("england")) {
