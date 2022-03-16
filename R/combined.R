@@ -88,7 +88,7 @@ spim_combined_load <- function(path, regions = "all") {
   ## Store model demography outputs
   message("Storing demographic outputs")
   ret$admissions_demography <- lapply(names(ret$samples), function(x)
-      spimalot:::spim_extract_admissions_by_age_region(ret$samples[[x]]))
+      spim_extract_admissions_by_age_region(ret$samples[[x]]))
   names(ret$admissions_demography) <- names(ret$samples)
 
   ret
