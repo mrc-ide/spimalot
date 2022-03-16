@@ -86,10 +86,10 @@ spim_combined_load <- function(path, regions = "all") {
   ret$data <- agg_data
 
   ## Store model demography outputs
-  ret$admissions_demography <- lapply(
-    c(sircovid::regions("all"), "uk"), function(x)
-      spimalot:::spim_extract_admissions_by_age_region(ret$samples[[x]]))
-  names(ret$admissions_demography) <- c(sircovid::regions("all"), "uk")
+  message("Storing demographic outputs")
+  ret$admissions_demography <- lapply(names(ret$samples), function(x)
+      spim_extract_admissions_by_age_region(ret$samples[[x]]))
+  names(ret$admissions_demography) <- names(ret$samples)
 
   ret
 }

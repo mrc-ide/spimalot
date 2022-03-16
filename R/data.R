@@ -27,10 +27,10 @@
 ##' @param trim_pillar2 The number of days of pillar 2 data to trim to avoid
 ##'   back-fill issues. We typically use a value of 7 days.
 ##'
-##' @param adm_backfill_date A date string, representing the date that we start
-##'   using age-aggregated admissions from the PHE dashboard for England NHS
-##'   regions instead of admissions by age from the SUS linelist (which are used
-##'   before this date). This is to account for backfill, and should be
+##' @param adm_backfill_date A date string, representing the last date we use
+##'   admissions by age from the SUS linelist for England NHS regions. After
+##'   this date we use age-aggregated admissions from the UKHSA dashboard.
+##'   This is to account for backfill, and should be
 ##'   carefully updated with every new SUS data delivery.
 ##'
 ##' @param full_data Not sure yet, we'll find out
@@ -559,10 +559,9 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     }
 
     # Check we have age-specific admissions for England regions, and use if so.
-    # admissions_by_age is a date string, representing the date that we start
-    # using age-aggregated admissions from the PHE dashboard for England NHS
-    # regions instead of admissions by age from the SUS linelist (which are
-    # used before this date). This is to account for backfill.
+    # Due to backfill issues with the sus linelist, we only fit admissions by
+    # age up until (and including) adm_backfill_date, after which we switch to
+    # age-aggregated admissions
     admissions_by_age <- grep("all_admission_", colnames(ret), value = TRUE)
     if (!all(is.na(ret[, admissions_by_age])) &&
         region %in% sircovid::regions("england")) {
