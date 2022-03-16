@@ -12,6 +12,7 @@ spim_data(
   serology,
   trim_deaths,
   trim_pillar2,
+  adm_backfill_date,
   full_data = FALSE
 )
 }
@@ -38,6 +39,12 @@ back-fill issues. We typically use a value of 4 days.}
 
 \item{trim_pillar2}{The number of days of pillar 2 data to trim to avoid
 back-fill issues. We typically use a value of 7 days.}
+
+\item{adm_backfill_date}{A date string, representing the last date we use
+admissions by age from the SUS linelist for England NHS regions. After
+this date we use age-aggregated admissions from the UKHSA dashboard.
+This is to account for backfill, and should be
+carefully updated with every new SUS data delivery.}
 
 \item{full_data}{Not sure yet, we'll find out}
 }
