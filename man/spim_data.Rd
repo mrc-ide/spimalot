@@ -40,10 +40,11 @@ back-fill issues. We typically use a value of 4 days.}
 \item{trim_pillar2}{The number of days of pillar 2 data to trim to avoid
 back-fill issues. We typically use a value of 7 days.}
 
-\item{adm_backfill_date}{A date string to remove backfilled admissions by
-age data from SUS lineliest. This has to be estimated with every new
-SUS data delivery. Aggregate admissions data from PHE dashboard will
-be used from this date onward.}
+\item{adm_backfill_date}{A date string, representing the date that we start
+using age-aggregated admissions from the PHE dashboard for England NHS
+regions instead of admissions by age from the SUS linelist (which are used
+before this date). This is to account for backfill, and should be
+carefully updated with every new SUS data delivery.}
 
 \item{full_data}{Not sure yet, we'll find out}
 }
