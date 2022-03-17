@@ -85,6 +85,75 @@ spim_combined_load <- function(path, regions = "all") {
   ret$samples <- agg_samples
   ret$data <- agg_data
 
+  ## Store model demography outputs
+  message("Storing demographic outputs")
+  ret$admissions_demography <- lapply(names(ret$samples), function(x)
+      spim_extract_admissions_by_age_region(ret$samples[[x]]))
+  names(ret$admissions_demography) <- names(ret$samples)
+
+  ret
+}
+
+
+##' Load multiregion fits as a combined fit object
+##'
+##' @title Load multiregion fits as a combined fit object
+##'
+##' @param path Directory name. Within here we expect to see
+##'   `fits.rds`
+##'
+##' @return A combined fit object
+##' @export
+spim_combined_load_multiregion <- function(path) {
+
+  message("Reading multiregion fit")
+  filename <- file.path(path, "fit.rds")
+  ret <- readRDS(filename)
+
+  regions <- ret$samples$info$region
+
+  ret$info <- ret$samples$info[c("date", "multistrain", "model_type",
+                                 "beta_date", "restart_date")]
+  ret$info$date <- as.Date(ret$info$date)
+
+  region_samples <- function(r) {
+    samples <- ret$samples
+    samples$pars <- samples$pars_full[, , r]
+    samples$probabilities <- samples$probabilities_full[, , r]
+    samples$state <- samples$state[, r, ]
+    samples$trajectories$state <- samples$trajectories$state[, r, , ]
+    samples$predict$transform <- samples$predict$transform[[r]]
+    samples
+  }
+
+  ret$samples <- lapply(seq_along(regions), region_samples)
+  names(ret$samples) <- regions
+
+  region_data <- function(region) {
+    data <- ret$data
+    data$fitted <- data$fitted[data$fitted$region == region, ]
+    data$full <- data$full[data$full$region == region, ]
+    data
+  }
+
+  ret$data <- lapply(regions, region_data)
+  names(ret$data) <- regions
+
+  message("Aggregating England/UK")
+  ## Aggregate some of these to get england/uk entries
+  ## Note that we do not store the aggregated outputs in ret yet to avoid
+  ## including in the onward object below. The exception is the Rt values,
+  ## as aggregated Rt values are used in onwards simulations
+  agg_samples <- combined_aggregate_samples(ret$samples)
+  agg_data <- combined_aggregate_data(ret$data)
+  ret$rt <- combined_aggregate_rt(ret$rt, agg_samples)
+  ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, agg_samples)
+
+  ## Now the onward object has been created, we can safely store the
+  ## other aggregated outputs in ret
+  ret$samples <- agg_samples
+  ret$data <- agg_data
+
   ret
 }
 
@@ -121,8 +190,12 @@ spim_combined_onward_simulate <- function(dat) {
     x$trajectories$state[state_names, , idx_dates])
   state <- aperm(abind_quiet(state, along = 4), c(1, 2, 4, 3))
 
+  state_by_age <- lapply(list_transpose(simulate$state_by_age),
+                        abind_quiet, along = 3)
+
   ret <- list(date = dates,
-              state = state)
+              state = state,
+              state_by_age = state_by_age)
 
   ## This is not terrible:
   rt <- list_transpose(dat$rt)[c("Rt_general", "eff_Rt_general")]

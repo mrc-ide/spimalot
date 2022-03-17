@@ -59,7 +59,14 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
     n_particles <- min(10, n_particles)
     n_mcmc <- min(20, n_mcmc)
     n_sample <- min(10, n_mcmc)
+    n_chains <- min(4, n_chains)
     burnin <- 1
+  }
+
+  if (multiregion) {
+    ## Temporary fix as there is currently an issue with history reporting
+    ## in mcstate for multiregion when the compiled compare is used
+    compiled_compare <- FALSE
   }
 
   n_steps_retain <- ceiling(n_sample / n_chains)
