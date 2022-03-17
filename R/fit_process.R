@@ -43,7 +43,8 @@ spim_fit_process <- function(samples, parameters, data,
   if (simulate_object == TRUE) {
     message("Preparing onward simulation object")
     start_date_sim <- "2021-06-01"
-    simulate <- create_simulate_object(samples, start_date_sim, samples$info$date)
+    simulate <- create_simulate_object(samples, start_date_sim,
+                                        samples$info$date)
   }
 
 
