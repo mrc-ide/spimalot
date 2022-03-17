@@ -13,7 +13,7 @@ spim_add_par(
   max,
   proposal_variance,
   prior,
-  discrete = FALSE,
+  integer = FALSE,
   include = TRUE
 )
 
@@ -35,7 +35,7 @@ spim_add_par_beta(pars)
 \item{prior}{List of values for the prior (must include "type",
 then other values for the prior data.frame)}
 
-\item{discrete}{Logical, indicates if discrete}
+\item{integer}{Logical, indicates if integer}
 
 \item{include}{Logical, indicates if fitted}
 }
