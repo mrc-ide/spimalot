@@ -67,7 +67,7 @@ spim_pars_check_beta_date <- function(beta_date) {
 
 spim_pars_info_single <- function(region, info) {
   assert_has_names(info, c("region", "include",
-                           "name", "initial", "max", "discrete"))
+                           "name", "initial", "max", "integer"))
   if (!(region %in% info$region)) {
     stop(sprintf("Did not find region '%s' in parameter info", region))
   }
@@ -81,7 +81,7 @@ spim_pars_info_single <- function(region, info) {
 
 spim_pars_info_nested <- function(region, info) {
   assert_has_names(info, c("region", "include", "name", "initial",
-                           "max", "discrete"))
+                           "max", "integer"))
   msg <- setdiff(region, info$region)
   if (length(msg) > 0) {
     stop(sprintf("Did not find region %s in parameter info",
@@ -223,13 +223,13 @@ make_prior <- function(d) {
 ##' @param prior List of values for the prior (must include "type",
 ##'   then other values for the prior data.frame)
 ##'
-##' @param discrete Logical, indicates if discrete
+##' @param integer Logical, indicates if integer
 ##'
 ##' @param include Logical, indicates if fitted
 ##'
 ##' @export
 spim_add_par <- function(pars, name, initial, min, max, proposal_variance,
-                         prior, discrete = FALSE, include = TRUE) {
+                         prior, integer = FALSE, include = TRUE) {
   assert_is(pars, "spim_pars_pmcmc")
 
   new_par <- data_frame(
@@ -238,7 +238,7 @@ spim_add_par <- function(pars, name, initial, min, max, proposal_variance,
     initial = initial,
     min = min,
     max = max,
-    discrete = discrete,
+    integer = integer,
     include = include)
   pars$info <- rbind(pars$info, new_par)
   pars$info <- pars$info[order(pars$info$region, pars$info$name), ]
@@ -298,7 +298,7 @@ spim_pars_mcmc_single <- function(info, prior, proposal, transform) {
     initial = info$initial,
     min = info$min,
     max = info$max,
-    discrete = info$discrete,
+    integer = info$integer,
     prior = lapply(split(prior, prior$name), make_prior))
 
   ret <- mcstate::pmcmc_parameters$new(pars_mcmc, proposal, transform)
@@ -319,7 +319,7 @@ spim_pars_mcmc_nested <- function(info, prior, proposal, transform) {
     initial = info$fixed$initial,
     min = info$fixed$min,
     max = info$fixed$max,
-    discrete = info$fixed$discrete,
+    integer = info$fixed$integer,
     prior = prior_fixed)
 
   ## These could be done per region, or could be done separately.  I
@@ -335,7 +335,7 @@ spim_pars_mcmc_nested <- function(info, prior, proposal, transform) {
       initial = info$varied[[i]]$initial,
       min = info$varied[[i]]$min,
       max = info$varied[[i]]$max,
-      discrete = info$varied[[i]]$discrete[[1]],
+      integer = info$varied[[i]]$integer[[1]],
       prior = prior_varied[[i]]))
   names(pars_varied) <- names(info$varied)
 
