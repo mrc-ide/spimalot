@@ -10,7 +10,8 @@
 ##' @param data Data sets used in fitting
 ##'
 ##' @export
-spim_fit_process <- function(samples, parameters, data, simulate_object = TRUE) {
+spim_fit_process <- function(samples, parameters, data,
+                            simulate_object = TRUE) {
   region <- samples$info$region
 
   ## This is just the info/prior/proposal + base of the parameter used
