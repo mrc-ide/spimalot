@@ -13,6 +13,9 @@ spim_fit_process(samples, parameters, data, simulate_object = TRUE)
 (\link{spim_pars_pmcmc_load})}
 
 \item{data}{Data sets used in fitting}
+
+\item{simulate_object}{set to TRUE for almost all cases, if you don't want
+your fits for a simulation then switch to FALSE}
 }
 \description{
 Process fit data for \code{lancelot} model

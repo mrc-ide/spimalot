@@ -9,6 +9,9 @@
 ##'
 ##' @param data Data sets used in fitting
 ##'
+##' @param simulate_object set to TRUE for almost all cases, if you don't want
+##' your fits for a simulation then switch to FALSE
+##'
 ##' @export
 spim_fit_process <- function(samples, parameters, data,
                             simulate_object = TRUE) {
@@ -38,9 +41,9 @@ spim_fit_process <- function(samples, parameters, data,
   ## change it.
 
   if (simulate_object == TRUE) {
-  message("Preparing onward simulation object")
-  start_date_sim <- "2021-06-01"
-  simulate <- create_simulate_object(samples, start_date_sim, samples$info$date)
+    message("Preparing onward simulation object")
+    start_date_sim <- "2021-06-01"
+    simulate <- create_simulate_object(samples, start_date_sim, samples$info$date)
   }
 
 
