@@ -2,7 +2,7 @@ test_dummy_pars_pmcmc <- function(vars, regions = NULL) {
   regions <- regions %||% sircovid::regions("all")
   info <- lapply(regions, function(r)
     data_frame(region = r, name = vars, initial = runif(length(vars)),
-               min = 0, max = 1, discrete = FALSE, include = TRUE))
+               min = 0, max = 1, integer = FALSE, include = TRUE))
   info <- dplyr::bind_rows(info)
 
   prior <- lapply(regions, function(r)

@@ -59,7 +59,7 @@ test_that("filter info by region", {
   dat <- test_dummy_pars_pmcmc(c("a", "b", "c"))
   info <- spim_pars_info_single("london", dat$info)
   expect_equal(nrow(info), 3)
-  expect_setequal(names(info), c("name", "initial", "min", "max", "discrete"))
+  expect_setequal(names(info), c("name", "initial", "min", "max", "integer"))
   expect_error(
     spim_pars_info_single("islington", dat$info),
     "Did not find region 'islington' in parameter info")
