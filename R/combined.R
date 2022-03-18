@@ -85,12 +85,6 @@ spim_combined_load <- function(path, regions = "all") {
   ret$samples <- agg_samples
   ret$data <- agg_data
 
-  ## Store model demography outputs
-  message("Storing demographic outputs")
-  ret$model_demography <- lapply(names(ret$samples), function(x)
-    combined_demography(ret$samples[[x]]))
-  names(ret$model_demography) <- names(ret$samples)
-
   ret
 }
 
@@ -554,34 +548,4 @@ spim_pmcmc_predict <- function(object, steps, prepend_trajectories = FALSE,
   }
 
   res
-}
-
-
-combined_demography <- function(sample) {
-
-  trajectories <- sample$trajectories$state
-
-  admissions <- trajectories[grep("^cum_admit", rownames(trajectories)), , ]
-  deaths_hosp <- trajectories[grep("deaths_hosp_", rownames(trajectories)), , ]
-
-  process <- function(x, what) {
-    total <- x[, , dim(x)[3]]
-    prop_total <- t(total) / colSums(total) * 100
-
-    if (what == "admissions") {
-      daily <- apply(x, 1:2, diff)
-      mean <- apply(daily, 1:2, mean)
-    } else if (what == "deaths_hosp") {
-      mean <- apply(x[, , -1L], c(3, 1), mean)
-    }
-
-    list(total = total,
-         prop_total = prop_total,
-         mean_prop_total = colMeans(prop_total),
-         mean_t = mean)
-  }
-
-  output <- list(
-    admissions = process(admissions, "admissions"),
-    deaths_hosp = process(deaths_hosp, "deaths_hosp"))
 }
