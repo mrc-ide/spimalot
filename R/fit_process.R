@@ -887,7 +887,10 @@ get_names <- function(state_name, suffix_list, suffix0 = NULL) {
 
 extract_demography <- function(samples) {
 
-  trajectories <- samples$trajectories$state
+  # remove the first date as it is more than one day before the second date
+  trajectories <- samples$trajectories$state[, , -1L]
+  # remove the second date here also as we will lose a date doing diff below
+  date <- samples$trajectories$date[-c(1, 2)]
 
   admissions <- trajectories[grep("^cum_admit", rownames(trajectories)), , ]
   deaths_hosp <- trajectories[grep("^D_hosp_", rownames(trajectories)), , ]
@@ -896,13 +899,14 @@ extract_demography <- function(samples) {
     total <- x[, , dim(x)[3]]
     prop_total <- t(total) / colSums(total) * 100
 
-    daily <- apply(x, 1:2, diff)
-    mean <- apply(daily, 1:2, mean)
+    daily <- apply(x, c(1, 2), diff)
+    mean <- apply(daily, c(1, 2), mean)
 
     list(total = total,
          prop_total = prop_total,
          mean_prop_total = colMeans(prop_total),
-         mean_t = mean)
+         mean_t = mean,
+         date = date)
   }
 
   output <- list(
