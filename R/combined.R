@@ -381,8 +381,8 @@ combine_demography <- function(demography) {
 
   agg_demography <- function(demo) {
     demo <- combined_switch_levels(demo)
-    total <- Reduce('+', demo$total)
-    mean_t <- Reduce('+', demo$mean_t)
+    total <- Reduce(`+`, demo$total)
+    mean_t <- Reduce(`+`, demo$mean_t)
 
     prop_total <- t(total) / colSums(total) * 100
 
