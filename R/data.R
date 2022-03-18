@@ -222,6 +222,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
   if (region %in% c("northern_ireland", "scotland", "wales", "uk")) {
     data$deaths <- data$death2
     data[, deaths_hosp_age] <- NA_integer_
+    data[, deaths_comm_age] <- NA_integer_
     data$deaths_hosp <- NA_integer_
     data$deaths_comm <- NA_integer_
     data$deaths_carehomes <- NA_integer_
