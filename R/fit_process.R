@@ -9,8 +9,12 @@
 ##'
 ##' @param data Data sets used in fitting
 ##'
+##' @param simulate_object set to TRUE for almost all cases, if you don't want
+##' your fits for a simulation then switch to FALSE
+##'
 ##' @export
-spim_fit_process <- function(samples, parameters, data) {
+spim_fit_process <- function(samples, parameters, data,
+                            simulate_object = TRUE) {
   region <- samples$info$region
 
   ## This is just the info/prior/proposal + base of the parameter used
@@ -35,9 +39,14 @@ spim_fit_process <- function(samples, parameters, data) {
   ## TODO: someone needs to document what this date is for (appears to
   ## filter trajectories to start at this date) and when we might
   ## change it.
-  message("Preparing onward simulation object")
-  start_date_sim <- "2021-06-01"
-  simulate <- create_simulate_object(samples, start_date_sim, samples$info$date)
+
+  if (simulate_object == TRUE) {
+    message("Preparing onward simulation object")
+    start_date_sim <- "2021-06-01"
+    simulate <- create_simulate_object(samples, start_date_sim,
+                                        samples$info$date)
+  }
+
 
   ## Reduce trajectories in samples before saving
   message("Reducing trajectories")
