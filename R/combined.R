@@ -65,6 +65,7 @@ spim_combined_load <- function(path, regions = "all") {
   agg_data <- combined_aggregate_data(ret$data)
   ret$rt <- combined_aggregate_rt(ret$rt, agg_samples)
   ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, agg_samples)
+  ret$model_demography <- combined_aggregate_demography(ret$model_demography)
 
   ## NOTE: have not ported the "randomise trajectory order" bit over,
   ## but I do not think that we need to.
@@ -357,6 +358,42 @@ combine_variant_rt <- function(variant_rt, samples, rank) {
                          c(1, 3, 2))
   }
 
+  ret
+}
+
+
+combined_aggregate_demography <- function(demography) {
+  england <- sircovid::regions("england")
+  nations <- sircovid::regions("nations")
+
+  if (all(england %in% names(demography))) {
+    demography$england <- combine_demography(demography[england])
+  }
+  if (all(nations %in% names(demography))) {
+    demography$uk <- combine_demography(demography[nations])
+  }
+  demography
+}
+
+
+combine_demography <- function(demography) {
+  demography <- combined_switch_levels(demography)
+
+  agg_demography <- function(demo) {
+    demo <- combined_switch_levels(demo)
+    total <- Reduce('+', demo$total)
+    mean_t <- Reduce('+', demo$mean_t)
+
+    prop_total <- t(total) / colSums(total) * 100
+
+    list(total = total,
+         prop_total = prop_total,
+         mean_prop_total = colMeans(prop_total),
+         mean_t = mean_t,
+         date = demo$date[[1]])
+  }
+
+  ret <- lapply(demography, agg_demography)
   ret
 }
 
