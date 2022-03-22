@@ -47,6 +47,9 @@ spim_fit_process <- function(samples, parameters, data,
                                         samples$info$date)
   }
 
+  ## Extract demography
+  message("Extracting demography")
+  model_demography <- extract_demography(samples)
 
   ## Reduce trajectories in samples before saving
   message("Reducing trajectories")
@@ -80,6 +83,7 @@ spim_fit_process <- function(samples, parameters, data,
   ## simulate - object containing spimalot objects (used for onward simulation)
   ##            such as; thinned samples, start date of sim, samples date.
   ## parameters - parameter MLE and covariance matrix
+  ## model_demography - admissions and deaths by age from the model
   ## data - fitted and full data
   ##
   ## 2. 'restart' list of;
@@ -91,6 +95,7 @@ spim_fit_process <- function(samples, parameters, data,
                variant_rt = variant_rt,
                simulate = simulate,
                parameters = parameters_new,
+               model_demography = model_demography,
                ## NOTE: fit$data$fitted is assumed to exist by the restart
                data = list(fitted = data$fitted, full = data$full)),
     restart = restart)
@@ -301,7 +306,7 @@ reduce_trajectories <- function(samples) {
   ## Remove unused trajectories for predict function in combined
   remove_strings <- c("prob_strain", "S_", "R_", "I_weighted_", "D_hosp_",
                       "D_all_", "diagnoses_admitted_", "cum_infections_disag_",
-                      "cum_n_vaccinated")
+                      "cum_n_vaccinated", "cum_admit_")
   re <- sprintf("^(%s)", paste(remove_strings, collapse = "|"))
 
   samples <- summarise_states(samples)
@@ -878,4 +883,33 @@ get_names <- function(state_name, suffix_list, suffix0 = NULL) {
                function(x) sprintf("%s%s",
                                    state_name, paste0(x, collapse = "")))
   nms
+}
+
+extract_demography <- function(samples) {
+
+  # remove the first date as it is more than one day before the second date
+  trajectories <- samples$trajectories$state[, , -1L]
+  # remove the second date here also as we will lose a date doing diff below
+  date <- samples$trajectories$date[-c(1, 2)]
+
+  admissions <- trajectories[grep("^cum_admit", rownames(trajectories)), , ]
+  deaths_hosp <- trajectories[grep("^D_hosp_", rownames(trajectories)), , ]
+
+  process <- function(x, what) {
+    total <- x[, , dim(x)[3]]
+    prop_total <- t(total) / colSums(total) * 100
+
+    daily <- apply(x, c(1, 2), diff)
+    mean <- apply(daily, c(1, 2), mean)
+
+    list(total = total,
+         prop_total = prop_total,
+         mean_prop_total = colMeans(prop_total),
+         mean_t = mean,
+         date = date)
+  }
+
+  output <- list(
+    admissions = process(admissions, "admissions"),
+    deaths_hosp = process(deaths_hosp, "deaths_hosp"))
 }
