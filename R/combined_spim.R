@@ -369,3 +369,4 @@ spim_summary_quantiles <- function() {
   names(qs) <- sprintf("Quantile %s", qs)
   c(c(Value = 0.5), qs)
 }
+
