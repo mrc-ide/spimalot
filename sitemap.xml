@@ -58,9 +58,6 @@
     <loc>/reference/spim_data.html</loc>
   </url>
   <url>
-    <loc>/reference/spim_extract_admissions_by_age.html</loc>
-  </url>
-  <url>
     <loc>/reference/spim_extract_alos.html</loc>
   </url>
   <url>
@@ -101,9 +98,6 @@
   </url>
   <url>
     <loc>/reference/spim_plot_Rt.html</loc>
-  </url>
-  <url>
-    <loc>/reference/spim_plot_admissions_by_age.html</loc>
   </url>
   <url>
     <loc>/reference/spim_plot_alos.html</loc>
