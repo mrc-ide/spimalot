@@ -898,7 +898,7 @@ extract_demography <- function(samples) {
   ## But D_all is by vaccine class as well as age, so first we must sum
   ## over vaccine classes
   D_all <- trajectories[grep("^D_all_", rownames(trajectories)), , ]
-  p <- samples$predict$transform(samples$pars[1,])
+  p <- samples$predict$transform(samples$pars[1, ])
   n_groups <- p[[length(p)]]$pars$n_groups
   n_vacc_classes <- p[[length(p)]]$pars$n_vacc_classes
   D_all <- array(D_all, c(n_groups, n_vacc_classes, dim(D_all)[c(2, 3)]))
