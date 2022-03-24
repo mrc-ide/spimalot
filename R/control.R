@@ -63,12 +63,6 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
     burnin <- 1
   }
 
-  if (multiregion) {
-    ## Temporary fix as there is currently an issue with history reporting
-    ## in mcstate for multiregion when the compiled compare is used
-    compiled_compare <- FALSE
-  }
-
   n_steps_retain <- ceiling(n_sample / n_chains)
 
   rerun_every <- if (deterministic) Inf else 100
