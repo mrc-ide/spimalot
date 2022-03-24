@@ -886,6 +886,29 @@ get_names <- function(state_name, suffix_list, suffix0 = NULL) {
 }
 
 extract_demography <- function(samples) {
+  multiregion <- samples$info$multiregion
+
+  if (multiregion) {
+    extract1 <- function (i) {
+      samples$trajectories$state <- samples$trajectories$state[, i, , ]
+      samples$predict$transform <- samples$predict$transform[[i]]
+      samples$pars_full <- samples$par_full[, , i]
+
+      extract_demography_region(samples)
+    }
+
+    regions <- samples$info$region
+    ret <- lapply(seq_along(regions), extract1)
+    names(ret) <- regions
+
+  } else {
+    ret <- extract_demography_region(samples)
+  }
+
+  ret
+}
+
+extract_demography_region <- function(samples) {
   # remove the first date as it is more than one day before the second date
   trajectories <- samples$trajectories$state[, , -1L]
   # remove the second date here also as we will lose a date doing diff below
