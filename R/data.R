@@ -406,6 +406,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     data$final_hosp <- data$phe_patients
   }
 
+  if (region %in% sircovid::regions("england")) {
+    data[, admissions_age_bands][is.na(data[, admissions_age_bands])] <- 0
+    data$final_admissions[data$date <= adm_backfill_date] <-
+      rowSums(data[data$date <= adm_backfill_date, admissions_age_bands])
+  }
+
   cols_pillar2 <- c("pillar2_positives", "pillar2_negatives", "pillar2_cases",
                     paste0("pillar2_positives_",
                            c("over25", pillar2_age_bands)),
@@ -580,8 +586,6 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     admissions_by_age <- grep("all_admission_", colnames(ret), value = TRUE)
     if (!all(is.na(ret[, admissions_by_age])) &&
         region %in% sircovid::regions("england")) {
-      # First replace NAs with zeroes
-      ret[, admissions_by_age][is.na(ret[, admissions_by_age])] <- 0
       ret[ret$date > adm_backfill_date, admissions_by_age] <- NA_integer_
       ret[ret$date <= adm_backfill_date, "all_admission"] <- NA_integer_
 
