@@ -4,7 +4,14 @@
 \alias{spim_vaccination_data}
 \title{Prepare vaccination data}
 \usage{
-spim_vaccination_data(date, region, uptake, days_to_effect, data)
+spim_vaccination_data(
+  date,
+  region,
+  uptake,
+  days_to_effect,
+  data,
+  carehomes = TRUE
+)
 }
 \arguments{
 \item{date}{The date of the data. This will be the final date}
@@ -21,6 +28,9 @@ value being the uptake of dose j for group i. Must have 19 rows.}
 assumed to take to reach effect}
 
 \item{data}{Vaccination data (TODO: DESCRIBE CONTENTS)}
+
+\item{carehomes}{Logical parameter, whether or not we have carehomes in
+the model. Default is TRUE}
 }
 \value{
 A list suitable for passing to \code{spim_pars} as
