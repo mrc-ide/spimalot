@@ -889,7 +889,7 @@ extract_demography <- function(samples) {
   multiregion <- samples$info$multiregion
 
   if (multiregion) {
-    extract1 <- function (i) {
+    extract1 <- function(i) {
       samples$trajectories$state <- samples$trajectories$state[, i, , ]
       samples$predict$transform <- samples$predict$transform[[i]]
       samples$pars_full <- samples$par_full[, , i]
