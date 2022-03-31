@@ -1770,6 +1770,7 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
 
   rn_res <- as.Date(colnames(res))
   ylim <- c(0, max(dy[which(dx >= xlim[1] & dx <= xlim[2])],
+                   dy_extra[which(dx >= xlim[1] & dx <= xlim[2])],
                    qs[, which(rn_res >= xlim[1] & rn_res <= xlim[2])],
                    na.rm = TRUE))
   plot(xlim[1], 0, type = "n",
