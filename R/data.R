@@ -33,6 +33,12 @@
 ##'   This is to account for backfill, and should be
 ##'   carefully updated with every new SUS data delivery.
 ##'
+##' @param ons_death_backfill_date A date string, representing the last date we
+##'   use deaths by age from the ONS for England NHS regions. After
+##'   this date we use deaths by age from the UKHSA linelist. This is to account
+##'   for the increased delay in registering death certificates, compared with
+##'   just reporting deaths that occur within 28 days of a positive test.
+##'
 ##' @param full_data Not sure yet, we'll find out
 ##'
 ##' @return A [data.frame()] TODO: describe columns
@@ -40,12 +46,14 @@
 ##' @export
 spim_data <- function(date, region, model_type, rtm, serology,
                       trim_deaths, trim_pillar2, adm_backfill_date,
+                      ons_death_backfill_date,
                       full_data = FALSE) {
   spim_check_model_type(model_type)
   if (length(region) == 1) {
     check_region(region)
     spim_data_single(date, region, model_type, rtm, serology, trim_deaths,
-                     trim_pillar2, adm_backfill_date, full_data)
+                     trim_pillar2, adm_backfill_date, ons_death_backfill_date,
+                     full_data)
   } else {
     ## TODO: better error message here:
     stopifnot(all(region %in% sircovid::regions("all")))
@@ -53,7 +61,8 @@ spim_data <- function(date, region, model_type, rtm, serology,
       cbind(
         region = r,
         spim_data_single(date, r, model_type, rtm, serology, trim_deaths,
-                         trim_pillar2, adm_backfill_date, full_data),
+                         trim_pillar2, adm_backfill_date,
+                         ons_death_backfill_date, full_data),
         stringsAsFactors = FALSE))
     if (length(unique(lapply(data, "[[", "date"))) != 1) {
       ## If this errors, we just need to compute the union set of
@@ -71,10 +80,12 @@ spim_data <- function(date, region, model_type, rtm, serology,
 
 spim_data_single <- function(date, region, model_type, rtm, serology,
                              trim_deaths, trim_pillar2,
-                             adm_backfill_date, full_data) {
+                             adm_backfill_date, ons_death_backfill_date,
+                             full_data) {
   ## TODO: verify that rtm has consecutive days
   rtm <- spim_lancelot_data_rtm(date, region, model_type, rtm,
-                                adm_backfill_date, full_data)
+                                adm_backfill_date, ons_death_backfill_date,
+                                full_data)
   serology <- spim_data_serology(date, region, serology)
 
   ## Merge the two datasets on date
@@ -113,7 +124,8 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
 
 ##' @importFrom dplyr %>%
 spim_lancelot_data_rtm <- function(date, region, model_type, data,
-                                   adm_backfill_date, full_data) {
+                                   adm_backfill_date, ons_death_backfill_date,
+                                   full_data) {
 
   pillar2_over25_age_bands <- c("25_49", "50_64", "65_79", "80_plus")
   pillar2_age_bands <- c("under15", "15_24", pillar2_over25_age_bands)
@@ -236,8 +248,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
 
     ## due to ONS data being lagged, we will use death linelist data
     ## for recent care home and community deaths
-    date_death_change <- as.Date(date) - 45
-    ons_death_dates <- data$date < date_death_change
+    ons_death_dates <- data$date <= ons_death_backfill_date
     data$deaths_hosp[ons_death_dates] <-
       data$ons_death_hospital[ons_death_dates]
     data$deaths_comm[ons_death_dates] <-
