@@ -13,6 +13,7 @@ spim_data(
   trim_deaths,
   trim_pillar2,
   adm_backfill_date,
+  ons_death_backfill_date,
   full_data = FALSE
 )
 }
@@ -45,6 +46,12 @@ admissions by age from the SUS linelist for England NHS regions. After
 this date we use age-aggregated admissions from the UKHSA dashboard.
 This is to account for backfill, and should be
 carefully updated with every new SUS data delivery.}
+
+\item{ons_death_backfill_date}{A date string, representing the last date we
+use deaths by age from the ONS for England NHS regions. After
+this date we use deaths by age from the UKHSA linelist. This is to account
+for the increased delay in registering death certificates, compared with
+just reporting deaths that occur within 28 days of a positive test.}
 
 \item{full_data}{Not sure yet, we'll find out}
 }
