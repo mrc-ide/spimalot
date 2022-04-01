@@ -892,7 +892,7 @@ extract_demography <- function(samples) {
     extract1 <- function(i) {
       samples$trajectories$state <- samples$trajectories$state[, i, , ]
       samples$predict$transform <- samples$predict$transform[[i]]
-      samples$pars_full <- samples$par_full[, , i]
+      samples$pars <- samples$pars_full[, , i]
 
       extract_demography_region(samples)
     }
