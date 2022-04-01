@@ -1728,14 +1728,10 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
       res <- trajectories$state[trajnames[what], , -1L]
     }
   } else {
-    if (what == "deaths_hosp") {
-      res <- trajectories$state[paste0("deaths_hosp_", age_band, "_inc"), , -1L]
-    } else if (what == "all_admission") {
-      res <-
-        trajectories$state[paste0("all_admission_", age_band, "_inc"), , -1L]
-    } else {
+    if (!(what %in% c("all_admission", "deaths_hosp", "deaths_comm"))) {
       stop(message(paste0("Cannot plot ", what, " by age")))
     }
+    res <- trajectories$state[paste0(what, "_", age_band, "_inc"), , -1L]
     labs[what] <- paste(labs[what], gsub("_", " to ", age_band))
   }
 
@@ -1774,6 +1770,7 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
 
   rn_res <- as.Date(colnames(res))
   ylim <- c(0, max(dy[which(dx >= xlim[1] & dx <= xlim[2])],
+                   dy_extra[which(dx >= xlim[1] & dx <= xlim[2])],
                    qs[, which(rn_res >= xlim[1] & rn_res <= xlim[2])],
                    na.rm = TRUE))
   plot(xlim[1], 0, type = "n",

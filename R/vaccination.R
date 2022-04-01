@@ -12,13 +12,17 @@
 ##'
 ##' @param data Vaccination data (TODO: DESCRIBE CONTENTS)
 ##'
+##' @param carehomes Logical parameter, whether or not we have carehomes in
+##'   the model. Default is TRUE
+##'
 ##' @return A list suitable for passing to `spim_pars` as
 ##'   `vaccination`, containing the new vaccination schedule
 ##'   (important bits are `efficacy` and `schedule`, but other
 ##'   elements may be used elsewhere)
 ##'
 ##' @export
-spim_vaccination_data <- function(date, region, uptake, days_to_effect, data) {
+spim_vaccination_data <- function(date, region, uptake, days_to_effect, data,
+                                  carehomes = TRUE) {
 
   ## Vaccination started 2020-12-08. There should be no doses before this
   ## so we remove dates before this
@@ -75,7 +79,8 @@ spim_vaccination_data <- function(date, region, uptake, days_to_effect, data) {
     dates_remove[dates_remove > date - min(days_to_effect)]
   data <- data[!(data$date %in% dates_remove), ]
 
-  schedule <- sircovid::vaccine_schedule_from_data(data, region, uptake)
+  schedule <- sircovid::vaccine_schedule_from_data(data, region, uptake,
+                                                   carehomes)
 
 
   ret <- list(
