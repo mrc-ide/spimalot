@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.15</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.16</span>
       </span>
     </div>
 
@@ -50,7 +50,14 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">spim_vaccination_data</span><span class="op">(</span><span class="va">date</span>, <span class="va">region</span>, <span class="va">uptake</span>, <span class="va">days_to_effect</span>, <span class="va">data</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">spim_vaccination_data</span><span class="op">(</span>
+  <span class="va">date</span>,
+  <span class="va">region</span>,
+  <span class="va">uptake</span>,
+  <span class="va">days_to_effect</span>,
+  <span class="va">data</span>,
+  carehomes <span class="op">=</span> <span class="cn">TRUE</span>
+<span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -70,6 +77,9 @@ value being the uptake of dose j for group i. Must have 19 rows.</p></dd>
 assumed to take to reach effect</p></dd>
 <dt>data</dt>
 <dd><p>Vaccination data (TODO: DESCRIBE CONTENTS)</p></dd>
+<dt>carehomes</dt>
+<dd><p>Logical parameter, whether or not we have carehomes in
+the model. Default is TRUE</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>

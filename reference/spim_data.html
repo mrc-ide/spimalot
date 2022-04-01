@@ -19,7 +19,7 @@ data) that are not fit to but are treated as model parameters."><!-- mathjax -->
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.15</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.16</span>
       </span>
     </div>
 
@@ -63,6 +63,7 @@ data) that are not fit to but are treated as model parameters.</p>
   <span class="va">trim_deaths</span>,
   <span class="va">trim_pillar2</span>,
   <span class="va">adm_backfill_date</span>,
+  <span class="va">ons_death_backfill_date</span>,
   full_data <span class="op">=</span> <span class="cn">FALSE</span>
 <span class="op">)</span></code></pre></div>
     </div>
@@ -98,6 +99,12 @@ admissions by age from the SUS linelist for England NHS regions. After
 this date we use age-aggregated admissions from the UKHSA dashboard.
 This is to account for backfill, and should be
 carefully updated with every new SUS data delivery.</p></dd>
+<dt>ons_death_backfill_date</dt>
+<dd><p>A date string, representing the last date we
+use deaths by age from the ONS for England NHS regions. After
+this date we use deaths by age from the UKHSA linelist. This is to account
+for the increased delay in registering death certificates, compared with
+just reporting deaths that occur within 28 days of a positive test.</p></dd>
 <dt>full_data</dt>
 <dd><p>Not sure yet, we'll find out</p></dd>
 </dl></div>
