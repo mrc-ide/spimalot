@@ -67,6 +67,15 @@ spim_combined_load <- function(path, regions = "all") {
   ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, agg_samples)
   ret$model_demography <- combined_aggregate_demography(ret$model_demography)
 
+
+  ## Check if severity calculations were outputed and, if so, save them within
+  ## Rt object for post-processing
+  traj_names <- rownames(agg_samples[[1]]$trajectories$state)
+  if (all(c("ifr", "ihr", "hfr") %in% traj_names)) {
+    message("Saving severity outputs")
+    ret$rt <- combined_extract_severity(ret$rt, agg_samples)
+  }
+
   ## NOTE: have not ported the "randomise trajectory order" bit over,
   ## but I do not think that we need to.
   message("Creating data for onward use")
@@ -302,6 +311,17 @@ combined_aggregate_rt <- function(rt, samples) {
 }
 
 
+combined_extract_severity <- function(rt, samples) {
+
+  for (i in names(rt)) {
+    rt[[i]]$ifr <- t(samples[[i]]$trajectories$state["ifr", , ])
+    rt[[i]]$ihr <- t(samples[[i]]$trajectories$state["ihr", , ])
+    rt[[i]]$hfr <- t(samples[[i]]$trajectories$state["hfr", , ])
+  }
+  rt
+}
+
+
 combined_aggregate_variant_rt <- function(variant_rt, samples) {
   england <- sircovid::regions("england")
   nations <- sircovid::regions("nations")
@@ -317,6 +337,7 @@ combined_aggregate_variant_rt <- function(variant_rt, samples) {
   }
   variant_rt
 }
+
 
 combine_variant_rt <- function(variant_rt, samples, rank) {
 
