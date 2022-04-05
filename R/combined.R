@@ -313,11 +313,52 @@ combined_aggregate_rt <- function(rt, samples) {
 
 combined_extract_severity <- function(rt, samples) {
 
-  for (i in names(rt)) {
+  regions <- sircovid::regions("all")
+  nations <- sircovid::regions("nations")
+
+  weighted_severity <- list()
+  dims <- dim(rt[[1]]$eff_Rt_all)
+
+  rt$england$ifr <- array(0, dim = dims)
+  rt$england$ihr <- array(0, dim = dims)
+  rt$england$hfr <- array(0, dim = dims)
+
+  rt$uk$ifr <- array(0, dim = dims)
+  rt$uk$ihr <- array(0, dim = dims)
+  rt$uk$hfr <- array(0, dim = dims)
+
+  for (i in regions) {
     rt[[i]]$ifr <- t(samples[[i]]$trajectories$state["ifr", , ])
     rt[[i]]$ihr <- t(samples[[i]]$trajectories$state["ihr", , ])
     rt[[i]]$hfr <- t(samples[[i]]$trajectories$state["hfr", , ])
+
+    inf_weights <- t(samples[[i]]$trajectories$state["infections_inc", , ])
+    adm_weights <- t(samples[[i]]$trajectories$state["admitted_inc", , ])
+
+    weighted_severity <- list(
+      ifr = (rt[[i]]$ifr * inf_weights) / inf_weights,
+      ihr = (rt[[i]]$ihr * inf_weights) / inf_weights,
+      hfr = (rt[[i]]$hfr * adm_weights) / adm_weights)
+
+    rt$england$ifr <- rt$england$ifr + weighted_severity$ifr
+    rt$england$ihr <- rt$england$ihr + weighted_severity$ihr
+    rt$england$hfr <- rt$england$hfr + weighted_severity$hfr
   }
+
+  for (i in nations) {
+    inf_weights <- t(samples[[i]]$trajectories$state["infections_inc", , ])
+    adm_weights <- t(samples[[i]]$trajectories$state["admitted_inc", , ])
+
+    weighted_severity <- list(
+      ifr = (rt[[i]]$ifr * inf_weights) / inf_weights,
+      ihr = (rt[[i]]$ihr * inf_weights) / inf_weights,
+      hfr = (rt[[i]]$hfr * adm_weights) / adm_weights)
+
+    rt$uk$ifr <- rt$uk$ifr + weighted_severity$ifr
+    rt$uk$ihr <- rt$uk$ihr + weighted_severity$ihr
+    rt$uk$hfr <- rt$uk$hfr + weighted_severity$hfr
+  }
+
   rt
 }
 
