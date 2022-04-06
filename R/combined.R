@@ -71,7 +71,7 @@ spim_combined_load <- function(path, regions = "all") {
   ## Check if severity calculations were outputed and, if so, aggregate
   if (!is.null(ret$severity)) {
     message("Aggregating severity outputs")
-    ret$severity <- aggregate_severity(ret$severity, agg_samples)
+    ret$severity <- combined_aggregate_severity(ret$severity, agg_samples)
   }
 
   ## NOTE: have not ported the "randomise trajectory order" bit over,
@@ -293,7 +293,7 @@ combined_aggregate_data <- function(data) {
 }
 
 
-aggregate_severity <- function(severity, samples) {
+combined_aggregate_severity <- function(severity, samples) {
 
   severity <- switch_levels(severity)
   hosp_names <- grep("hfr", names(severity), value = TRUE)
