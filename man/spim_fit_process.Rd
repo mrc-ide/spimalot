@@ -4,7 +4,13 @@
 \alias{spim_fit_process}
 \title{Process a fit for \code{lancelot} model}
 \usage{
-spim_fit_process(samples, parameters, data, simulate_object = TRUE)
+spim_fit_process(
+  samples,
+  parameters,
+  data,
+  simulate_object = TRUE,
+  get_severity = FALSE
+)
 }
 \arguments{
 \item{samples}{The pmcmc_samples object from \link[mcstate:pmcmc]{mcstate::pmcmc}}
@@ -16,6 +22,9 @@ spim_fit_process(samples, parameters, data, simulate_object = TRUE)
 
 \item{simulate_object}{set to TRUE for almost all cases, if you don't want
 your fits for a simulation then switch to FALSE}
+
+\item{get_severity}{Logical, if severity outputs are to be extracted
+(default to FALSE)}
 }
 \description{
 Process fit data for \code{lancelot} model

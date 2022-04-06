@@ -12,9 +12,12 @@
 ##' @param simulate_object set to TRUE for almost all cases, if you don't want
 ##' your fits for a simulation then switch to FALSE
 ##'
+##' @param get_severity Logical, if severity outputs are to be extracted
+##'    (default to FALSE)
+##'
 ##' @export
 spim_fit_process <- function(samples, parameters, data,
-                            simulate_object = TRUE) {
+                            simulate_object = TRUE, get_severity = FALSE) {
   region <- samples$info$region
 
   ## This is just the info/prior/proposal + base of the parameter used
@@ -51,9 +54,8 @@ spim_fit_process <- function(samples, parameters, data,
   message("Extracting demography")
   model_demography <- extract_demography(samples)
 
-  ## Check if severity calculations were outputted and, if so, extract
-  traj_names <- rownames(samples$trajectories$state)
-  if (all(c("ifr", "ihr", "hfr") %in% traj_names)) {
+  ## Check get_severity is TRUE extract
+  if (get_severity) {
     message("Extracting severity outputs")
     severity <- extract_severity(samples$trajectories$state)
     # Add Rt elements so severity has the same structure for post-processing
