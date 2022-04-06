@@ -59,7 +59,7 @@ spim_fit_process <- function(samples, parameters, data,
     # Add Rt elements so severity has the same structure for post-processing
     severity[["step"]] <- rt$step
     severity[["date"]] <- rt$date
-  } else (severity = NULL)
+  } else (severity <- NULL)
 
   ## Reduce trajectories in samples before saving
   message("Reducing trajectories")
