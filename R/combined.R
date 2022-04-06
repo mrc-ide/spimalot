@@ -68,12 +68,10 @@ spim_combined_load <- function(path, regions = "all") {
   ret$model_demography <- combined_aggregate_demography(ret$model_demography)
 
 
-  ## Check if severity calculations were outputed and, if so, save them within
-  ## Rt object for post-processing
-  traj_names <- rownames(agg_samples[[1]]$trajectories$state)
-  if (all(c("ifr", "ihr", "hfr") %in% traj_names)) {
-    message("Saving severity outputs")
-    ret$rt <- combined_extract_severity(ret$rt, agg_samples)
+  ## Check if severity calculations were outputed and, if so, aggregate
+  if (!is.null(ret$severity)) {
+    message("Aggregating severity outputs")
+    ret$severity <- aggregate_severity(ret$severity, agg_samples)
   }
 
   ## NOTE: have not ported the "randomise trajectory order" bit over,
@@ -295,70 +293,41 @@ combined_aggregate_data <- function(data) {
 }
 
 
-combined_aggregate_rt <- function(rt, samples) {
+aggregate_severity <- function(severity, samples) {
+
+  severity <- switch_levels(severity)
+  hosp_names <- grep("hfr", names(severity), value = TRUE)
+  inf_names <- grep("hfr", names(severity), invert = TRUE, value = TRUE)
+
+  admissions <- switch_levels(severity[c("date", "step", hosp_names)])
+  infections <- switch_levels(severity[inf_names])
+
+
+  admissions <- combined_aggregate_rt(admissions, samples,
+                                      weight = "admitted_inc")
+
+  infections <- combined_aggregate_rt(infections, samples,
+                                      weight = "infections_inc")
+
+  severity <- list(
+    admissions = admissions,
+    infections = infections
+  )
+}
+
+
+combined_aggregate_rt <- function(rt, samples,  weight = "infections_inc") {
   england <- sircovid::regions("england")
   nations <- sircovid::regions("nations")
 
   if (all(england %in% names(rt))) {
     rt$england <- sircovid::combine_rt(rt[england], samples[england],
-                                       rank = FALSE)
+                                       rank = FALSE, weight = weight)
   }
   if (all(nations %in% names(rt))) {
     rt$uk <- sircovid::combine_rt(rt[nations], samples[nations],
-                                  rank = FALSE)
+                                  rank = FALSE,  weight = weight)
   }
-  rt
-}
-
-
-combined_extract_severity <- function(rt, samples) {
-
-  regions <- sircovid::regions("all")
-  nations <- sircovid::regions("nations")
-
-  weighted_severity <- list()
-  dims <- dim(rt[[1]]$eff_Rt_all)
-
-  rt$england$ifr <- array(0, dim = dims)
-  rt$england$ihr <- array(0, dim = dims)
-  rt$england$hfr <- array(0, dim = dims)
-
-  rt$uk$ifr <- array(0, dim = dims)
-  rt$uk$ihr <- array(0, dim = dims)
-  rt$uk$hfr <- array(0, dim = dims)
-
-  for (i in regions) {
-    rt[[i]]$ifr <- t(samples[[i]]$trajectories$state["ifr", , ])
-    rt[[i]]$ihr <- t(samples[[i]]$trajectories$state["ihr", , ])
-    rt[[i]]$hfr <- t(samples[[i]]$trajectories$state["hfr", , ])
-
-    inf_weights <- t(samples[[i]]$trajectories$state["infections_inc", , ])
-    adm_weights <- t(samples[[i]]$trajectories$state["admitted_inc", , ])
-
-    weighted_severity <- list(
-      ifr = (rt[[i]]$ifr * inf_weights) / inf_weights,
-      ihr = (rt[[i]]$ihr * inf_weights) / inf_weights,
-      hfr = (rt[[i]]$hfr * adm_weights) / adm_weights)
-
-    rt$england$ifr <- rt$england$ifr + weighted_severity$ifr
-    rt$england$ihr <- rt$england$ihr + weighted_severity$ihr
-    rt$england$hfr <- rt$england$hfr + weighted_severity$hfr
-  }
-
-  for (i in nations) {
-    inf_weights <- t(samples[[i]]$trajectories$state["infections_inc", , ])
-    adm_weights <- t(samples[[i]]$trajectories$state["admitted_inc", , ])
-
-    weighted_severity <- list(
-      ifr = (rt[[i]]$ifr * inf_weights) / inf_weights,
-      ihr = (rt[[i]]$ihr * inf_weights) / inf_weights,
-      hfr = (rt[[i]]$hfr * adm_weights) / adm_weights)
-
-    rt$uk$ifr <- rt$uk$ifr + weighted_severity$ifr
-    rt$uk$ihr <- rt$uk$ihr + weighted_severity$ihr
-    rt$uk$hfr <- rt$uk$hfr + weighted_severity$hfr
-  }
-
   rt
 }
 
