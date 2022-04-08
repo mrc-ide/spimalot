@@ -42,7 +42,7 @@ spim_fit_process <- function(samples, parameters, data,
 
   if (simulate_object == TRUE) {
     message("Preparing onward simulation object")
-    start_date_sim <- "2021-06-01"
+    start_date_sim <- "2020-12-15"
     simulate <- create_simulate_object(samples, start_date_sim,
                                         samples$info$date)
   }
@@ -104,9 +104,10 @@ create_simulate_object <- function(samples, start_date_sim, date) {
     (fit_dates <= sircovid::sircovid_date(date))
   date <- fit_dates[idx_dates]
 
-  state_keep <- c("deaths", "admitted",
-                  "diagnoses", "infections", "hosp", "icu")
   state_full <- samples$trajectories$state
+  state_keep <- c("deaths", "admitted",
+                  "diagnoses", "infections", "hosp", "icu",
+                  grep("cum_n_vaccinated", rownames(state_full), value = TRUE))
 
   if (samples$info$multiregion) {
     region <- samples$info$region
