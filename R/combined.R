@@ -9,9 +9,13 @@
 ##' @param regions Region type passed to [sircovid::regions] (default
 ##'   is `all`, otherwise try `england`)
 ##'
+##' @param get_severity Logical, indicating whether to extract severity (e.g.
+##'   IFH, IHR, HFR, etc.) trajectories. Must default to `FALSE`, as these
+##'   are routine (e.g. MTPs) `sircovid` outputs.
+##'
 ##' @return A combined fit object
 ##' @export
-spim_combined_load <- function(path, regions = "all") {
+spim_combined_load <- function(path, regions = "all", get_severity = FALSE) {
   regions <- sircovid::regions(regions)
 
   files <- file.path(path, regions, "fit.rds")
@@ -69,7 +73,7 @@ spim_combined_load <- function(path, regions = "all") {
 
 
   ## Check if severity calculations were outputed and, if so, aggregate
-  if (!is.null(ret$severity)) {
+  if (get_severity) {
     message("Aggregating severity outputs")
     ret$severity <- combined_aggregate_severity(ret$severity, agg_samples)
   }
@@ -295,38 +299,64 @@ combined_aggregate_data <- function(data) {
 
 combined_aggregate_severity <- function(severity, samples) {
 
-  severity <- switch_levels(severity)
-  hosp_names <- grep("hfr", names(severity), value = TRUE)
-  inf_names <- grep("hfr", names(severity), invert = TRUE, value = TRUE)
+  # We first need to sum admitted_inc and diagnoses_inc trajectories to get
+  # all_admissions_inc, which we'll use as weight to aggregate hospital severity
+  for (i in names(samples)) {
+    admitted_inc <- samples[[i]]$trajectories$state["admitted_inc", , ]
+    diagnoses_inc <- samples[[i]]$trajectories$state["diagnoses_inc", , ]
+    all_admissions <- array(admitted_inc + diagnoses_inc, dim = c(1, 10, 744))
+    rownames(all_admissions) <- "all_admissions_inc"
+    samples[[i]]$trajectories$state <-
+      abind_quiet(samples[[i]]$trajectories$state, all_admissions, along = 1)
+  }
 
-  admissions <- switch_levels(severity[c("date", "step", hosp_names)])
-  infections <- switch_levels(severity[inf_names])
+  # Some unfortunate double running of the same function outputting a similar
+  # object but with different weighting
+  admissions <- combined_aggregate_severity_1(severity, samples,
+                                              weight = "all_admissions_inc")
 
+  infections <- combined_aggregate_severity_1(severity, samples,
+                                              weight = "infections_inc")
 
-  admissions <- combined_aggregate_rt(admissions, samples,
-                                      weight = "admitted_inc")
+  # Vector of severity trajectories weighted by admissions
+  # Note this is only one for now, but will grow going forward
+  admission_weighted <- "ihr"
+  severity$england <- infections$england
+  for (i in admission_weighted) {
+    severity$england[[i]] <- admissions$england[[i]]
+  }
 
-  infections <- combined_aggregate_rt(infections, samples,
-                                      weight = "infections_inc")
-
-  severity <- list(
-    admissions = admissions,
-    infections = infections
-  )
+  severity
 }
 
 
-combined_aggregate_rt <- function(rt, samples,  weight = "infections_inc") {
+combined_aggregate_severity_1 <- function(x, samples, weight) {
+  england <- sircovid::regions("england")
+  nations <- sircovid::regions("nations")
+
+  if (all(england %in% names(x))) {
+    x$england <- sircovid::combine_rt(x[england], samples[england],
+                                       rank = FALSE, weight = weight)
+  }
+  if (all(nations %in% names(x))) {
+    stop("We cannot currently run severity analysis at DVN/UK level!")
+  }
+  x
+
+}
+
+
+combined_aggregate_rt <- function(rt, samples) {
   england <- sircovid::regions("england")
   nations <- sircovid::regions("nations")
 
   if (all(england %in% names(rt))) {
     rt$england <- sircovid::combine_rt(rt[england], samples[england],
-                                       rank = FALSE, weight = weight)
+                                       rank = FALSE, weight = "infections_inc")
   }
   if (all(nations %in% names(rt))) {
     rt$uk <- sircovid::combine_rt(rt[nations], samples[nations],
-                                  rank = FALSE,  weight = weight)
+                                  rank = FALSE,  weight = "infections_inc")
   }
   rt
 }
