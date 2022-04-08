@@ -352,11 +352,11 @@ combined_aggregate_rt <- function(rt, samples) {
 
   if (all(england %in% names(rt))) {
     rt$england <- sircovid::combine_rt(rt[england], samples[england],
-                                       rank = FALSE, weight = "infections_inc")
+                                       rank = FALSE)
   }
   if (all(nations %in% names(rt))) {
     rt$uk <- sircovid::combine_rt(rt[nations], samples[nations],
-                                  rank = FALSE,  weight = "infections_inc")
+                                  rank = FALSE)
   }
   rt
 }
