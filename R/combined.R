@@ -193,9 +193,15 @@ spim_combined_onward_simulate <- function(dat) {
   state_by_age <- lapply(list_transpose(simulate$state_by_age),
                         abind_quiet, along = 3)
 
+  n_doses <- abind_quiet(simulate$n_doses, along = 3)
+  n_doses <- abind_quiet(n_doses,
+              aperm(array(apply(n_doses, c(1,2,4), sum, na.rm = TRUE),
+                          c(dim(n_doses)[-3], 1)), c(1,2,4,3)), along = 3)
+  dimnames(n_doses)[[3]] <- c(sircovid::regions("england"), "england")
   ret <- list(date = dates,
               state = state,
-              state_by_age = state_by_age)
+              state_by_age = state_by_age,
+              n_doses = n_doses)
 
   ## This is not terrible:
   rt <- list_transpose(dat$rt)[c("Rt_general", "eff_Rt_general")]
@@ -211,6 +217,11 @@ spim_combined_onward_simulate <- function(dat) {
   variant_rt_combined <- lapply(variant_rt, function(x)
     aperm(abind_quiet(x, along = 4), c(3, 4, 1, 2))[, , idx_variant_dates, ])
 
+  placeholder <- array(0, c(12,8,84,2))
+  placeholder[,,,1] <- rt_combined$Rt_general[,,seq(84)]
+  variant_rt_combined$Rt_general <- abind_quiet(placeholder, variant_rt_combined$Rt_general, along = 3)
+  placeholder[,,,1] <- rt_combined$eff_Rt_general[,,seq(84)]
+  variant_rt_combined$eff_Rt_general <- abind_quiet(placeholder, variant_rt_combined$eff_Rt_general, along = 3)
   rt_combined <- Map(function(rt, weighted_rt) {
     x <- abind_quiet(rt, weighted_rt, along = 4)
     dimnames(x)[[4]] <- c("strain_1", "strain_2", "both")
