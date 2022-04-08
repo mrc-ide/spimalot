@@ -4,7 +4,7 @@
 \alias{spim_combined_load}
 \title{Load combined fits}
 \usage{
-spim_combined_load(path, regions = "all")
+spim_combined_load(path, regions = "all", get_severity = FALSE)
 }
 \arguments{
 \item{path}{Directory name. Within here we expect to see
@@ -13,6 +13,10 @@ spim_combined_load(path, regions = "all")
 
 \item{regions}{Region type passed to \link[sircovid:regions]{sircovid::regions} (default
 is \code{all}, otherwise try \code{england})}
+
+\item{get_severity}{Logical, indicating whether to extract severity (e.g.
+IFH, IHR, HFR, etc.) trajectories. Must default to \code{FALSE}, as these
+are routine (e.g. MTPs) \code{sircovid} outputs.}
 }
 \value{
 A combined fit object
