@@ -28,7 +28,7 @@
 ##'   back-fill issues. We typically use a value of 7 days.
 ##'
 ##' @param trim_react The number of days of REACT data to trim. This is only
-##'   for exploratory purposes (write up of opinion piece)
+##'   for exploratory purposes (write up of opinion piece). Default to zero.
 ##'
 ##' @param adm_backfill_date A date string, representing the last date we use
 ##'   admissions by age from the SUS linelist for England NHS regions. After
@@ -48,8 +48,8 @@
 ##'
 ##' @export
 spim_data <- function(date, region, model_type, rtm, serology,
-                      trim_deaths, trim_pillar2, trim_react, adm_backfill_date,
-                      ons_death_backfill_date,
+                      trim_deaths, trim_pillar2, trim_react = 0,
+                      adm_backfill_date, ons_death_backfill_date,
                       full_data = FALSE) {
   spim_check_model_type(model_type)
   if (length(region) == 1) {

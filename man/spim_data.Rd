@@ -12,6 +12,7 @@ spim_data(
   serology,
   trim_deaths,
   trim_pillar2,
+  trim_react = 0,
   adm_backfill_date,
   ons_death_backfill_date,
   full_data = FALSE
@@ -40,6 +41,9 @@ back-fill issues. We typically use a value of 4 days.}
 
 \item{trim_pillar2}{The number of days of pillar 2 data to trim to avoid
 back-fill issues. We typically use a value of 7 days.}
+
+\item{trim_react}{The number of days of REACT data to trim. This is only
+for exploratory purposes (write up of opinion piece). Default to zero.}
 
 \item{adm_backfill_date}{A date string, representing the last date we use
 admissions by age from the SUS linelist for England NHS regions. After
