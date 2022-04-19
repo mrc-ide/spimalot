@@ -27,6 +27,9 @@
 ##' @param trim_pillar2 The number of days of pillar 2 data to trim to avoid
 ##'   back-fill issues. We typically use a value of 7 days.
 ##'
+##' @param trim_react The number of days of REACT data to trim. This is only
+##'   for exploratory purposes (write up of opinion piece)
+##'
 ##' @param adm_backfill_date A date string, representing the last date we use
 ##'   admissions by age from the SUS linelist for England NHS regions. After
 ##'   this date we use age-aggregated admissions from the UKHSA dashboard.
@@ -45,15 +48,15 @@
 ##'
 ##' @export
 spim_data <- function(date, region, model_type, rtm, serology,
-                      trim_deaths, trim_pillar2, adm_backfill_date,
+                      trim_deaths, trim_pillar2, trim_react, adm_backfill_date,
                       ons_death_backfill_date,
                       full_data = FALSE) {
   spim_check_model_type(model_type)
   if (length(region) == 1) {
     check_region(region)
     spim_data_single(date, region, model_type, rtm, serology, trim_deaths,
-                     trim_pillar2, adm_backfill_date, ons_death_backfill_date,
-                     full_data)
+                     trim_pillar2, trim_react, adm_backfill_date,
+                     ons_death_backfill_date, full_data)
   } else {
     ## TODO: better error message here:
     stopifnot(all(region %in% sircovid::regions("all")))
@@ -61,7 +64,7 @@ spim_data <- function(date, region, model_type, rtm, serology,
       cbind(
         region = r,
         spim_data_single(date, r, model_type, rtm, serology, trim_deaths,
-                         trim_pillar2, adm_backfill_date,
+                         trim_pillar2, trim_react, adm_backfill_date,
                          ons_death_backfill_date, full_data),
         stringsAsFactors = FALSE))
     if (length(unique(lapply(data, "[[", "date"))) != 1) {
@@ -79,7 +82,7 @@ spim_data <- function(date, region, model_type, rtm, serology,
 
 
 spim_data_single <- function(date, region, model_type, rtm, serology,
-                             trim_deaths, trim_pillar2,
+                             trim_deaths, trim_pillar2, trim_react,
                              adm_backfill_date, ons_death_backfill_date,
                              full_data) {
   ## TODO: verify that rtm has consecutive days
@@ -117,6 +120,11 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
   i <- seq(to = nrow(data), length.out = trim_pillar2)
   cols_pillar2 <- grep("pillar2", colnames(data), value = TRUE)
   data[i, cols_pillar2] <- NA_integer_
+
+  ## Exploratory - trim REACT data for write up of opinion piece
+  i <- seq(to = nrow(data), length.out = trim_react)
+  cols_react <- grep("react", colnames(data), value = TRUE)
+  data[i, cols_react] <- NA_integer_
 
   data
 }
