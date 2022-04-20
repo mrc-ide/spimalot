@@ -217,7 +217,7 @@ spim_combined_onward_simulate <- function(dat) {
   variant_rt_combined <- lapply(variant_rt, function(x)
     aperm(abind_quiet(x, along = 4), c(3, 4, 1, 2))[, , idx_variant_dates, ])
 
-  placeholder <- array(0, c(12,8,84,2))
+  placeholder <- array(0, c(dim(rt_combined$Rt_general)[1],8,84,2))
   placeholder[,,,1] <- rt_combined$Rt_general[,,seq(84)]
   variant_rt_combined$Rt_general <- abind_quiet(placeholder, variant_rt_combined$Rt_general, along = 3)
   placeholder[,,,1] <- rt_combined$eff_Rt_general[,,seq(84)]
