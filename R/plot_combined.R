@@ -1044,11 +1044,7 @@ spim_plot_pillar2_positivity_region <- function(region, dat, age_band,
   year_firsts <- x[!duplicated(substring(x, 1, 4))]
   abline(v = firsts[-1], col = "ivory2") #Plot gray line on 1st of every month
   abline(v = year_firsts[-1], col = "gray")
-
-  x_ticks <- pretty(xlim)
-  x_labels <- format(x_ticks, "%b-%y")
-  x_labels[format(x_ticks, "%d") != "01"] <- ""
-  axis(side = 1, at = x_ticks, labels = x_labels)
+  axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))
   axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
 
   ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
