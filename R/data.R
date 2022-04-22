@@ -24,8 +24,10 @@
 ##' @param trim_deaths The number of days of deaths to trim to avoid
 ##'   back-fill issues. We typically use a value of 4 days.
 ##'
-##' @param trim_pillar2 The number of days of pillar 2 data to trim to avoid
-##'   back-fill issues. We typically use a value of 7 days.
+##' @param trim_pillar2 Either an integer representing the number of days of
+##'   pillar 2 data to trim to avoid back-fill issues (typically 7 days) or a
+##'   date string representing the date from which we no longer fit to pillar 2.
+##'   If the latter, then `trim_pillar2_date` must be TRUE
 ##'
 ##' @param adm_backfill_date A date string, representing the last date we use
 ##'   admissions by age from the SUS linelist for England NHS regions. After
@@ -41,19 +43,24 @@
 ##'
 ##' @param full_data Not sure yet, we'll find out
 ##'
+##' @param trim_pillar2_date Logical parameter. If TRUE, indicates that
+##'   `trim_pillar2` should be expected to be a date string. If FALSE,
+##'   indicates that should. Default is FALSE
+##'
 ##' @return A [data.frame()] TODO: describe columns
 ##'
 ##' @export
 spim_data <- function(date, region, model_type, rtm, serology,
                       trim_deaths, trim_pillar2, adm_backfill_date,
                       ons_death_backfill_date,
+                      trim_pillar2_date = FALSE,
                       full_data = FALSE) {
   spim_check_model_type(model_type)
   if (length(region) == 1) {
     check_region(region)
     spim_data_single(date, region, model_type, rtm, serology, trim_deaths,
                      trim_pillar2, adm_backfill_date, ons_death_backfill_date,
-                     full_data)
+                     trim_pillar2_date, full_data)
   } else {
     ## TODO: better error message here:
     stopifnot(all(region %in% sircovid::regions("all")))
@@ -62,7 +69,7 @@ spim_data <- function(date, region, model_type, rtm, serology,
         region = r,
         spim_data_single(date, r, model_type, rtm, serology, trim_deaths,
                          trim_pillar2, adm_backfill_date,
-                         ons_death_backfill_date, full_data),
+                         ons_death_backfill_date, trim_pillar2_date, full_data),
         stringsAsFactors = FALSE))
     if (length(unique(lapply(data, "[[", "date"))) != 1) {
       ## If this errors, we just need to compute the union set of
@@ -81,7 +88,7 @@ spim_data <- function(date, region, model_type, rtm, serology,
 spim_data_single <- function(date, region, model_type, rtm, serology,
                              trim_deaths, trim_pillar2,
                              adm_backfill_date, ons_death_backfill_date,
-                             full_data) {
+                             trim_pillar2_date, full_data) {
   ## TODO: verify that rtm has consecutive days
   rtm <- spim_lancelot_data_rtm(date, region, model_type, rtm,
                                 adm_backfill_date, ons_death_backfill_date,
@@ -114,7 +121,15 @@ spim_data_single <- function(date, region, model_type, rtm, serology,
   ## Set last 'trim_pillar2' days with pillar 2 reported to NA, as these
   ## are too likely to be back-filled to be reliable
   ## TODO: this works only for Lancelot - carehomes will be soon removed
-  i <- seq(to = nrow(data), length.out = trim_pillar2)
+  if (trim_pillar2_date) {
+    assert_date_string(trim_pillar2)
+    days_to_trim <- as.Date(date) - as.Date(trim_pillar2) + 1
+    i <- seq(to = nrow(data), length.out = days_to_trim)
+  } else {
+    assert_integer(trim_pillar2)
+    i <- seq(to = nrow(data), length.out = trim_pillar2)
+  }
+
   cols_pillar2 <- grep("pillar2", colnames(data), value = TRUE)
   data[i, cols_pillar2] <- NA_integer_
 
