@@ -19,7 +19,7 @@ data) that are not fit to but are treated as model parameters."><!-- mathjax -->
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.17</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.18</span>
       </span>
     </div>
 
@@ -64,6 +64,7 @@ data) that are not fit to but are treated as model parameters.</p>
   <span class="va">trim_pillar2</span>,
   <span class="va">adm_backfill_date</span>,
   <span class="va">ons_death_backfill_date</span>,
+  trim_pillar2_date <span class="op">=</span> <span class="cn">FALSE</span>,
   full_data <span class="op">=</span> <span class="cn">FALSE</span>
 <span class="op">)</span></code></pre></div>
     </div>
@@ -91,8 +92,10 @@ DESCRIBE FORMAT; TODO: DESCRIBE ORIGIN</p></dd>
 <dd><p>The number of days of deaths to trim to avoid
 back-fill issues. We typically use a value of 4 days.</p></dd>
 <dt>trim_pillar2</dt>
-<dd><p>The number of days of pillar 2 data to trim to avoid
-back-fill issues. We typically use a value of 7 days.</p></dd>
+<dd><p>Either an integer representing the number of days of
+pillar 2 data to trim to avoid back-fill issues (typically 7 days) or a
+date string representing the date from which we no longer fit to pillar 2.
+If the latter, then <code>trim_pillar2_date</code> must be TRUE</p></dd>
 <dt>adm_backfill_date</dt>
 <dd><p>A date string, representing the last date we use
 admissions by age from the SUS linelist for England NHS regions. After
@@ -105,6 +108,10 @@ use deaths by age from the ONS for England NHS regions. After
 this date we use deaths by age from the UKHSA linelist. This is to account
 for the increased delay in registering death certificates, compared with
 just reporting deaths that occur within 28 days of a positive test.</p></dd>
+<dt>trim_pillar2_date</dt>
+<dd><p>Logical parameter. If TRUE, indicates that
+<code>trim_pillar2</code> should be expected to be a date string. If FALSE,
+indicates that should. Default is FALSE</p></dd>
 <dt>full_data</dt>
 <dd><p>Not sure yet, we'll find out</p></dd>
 </dl></div>
