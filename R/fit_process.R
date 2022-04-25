@@ -60,7 +60,7 @@ spim_fit_process <- function(samples, parameters, data, control,
   ## Check get_severity is TRUE extract
   if (control$severity) {
 
-    if (control$multiregion) {
+    if (samples$info$multiregion) {
       stop("Severity weighting not currently supported for multiregion fits!")
     }
 
