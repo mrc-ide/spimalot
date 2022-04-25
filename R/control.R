@@ -106,8 +106,7 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                           n_threads = n_threads,
                           seed = NULL,
                           compiled_compare = compiled_compare,
-                          severity = severity,
-                          multiregion = multiregion)
+                          severity = severity)
 
   list(pmcmc = pmcmc,
        particle_filter = particle_filter)
