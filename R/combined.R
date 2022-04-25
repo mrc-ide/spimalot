@@ -341,8 +341,10 @@ combined_aggregate_severity_1 <- function(x, samples, weight) {
                                        rank = FALSE, weight = weight)
   }
 
-  # Note we only aggerate to England level, but not UK as we don't expect to use
-  # the severity analysis for DVN
+  if (all(nations %in% names(x))) {
+    x$uk <- sircovid::combine_rt(x[nations], samples[nations],
+                                 rank = FALSE, weight = weight)
+  }
   x
 }
 
