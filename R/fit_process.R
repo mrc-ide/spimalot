@@ -59,6 +59,11 @@ spim_fit_process <- function(samples, parameters, data, control,
 
   ## Check get_severity is TRUE extract
   if (control$severity) {
+
+    if (control$multiregion) {
+      stop("Severity weighting not currently supported for multiregion fits!")
+    }
+
     message("Extracting severity outputs")
     severity <- extract_severity(samples$trajectories$state)
     # Add Rt elements so severity has the same structure for post-processing

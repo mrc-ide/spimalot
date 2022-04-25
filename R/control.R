@@ -95,11 +95,19 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                                   path = mcmc_path)
 
   n_threads <- parallel$n_threads_total / parallel$n_workers
-  particle_filter <- list(n_particles = n_particles,
+
+  # Force severity to be FALSE if running multiregion fits, as severity
+  # weight calculation does not currently work with multiregion = TRUE
+  if (multiregion) {
+    severity <- FALSE
+  }
+
+  particle_filter <- list(n_partiscles = n_particles,
                           n_threads = n_threads,
                           seed = NULL,
                           compiled_compare = compiled_compare,
-                          severity = severity)
+                          severity = severity,
+                          multiregion = multiregion)
 
   list(pmcmc = pmcmc,
        particle_filter = particle_filter)
