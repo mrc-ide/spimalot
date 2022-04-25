@@ -102,7 +102,7 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
     severity <- FALSE
   }
 
-  particle_filter <- list(n_partiscles = n_particles,
+  particle_filter <- list(n_particles = n_particles,
                           n_threads = n_threads,
                           seed = NULL,
                           compiled_compare = compiled_compare,
