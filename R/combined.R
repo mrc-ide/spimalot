@@ -302,9 +302,11 @@ combined_aggregate_severity <- function(severity, samples) {
   # We first need to sum admitted_inc and diagnoses_inc trajectories to get
   # all_admissions_inc, which we'll use as weight to aggregate hospital severity
   for (i in names(samples)) {
-    admitted_inc <- samples[[i]]$trajectories$state["admitted_inc", , ]
-    diagnoses_inc <- samples[[i]]$trajectories$state["diagnoses_inc", , ]
-    all_admissions <- array(admitted_inc + diagnoses_inc, dim = c(1, 10, 744))
+    admitted_inc <- samples[[i]]$trajectories$state["admitted_inc", , ,
+                                                    drop = FALSE]
+    diagnoses_inc <- samples[[i]]$trajectories$state["diagnoses_inc", , ,
+                                                     drop = FALSE]
+    all_admissions <- admitted_inc + diagnoses_inc
     rownames(all_admissions) <- "all_admissions_inc"
     samples[[i]]$trajectories$state <-
       abind_quiet(samples[[i]]$trajectories$state, all_admissions, along = 1)
@@ -338,11 +340,10 @@ combined_aggregate_severity_1 <- function(x, samples, weight) {
     x$england <- sircovid::combine_rt(x[england], samples[england],
                                        rank = FALSE, weight = weight)
   }
-  if (all(nations %in% names(x))) {
-    stop("We cannot currently run severity analysis at DVN/UK level!")
-  }
-  x
 
+  # Note we only aggerate to England level, but not UK as we don't expect to use
+  # the severity analysis for DVN
+  x
 }
 
 
