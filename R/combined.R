@@ -9,9 +9,13 @@
 ##' @param regions Region type passed to [sircovid::regions] (default
 ##'   is `all`, otherwise try `england`)
 ##'
+##' @param get_severity Logical, indicating whether to extract severity (e.g.
+##'   IFH, IHR, HFR, etc.) trajectories. Must default to `FALSE`, as these
+##'   are routine (e.g. MTPs) `sircovid` outputs.
+##'
 ##' @return A combined fit object
 ##' @export
-spim_combined_load <- function(path, regions = "all") {
+spim_combined_load <- function(path, regions = "all", get_severity = FALSE) {
   regions <- sircovid::regions(regions)
 
   files <- file.path(path, regions, "fit.rds")
@@ -66,6 +70,13 @@ spim_combined_load <- function(path, regions = "all") {
   ret$rt <- combined_aggregate_rt(ret$rt, agg_samples)
   ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, agg_samples)
   ret$model_demography <- combined_aggregate_demography(ret$model_demography)
+
+
+  ## Check if severity calculations were outputed and, if so, aggregate
+  if (get_severity) {
+    message("Aggregating severity outputs")
+    ret$severity <- combined_aggregate_severity(ret$severity, agg_samples)
+  }
 
   ## NOTE: have not ported the "randomise trajectory order" bit over,
   ## but I do not think that we need to.
@@ -286,6 +297,58 @@ combined_aggregate_data <- function(data) {
 }
 
 
+combined_aggregate_severity <- function(severity, samples) {
+
+  # We first need to sum admitted_inc and diagnoses_inc trajectories to get
+  # all_admissions_inc, which we'll use as weight to aggregate hospital severity
+  for (i in names(samples)) {
+    admitted_inc <- samples[[i]]$trajectories$state["admitted_inc", , ,
+                                                    drop = FALSE]
+    diagnoses_inc <- samples[[i]]$trajectories$state["diagnoses_inc", , ,
+                                                     drop = FALSE]
+    all_admissions <- admitted_inc + diagnoses_inc
+    rownames(all_admissions) <- "all_admissions_inc"
+    samples[[i]]$trajectories$state <-
+      abind_quiet(samples[[i]]$trajectories$state, all_admissions, along = 1)
+  }
+
+  # Some unfortunate double running of the same function outputting a similar
+  # object but with different weighting
+  admissions <- combined_aggregate_severity_1(severity, samples,
+                                              weight = "all_admissions_inc")
+
+  infections <- combined_aggregate_severity_1(severity, samples,
+                                              weight = "infections_inc")
+
+  # Vector of severity trajectories weighted by admissions
+  # Note this is only one for now, but will grow going forward
+  admission_weighted <- "ihr"
+  severity$england <- infections$england
+  for (i in admission_weighted) {
+    severity$england[[i]] <- admissions$england[[i]]
+  }
+
+  severity
+}
+
+
+combined_aggregate_severity_1 <- function(x, samples, weight) {
+  england <- sircovid::regions("england")
+  nations <- sircovid::regions("nations")
+
+  if (all(england %in% names(x))) {
+    x$england <- sircovid::combine_rt(x[england], samples[england],
+                                       rank = FALSE, weight = weight)
+  }
+
+  if (all(nations %in% names(x))) {
+    x$uk <- sircovid::combine_rt(x[nations], samples[nations],
+                                 rank = FALSE, weight = weight)
+  }
+  x
+}
+
+
 combined_aggregate_rt <- function(rt, samples) {
   england <- sircovid::regions("england")
   nations <- sircovid::regions("nations")
@@ -317,6 +380,7 @@ combined_aggregate_variant_rt <- function(variant_rt, samples) {
   }
   variant_rt
 }
+
 
 combine_variant_rt <- function(variant_rt, samples, rank) {
 

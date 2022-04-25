@@ -9,11 +9,17 @@
 ##'
 ##' @param data Data sets used in fitting
 ##'
+##' @param control A list of control parameters including
+##'   `severity` and `compiled_compare`, typically the
+##'   `particle_filter` element of the result of
+##'   [spimalot::spim_control()]. It will be used here to check for switches of
+##'   particular trajectories to be outputed (e.g. `severity`).
+##'
 ##' @param simulate_object set to TRUE for almost all cases, if you don't want
-##' your fits for a simulation then switch to FALSE
+##'    your fits for a simulation then switch to FALSE
 ##'
 ##' @export
-spim_fit_process <- function(samples, parameters, data,
+spim_fit_process <- function(samples, parameters, data, control,
                             simulate_object = TRUE) {
   region <- samples$info$region
 
@@ -50,6 +56,22 @@ spim_fit_process <- function(samples, parameters, data,
   ## Extract demography
   message("Extracting demography")
   model_demography <- extract_demography(samples)
+
+  ## Check get_severity is TRUE extract
+  if (control$severity) {
+
+    if (samples$info$multiregion) {
+      stop("Severity weighting not currently supported for multiregion fits!")
+    }
+
+    message("Extracting severity outputs")
+    severity <- extract_severity(samples$trajectories$state)
+    # Add Rt elements so severity has the same structure for post-processing
+    severity[["step"]] <- rt$step
+    severity[["date"]] <- rt$date
+  } else {
+    severity <- NULL
+  }
 
   ## Reduce trajectories in samples before saving
   message("Reducing trajectories")
@@ -92,6 +114,7 @@ spim_fit_process <- function(samples, parameters, data,
   list(
     fit = list(samples = samples,
                rt = rt,
+               severity = severity,
                variant_rt = variant_rt,
                simulate = simulate,
                parameters = parameters_new,
@@ -306,7 +329,7 @@ reduce_trajectories <- function(samples) {
   ## Remove unused trajectories for predict function in combined
   remove_strings <- c("prob_strain", "S_", "R_", "I_weighted_", "D_hosp_",
                       "D_all_", "diagnoses_admitted_", "cum_infections_disag_",
-                      "cum_n_vaccinated", "cum_admit_")
+                      "cum_n_vaccinated", "cum_admit_", "ifr", "ihr", "hfr")
   re <- sprintf("^(%s)", paste(remove_strings, collapse = "|"))
 
   samples <- summarise_states(samples)
@@ -948,4 +971,17 @@ extract_demography_region <- function(samples) {
     admissions = process(admissions),
     deaths_hosp = process(deaths_hosp),
     deaths_comm = process(deaths_comm))
+}
+
+
+extract_severity <- function(sample) {
+
+  what <- c("ifr", "ihr", "hfr")
+  severity <- list()
+
+  for (s in what) {
+    tmp <- t(sample[s, , ])
+    severity[[s]] <- tmp
+  }
+  severity
 }
