@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.18</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.19</span>
       </span>
     </div>
 
@@ -55,6 +55,7 @@
   <span class="va">n_chains</span>,
   deterministic <span class="op">=</span> <span class="cn">FALSE</span>,
   multiregion <span class="op">=</span> <span class="cn">FALSE</span>,
+  severity <span class="op">=</span> <span class="cn">FALSE</span>,
   date_restart <span class="op">=</span> <span class="cn">NULL</span>,
   n_particles <span class="op">=</span> <span class="fl">192</span>,
   n_mcmc <span class="op">=</span> <span class="fl">1500</span>,
@@ -82,6 +83,9 @@ data is run deterministically or stochastically</p></dd>
 <dd><p>Logical, indicating if we are fitting multiple
 regions at once (in which case even the deterministic model may
 benefit from multithreading).</p></dd>
+<dt>severity</dt>
+<dd><p>Logical, indicating if we are outputting severity
+trajectories (e.g. IFR, IHR, HFR). Default to FALSE.</p></dd>
 <dt>date_restart</dt>
 <dd><p>Optionally, dates save restart data in the
 pmcmc (see <a href="https://rdrr.io/pkg/mcstate/man/pmcmc.html" class="external-link">mcstate::pmcmc</a></p></dd>
