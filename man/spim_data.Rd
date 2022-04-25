@@ -14,6 +14,7 @@ spim_data(
   trim_pillar2,
   adm_backfill_date,
   ons_death_backfill_date,
+  trim_pillar2_date = FALSE,
   full_data = FALSE
 )
 }
@@ -38,8 +39,10 @@ DESCRIBE FORMAT; TODO: DESCRIBE ORIGIN}
 \item{trim_deaths}{The number of days of deaths to trim to avoid
 back-fill issues. We typically use a value of 4 days.}
 
-\item{trim_pillar2}{The number of days of pillar 2 data to trim to avoid
-back-fill issues. We typically use a value of 7 days.}
+\item{trim_pillar2}{Either an integer representing the number of days of
+pillar 2 data to trim to avoid back-fill issues (typically 7 days) or a
+date string representing the date from which we no longer fit to pillar 2.
+If the latter, then \code{trim_pillar2_date} must be TRUE}
 
 \item{adm_backfill_date}{A date string, representing the last date we use
 admissions by age from the SUS linelist for England NHS regions. After
@@ -52,6 +55,10 @@ use deaths by age from the ONS for England NHS regions. After
 this date we use deaths by age from the UKHSA linelist. This is to account
 for the increased delay in registering death certificates, compared with
 just reporting deaths that occur within 28 days of a positive test.}
+
+\item{trim_pillar2_date}{Logical parameter. If TRUE, indicates that
+\code{trim_pillar2} should be expected to be a date string. If FALSE,
+indicates that should. Default is FALSE}
 
 \item{full_data}{Not sure yet, we'll find out}
 }
