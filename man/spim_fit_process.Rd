@@ -4,13 +4,7 @@
 \alias{spim_fit_process}
 \title{Process a fit for \code{lancelot} model}
 \usage{
-spim_fit_process(
-  samples,
-  parameters,
-  data,
-  simulate_object = TRUE,
-  get_severity = FALSE
-)
+spim_fit_process(samples, parameters, data, simulate_object = TRUE, control)
 }
 \arguments{
 \item{samples}{The pmcmc_samples object from \link[mcstate:pmcmc]{mcstate::pmcmc}}
@@ -23,8 +17,11 @@ spim_fit_process(
 \item{simulate_object}{set to TRUE for almost all cases, if you don't want
 your fits for a simulation then switch to FALSE}
 
-\item{get_severity}{Logical, if severity outputs are to be extracted
-(default to FALSE)}
+\item{control}{A list of control parameters including
+\code{severity} and \code{compiled_compare}, typically the
+\code{particle_filter} element of the result of
+\code{\link[=spim_control]{spim_control()}}. It will be used here to check for switches of
+particular trajectories to be outputed (e.g. \code{severity}).}
 }
 \description{
 Process fit data for \code{lancelot} model

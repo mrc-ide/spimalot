@@ -12,12 +12,15 @@
 ##' @param simulate_object set to TRUE for almost all cases, if you don't want
 ##' your fits for a simulation then switch to FALSE
 ##'
-##' @param get_severity Logical, if severity outputs are to be extracted
-##'    (default to FALSE)
+##' @param control A list of control parameters including
+##'   `severity` and `compiled_compare`, typically the
+##'   `particle_filter` element of the result of
+##'   [spimalot::spim_control()]. It will be used here to check for switches of
+##'   particular trajectories to be outputed (e.g. `severity`).
 ##'
 ##' @export
 spim_fit_process <- function(samples, parameters, data,
-                            simulate_object = TRUE, get_severity = FALSE) {
+                            simulate_object = TRUE, control) {
   region <- samples$info$region
 
   ## This is just the info/prior/proposal + base of the parameter used
@@ -55,7 +58,7 @@ spim_fit_process <- function(samples, parameters, data,
   model_demography <- extract_demography(samples)
 
   ## Check get_severity is TRUE extract
-  if (get_severity) {
+  if (control$severity) {
     message("Extracting severity outputs")
     severity <- extract_severity(samples$trajectories$state)
     # Add Rt elements so severity has the same structure for post-processing
