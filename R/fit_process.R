@@ -9,18 +9,18 @@
 ##'
 ##' @param data Data sets used in fitting
 ##'
-##' @param simulate_object set to TRUE for almost all cases, if you don't want
-##' your fits for a simulation then switch to FALSE
-##'
 ##' @param control A list of control parameters including
 ##'   `severity` and `compiled_compare`, typically the
 ##'   `particle_filter` element of the result of
 ##'   [spimalot::spim_control()]. It will be used here to check for switches of
 ##'   particular trajectories to be outputed (e.g. `severity`).
 ##'
+##' @param simulate_object set to TRUE for almost all cases, if you don't want
+##'    your fits for a simulation then switch to FALSE
+##'
 ##' @export
-spim_fit_process <- function(samples, parameters, data,
-                            simulate_object = TRUE, control) {
+spim_fit_process <- function(samples, parameters, data, control,
+                            simulate_object = TRUE) {
   region <- samples$info$region
 
   ## This is just the info/prior/proposal + base of the parameter used
