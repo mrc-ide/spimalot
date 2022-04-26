@@ -57,7 +57,7 @@ spim_fit_process <- function(samples, parameters, data, control,
   message("Extracting demography")
   model_demography <- extract_demography(samples)
 
-  ## Check get_severity is TRUE extract
+  ## Check severity is TRUE extract
   if (control$severity) {
     message("Extracting severity outputs")
     severity <- extract_severity(samples)
