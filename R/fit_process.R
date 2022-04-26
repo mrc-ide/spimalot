@@ -976,7 +976,9 @@ extract_demography_region <- function(samples) {
 
 extract_severity <- function(sample) {
 
-  what <- c("ifr", "ihr", "hfr")
+  what <- c("ifr", "ihr", "hfr",
+            "ifr_strain_1", "ihr_strain_1", "hfr_strain_1",
+            "ifr_strain_2", "ihr_strain_2", "hfr_strain_2")
   severity <- list()
 
   for (s in what) {
