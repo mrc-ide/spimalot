@@ -59,16 +59,8 @@ spim_fit_process <- function(samples, parameters, data, control,
 
   ## Check get_severity is TRUE extract
   if (control$severity) {
-
-    if (samples$info$multiregion) {
-      stop("Severity weighting not currently supported for multiregion fits!")
-    }
-
     message("Extracting severity outputs")
-    severity <- extract_severity(samples$trajectories$state)
-    # Add Rt elements so severity has the same structure for post-processing
-    severity[["step"]] <- rt$step
-    severity[["date"]] <- rt$date
+    severity <- extract_severity(samples)
   } else {
     severity <- NULL
   }
@@ -974,14 +966,37 @@ extract_demography_region <- function(samples) {
 }
 
 
-extract_severity <- function(sample) {
+extract_severity <- function(samples) {
+  step <- samples$trajectories$step
+  date <- samples$trajectories$date
+  state <- samples$trajectories$state
+
+  multiregion <- samples$info$multiregion
+
+  if (multiregion) {
+    ## state, step, date
+    ret <- lapply(samples$info$region, function(r)
+      extract_severity_region(state[, r, , ], step, date))
+    names(ret) <- samples$info$region
+  } else {
+    ret <- extract_severity_region(state, step, date)
+  }
+  ret
+}
+
+
+extract_severity_region <- function(state, step, date) {
 
   what <- c("ifr", "ihr", "hfr")
   severity <- list()
 
   for (s in what) {
-    tmp <- t(sample[s, , ])
+    tmp <- t(state[s, , ])
     severity[[s]] <- tmp
   }
+
+  severity$step <- step
+  severity$date <- date
+
   severity
 }
