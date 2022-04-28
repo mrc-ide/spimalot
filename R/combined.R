@@ -322,7 +322,7 @@ combined_aggregate_severity <- function(severity, samples) {
 
   # Vector of severity trajectories weighted by admissions
   # Note this is only one for now, but will grow going forward
-  admission_weighted <- "ihr"
+  admission_weighted <- c("ihr", "ihr_strain_1", "ihr_strain_2")
   severity$england <- infections$england
   for (i in admission_weighted) {
     severity$england[[i]] <- admissions$england[[i]]
