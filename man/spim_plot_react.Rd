@@ -4,14 +4,9 @@
 \alias{spim_plot_react}
 \title{Plot REACT}
 \usage{
-spim_plot_react(
-  dat,
-  regions,
-  date_min,
-  ymax,
-  age_band = NULL,
-  add_betas = FALSE
-)
+spim_plot_react(dat, regions, date_min, ymax, add_betas = FALSE)
+
+spim_plot_react(dat, regions, date_min, ymax, add_betas = FALSE)
 }
 \arguments{
 \item{dat}{Combined data set}
@@ -22,10 +17,12 @@ spim_plot_react(
 
 \item{ymax}{Maximum percentage on y-axis}
 
-\item{age_band}{String, indicating which age band to plot}
-
 \item{add_betas}{Logical, indicating if we should add betas}
+
+\item{age_band}{String, indicating which age band to plot}
 }
 \description{
 Plot REACT
+
+Plot ONS
 }
