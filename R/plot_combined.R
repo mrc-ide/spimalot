@@ -1192,8 +1192,7 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
   date <- dat$info$date
-  days_to_agg <- 3
-  min_agg_tot <- 200
+  min_tot <- 50
   cols <- spim_colours()
   pos_col <- cols$blue
   dcols <- c(cols$orange, cols$brown)
@@ -1221,33 +1220,7 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
 
   dx <- as.Date(data$fitted$date_string)
 
-  ##aggregate
-  agg_dates <- data.frame(start = dx[seq(1, length(dx), days_to_agg)])
-  agg_dates$end <- agg_dates$start + days_to_agg - 1
-  agg_dates$end[length(agg_dates$end)] <- dx[length(dx)]
-  agg_dates$mid <- floor(rowMeans(apply(agg_dates, 2, sircovid::sircovid_date)))
-  agg_dates$mid <- sircovid::sircovid_date_as_date(agg_dates$mid)
-
-  agg_dates$end <- as.Date(agg_dates$end)
-
-  aggregate_react <- function(i) {
-    agg_pos <- sum(npos[dx >= agg_dates$start[i] & dx <= agg_dates$end[i]])
-    agg_tot <- sum(ntot[dx >= agg_dates$start[i] & dx <= agg_dates$end[i]])
-    if (agg_tot > min_agg_tot) {
-      agg_out <- c(agg_pos, agg_tot)
-    } else {
-      agg_out <- c(0, 0)
-    }
-    agg_out
-  }
-
-  agg_dates$npos <- rep(0, length(agg_dates$mid))
-  agg_dates$ntot <- rep(0, length(agg_dates$mid))
-  agg_dates[, c("npos", "ntot")] <- t(sapply(seq_len(length(agg_dates$mid)),
-                                             aggregate_react))
-
-
-  cis <- Hmisc::binconf(x = agg_dates$npos, n = agg_dates$ntot) * 100
+  cis <- Hmisc::binconf(x = npos, n = ntot) * 100
   dy <- cis[, "PointEst"]
   lower <- cis[, "Lower"]
   upper <- cis[, "Upper"]
