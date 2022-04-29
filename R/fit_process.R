@@ -987,9 +987,13 @@ extract_severity <- function(samples) {
 
 extract_severity_region <- function(state, step, date) {
 
-  what <- c("ifr", "ihr", "hfr",
-            "ifr_strain_1", "ihr_strain_1", "hfr_strain_1",
-            "ifr_strain_2", "ihr_strain_2", "hfr_strain_2")
+  aggregated <- c("ifr", "ihr", "hfr")
+  suffix <- paste0("_age_", c(sircovid:::sircovid_age_bins()$start))
+  severity_age <- as.vector(outer(aggregated, suffix, paste0))
+  severity_strain <- as.vector(outer(aggregated, c("_strain_1", "_strain_2"),
+                                     paste0))
+
+  what <- c(aggregated, severity_age, severity_strain)
   severity <- list()
 
   for (s in what) {
