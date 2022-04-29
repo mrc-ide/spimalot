@@ -987,7 +987,9 @@ extract_severity <- function(samples) {
 
 extract_severity_region <- function(state, step, date) {
 
-  what <- c("ifr", "ihr", "hfr")
+  what <- c("ifr", "ihr", "hfr",
+            "ifr_strain_1", "ihr_strain_1", "hfr_strain_1",
+            "ifr_strain_2", "ihr_strain_2", "hfr_strain_2")
   severity <- list()
 
   for (s in what) {
