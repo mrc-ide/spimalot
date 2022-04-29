@@ -445,7 +445,7 @@ spim_plot_react <- function(dat, regions, date_min, ymax, age_band = NULL,
 ##' @param add_betas Logical, indicating if we should add betas
 ##'
 ##' @export
-spim_plot_react <- function(dat, regions, date_min, ymax,
+spim_plot_ons <- function(dat, regions, date_min, ymax,
                             add_betas = FALSE) {
 
   oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
