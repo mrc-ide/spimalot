@@ -1224,8 +1224,7 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   dy <- cis[, "PointEst"]
   lower <- cis[, "Lower"]
   upper <- cis[, "Upper"]
-  dy[agg_dates$ntot == 0] <- NA
-  dx <- agg_dates$mid
+  dy[ntot == 0] <- NA
 
   trajectories <- sample$trajectories$state
 
