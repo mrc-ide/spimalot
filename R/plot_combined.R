@@ -1192,7 +1192,7 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
   date <- dat$info$date
-  min_tot <- 100
+  min_tot <- 50
   cols <- spim_colours()
   pos_col <- cols$blue
   dcols <- c(cols$orange, cols$brown)
