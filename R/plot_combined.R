@@ -1218,6 +1218,7 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   npos[is.na(npos)] <- 0
   ntot[is.na(ntot)] <- 0
 
+  ## Only plot when number of samples is above min_tot threshold
   npos[ntot < min_tot] <- 0
   ntot[ntot < min_tot] <- 0
 
@@ -1305,6 +1306,7 @@ spim_plot_ons_region <- function(region, dat, date_min, ymax,
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
   date <- dat$info$date
+  min_tot <- 50
   cols <- spim_colours()
   pos_col <- cols$blue
   dcols <- c(cols$orange, cols$brown)
@@ -1319,6 +1321,10 @@ spim_plot_ons_region <- function(region, dat, date_min, ymax,
   }
   npos[is.na(npos)] <- 0
   ntot[is.na(ntot)] <- 0
+
+  ## Only plot when number of samples is above min_tot threshold
+  npos[ntot < min_tot] <- 0
+  ntot[ntot < min_tot] <- 0
 
   dx <- as.Date(data$fitted$date_string)
 
