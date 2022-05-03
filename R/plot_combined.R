@@ -1218,6 +1218,9 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   npos[is.na(npos)] <- 0
   ntot[is.na(ntot)] <- 0
 
+  npos[ntot < min_tot] <- 0
+  ntot[ntot < min_tot] <- 0
+
   dx <- as.Date(data$fitted$date_string)
 
   cis <- Hmisc::binconf(x = npos, n = ntot) * 100
