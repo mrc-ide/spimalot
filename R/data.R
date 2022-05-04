@@ -162,6 +162,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
             # Deaths by age
             deaths_hosp_age, deaths_non_hosp_age, ons_deaths_hosp_age,
             ons_deaths_non_hosp_age,
+            # ONS survey data
+            "ons_positive", "ons_samples",
             # REACT data
             "react_positive", "react_samples",
             paste0("react_positive_", react_age_bands),
@@ -559,6 +561,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
       data$pillar2_negatives_80_plus,
     pillar2_80_plus_pos = data$pillar2_positives_80_plus,
     pillar2_80_plus_cases = data$pillar2_cases_80_plus,
+    ons_pos = data$ons_positive,
+    ons_tot = data$ons_samples,
     react_pos = data$react_positive,
     react_tot = data$react_samples,
     react_5_24_pos = data$react_positive_5_24,
