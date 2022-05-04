@@ -430,6 +430,34 @@ spim_plot_react <- function(dat, regions, date_min, ymax, age_band = NULL,
 }
 
 
+##' Plot ONS
+##'
+##' @title Plot ONS
+##'
+##' @param dat Combined data set
+##'
+##' @param regions Vector of regions to plot
+##'
+##' @param date_min Starting date for plot
+##'
+##' @param ymax Maximum percentage on y-axis
+##'
+##' @param add_betas Logical, indicating if we should add betas
+##'
+##' @export
+spim_plot_ons <- function(dat, regions, date_min, ymax,
+                            add_betas = FALSE) {
+
+  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+            mar = c(3, 3, 3, 1))
+  on.exit(par(oo))
+
+  for (r in regions) {
+    spim_plot_ons_region(r, dat, date_min, ymax, add_betas)
+  }
+}
+
+
 ##' Plot incidence
 ##'
 ##' @title Plot incidence
@@ -1164,8 +1192,7 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
   date <- dat$info$date
-  days_to_agg <- 3
-  min_agg_tot <- 200
+  min_tot <- 50
   cols <- spim_colours()
   pos_col <- cols$blue
   dcols <- c(cols$orange, cols$brown)
@@ -1191,40 +1218,17 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   npos[is.na(npos)] <- 0
   ntot[is.na(ntot)] <- 0
 
+  ## Only plot when number of samples is above min_tot threshold
+  npos[ntot < min_tot] <- 0
+  ntot[ntot < min_tot] <- 0
+
   dx <- as.Date(data$fitted$date_string)
 
-  ##aggregate
-  agg_dates <- data.frame(start = dx[seq(1, length(dx), days_to_agg)])
-  agg_dates$end <- agg_dates$start + days_to_agg - 1
-  agg_dates$end[length(agg_dates$end)] <- dx[length(dx)]
-  agg_dates$mid <- floor(rowMeans(apply(agg_dates, 2, sircovid::sircovid_date)))
-  agg_dates$mid <- sircovid::sircovid_date_as_date(agg_dates$mid)
-
-  agg_dates$end <- as.Date(agg_dates$end)
-
-  aggregate_react <- function(i) {
-    agg_pos <- sum(npos[dx >= agg_dates$start[i] & dx <= agg_dates$end[i]])
-    agg_tot <- sum(ntot[dx >= agg_dates$start[i] & dx <= agg_dates$end[i]])
-    if (agg_tot > min_agg_tot) {
-      agg_out <- c(agg_pos, agg_tot)
-    } else {
-      agg_out <- c(0, 0)
-    }
-    agg_out
-  }
-
-  agg_dates$npos <- rep(0, length(agg_dates$mid))
-  agg_dates$ntot <- rep(0, length(agg_dates$mid))
-  agg_dates[, c("npos", "ntot")] <- t(sapply(seq_len(length(agg_dates$mid)),
-                                             aggregate_react))
-
-
-  cis <- Hmisc::binconf(x = agg_dates$npos, n = agg_dates$ntot) * 100
+  cis <- Hmisc::binconf(x = npos, n = ntot) * 100
   dy <- cis[, "PointEst"]
   lower <- cis[, "Lower"]
   upper <- cis[, "Upper"]
-  dy[agg_dates$ntot == 0] <- NA
-  dx <- agg_dates$mid
+  dy[ntot == 0] <- NA
 
   trajectories <- sample$trajectories$state
 
@@ -1294,6 +1298,104 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   }
 
 }
+
+
+spim_plot_ons_region <- function(region, dat, date_min, ymax,
+                                 add_betas = FALSE) {
+
+  sample <- dat$samples[[region]]
+  data <- dat$data[[region]]
+  date <- dat$info$date
+  min_tot <- 50
+  cols <- spim_colours()
+  pos_col <- cols$blue
+  dcols <- c(cols$orange, cols$brown)
+
+  npos <- data$fitted[, "ons_pos"]
+  ntot <- data$fitted[, "ons_tot"]
+
+  if (all(is.na(npos))) {
+    npos <- data$full[, "ons_pos"]
+    ntot <- data$full[, "ons_tot"]
+    dcols[1] <- cols$green2
+  }
+  npos[is.na(npos)] <- 0
+  ntot[is.na(ntot)] <- 0
+
+  ## Only plot when number of samples is above min_tot threshold
+  npos[ntot < min_tot] <- 0
+  ntot[ntot < min_tot] <- 0
+
+  dx <- as.Date(data$fitted$date_string)
+
+  cis <- Hmisc::binconf(x = npos, n = ntot) * 100
+  dy <- cis[, "PointEst"]
+  lower <- cis[, "Lower"]
+  upper <- cis[, "Upper"]
+  dy[ntot == 0] <- NA
+
+  trajectories <- sample$trajectories$state
+
+  model_params <- sample$predict$transform(sample$pars[1, ])
+  model_params <- model_params[[length(model_params)]]$pars
+
+  pos <- trajectories["ons_pos", , ]
+  neg <- (sum(model_params$N_tot_ons) - pos)
+  ylab <- "ONS proportion positive (%)"
+
+  res <- (pos * model_params$ons_sensitivity +
+            neg * (1 - model_params$ons_specificity)) / (pos + neg) * 100
+
+
+  x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
+
+  ps <- seq(0.025, 0.975, 0.005)
+  qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
+
+  pos_cols <- c(mix_cols(pos_col, "white", 0.7),
+                mix_cols(pos_col, "white", 0.495))
+
+
+  oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
+  on.exit(oo)
+
+  xlim <- c(date_min, dat$info$date)
+  ylim <- c(0, ymax)
+
+  plot(date_min, 0, type = "n",
+       xlim = xlim,
+       ylim = ylim,
+       main = toupper(spim_region_name(region)),
+       font.main = 1,
+       xlab = "Date", ylab = ylab,
+       axes = FALSE,
+       xaxs = "i",
+       yaxs = "i")
+
+  #Extract every first date of month from x
+  firsts <- x[!duplicated(substring(x, 1, 7))]
+  #Extract every first date of year from x
+  year_firsts <- x[!duplicated(substring(x, 1, 4))]
+  abline(v = firsts[-1], col = "ivory2") #Plot gray line on 1st of every month
+  abline(v = year_firsts[-1], col = "gray")
+  axis(side = 1, at = pretty(xlim), labels = format(pretty(xlim), "%b-%y"))
+  axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
+
+  ci_bands(qs[c("2.5%", "25.0%", "75.0%", "97.5%"), ], x, cols = pos_cols,
+           horiz = FALSE, leg = FALSE)
+  lines(x, qs["50.0%", ], col = pos_col, lty = 1, lwd = 1.5, lend = 1)
+  segments(x0 = dx, y0 = lower, y1 = upper, col = "grey60")
+  points(dx, dy, pch = 23, bg = dcols[1], col = dcols[2], cex = 0.8, lwd = 0.6)
+
+  segments(x0 = as.Date(date), y0 = 0, y1 = 100, lwd = 3, col = "white")
+
+  if (add_betas == TRUE) {
+    abline(v = sircovid::sircovid_date_as_date(sample$info$beta_date),
+           lty = 2, col = cols$puce)
+  }
+
+}
+
 
 spim_plot_serology_region <- function(region, dat, sero_flow, ymax,
                                       plot_legend = FALSE) {
