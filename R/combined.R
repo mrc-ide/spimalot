@@ -320,13 +320,13 @@ combined_aggregate_severity <- function(severity, samples) {
   infections <- combined_aggregate_severity_1(severity, samples,
                                               weight = "infections_inc")
 
-  # Vector of severity trajectories weighted by admissions
-  ihr_age_nms <- paste0("ihr_age_", c(sircovid:::sircovid_age_bins()$start))
-  ihr_disag_nms <- as.vector(outer(
-    paste0("ihr_disag_", c(sircovid:::sircovid_age_bins()$start)),
-    c("", "_1", "_2", "_3", "_4"), paste0))
-  admission_weighted <- c("ihr", "ihr_strain_1", "ihr_strain_2", ihr_age_nms,
-                          ihr_disag_nms)
+  # Severity trajectories weighted by admissions
+  age_bands <- seq(0, 80, 5)
+  ihr_strain_nms <- grep("ihr_strain", names(severity[[1]]), value = TRUE)
+  ihr_disag_nms <- grep("ihr_disag", names(severity[[1]]), value = TRUE)
+  ihr_age_nms <- grep("ihr_age", names(severity[[1]]), value = TRUE)
+  admission_weighted <- c("ihr", ihr_strain_nms, ihr_age_nms, ihr_disag_nms)
+
   severity$england <- infections$england
   for (i in admission_weighted) {
     severity$england[[i]] <- admissions$england[[i]]
