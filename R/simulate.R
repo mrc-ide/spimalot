@@ -1259,9 +1259,9 @@ simulate_extract_age_class_state <- function(state, index) {
     }
 
     ## aggregate age groups
-    groups <- list(age_0 = 1:6, # 0-4, 5-9, 10-14, 15-19, 20-24, 25-29
-                   age_30 = 7:10,  # 30-34, 35-39, 40-44, 45-49
-                   age_50 = 11:15, # 50-54, 55-59, 60-64, 65-69, 70-74
+    groups <- list(age_0 = 1:7, # 0-4, 5-9, 10-14, 15-19, 20-24, 25-29, 30-34
+                   age_35 = 8:11,  # 35-39, 40-44, 45-49, 50-54
+                   age_55 = 12:15, # 55-59, 60-64, 65-69, 70-74
                    age_75 = 16:17, # 75-79, 80+
                    chw = 18, chr = 19)
 
@@ -1270,8 +1270,9 @@ simulate_extract_age_class_state <- function(state, index) {
 
     # distribute CHW between 30-49 and 50-74 age groups
     # distribute CHR between 50-74 and 75+ age groups
-    res$age_30 <- res$age_30 + 0.75 * res$chw
-    res$age_50 <- res$age_50 + 0.25 * res$chw + 0.1 * res$chr
+    res$age_0 <- res$age_0 + 0.25 * res$chw
+    res$age_35 <- res$age_35 + 0.5 * res$chw
+    res$age_55 <- res$age_55 + 0.25 * res$chw + 0.1 * res$chr
     res$age_75 <- res$age_75 + 0.9 * res$chr
     res$chw <- NULL
     res$chr <- NULL
