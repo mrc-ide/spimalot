@@ -103,7 +103,7 @@ spim_particle_filter <- function(data, pars, control,
 ##' @export
 spim_fit_run <- function(pars, filter, control) {
   message("Running chains - this will take a while!")
-  multiregion <- filter$nested
+  multiregion <- filter$has_multiple_data %||% filter$nested
   if (multiregion) {
     initial <- replicate(control$n_chains,
                          pars$mcmc$propose(pars$mcmc$initial(), "both", 1))
