@@ -125,6 +125,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
   react_age_bands <- c("5_24", "25_34", "35_44", "45_54", "55_64", "65_plus")
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
+
+
+"ons_positive",
+"ons_samples",
+
+
             "admitted", "new", "phe_admissions", "all_admission",
             deaths_hosp_age, "death2", "death3", "death_chr", "death_comm",
             "ons_death_carehome", "ons_death_noncarehome",
@@ -523,6 +529,11 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
       data$pillar2_negatives_80_plus,
     pillar2_80_plus_pos = data$pillar2_positives_80_plus,
     pillar2_80_plus_cases = data$pillar2_cases_80_plus,
+
+ons_pos = data$ons_positive,
+ons_tot = data$ons_samples,
+
+
     react_pos = data$react_positive,
     react_tot = data$react_samples,
     react_5_24_pos = data$react_positive_5_24,
