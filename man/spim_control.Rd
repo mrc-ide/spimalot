@@ -18,6 +18,7 @@ spim_control(
   n_sample = 1000,
   n_threads = NULL,
   compiled_compare = FALSE,
+  adaptive_proposal = NULL,
   mcmc_path = NULL,
   verbose = TRUE
 )
@@ -63,6 +64,11 @@ by \link{spim_control_cores}}
 \item{compiled_compare}{Use a compiled compare function (rather
 than the R version).  This can speed things up with the
 deterministic models in particular.}
+
+\item{adaptive_proposal}{Control the adaptive proposal. By default
+this is disabled (value of \code{NULL}). This can only be enabled for
+determinsitic models. Pass either \code{TRUE} here or the results
+from \code{\link[mcstate:adaptive_proposal_control]{mcstate::adaptive_proposal_control()}}}
 
 \item{mcmc_path}{Path to store the mcmc results in}
 
