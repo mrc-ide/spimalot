@@ -31,7 +31,7 @@ spim_vaccination_data <- function(date, region, uptake, days_to_effect, data,
   ## Boosters started 2021-09-15, so ignore any third doses before this date
   data$third_dose[data$date < "2021-09-15"] <- 0
 
-  ## 2nd boosters started 2022-03-21, so ignore any fourth doses before this date
+  ## 2nd boosters started 2022-03-21, ignore any fourth doses before this date
   data$fourth_dose[data$date < "2022-03-21"] <- 0
 
   ## Remove any data after date parameter
@@ -77,7 +77,7 @@ spim_vaccination_data <- function(date, region, uptake, days_to_effect, data,
   agg_data <- data %>%
     dplyr::group_by(date) %>%
     dplyr::summarise(
-      doses = sum(.data$dose1) + sum(.data$dose2) +sum(.data$dose3) +
+      doses = sum(.data$dose1) + sum(.data$dose2) + sum(.data$dose3) +
         sum(.data$dose4))
   dates_remove <-
     agg_data$date[agg_data$date > max(agg_data$date[agg_data$doses > 0])]
