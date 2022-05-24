@@ -276,10 +276,11 @@ extract_age_class_state <- function(state) {
   f <- function(array) {
     x <- mcstate::array_reshape(array, 1L, c(n_groups, strata))
 
-    if (ncol(x) == 7) {
+    if (ncol(x) == 8) {
       colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
                        "waned_protection", "booster_protection",
-                       "booster_waned_protection", "booster2_protection")
+                       "booster_waned_protection", "booster2_protection",
+                       "booster2_waned_protection")
     } else if (ncol(x) == 5) {
       colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
                        "waned_protection", "booster_protection")
