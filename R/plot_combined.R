@@ -2139,7 +2139,7 @@ spim_plot_vaccine_status_region <- function(region, dat, vacc_names,
        xaxs = "i",
        yaxs = "i")
 
-  cols <- khroma::colour("bright")(length(vacc_names))
+  cols <- khroma::colour("muted")(length(vacc_names))
 
   proportion_fill(x, res, cols)
 
