@@ -987,26 +987,18 @@ extract_severity <- function(samples) {
 
 extract_severity_region <- function(state, step, date) {
 
+  browser()
   # String vectors to formulate severity trajectory names needed
-  aggregated <- c("ifr", "ihr", "hfr")
-  age_bands <- seq(0, 80, 5)
-  strains <- gsub("ifr_", "", (grep("ifr_strain",
-                                    rownames(state), value = TRUE)))
+  sev_traj <- c(grep("ifr", rownames(state), value = TRUE),
+                grep("ihr", rownames(state), value = TRUE),
+                grep("hfr", rownames(state), value = TRUE))
+  # ignore CHR and CHW
+  sev_traj <- grep("CHR", sev_traj, invert = TRUE, value = TRUE)
+  sev_traj <- grep("CHW", sev_traj, invert = TRUE, value = TRUE)
 
-  # Vectors containing actual names of trajectories
-  disag <- as.vector(outer(paste0(aggregated, "_disag_"), age_bands, paste0))
-  vacc_class <- gsub(disag[1], "", grep(disag[1],
-                                        rownames(state), value = TRUE))
-  severity_age <- as.vector(outer(aggregated,
-                                  paste0("_age_", age_bands), paste0))
-  severity_strain <- as.vector(outer(aggregated, c("_strain_1", "_strain_2"),
-                                     paste0))
-  severity_disag <- as.vector(outer(disag, vacc_class, paste0))
-
-  what <- c(aggregated, severity_age, severity_strain, severity_disag)
   severity <- list()
 
-  for (s in what) {
+  for (s in sev_traj) {
     tmp <- t(state[s, , ])
     severity[[s]] <- tmp
   }
