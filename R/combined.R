@@ -321,7 +321,7 @@ combined_aggregate_severity <- function(severity, samples) {
                                               weight = "infections_inc")
 
   # Severity trajectories weighted by admissions
-  admission_weighted <- grep("hfr", names(admissions[[1]]), value = TRUE)
+  admission_weighted <- grep("^hfr", names(admissions[[1]]), value = TRUE)
 
   severity$england <- infections$england
   for (i in admission_weighted) {

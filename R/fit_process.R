@@ -987,11 +987,11 @@ extract_severity <- function(samples) {
 
 extract_severity_region <- function(state, step, date) {
 
-  browser()
   # String vectors to formulate severity trajectory names needed
-  sev_traj <- c(grep("ifr", rownames(state), value = TRUE),
-                grep("ihr", rownames(state), value = TRUE),
-                grep("hfr", rownames(state), value = TRUE))
+  sev_traj <- c(grep("^ifr", rownames(state), value = TRUE),
+                grep("^ihr", rownames(state), value = TRUE),
+                grep("^hfr", rownames(state), value = TRUE))
+
   # ignore CHR and CHW
   sev_traj <- grep("CHR", sev_traj, invert = TRUE, value = TRUE)
   sev_traj <- grep("CHW", sev_traj, invert = TRUE, value = TRUE)
