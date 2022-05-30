@@ -322,10 +322,10 @@ combined_aggregate_severity <- function(severity, samples) {
 
   # Severity trajectories weighted by admissions
   age_bands <- seq(0, 80, 5)
-  ihr_strain_nms <- grep("ihr_strain", names(severity[[1]]), value = TRUE)
-  ihr_disag_nms <- grep("ihr_disag", names(severity[[1]]), value = TRUE)
-  ihr_age_nms <- grep("ihr_age", names(severity[[1]]), value = TRUE)
-  admission_weighted <- c("ihr", ihr_strain_nms, ihr_age_nms, ihr_disag_nms)
+  hfr_strain_nms <- grep("hfr_strain", names(severity[[1]]), value = TRUE)
+  hfr_disag_nms <- grep("hfr_disag", names(severity[[1]]), value = TRUE)
+  hfr_age_nms <- grep("hfr_age", names(severity[[1]]), value = TRUE)
+  admission_weighted <- c("hfr", hfr_strain_nms, hfr_age_nms, hfr_disag_nms)
 
   severity$england <- infections$england
   for (i in admission_weighted) {
