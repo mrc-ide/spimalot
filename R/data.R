@@ -279,13 +279,14 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     data$deaths <- data$deaths_hosp + data$deaths_comm
   }
 
-  ## Fit to Wildtype/Alpha using sgtf for England, COG for S/W/NI
+  ## Fit to Wildtype/Alpha using VAM data for England, COG for S/W/NI
   if (region %in% c("scotland", "wales", "northern_ireland")) {
     data$strain_non_variant <- data$n_non_alpha_variant
     data$strain_tot <- data$n_alpha_variant + data$n_non_alpha_variant
   } else {
-    data$strain_non_variant <- data$n_non_alpha_pred
-    data$strain_tot <- data$n_alpha_pred + data$n_non_alpha_pred
+    data$strain_non_variant <- data$n_symp_non_alpha_variant
+    data$strain_tot <- data$n_symp_alpha_variant +
+      data$n_sympt_non_alpha_variant
   }
 
   # Only use Wildtype/Alpha data between 2020-09-17 and 2021-03-01
@@ -294,7 +295,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
   data$strain_non_variant[na_strain_dates] <- NA_integer_
   data$strain_tot[na_strain_dates] <- NA_integer_
 
-  # Fit to Alpha/Delta using sgtf data for England, COG data for S/W/NI
+  # Fit to Alpha/Delta using VAM data for England, COG data for S/W/NI
   alpha_delta_dates <- data$date >= "2021-03-08" & data$date <= "2021-07-31"
   if (region %in% c("scotland", "wales", "northern_ireland")) {
     data$strain_non_variant[alpha_delta_dates] <-
