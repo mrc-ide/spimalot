@@ -264,7 +264,6 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
 }
 
 extract_age_class_state <- function(state) {
-  browser()
   n_groups <- sircovid:::lancelot_n_groups()
   names_index <- c("cum_infections_disag", "diagnoses_admitted", "D_all")
 
