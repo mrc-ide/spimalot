@@ -286,7 +286,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
   } else {
     data$strain_non_variant <- data$n_symp_non_alpha_variant
     data$strain_tot <- data$n_symp_alpha_variant +
-      data$n_sympt_non_alpha_variant
+      data$n_symp_non_alpha_variant
   }
 
   # Only use Wildtype/Alpha data between 2020-09-17 and 2021-03-01
