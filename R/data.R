@@ -328,7 +328,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
   }
 
   ## Fit to Delta/Omicron using VAM data for England, COG data for S/W/NI
-  omicron_ba2_dates <- data$date >= "2022-01-01" & data$date <= "2022-06-01"
+  omicron_ba2_dates <- data$date >= "2022-01-01" & data$date <= "2022-04-15"
   if (region %in% c("scotland", "wales", "northern_ireland")) {
     data$strain_non_variant[omicron_ba2_dates] <-
       data$n_non_omicron_ba2_variant[omicron_ba2_dates]
