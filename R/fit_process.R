@@ -67,7 +67,7 @@ spim_fit_process <- function(samples, parameters, data, control,
 
   ## Reduce trajectories in samples before saving
   message("Reducing trajectories")
-  samples <- reduce_trajectories(samples)
+  samples <- reduce_trajectories(samples, control$severity)
 
   message("Computing parameter MLE and covariance matrix")
   parameters_new <- spim_fit_parameters(samples, parameters_raw)
@@ -317,11 +317,16 @@ extract_age_class_state <- function(state) {
 
 }
 
-reduce_trajectories <- function(samples) {
+reduce_trajectories <- function(samples, severity) {
   ## Remove unused trajectories for predict function in combined
   remove_strings <- c("prob_strain", "S_", "R_", "I_weighted_", "D_hosp_",
                       "D_all_", "diagnoses_admitted_", "cum_infections_disag_",
                       "cum_n_vaccinated", "cum_admit_", "ifr", "ihr", "hfr")
+
+  if (severity) {
+    remove_strings <- remove_strings[!remove_strings %in% "diagnoses_admitted_"]
+  }
+
   re <- sprintf("^(%s)", paste(remove_strings, collapse = "|"))
 
   samples <- summarise_states(samples)
