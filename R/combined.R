@@ -76,12 +76,17 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE) {
   if (get_severity) {
     message("Aggregating severity outputs")
     ret$severity <- combined_aggregate_severity(ret$severity, agg_samples)
+
+    ## We don't need projections for severity analysis, these will be NULL
+    ret$onward <- NULL
+  } else {
+    message("Creating data for onward use")
+    ret$onward <- spim_combined_onward(ret)
   }
 
   ## NOTE: have not ported the "randomise trajectory order" bit over,
   ## but I do not think that we need to.
-  message("Creating data for onward use")
-  ret$onward <- spim_combined_onward(ret)
+
 
   ## There are 3 elements in the parameter list that we need to join
   ## together; info, prior and proposal, anything else we will leave
