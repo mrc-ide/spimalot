@@ -279,7 +279,7 @@ extract_age_class_state <- function(state) {
                       "waned_protection", "booster_protection",
                       "booster_waned_protection", "booster2_protection",
                       "booster2_waned_protection")
-    colnames(x) <- vacc_classes[1:ncol(x)]
+    colnames(x) <- vacc_classes[seq_len(ncol(x))]
 
 
     ## aggregate age groups
