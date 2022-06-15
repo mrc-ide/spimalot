@@ -275,14 +275,11 @@ extract_age_class_state <- function(state) {
 
   f <- function(array) {
     x <- mcstate::array_reshape(array, 1L, c(n_groups, strata))
-
-    if (ncol(x) == 5) {
-      colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
-                       "waned_protection", "booster_protection")
-    } else {
-      colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
-                       "waned_protection")
-    }
+    vacc_classes <- c("unvaccinated", "partial_protection", "full_protection",
+                      "waned_protection", "booster_protection",
+                      "booster_waned_protection", "booster2_protection",
+                      "booster2_waned_protection")
+    colnames(x) <- vacc_classes[seq_len(ncol(x))]
 
 
     ## aggregate age groups

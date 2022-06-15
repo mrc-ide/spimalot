@@ -1,6 +1,6 @@
 Package: spimalot
 Title: Support for 'sircovid'
-Version: 0.7.26
+Version: 0.7.28
 Authors@R:
     c(person(given = "Marc",
            family = "Baguelin",
@@ -74,7 +74,7 @@ Imports:
     patchwork,
     readxl,
     reshape2,
-    sircovid (>= 0.13.14),
+    sircovid (>= 0.13.17),
     stringr,
     tdigest,
     tibble,
