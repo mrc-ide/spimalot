@@ -19,7 +19,7 @@ data) that are not fit to but are treated as model parameters."><!-- mathjax -->
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.26</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.27</span>
       </span>
     </div>
 
@@ -73,51 +73,74 @@ data) that are not fit to but are treated as model parameters.</p>
     <h2>Arguments</h2>
     <dl><dt>date</dt>
 <dd><p>The date of the data. This will be the final date</p></dd>
+
+
 <dt>region</dt>
 <dd><p>The region that we are fitting to. This will either
 be one of the 10 NHS regions (one of
 <code>sircovid::regions("all")</code>), or an argument to that function
 (e.g., <code>all</code>)</p></dd>
+
+
 <dt>model_type</dt>
 <dd><p>Either "BB" (beta-binomial) or "NB" (negative
 binomial). We use and exclude different data types depending on
 this argument.</p></dd>
+
+
 <dt>rtm</dt>
 <dd><p>The "RTM collate" data feed. This contains information
 about deaths, positive test results, react serology, etc. TODO:
 DESCRIBE FORMAT; TODO: DESCRIBE ORIGIN</p></dd>
+
+
 <dt>serology</dt>
 <dd><p>The additional serology data. TODO: DESCRIBE FORMAT</p></dd>
+
+
 <dt>trim_deaths</dt>
 <dd><p>The number of days of deaths to trim to avoid
 back-fill issues. We typically use a value of 4 days.</p></dd>
+
+
 <dt>trim_pillar2</dt>
 <dd><p>Either an integer representing the number of days of
 pillar 2 data to trim to avoid back-fill issues (typically 7 days) or a
 date string representing the date from which we no longer fit to pillar 2.
 If the latter, then <code>trim_pillar2_date</code> must be TRUE</p></dd>
+
+
 <dt>adm_backfill_date</dt>
 <dd><p>A date string, representing the last date we use
 admissions by age from the SUS linelist for England NHS regions. After
 this date we use age-aggregated admissions from the UKHSA dashboard.
 This is to account for backfill, and should be
 carefully updated with every new SUS data delivery.</p></dd>
+
+
 <dt>ons_death_backfill_date</dt>
 <dd><p>A date string, representing the last date we
 use deaths by age from the ONS for England NHS regions. After
 this date we use deaths by age from the UKHSA linelist. This is to account
 for the increased delay in registering death certificates, compared with
 just reporting deaths that occur within 28 days of a positive test.</p></dd>
+
+
 <dt>trim_pillar2_date</dt>
 <dd><p>Logical parameter. If TRUE, indicates that
 <code>trim_pillar2</code> should be expected to be a date string. If FALSE,
 indicates that should. Default is FALSE</p></dd>
+
+
 <dt>full_data</dt>
 <dd><p>Not sure yet, we'll find out</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A <code><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame()</a></code> TODO: describe columns</p>
+    
+
+<p>A <code><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame()</a></code> TODO: describe columns</p>
     </div>
 
   </div>
@@ -132,7 +155,7 @@ indicates that should. Default is FALSE</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

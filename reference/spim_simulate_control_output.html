@@ -19,7 +19,7 @@ reducing this will make your life more pleasant."><!-- mathjax --><script src="h
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.26</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.27</span>
       </span>
     </div>
 
@@ -70,32 +70,47 @@ reducing this will make your life more pleasant.</p>
     <dl><dt>keep</dt>
 <dd><p>Character vector of outputs to keep. Must be names of
 variables as included in the index of the model run.</p></dd>
+
+
 <dt>time_series</dt>
 <dd><p>Logical, indicating if a time series should be
 output (these are quite large)</p></dd>
+
+
 <dt>rt</dt>
 <dd><p>Logical, indicating if Rt should be calculated. This is
 quite slow.</p></dd>
+
+
 <dt>rt_weighted</dt>
 <dd><p>Logical, indicating if weighted Rt should be
 calculated. This is also quite slow. Only allowed if <code>rt</code> is
 <code>TRUE</code></p></dd>
+
+
 <dt>rt_type</dt>
 <dd><p>Character vecrtor of Rt types to use, passed to
 <a href="https://rdrr.io/pkg/sircovid/man/lancelot_Rt.html" class="external-link">sircovid::lancelot_Rt</a>.  Can be any or all of <code>eff_Rt_all</code>,
 <code>eff_Rt_general</code>, <code>Rt_all</code> and <code>Rt_general</code>.</p></dd>
+
+
 <dt>state_by_age</dt>
 <dd><p>Logical, indicating if state by age should be
 output. These are really large and <em>will</em> cause memory issues
 for you if you try to run with long time series unless you have
 a lot of RAM.</p></dd>
+
+
 <dt>vaccination</dt>
 <dd><p>Logical, indicating if vaccination information
 should be output.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>An object of <code>spim_simulate_control_output</code>. Do not modify
+    
+
+<p>An object of <code>spim_simulate_control_output</code>. Do not modify
 this object after creation.</p>
     </div>
 
@@ -111,7 +126,7 @@ this object after creation.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.26</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.27</span>
       </span>
     </div>
 
@@ -74,53 +74,84 @@
     <dl><dt>short_run</dt>
 <dd><p>Logical, indicating if this is a debug run. This
 will use freer particles, mcmc steps and a small sample</p></dd>
+
+
 <dt>n_chains</dt>
 <dd><p>The number of chains to run</p></dd>
+
+
 <dt>deterministic</dt>
 <dd><p>Logical, indicating if the model to fit to
 data is run deterministically or stochastically</p></dd>
+
+
 <dt>multiregion</dt>
 <dd><p>Logical, indicating if we are fitting multiple
 regions at once (in which case even the deterministic model may
 benefit from multithreading).</p></dd>
+
+
 <dt>severity</dt>
 <dd><p>Logical, indicating if we are outputting severity
 trajectories (e.g. IFR, IHR, HFR). Default to FALSE.</p></dd>
+
+
 <dt>date_restart</dt>
 <dd><p>Optionally, dates save restart data in the
 pmcmc (see <a href="https://rdrr.io/pkg/mcstate/man/pmcmc.html" class="external-link">mcstate::pmcmc</a></p></dd>
+
+
 <dt>n_particles</dt>
 <dd><p>number of particles to be used in particle filter if
 <code>short_run = FALSE</code></p></dd>
+
+
 <dt>n_mcmc</dt>
 <dd><p>number of steps to be used in PMCMC if
 <code>short_run = FALSE</code></p></dd>
+
+
 <dt>burnin</dt>
 <dd><p>number of steps out of <code>n_mcmc</code> to be used as a burn-in in
 PMCMC if <code>short_run = FALSE</code></p></dd>
+
+
 <dt>workers</dt>
 <dd><p>Logical, indicating if we should enable workers. If
 <code>TRUE</code>, then a number of workers between 1 and 4 will be used
 depending on <code>n_chains</code> and the detected number of cores.</p></dd>
+
+
 <dt>n_sample</dt>
 <dd><p>number of steps to retain (across all chains) if
 <code>short_run = FALSE</code></p></dd>
+
+
 <dt>n_threads</dt>
 <dd><p>Explicit number of threads, overriding detection
 by <a href="spim_control_cores.html">spim_control_cores</a></p></dd>
+
+
 <dt>compiled_compare</dt>
 <dd><p>Use a compiled compare function (rather
 than the R version).  This can speed things up with the
 deterministic models in particular.</p></dd>
+
+
 <dt>mcmc_path</dt>
 <dd><p>Path to store the mcmc results in</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>Logical, indicating if we should print information
 about the parallel configuration</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A list of options</p>
+    
+
+<p>A list of options</p>
     </div>
     <div id="details">
     <h2>Details</h2>
@@ -139,7 +170,7 @@ about the parallel configuration</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.26</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.27</span>
       </span>
     </div>
 
@@ -64,26 +64,39 @@
     <h2>Arguments</h2>
     <dl><dt>date</dt>
 <dd><p>The date of the data. This will be the final date</p></dd>
+
+
 <dt>region</dt>
 <dd><p>The region that we are fitting to. This will either
 be one of the 10 NHS regions (one of
 <code>sircovid::regions("all")</code>), or an argument to that function
 (e.g., <code>all</code>)</p></dd>
+
+
 <dt>uptake</dt>
 <dd><p>A matrix of proportion uptake by age, with (i, j) th
 value being the uptake of dose j for group i. Must have 19 rows.</p></dd>
+
+
 <dt>days_to_effect</dt>
 <dd><p>A vector of the number of days each dose is
 assumed to take to reach effect</p></dd>
+
+
 <dt>data</dt>
 <dd><p>Vaccination data (TODO: DESCRIBE CONTENTS)</p></dd>
+
+
 <dt>carehomes</dt>
 <dd><p>Logical parameter, whether or not we have carehomes in
 the model. Default is TRUE</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A list suitable for passing to <code>spim_pars</code> as
+    
+
+<p>A list suitable for passing to <code>spim_pars</code> as
 <code>vaccination</code>, containing the new vaccination schedule
 (important bits are <code>efficacy</code> and <code>schedule</code>, but other
 elements may be used elsewhere)</p>
@@ -101,7 +114,7 @@ elements may be used elsewhere)</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

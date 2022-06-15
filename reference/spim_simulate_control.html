@@ -19,7 +19,7 @@ simulation and grids of parameter types to loop over."><!-- mathjax --><script s
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.26</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.27</span>
       </span>
     </div>
 
@@ -71,14 +71,22 @@ simulation and grids of parameter types to loop over.</p>
     <dl><dt>flavour</dt>
 <dd><p>The simulation flavour; this is a single string
 (e.g., "mtp" or "add_omicron")</p></dd>
+
+
 <dt>regions</dt>
 <dd><p>A vector of regions to simulate over.  These must
 all be valid values in <a href="https://rdrr.io/pkg/sircovid/man/regions.html" class="external-link">sircovid::regions</a></p></dd>
+
+
 <dt>date_start</dt>
 <dd><p>The start date, as an R <code>Date</code> object. Typically this
 is the last date of the data/fits.</p></dd>
+
+
 <dt>date_end</dt>
 <dd><p>The end date of the simulation as an R <code>Date</code> object</p></dd>
+
+
 <dt>expected</dt>
 <dd><p>A character vector of expected parameter names.
 These are the names of things that <em>must</em> be present within
@@ -86,20 +94,27 @@ These are the names of things that <em>must</em> be present within
 tempting to write <code>names(parameters)</code> here, but we suggest not
 doing that as this will provide a human readable description of
 what you are currently looking to simulate against.</p></dd>
+
+
 <dt>parameters</dt>
 <dd><p>A list of parameters.  These might be direct
 replacements against the baseline or structured lists of
 parameters with names that correspond to those within <code>grid</code>.
 We'll document this more later!</p></dd>
+
+
 <dt>grid</dt>
 <dd><p>The parameter grid, indicating the set of simulations
 to run. It must have at least one row.  Not all variables are
 allowed in here; in particular, we disallow most of the <code>rt_</code>
 variables.  An error will be thrown if anything unexpected is
 found.</p></dd>
+
+
 <dt>output</dt>
 <dd><p>Output control, created by
 spim_simulate_control</p></dd>
+
 </dl></div>
 
   </div>
@@ -114,7 +129,7 @@ spim_simulate_control</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>

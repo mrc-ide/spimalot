@@ -20,7 +20,7 @@ date."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathj
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.26</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.27</span>
       </span>
     </div>
 
@@ -67,15 +67,20 @@ date.</p>
 <code>restart</code> has a <code>state</code> element which is list with elements
 <code>time</code> (a sircovid date) and <code>state</code> (a 3d array of model state
 by particle by <code>time</code>).</p></dd>
+
+
 <dt>date</dt>
 <dd><p>The date that the restart should come from.  Will be
 passed through <a href="https://rdrr.io/pkg/sircovid/man/sircovid_date.html" class="external-link">sircovid::as_sircovid_date</a> so can be either an
 integer sircovid date, an R Date or a string representing an ISO
 date.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A list with the same names as <code>restart</code>, but with
+    
+
+<p>A list with the same names as <code>restart</code>, but with
 <code>restart$state</code> filtered down to a single date's data and
 <code>restart$state$restart_date</code> replaced by the sircovid date
 corresponding to the restart.</p>
@@ -93,7 +98,7 @@ corresponding to the restart.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.4.</p>
 </div>
 
       </footer></div>
