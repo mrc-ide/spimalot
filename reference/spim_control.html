@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.27</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.28</span>
       </span>
     </div>
 
@@ -64,6 +64,7 @@
   n_sample <span class="op">=</span> <span class="fl">1000</span>,
   n_threads <span class="op">=</span> <span class="cn">NULL</span>,
   compiled_compare <span class="op">=</span> <span class="cn">FALSE</span>,
+  adaptive_proposal <span class="op">=</span> <span class="cn">NULL</span>,
   mcmc_path <span class="op">=</span> <span class="cn">NULL</span>,
   verbose <span class="op">=</span> <span class="cn">TRUE</span>
 <span class="op">)</span></code></pre></div>
@@ -136,6 +137,13 @@ by <a href="spim_control_cores.html">spim_control_cores</a></p></dd>
 <dd><p>Use a compiled compare function (rather
 than the R version).  This can speed things up with the
 deterministic models in particular.</p></dd>
+
+
+<dt>adaptive_proposal</dt>
+<dd><p>Control the adaptive proposal. By default
+this is disabled (value of <code>NULL</code>). This can only be enabled for
+determinsitic models. Pass either <code>TRUE</code> here or the results
+from <code><a href="https://rdrr.io/pkg/mcstate/man/adaptive_proposal_control.html" class="external-link">mcstate::adaptive_proposal_control()</a></code></p></dd>
 
 
 <dt>mcmc_path</dt>
