@@ -48,9 +48,9 @@
 ##' @param mcmc_path Path to store the mcmc results in
 ##'
 ##' @param adaptive_proposal Control the adaptive proposal. By default
-##'   this is disabled (value of `NULL`). This can only be enabled for
-##'   determinsitic models. Pass either `TRUE` here or the results
-##'   from [mcstate::adaptive_proposal_control()]
+##'   this is disabled (value of `NULL` or `FALSE`). This can only be
+##'   enabled for determinsitic models. Pass either `TRUE` here or the
+##'   results from [mcstate::adaptive_proposal_control()]
 ##'
 ##' @param verbose Logical, indicating if we should print information
 ##'   about the parallel configuration
@@ -85,7 +85,8 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
 
   ## Once happy here, you could change the default behaviour, so that
   ## if determinsitic and not `FALSE` we set this up.
-  if (!is.null(adaptive_proposal) && !deterministic) {
+  adaptive_proposal <- adaptive_proposal %||% FALSE
+  if (isTRUE(adaptive_proposal) && !deterministic) {
     stop("Can't use adaptive_proposal with non-deterministic models")
   }
 
