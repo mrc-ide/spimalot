@@ -85,8 +85,7 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
 
   ## We don't need projections for the severity paper, these will be NULL to
   ## save memory as we already process very heavy outputs!
-  ## We might want these for other analysis so they will be outputted if
-  ## get_onward == TRUE (default)
+  ## We might want these for other analysis; output if get_onward == TRUE
   if (get_onward) {
     message("Creating data for onward use")
     ret$onward <- spim_combined_onward(ret)
