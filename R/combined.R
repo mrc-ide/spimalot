@@ -84,10 +84,6 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE) {
     ret$onward <- spim_combined_onward(ret)
   }
 
-  ## NOTE: have not ported the "randomise trajectory order" bit over,
-  ## but I do not think that we need to.
-
-
   ## There are 3 elements in the parameter list that we need to join
   ## together; info, prior and proposal, anything else we will leave
   ## as a nested list (this includes the baseline parameter set which
