@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.30</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.31</span>
       </span>
     </div>
 
@@ -50,7 +50,7 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">spim_plot_forest</span><span class="op">(</span><span class="va">dat</span>, regions <span class="op">=</span> <span class="cn">NULL</span>, plot_type <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">spim_plot_forest</span><span class="op">(</span><span class="va">dat</span>, regions <span class="op">=</span> <span class="cn">NULL</span>, plot_type <span class="op">=</span> <span class="st">"all"</span>, subset <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -68,7 +68,13 @@ england/uk)</p></dd>
 <dt>plot_type</dt>
 <dd><p>The type of parameters to plot: <code>all</code> would plot
 all parameters, <code>betas</code> would just plot betas, <code>non_betas</code> would
-plot all non-beta parameters</p></dd>
+plot all non-beta parameters, <code>subset</code> allows specifying a subset
+of the parameters</p></dd>
+
+
+<dt>subset</dt>
+<dd><p>A vector of parameter names to plot if <code>subset</code> is selected
+for <code>plot_type</code>. Otherwise can just be set to NULL (the default)</p></dd>
 
 </dl></div>
     <div id="value">
