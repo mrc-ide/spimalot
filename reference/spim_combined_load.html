@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.29</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.7.30</span>
       </span>
     </div>
 
@@ -50,7 +50,12 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">spim_combined_load</span><span class="op">(</span><span class="va">path</span>, regions <span class="op">=</span> <span class="st">"all"</span>, get_severity <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">spim_combined_load</span><span class="op">(</span>
+  <span class="va">path</span>,
+  regions <span class="op">=</span> <span class="st">"all"</span>,
+  get_severity <span class="op">=</span> <span class="cn">FALSE</span>,
+  get_onward <span class="op">=</span> <span class="cn">TRUE</span>
+<span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -70,6 +75,12 @@ is <code>all</code>, otherwise try <code>england</code>)</p></dd>
 <dd><p>Logical, indicating whether to extract severity (e.g.
 IFH, IHR, HFR, etc.) trajectories. Must default to <code>FALSE</code>, as these
 are routine (e.g. MTPs) <code>sircovid</code> outputs.</p></dd>
+
+
+<dt>get_onward</dt>
+<dd><p>Logical, indicating whether to extract projection
+trajectories for downstream (e.g. simulations) use. Default is <code>TRUE</code>,
+as these are routinely outputted in the RTM pipeline.</p></dd>
 
 </dl></div>
     <div id="value">
