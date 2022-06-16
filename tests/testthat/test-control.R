@@ -164,3 +164,30 @@ test_that("Control compiled compare", {
   ctl <- spim_control(TRUE, 4, compiled_compare = TRUE, verbose = FALSE)
   expect_true(ctl$particle_filter$compiled_compare)
 })
+
+
+test_that("Disallow adaptive propsosal with stochastic models", {
+  ctl <- spimalot::spim_control(TRUE, 4, deterministic = FALSE,
+                                adaptive_proposal = FALSE)
+  expect_null(ctl$adaptive_proposal)
+  ctl <- spimalot::spim_control(TRUE, 4, deterministic = FALSE,
+                                adaptive_proposal = NULL)
+  expect_null(ctl$adaptive_proposal)
+  expect_error(spimalot::spim_control(TRUE, 4, deterministic = FALSE,
+                                      adaptive_proposal = TRUE),
+               "Can't use adaptive_proposal with non-deterministic models")
+})
+
+
+test_that("control adaptive proposal with deterministic models", {
+  ctl <- spimalot::spim_control(TRUE, 4, deterministic = TRUE,
+                                adaptive_proposal = FALSE)
+  expect_null(ctl$adaptive_proposal)
+  ctl <- spimalot::spim_control(TRUE, 4, deterministic = TRUE,
+                                adaptive_proposal = NULL)
+  expect_null(ctl$adaptive_proposal)
+  ctl <- spimalot::spim_control(TRUE, 4, deterministic = TRUE,
+                                adaptive_proposal = TRUE)
+  expect_equal(ctl$pmcmc$adaptive_proposal,
+               mcstate::adaptive_proposal_control())
+})

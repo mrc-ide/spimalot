@@ -47,6 +47,11 @@
 ##'
 ##' @param mcmc_path Path to store the mcmc results in
 ##'
+##' @param adaptive_proposal Control the adaptive proposal. By default
+##'   this is disabled (value of `NULL` or `FALSE`). This can only be
+##'   enabled for determinsitic models. Pass either `TRUE` here or the
+##'   results from [mcstate::adaptive_proposal_control()]
+##'
 ##' @param verbose Logical, indicating if we should print information
 ##'   about the parallel configuration
 ##'
@@ -57,6 +62,7 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                          date_restart = NULL, n_particles = 192, n_mcmc = 1500,
                          burnin = 500, workers = TRUE, n_sample = 1000,
                          n_threads = NULL, compiled_compare = FALSE,
+                         adaptive_proposal = NULL,
                          mcmc_path = NULL, verbose = TRUE) {
   if (short_run) {
     n_particles <- min(10, n_particles)
@@ -77,6 +83,13 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                                     deterministic, multiregion,
                                     verbose)
 
+  ## Once happy here, you could change the default behaviour, so that
+  ## if determinsitic and not `FALSE` we set this up.
+  adaptive_proposal <- adaptive_proposal %||% FALSE
+  if (isTRUE(adaptive_proposal) && !deterministic) {
+    stop("Can't use adaptive_proposal with non-deterministic models")
+  }
+
   pmcmc <- mcstate::pmcmc_control(n_mcmc,
                                   n_chains = n_chains,
                                   n_threads_total = parallel$n_threads_total,
@@ -91,6 +104,7 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                                   rerun_random = TRUE,
                                   filter_early_exit = !deterministic,
                                   n_burnin = burnin,
+                                  adaptive_proposal = adaptive_proposal,
                                   n_steps_retain = n_steps_retain,
                                   path = mcmc_path)
 
