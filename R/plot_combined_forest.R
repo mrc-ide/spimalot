@@ -201,15 +201,13 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all",
   } else if (plot_type == "subset") {
     if (is.null(subset)) {
       stop("Expected a 'subset' input as subset plot type has been selected")
-    } else {
-      missing_pars <- setdiff(subset, par_names)
-      if (length(missing_pars > 0)) {
-        stop("The following parameters listed in 'subset' are missing
-             from the fitted parameters: ",
-             paste(missing_pars, collapse = ", "))
-      }
-      pars_to_plot <- subset
     }
+    missing_pars <- setdiff(subset, par_names)
+    if (length(missing_pars > 0)) {
+      stop("The following parameters listed in 'subset' are missing from the
+           fitted parameters: ", paste(missing_pars, collapse = ", "))
+    }
+    pars_to_plot <- subset
   }
 
   if ("start_date" %in% pars_to_plot) {
