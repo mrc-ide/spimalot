@@ -4,7 +4,7 @@
 \alias{spim_plot_forest}
 \title{Forest plot}
 \usage{
-spim_plot_forest(dat, regions = NULL, plot_type = "all")
+spim_plot_forest(dat, regions = NULL, plot_type = "all", subset = NULL)
 }
 \arguments{
 \item{dat}{Combined data from \link{spim_combined_load}}
@@ -15,7 +15,11 @@ england/uk)}
 
 \item{plot_type}{The type of parameters to plot: \code{all} would plot
 all parameters, \code{betas} would just plot betas, \code{non_betas} would
-plot all non-beta parameters}
+plot all non-beta parameters, \code{subset} allows specifying a subset
+of the parameters}
+
+\item{subset}{A vector of parameter names to plot if \code{subset} is selected
+for \code{plot_type}. Otherwise can just be set to NULL (the default)}
 }
 \value{
 Nothing, called for side effects
