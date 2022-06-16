@@ -9,11 +9,16 @@
 ##'
 ##' @param plot_type The type of parameters to plot: `all` would plot
 ##'   all parameters, `betas` would just plot betas, `non_betas` would
-##'   plot all non-beta parameters
+##'   plot all non-beta parameters, `subset` allows specifying a subset
+##'   of the parameters
+##'
+##' @param subset A vector of parameter names to plot if `subset` is selected
+##'   for `plot_type`. Otherwise can just be set to NULL (the default)
 ##'
 ##' @return Nothing, called for side effects
 ##' @export
-spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
+spim_plot_forest <- function(dat, regions = NULL, plot_type = "all",
+                             subset = NULL) {
   if (is.null(regions)) {
     regions <- intersect(sircovid::regions("all"), names(dat$samples))
   } else {
@@ -23,7 +28,7 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
     }
   }
 
-  match_value(plot_type, c("all", "betas", "non_betas"))
+  match_value(plot_type, c("all", "betas", "non_betas", "subset"))
 
   samples <- dat$samples[regions]
   date <- dat$info$date
@@ -193,6 +198,18 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all") {
     pars_to_plot <- beta_names
   } else if (plot_type == "non_betas") {
     pars_to_plot <- setdiff(par_names, beta_names)
+  } else if (plot_type == "subset") {
+    if (is.null(subset)) {
+      stop("Expected a 'subset' input as subset plot type has been selected")
+    } else {
+      missing_pars <- setdiff(subset, par_names)
+      if (length(missing_pars > 0)) {
+        stop("The following parameters listed in 'subset' are missing
+             from the fitted parameters: ",
+             paste(missing_pars, collapse = ", "))
+      }
+      pars_to_plot <- subset
+    }
   }
 
   if ("start_date" %in% pars_to_plot) {
