@@ -4,7 +4,12 @@
 \alias{spim_combined_load}
 \title{Load combined fits}
 \usage{
-spim_combined_load(path, regions = "all", get_severity = FALSE)
+spim_combined_load(
+  path,
+  regions = "all",
+  get_severity = FALSE,
+  get_onward = TRUE
+)
 }
 \arguments{
 \item{path}{Directory name. Within here we expect to see
@@ -17,6 +22,10 @@ is \code{all}, otherwise try \code{england})}
 \item{get_severity}{Logical, indicating whether to extract severity (e.g.
 IFH, IHR, HFR, etc.) trajectories. Must default to \code{FALSE}, as these
 are routine (e.g. MTPs) \code{sircovid} outputs.}
+
+\item{get_onward}{Logical, indicating whether to extract projection
+trajectories for downstream (e.g. simulations) use. Default is \code{TRUE},
+as these are routinely outputted in the RTM pipeline.}
 }
 \value{
 A combined fit object

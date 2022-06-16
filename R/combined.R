@@ -13,9 +13,14 @@
 ##'   IFH, IHR, HFR, etc.) trajectories. Must default to `FALSE`, as these
 ##'   are routine (e.g. MTPs) `sircovid` outputs.
 ##'
+##' @param get_onward Logical, indicating whether to extract projection
+##'   trajectories for downstream (e.g. simulations) use. Default is `TRUE`,
+##'   as these are routinely outputted in the RTM pipeline.
+##'
 ##' @return A combined fit object
 ##' @export
-spim_combined_load <- function(path, regions = "all", get_severity = FALSE) {
+spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
+                               get_onward = TRUE) {
   regions <- sircovid::regions(regions)
 
   files <- file.path(path, regions, "fit.rds")
@@ -78,10 +83,15 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE) {
     ret$severity <- combined_aggregate_severity(ret$severity, agg_samples)
   }
 
-  ## NOTE: have not ported the "randomise trajectory order" bit over,
-  ## but I do not think that we need to.
-  message("Creating data for onward use")
-  ret$onward <- spim_combined_onward(ret)
+  ## We don't need projections for the severity paper, these will be NULL to
+  ## save memory as we already process very heavy outputs!
+  ## We might want these for other analysis; output if get_onward == TRUE
+  if (get_onward) {
+    message("Creating data for onward use")
+    ret$onward <- spim_combined_onward(ret)
+  } else {
+    ret$onward <- NULL
+  }
 
   ## There are 3 elements in the parameter list that we need to join
   ## together; info, prior and proposal, anything else we will leave
