@@ -595,7 +595,7 @@ spim_add_forecast_region <- function(samples, forecast_days) {
   ## Get forecast trajectories in a shape compatible with samples trajectories
   forecast_samples <- samples
   forecast_samples$trajectories <- forecast
-  forecast_samples <- reduce_trajectories(forecast_samples)
+  forecast_samples <- reduce_trajectories(forecast_samples, FALSE)
 
   ## Join trajectories from forecast and samples together
   ## We remove the first date from the forecast as this is the same as the last
