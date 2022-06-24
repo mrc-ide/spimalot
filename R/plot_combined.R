@@ -2221,7 +2221,7 @@ spim_plot_infection_status_region <- function(region, dat,
   if (plot_legend) {
     legend("bottomleft",
            legend = c("Susceptible",
-                      "Recovered (historic strains)"
+                      "Recovered (historic strains)",
                       "Recovered (strain 1)",
                       "Recovered (strain 2)",
                       "Infected",
