@@ -2179,13 +2179,14 @@ spim_plot_infection_status_region <- function(region, dat,
   x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
   x <- x[-1L]
 
-  status_rows <- c("susceptible", "recovered_1", "recovered_2", "deaths")
+  status_rows <- c("susceptible", "recovered_historic", "recovered_1",
+                   "recovered_2", "deaths")
   res <- state[status_rows, , ]
   res <- apply(res, c(1, 3), mean)
   infected <- p$N_tot_all - colSums(res)
   res <- rbind(res, infected)
-  res <- res[c("susceptible", "recovered_1", "recovered_2",
-               "infected", "deaths"), ]
+  res <- res[c("susceptible", "recovered_historic", "recovered_1",
+               "recovered_2", "infected", "deaths"), ]
 
   xlim <- c(min(x), max(x))
   ylim <- c(0, 100)
@@ -2220,6 +2221,7 @@ spim_plot_infection_status_region <- function(region, dat,
   if (plot_legend) {
     legend("bottomleft",
            legend = c("Susceptible",
+                      "Recovered (historic strains)"
                       "Recovered (strain 1)",
                       "Recovered (strain 2)",
                       "Infected",
