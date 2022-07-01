@@ -346,6 +346,26 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
       data$n_symp_omicron_ba2_variant[omicron_ba2_dates]
   }
 
+  ## Fit to Omicron (BA.1)/Omicron BA.2 using VAM data for England,
+  ## COG data for S/W/NI
+  omicron_ba2_ba4ba5_dates <-
+    data$date >= "2022-05-01" & data$date <= date
+  if (region %in% c("scotland", "wales", "northern_ireland")) {
+    data$strain_non_variant[omicron_ba2_ba4ba5_dates] <-
+      data$n_omicron_ba2_variant[omicron_ba2_ba4ba5_dates]
+    data$strain_tot[omicron_ba2_ba4ba5_dates] <-
+      data$n_omicron_ba2_variant[omicron_ba2_ba4ba5_dates] +
+      data$n_omicron_ba4_variant[omicron_ba2_ba4ba5_dates] +
+      data$n_omicron_ba5_variant[omicron_ba2_ba4ba5_dates]
+  } else {
+    data$strain_non_variant[omicron_ba2_ba4ba5_dates] <-
+      data$n_symp_omicron_ba2_variant[omicron_ba2_ba4ba5_dates]
+    data$strain_tot[omicron_ba2_ba4ba5_dates] <-
+      data$n_symp_omicron_ba2_variant[omicron_ba2_ba4ba5_dates] +
+      data$n_symp_omicron_ba4_variant[omicron_ba2_ba4ba5_dates] +
+      data$n_symp_omicron_ba5_variant[omicron_ba2_ba4ba5_dates]
+  }
+
   # Use positives/negatives as Pillar 2 for Scotland
   # Set data$phe_patients to NA between 2020-06-01 and 2020-09-09 (inclusive)
   if (region == "scotland") {
