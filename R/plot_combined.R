@@ -1939,7 +1939,7 @@ spim_plot_effective_susceptible_region <- function(region, dat,
   state <- sample$trajectories$state
   state <- state[, , -1L]
 
-  strain_cols <- khroma::colour("bright")(length(strain_names))
+  strain_cols <- khroma::colour("muted")(length(strain_names))
   strain_dates <- c(strain_dates, as.Date(date) + 1)
   res <- array(NA, dim = c(length(strain_names), dim(state)[2:3]))
 
@@ -2079,7 +2079,7 @@ spim_plot_infections_per_strain_region <- function(region, dat,
        xaxs = "i",
        yaxs = "i")
 
-  cols <- khroma::colour("bright")(length(inf_names))
+  cols <- khroma::colour("muted")(length(inf_names))
 
   proportion_fill(x, res, cols)
 
@@ -2179,13 +2179,14 @@ spim_plot_infection_status_region <- function(region, dat,
   x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
   x <- x[-1L]
 
-  status_rows <- c("susceptible", "recovered_1", "recovered_2", "deaths")
+  status_rows <- c("susceptible", "recovered_historic", "recovered_1",
+                   "recovered_2", "deaths")
   res <- state[status_rows, , ]
   res <- apply(res, c(1, 3), mean)
   infected <- p$N_tot_all - colSums(res)
   res <- rbind(res, infected)
-  res <- res[c("susceptible", "recovered_1", "recovered_2",
-               "infected", "deaths"), ]
+  res <- res[c("susceptible", "recovered_historic", "recovered_1",
+               "recovered_2", "infected", "deaths"), ]
 
   xlim <- c(min(x), max(x))
   ylim <- c(0, 100)
@@ -2203,7 +2204,7 @@ spim_plot_infection_status_region <- function(region, dat,
        xaxs = "i",
        yaxs = "i")
 
-  cols <- khroma::colour("bright")(nrow(res))
+  cols <- khroma::colour("muted")(nrow(res))
 
   proportion_fill(x, res, cols)
 
@@ -2220,6 +2221,7 @@ spim_plot_infection_status_region <- function(region, dat,
   if (plot_legend) {
     legend("bottomleft",
            legend = c("Susceptible",
+                      "Recovered (historic strains)",
                       "Recovered (strain 1)",
                       "Recovered (strain 2)",
                       "Infected",

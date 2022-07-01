@@ -169,15 +169,17 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
             paste0("react_positive_", react_age_bands),
             paste0("react_samples_", react_age_bands),
             # VAM data
+            "n_symp_wildtype_variant", "n_symp_non_wildtype_variant",
             "n_symp_alpha_variant", "n_symp_non_alpha_variant",
             "n_symp_delta_variant", "n_symp_non_delta_variant",
             "n_symp_omicron_variant", "n_symp_non_omicron_variant",
+            "n_symp_omicron_ba2_variant", "n_symp_non_omicron_ba2_variant",
             # Other VOC data
-            "n_alpha_pred", "n_non_alpha_pred",
+            "n_wildtype_variant", "n_non_wildtype_variant",
             "n_alpha_variant", "n_non_alpha_variant",
             "n_delta_variant", "n_non_delta_variant",
-            "n_omicron_variant", "n_non_omicron_variant", "s_positive_adj1",
-            "s_negative_adj1",
+            "n_omicron_variant", "n_non_omicron_variant",
+            "n_omicron_ba2_variant", "n_non_omicron_ba2_variant",
             # Pillar 2 positives
             "positives", "positives_over25", "pillar2_positives",
             "pillar2_positives_over25", "positives_pcr",
@@ -281,12 +283,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
 
   ## Fit to Wildtype/Alpha using VAM data for England, COG for S/W/NI
   if (region %in% c("scotland", "wales", "northern_ireland")) {
-    data$strain_non_variant <- data$n_non_alpha_variant
-    data$strain_tot <- data$n_alpha_variant + data$n_non_alpha_variant
+    data$strain_non_variant <- data$n_wildtype_variant
+    data$strain_tot <- data$n_alpha_variant + data$n_wildtype_variant
   } else {
-    data$strain_non_variant <- data$n_symp_non_alpha_variant
+    data$strain_non_variant <- data$n_symp_wildtype_variant
     data$strain_tot <- data$n_symp_alpha_variant +
-      data$n_symp_non_alpha_variant
+      data$n_symp_wildtype_variant
   }
 
   # Only use Wildtype/Alpha data between 2020-09-17 and 2021-03-01
@@ -299,34 +301,50 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
   alpha_delta_dates <- data$date >= "2021-03-08" & data$date <= "2021-07-31"
   if (region %in% c("scotland", "wales", "northern_ireland")) {
     data$strain_non_variant[alpha_delta_dates] <-
-      data$n_non_delta_variant[alpha_delta_dates]
+      data$n_alpha_variant[alpha_delta_dates]
     data$strain_tot[alpha_delta_dates] <-
       data$n_delta_variant[alpha_delta_dates] +
-      data$n_non_delta_variant[alpha_delta_dates]
+      data$n_alpha_variant[alpha_delta_dates]
   } else {
     data$strain_non_variant[alpha_delta_dates] <-
-      data$n_symp_non_delta_variant[alpha_delta_dates]
+      data$n_symp_alpha_variant[alpha_delta_dates]
     data$strain_tot[alpha_delta_dates] <-
       data$n_symp_delta_variant[alpha_delta_dates] +
-      data$n_symp_non_delta_variant[alpha_delta_dates]
+      data$n_symp_alpha_variant[alpha_delta_dates]
   }
 
   ## Fit to Delta/Omicron using VAM data for England, COG data for S/W/NI
-  delta_omicron_dates <- data$date >= "2021-11-20" & data$date <= "2022-01-15"
+  delta_omicron_dates <- data$date >= "2021-11-20" & data$date < "2022-01-01"
   if (region %in% c("scotland", "wales", "northern_ireland")) {
     data$strain_non_variant[delta_omicron_dates] <-
-      data$n_non_omicron_variant[delta_omicron_dates]
+      data$n_delta_variant[delta_omicron_dates]
     data$strain_tot[delta_omicron_dates] <-
       data$n_omicron_variant[delta_omicron_dates] +
-      data$n_non_omicron_variant[delta_omicron_dates]
+      data$n_delta_variant[delta_omicron_dates]
   } else {
     data$strain_non_variant[delta_omicron_dates] <-
-      data$n_symp_non_omicron_variant[delta_omicron_dates]
+      data$n_symp_delta_variant[delta_omicron_dates]
     data$strain_tot[delta_omicron_dates] <-
-      data$n_symp_non_omicron_variant[delta_omicron_dates] +
+      data$n_symp_delta_variant[delta_omicron_dates] +
       data$n_symp_omicron_variant[delta_omicron_dates]
   }
 
+  ## Fit to Omicron (BA.1)/Omicron BA.2 using VAM data for England,
+  ## COG data for S/W/NI
+  omicron_ba2_dates <- data$date >= "2022-01-01" & data$date <= "2022-04-15"
+  if (region %in% c("scotland", "wales", "northern_ireland")) {
+    data$strain_non_variant[omicron_ba2_dates] <-
+      data$n_omicron_variant[omicron_ba2_dates]
+    data$strain_tot[omicron_ba2_dates] <-
+      data$n_omicron_ba2_variant[omicron_ba2_dates] +
+      data$n_omicron_variant[omicron_ba2_dates]
+  } else {
+    data$strain_non_variant[omicron_ba2_dates] <-
+      data$n_symp_omicron_variant[omicron_ba2_dates]
+    data$strain_tot[omicron_ba2_dates] <-
+      data$n_symp_omicron_variant[omicron_ba2_dates] +
+      data$n_symp_omicron_ba2_variant[omicron_ba2_dates]
+  }
 
   # Use positives/negatives as Pillar 2 for Scotland
   # Set data$phe_patients to NA between 2020-06-01 and 2020-09-09 (inclusive)

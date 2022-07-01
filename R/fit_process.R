@@ -222,6 +222,7 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
     }
 
     n_strains <- pars_model[[i]][[1]]$n_strains
+    n_strains_R <- pars_model[[i]][[1]]$n_strains_R
     n_vacc_classes <- pars_model[[i]][[1]]$n_vacc_classes
 
     suffix <- paste0("_", c(sircovid:::sircovid_age_bins()$start, "CHW", "CHR"))
@@ -235,7 +236,7 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
       prob_strain1 <- NULL
     } else {
       R_nms <- get_names("R",
-                         list(S = n_strains, V = n_vacc_classes),
+                         list(S = n_strains_R, V = n_vacc_classes),
                          suffix)
       R1 <- R[R_nms, , dates1, drop = FALSE]
       prob_strain1 <- prob_strain[, , dates1, drop = FALSE]
@@ -842,6 +843,7 @@ summarise_states_region <- function(state, pars_model) {
   pars <- pars_model[[length(pars_model)]]
   n_groups <- pars$n_groups
   n_strains <- pars$n_strains
+  n_strains_R <- pars$n_strains_R
   n_vacc_classes <- pars$n_vacc_classes
 
   susceptible <- state[grep("^S_", rownames(state)), , ]
@@ -852,11 +854,12 @@ summarise_states_region <- function(state, pars_model) {
 
   recovered <- state[grep("^R_", rownames(state)), , ]
   recovered[is.na(recovered)] <- 0
-  recovered <- array(recovered, c(n_groups, n_strains,
+  recovered <- array(recovered, c(n_groups, n_strains_R,
                                   n_vacc_classes, dim(recovered)[2:3]))
   recovered <- apply(recovered, c(2, 4, 5), sum)
-  recovered <- recovered[c(1, 2), , ] + recovered[c(4, 3), , ]
-  row.names(recovered) <- c("recovered_1", "recovered_2")
+  recovered[c(1, 2), , ] <- recovered[c(1, 2), , ] + recovered[c(4, 3), , ]
+  recovered <- recovered[c(1, 2, 5), , ]
+  row.names(recovered) <- c("recovered_1", "recovered_2", "recovered_historic")
 
   extra_states <- abind1(susceptible, recovered)
 
