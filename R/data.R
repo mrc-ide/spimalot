@@ -171,12 +171,11 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
             # VAM data
             "n_symp_wildtype_variant", "n_symp_alpha_variant",
             "n_symp_delta_variant", "n_symp_omicron_variant",
-            "n_symp_omicron_ba2_variant", "n_symp_omicron_ba4_variant",
-            "n_symp_omicron_ba5_variant",
+            "n_symp_omicron_ba2_variant", "n_all_omicron_ba2_variant",
+            "n_all_omicron_ba4_variant", "n_all_omicron_ba5_variant",
             # Other VOC data
             "n_wildtype_variant", "n_alpha_variant", "n_delta_variant",
             "n_omicron_variant", "n_omicron_ba2_variant",
-            "n_omicron_ba4_variant", "n_omicron_ba5_variant",
             # Pillar 2 positives
             "positives", "positives_over25", "pillar2_positives",
             "pillar2_positives_over25", "positives_pcr",
@@ -343,25 +342,15 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
       data$n_symp_omicron_ba2_variant[omicron_ba2_dates]
   }
 
-  ## Fit to Omicron (BA.1)/Omicron BA.2 using VAM data for England,
-  ## COG data for S/W/NI
+  ## Fit to Omicron BA.2/Omicron BA.4 & BA.5
   omicron_ba2_ba4ba5_dates <-
     data$date >= "2022-05-01" & data$date <= date
-  if (region %in% c("scotland", "wales", "northern_ireland")) {
-    data$strain_non_variant[omicron_ba2_ba4ba5_dates] <-
-      data$n_omicron_ba2_variant[omicron_ba2_ba4ba5_dates]
+  data$strain_non_variant[omicron_ba2_ba4ba5_dates] <-
+    data$n_all_omicron_ba2_variant[omicron_ba2_ba4ba5_dates]
     data$strain_tot[omicron_ba2_ba4ba5_dates] <-
-      data$n_omicron_ba2_variant[omicron_ba2_ba4ba5_dates] +
-      data$n_omicron_ba4_variant[omicron_ba2_ba4ba5_dates] +
-      data$n_omicron_ba5_variant[omicron_ba2_ba4ba5_dates]
-  } else {
-    data$strain_non_variant[omicron_ba2_ba4ba5_dates] <-
-      data$n_symp_omicron_ba2_variant[omicron_ba2_ba4ba5_dates]
-    data$strain_tot[omicron_ba2_ba4ba5_dates] <-
-      data$n_symp_omicron_ba2_variant[omicron_ba2_ba4ba5_dates] +
-      data$n_symp_omicron_ba4_variant[omicron_ba2_ba4ba5_dates] +
-      data$n_symp_omicron_ba5_variant[omicron_ba2_ba4ba5_dates]
-  }
+      data$n_all_omicron_ba2_variant[omicron_ba2_ba4ba5_dates] +
+      data$n_all_omicron_ba4_variant[omicron_ba2_ba4ba5_dates] +
+      data$n_all_omicron_ba5_variant[omicron_ba2_ba4ba5_dates]
 
   # Use positives/negatives as Pillar 2 for Scotland
   # Set data$phe_patients to NA between 2020-06-01 and 2020-09-09 (inclusive)
