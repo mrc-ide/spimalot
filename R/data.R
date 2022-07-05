@@ -289,12 +289,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
 
   # Only use Wildtype/Alpha data between 2020-09-17 and 2021-03-01
   na_strain_dates <-
-    data$date < as.Date("2020-09-17") | data$date > as.Date("2021-03-01")
+    data$date <= as.Date("2020-09-17") | data$date > as.Date("2021-03-01")
   data$strain_non_variant[na_strain_dates] <- NA_integer_
   data$strain_tot[na_strain_dates] <- NA_integer_
 
   # Fit to Alpha/Delta using VAM data for England, COG data for S/W/NI
-  alpha_delta_dates <- data$date >= "2021-03-08" & data$date <= "2021-07-31"
+  alpha_delta_dates <- data$date > "2021-03-08" & data$date <= "2021-07-31"
   if (region %in% c("scotland", "wales", "northern_ireland")) {
     data$strain_non_variant[alpha_delta_dates] <-
       data$n_alpha_variant[alpha_delta_dates]
@@ -327,7 +327,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
 
   ## Fit to Omicron (BA.1)/Omicron BA.2 using VAM data for England,
   ## COG data for S/W/NI
-  omicron_ba2_dates <- data$date >= "2022-01-01" & data$date <= "2022-04-15"
+  omicron_ba2_dates <- data$date > "2022-01-01" & data$date < "2022-04-15"
   if (region %in% c("scotland", "wales", "northern_ireland")) {
     data$strain_non_variant[omicron_ba2_dates] <-
       data$n_omicron_variant[omicron_ba2_dates]
@@ -344,7 +344,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
 
   ## Fit to Omicron BA.2/Omicron BA.4 & BA.5
   omicron_ba2_ba4ba5_dates <-
-    data$date >= "2022-04-15" & data$date <= date
+    data$date > "2022-04-15" & data$date <= date
   data$strain_non_variant[omicron_ba2_ba4ba5_dates] <-
     data$n_all_omicron_ba2_variant[omicron_ba2_ba4ba5_dates]
     data$strain_tot[omicron_ba2_ba4ba5_dates] <-
