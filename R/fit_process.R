@@ -26,11 +26,9 @@ spim_fit_process <- function(samples, parameters, data, control,
   ## This is just the info/prior/proposal + base of the parameter used
   ## to fit the model. Below we will also create a refitted
   ## parameters_new object with new proposal matrix
-  parameters_raw <- parameters$raw
-  parameters_raw$base <- parameters$base
 
   message("Computing restart information")
-  restart <- fit_process_restart(samples, parameters_raw)
+  restart <- fit_process_restart(samples, parameters)
   samples$restart <- NULL
 
   samples$trajectories$date <-
@@ -70,7 +68,7 @@ spim_fit_process <- function(samples, parameters, data, control,
   samples <- reduce_trajectories(samples, control$severity)
 
   message("Computing parameter MLE and covariance matrix")
-  parameters_new <- spim_fit_parameters(samples, parameters_raw)
+  parameters_new <- spim_fit_parameters(samples, parameters)
 
   ## This can possibly merge in with the initial restart processing if
   ## we're careful now.  We need to have computed Rt first is the only
@@ -85,7 +83,7 @@ spim_fit_process <- function(samples, parameters, data, control,
       trajectories = trajectories_filter_time(samples$trajectories, i),
       rt = rt_filter_time(rt, i, samples$info$multiregion),
       data = data,
-      prior = parameters_raw$prior)
+      prior = parameters$raw$prior)
   }
 
   ## This list returns:
@@ -553,11 +551,8 @@ spim_fit_parameters <- function(samples, parameters) {
   }
 
   region <- samples$info$region
-  info <- parameters$info[keep(parameters$info$region, region), ]
+  info <- parameters$raw$info[keep(parameters$raw$info$region, region), ]
   rownames(info) <- NULL
-
-  prior <- parameters$prior[keep(parameters$prior$region, region), ]
-  rownames(prior) <- NULL
 
   ## This will certainly want moving elsewhere, possibly mcstate, as
   ## it's very fiddly.  There's no good reason it needs to be here
@@ -607,6 +602,9 @@ spim_fit_parameters <- function(samples, parameters) {
       covariance,
       stringsAsFactors = FALSE)
 
+    prior <- parameters$raw$prior[keep(parameters$raw$prior$region, region), ]
+    rownames(prior) <- NULL
+
   } else {
     i <- which.max(samples$probabilities[, "log_posterior"])
     initial <- samples$pars[i, ]
@@ -617,6 +615,11 @@ spim_fit_parameters <- function(samples, parameters) {
     proposal <- data_frame(region = samples$info$region,
                            name = colnames(covariance),
                            covariance)
+
+    prior <- parameters$prior
+    prior$region <- samples$info$region
+    prior <- prior[, c("region", setdiff(names(prior), "region"))]
+    rownames(prior) <- NULL
   }
 
   parameters$info <- info
