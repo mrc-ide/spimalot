@@ -169,17 +169,13 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
             paste0("react_positive_", react_age_bands),
             paste0("react_samples_", react_age_bands),
             # VAM data
-            "n_symp_wildtype_variant", "n_symp_non_wildtype_variant",
-            "n_symp_alpha_variant", "n_symp_non_alpha_variant",
-            "n_symp_delta_variant", "n_symp_non_delta_variant",
-            "n_symp_omicron_variant", "n_symp_non_omicron_variant",
-            "n_symp_omicron_ba2_variant", "n_symp_non_omicron_ba2_variant",
+            "n_symp_wildtype_variant", "n_symp_alpha_variant",
+            "n_symp_delta_variant", "n_symp_omicron_variant",
+            "n_symp_omicron_ba2_variant", "n_all_omicron_ba2_variant",
+            "n_all_omicron_ba4_variant", "n_all_omicron_ba5_variant",
             # Other VOC data
-            "n_wildtype_variant", "n_non_wildtype_variant",
-            "n_alpha_variant", "n_non_alpha_variant",
-            "n_delta_variant", "n_non_delta_variant",
-            "n_omicron_variant", "n_non_omicron_variant",
-            "n_omicron_ba2_variant", "n_non_omicron_ba2_variant",
+            "n_wildtype_variant", "n_alpha_variant", "n_delta_variant",
+            "n_omicron_variant", "n_omicron_ba2_variant",
             # Pillar 2 positives
             "positives", "positives_over25", "pillar2_positives",
             "pillar2_positives_over25", "positives_pcr",
@@ -293,12 +289,12 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
 
   # Only use Wildtype/Alpha data between 2020-09-17 and 2021-03-01
   na_strain_dates <-
-    data$date < as.Date("2020-09-17") | data$date > as.Date("2021-03-01")
+    data$date <= as.Date("2020-09-17") | data$date > as.Date("2021-03-01")
   data$strain_non_variant[na_strain_dates] <- NA_integer_
   data$strain_tot[na_strain_dates] <- NA_integer_
 
   # Fit to Alpha/Delta using VAM data for England, COG data for S/W/NI
-  alpha_delta_dates <- data$date >= "2021-03-08" & data$date <= "2021-07-31"
+  alpha_delta_dates <- data$date > "2021-03-08" & data$date <= "2021-07-31"
   if (region %in% c("scotland", "wales", "northern_ireland")) {
     data$strain_non_variant[alpha_delta_dates] <-
       data$n_alpha_variant[alpha_delta_dates]
@@ -331,7 +327,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
 
   ## Fit to Omicron (BA.1)/Omicron BA.2 using VAM data for England,
   ## COG data for S/W/NI
-  omicron_ba2_dates <- data$date >= "2022-01-01" & data$date <= "2022-04-15"
+  omicron_ba2_dates <- data$date > "2022-01-01" & data$date < "2022-04-15"
   if (region %in% c("scotland", "wales", "northern_ireland")) {
     data$strain_non_variant[omicron_ba2_dates] <-
       data$n_omicron_variant[omicron_ba2_dates]
@@ -345,6 +341,16 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
       data$n_symp_omicron_variant[omicron_ba2_dates] +
       data$n_symp_omicron_ba2_variant[omicron_ba2_dates]
   }
+
+  ## Fit to Omicron BA.2/Omicron BA.4 & BA.5
+  omicron_ba2_ba4ba5_dates <-
+    data$date > "2022-04-15" & data$date <= date
+  data$strain_non_variant[omicron_ba2_ba4ba5_dates] <-
+    data$n_all_omicron_ba2_variant[omicron_ba2_ba4ba5_dates]
+    data$strain_tot[omicron_ba2_ba4ba5_dates] <-
+      data$n_all_omicron_ba2_variant[omicron_ba2_ba4ba5_dates] +
+      data$n_all_omicron_ba4_variant[omicron_ba2_ba4ba5_dates] +
+      data$n_all_omicron_ba5_variant[omicron_ba2_ba4ba5_dates]
 
   # Use positives/negatives as Pillar 2 for Scotland
   # Set data$phe_patients to NA between 2020-06-01 and 2020-09-09 (inclusive)

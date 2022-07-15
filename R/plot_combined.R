@@ -2059,9 +2059,15 @@ spim_plot_infections_per_strain_region <- function(region, dat,
 
   res <- apply(res, c(1, 3), mean)
 
+  strain_cols <- khroma::colour("muted")(length(strain_names))
+  cols <- c(rbind(strain_cols, strain_cols))
+  shade <- rep(c(FALSE, TRUE), length(strain_names))
+
   remove_rows <- rowSums(res) == 0
   inf_names <- inf_names[!remove_rows]
   res <- res[!remove_rows, ]
+  cols <- cols[!remove_rows]
+  shade <- shade[!remove_rows]
 
   xlim <- c(min(x), max(x))
   ylim <- c(0, 100)
@@ -2079,9 +2085,7 @@ spim_plot_infections_per_strain_region <- function(region, dat,
        xaxs = "i",
        yaxs = "i")
 
-  cols <- khroma::colour("muted")(length(inf_names))
-
-  proportion_fill(x, res, cols)
+  proportion_fill(x, res, cols, shade)
 
   #Extract every first date of month from x
   firsts <- x[!duplicated(substring(x, 1, 7))]
@@ -2094,9 +2098,9 @@ spim_plot_infections_per_strain_region <- function(region, dat,
   axis(side = 2, at = pretty(ylim), labels = pretty(ylim))
 
   if (plot_legend) {
-    legend("bottomleft", legend = inf_names,
+    legend("bottomleft", legend = strain_names,
            cex = 0.8, x.intersp = 2, ncol = 1,
-           fill = cols,
+           fill = strain_cols,
            bty = "o",
            bg = "white",
            inset = 0.02)
@@ -2350,17 +2354,33 @@ ci_bands <- function(quantiles, y, palette = NULL, cols = NULL, leg = TRUE,
 }
 
 
-proportion_fill <- function(x, y, cols) {
+proportion_fill <- function(x, y, cols, shade = NULL) {
+
   n_y <- nrow(y)
   y <- apply(y, 2, cumsum)
   y <- rbind(rep(0, dim(y)[2]), y)
   y <- t(t(y) / y[nrow(y), ]) * 100
 
+  if (is.null(shade)) {
+    shade <- rep(FALSE, n_y)
+  }
+
   for (i in seq_len(n_y)) {
     y1 <- y[i, ]
     y2 <- y[i + 1, ]
+    if (shade[i]) {
+      density <- 20
+    } else {
+      density <- NULL
+    }
     polygon(x = c(x, rev(x)),
             y = c(y2, rev(y1)),
-            col = cols[i])
+            col = cols[i],
+            density = density,
+            lwd = 2,
+            border = NA)
+    polygon(x = c(x, rev(x)),
+            y = c(y2, rev(y1)),
+            border = "black")
   }
 }
