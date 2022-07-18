@@ -659,8 +659,13 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
       ret[, react_by_age] <- NA_integer_
     }
 
+    ## Do not fit to all beds occupancy when we have split general/ICU beds
+    ## occupancy
+    hosp_split_dates <- !is.na(ret$general) | !is.na(ret$icu)
+    ret$hosp[hosp_split_dates] <- NA_integer_
+
     if (model_type == "BB") {
-      omit <- c("hosp", "admitted", "diagnoses", "pillar2_cases",
+      omit <- c("admitted", "diagnoses", "pillar2_cases",
                 "pillar2_over25_cases",
                 paste0("pillar2_", pillar2_age_bands, "_cases"))
 
@@ -689,7 +694,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
 
     }
     if (model_type == "NB") {
-      omit <- c("hosp", "admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
+      omit <- c("admitted", "diagnoses", "pillar2_tot", "pillar2_pos",
                 "pillar2_over25_tot", "pillar2_over25_pos",
                 paste0("pillar2_", pillar2_age_bands, "_tot"),
                 paste0("pillar2_", pillar2_age_bands, "_pos"))
