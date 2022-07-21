@@ -236,6 +236,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
   data[which(is.na(data$death_comm)), "death_comm"] <- 0
   data[which(is.na(data$ons_death_carehome)), "ons_death_carehome"] <- 0
   data[which(is.na(data$ons_death_noncarehome)), "ons_death_noncarehome"] <- 0
+  data[which(is.na(data$ons_death_hospital)), "ons_death_hospital"] <- 0
 
   if (region == "uk") {
     ## This might be better done in the upstream task
@@ -246,36 +247,40 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     data <- data[data$region == region, ]
   }
 
-  if (region %in% c("northern_ireland", "scotland", "wales", "uk")) {
-    data$deaths <- data$death2
-    data[, deaths_hosp_age] <- NA_integer_
-    data[, deaths_non_hosp_age] <- NA_integer_
-    data$deaths_hosp <- NA_integer_
-    data$deaths_comm <- NA_integer_
-    data$deaths_carehomes <- NA_integer_
-    data$deaths_non_hosp <- NA_integer_
+  ## due to ONS data being lagged, we will use death linelist data
+  ## for recent care home and community deaths
+  ons_death_dates <- data$date <= ons_death_backfill_date
+  data$deaths_hosp[ons_death_dates] <-
+    data$ons_death_hospital[ons_death_dates]
+  data$deaths_comm[ons_death_dates] <-
+    data$ons_death_carehome[ons_death_dates] +
+    data$ons_death_noncarehome[ons_death_dates]
+  data[ons_death_dates, deaths_hosp_age] <-
+    data[ons_death_dates, ons_deaths_hosp_age]
+  data[ons_death_dates, deaths_non_hosp_age] <-
+    data[ons_death_dates, ons_deaths_non_hosp_age]
+
+  if (region %in% c("scotland", "wales", "northern_ireland")) {
+    data$deaths[ons_death_dates] <-
+      data$deaths_hosp[ons_death_dates] + data$deaths_comm[ons_death_dates]
+    data$deaths_hosp[!ons_death_dates] <- NA_integer_
+    data$deaths_comm[!ons_death_dates] <- NA_integer_
+    data[!ons_death_dates, deaths_hosp_age] <- NA_integer_
+    data[!ons_death_dates, deaths_non_hosp_age] <- NA_integer_
+    if (region == "northern_ireland") {
+      data$deaths[!ons_death_dates] <- data$death2[!ons_death_dates]
+    } else {
+      data$deaths[!ons_death_dates] <- NA_integer_
+    }
   } else {
-
-    data$deaths_hosp <- data$death3
-    data$deaths_comm <- data$death_comm + data$death_chr
-    data$deaths_non_hosp <- NA_integer_
-    data$deaths_carehomes <- NA_integer_
-
-    ## due to ONS data being lagged, we will use death linelist data
-    ## for recent care home and community deaths
-    ons_death_dates <- data$date <= ons_death_backfill_date
-    data$deaths_hosp[ons_death_dates] <-
-      data$ons_death_hospital[ons_death_dates]
-    data$deaths_comm[ons_death_dates] <-
-      data$ons_death_carehome[ons_death_dates] +
-      data$ons_death_noncarehome[ons_death_dates]
-    data[ons_death_dates, deaths_hosp_age] <-
-      data[ons_death_dates, ons_deaths_hosp_age]
-    data[ons_death_dates, deaths_non_hosp_age] <-
-      data[ons_death_dates, ons_deaths_non_hosp_age]
-
+    data$deaths_hosp[!ons_death_dates] <- data$death3[!ons_death_dates]
+    data$deaths_comm[!ons_death_dates] <-
+      data$death_comm[!ons_death_dates] + data$death_chr[!ons_death_dates]
     data$deaths <- data$deaths_hosp + data$deaths_comm
   }
+
+  data$deaths_non_hosp <- NA_integer_
+  data$deaths_carehomes <- NA_integer_
 
   ## Fit to Wildtype/Alpha using VAM data for England, COG for S/W/NI
   if (region %in% c("scotland", "wales", "northern_ireland")) {
@@ -617,22 +622,22 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     ret$pillar2_under15_pos <- NA_integer_
     ret$pillar2_under15_cases <- NA_integer_
 
+    has <- as.data.frame(!is.na(ret))
+    has_any <- function(nms) {
+      apply(has[nms], 1, any)
+    }
+
     ## Do not fit to aggregated hospital deaths
     deaths_hosp_age <- gsub("death", "deaths_hosp", deaths_hosp_age)
-    if (any(!is.na(ret[, deaths_hosp_age]))) {
-      ret$deaths_hosp <- NA_integer_
-    }
+    ret$deaths_hosp[has_any(deaths_hosp_age)] <- NA_integer_
+
     deaths_comm_age <-
       gsub("death_non_hosp", "deaths_comm", deaths_non_hosp_age)
-    if (any(!is.na(ret[, deaths_comm_age]))) {
-      ret$deaths_comm <- NA_integer_
-    }
-    set_deaths_to_na <-
-      any(!is.na(ret[, c(deaths_hosp_age, deaths_comm_age,
-                         "deaths_hosp", "deaths_comm")]))
-    if (set_deaths_to_na) {
-      ret$deaths <- NA_integer_
-    }
+    ret$deaths_comm[has_any(deaths_comm_age)] <- NA_integer_
+
+    ret$deaths[has_any(c(deaths_hosp_age, deaths_comm_age,
+                         "deaths_hosp", "deaths_comm"))] <- NA_integer_
+
 
     # Check we have age-specific admissions for England regions, and use if so.
     # Due to backfill issues with the sus linelist, we only fit admissions by
