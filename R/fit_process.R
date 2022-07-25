@@ -98,6 +98,7 @@ spim_fit_process <- function(samples, parameters, data,
 
 
 create_simulate_object <- function(samples, start_date_sim, date) {
+
   start_date_sim <- sircovid::sircovid_date(start_date_sim)
   fit_dates <- samples$trajectories$date
   idx_dates <- (fit_dates >= start_date_sim) &
@@ -257,12 +258,12 @@ extract_age_class_state <- function(state) {
   f <- function(array) {
     x <- mcstate::array_reshape(array, 1L, c(n_groups, strata))
 
-    if (ncol(x) == 5) {
-      colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
-                       "waned_protection", "booster_protection")
+    if (ncol(x) == 6) {
+      colnames(x) <- c("unvaccinated", "no_protection", "partial_protection",
+                       "full_protection", "waned_protection", "booster_protection")
     } else {
-      colnames(x) <- c("unvaccinated", "partial_protection", "full_protection",
-                       "waned_protection")
+      colnames(x) <- c("unvaccinated", "no_protection", "partial_protection",
+                       "full_protection", "waned_protection")
     }
 
 
