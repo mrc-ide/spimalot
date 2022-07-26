@@ -355,7 +355,18 @@ spim_calculate_doses <- function(summary, population_england, scen) {
   doses_g <- summary$n_doses %>%
     dplyr::filter(region == "england",
                   scenario == scen) %>%
-    tidyr::pivot_wider(names_from = state, names_prefix = "state_") %>%
+    tidyr::pivot_wider(names_from = state, names_prefix = "state_")
+
+  if ("state_first_dose_no_effect_inc" %in% colnames(doses_g)) {
+    doses_g$state_first_dose_inc <- doses_g$state_first_dose_no_effect_inc +
+      doses_g$state_first_dose_full_effect_inc
+  }
+
+  if (!("state_booster_dose_inc" %in% colnames(doses_g))) {
+    doses_g$state_booster_dose_inc <- 0
+  }
+
+  doses_g <- doses_g %>%
     dplyr::mutate(state_total_dose_inc = state_first_dose_inc +
                     state_second_dose_inc +
                     state_booster_dose_inc) %>%
