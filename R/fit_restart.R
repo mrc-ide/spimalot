@@ -16,13 +16,18 @@
 ##'   integer sircovid date, an R Date or a string representing an ISO
 ##'   date.
 ##'
+##' @param round Logical parameter, indicates whether or not to round
+##'   the main model states. Can be used to ensure that a restart initial
+##'   state from a deterministic parent fit can be used in a stochastic
+##'   restart fit. Default is FALSE
+##'
 ##' @return A list with the same names as `restart`, but with
 ##'   `restart$state` filtered down to a single date's data and
 ##'   `restart$state$restart_date` replaced by the sircovid date
 ##'   corresponding to the restart.
 ##'
 ##' @export
-spim_restart_initial_state <- function(restart, date) {
+spim_restart_initial_state <- function(restart, date, round = FALSE) {
   ## TODO: this could actually go into mcstate.
   date <- sircovid::as_sircovid_date(date)
   i <- match(date, restart$state$time)
@@ -31,7 +36,28 @@ spim_restart_initial_state <- function(restart, date) {
     stop(sprintf("Can't restart at date '%s', must be one of %s",
                  date, paste(pos, collapse = ", ")))
   }
-  restart$state$state[, , i, drop = TRUE]
+  ret <- restart$state$state[, , i, drop = TRUE]
+
+  if (round) {
+    info <- restart$info$info[[length(restart$info$info)]]
+
+    states_to_round <-
+      c("D_hosp", "D_non_hosp", "D", "S", "vaccine_missed_doses",
+        "T_sero_neg_1", "T_sero_neg_2", "R", "T_PCR_neg",
+        "E", "I_A", "I_P", "I_C_1", "I_C_2", "G_D", "ICU_pre_unconf",
+        "ICU_pre_conf", "H_R_unconf", "H_R_conf", "H_D_unconf", "H_D_conf",
+        "ICU_W_R_unconf", "ICU_W_R_conf", "ICU_W_D_unconf", "ICU_W_D_conf",
+        "ICU_D_unconf", "ICU_D_conf", "W_R_unconf", "W_R_conf", "W_D_unconf",
+        "W_D_conf", "T_sero_pre_1", "T_sero_pos_1", "T_sero_pre_2",
+        "T_sero_pos_2", "T_PCR_pre", "T_PCR_pos")
+
+    idx_states_to_round <- c(unlist(info$index[states_to_round]))
+
+    ret[idx_states_to_round, ] <- round(ret[idx_states_to_round, ])
+  }
+
+  ret
+
 }
 
 
