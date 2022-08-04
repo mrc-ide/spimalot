@@ -53,7 +53,11 @@ spim_restart_initial_state <- function(restart, date, round = FALSE) {
 
     idx_states_to_round <- c(unlist(info$index[states_to_round]))
 
-    ret[idx_states_to_round, ] <- round(ret[idx_states_to_round, ])
+    random_round <- function(x) {
+      floor(x) + rbinom(prod(dim(x)), 1, x - floor(x))
+    }
+
+    ret[idx_states_to_round, ] <- random_round(ret[idx_states_to_round, ])
   }
 
   ret
