@@ -4,7 +4,7 @@
 \alias{spim_restart_initial_state}
 \title{Load restart data}
 \usage{
-spim_restart_initial_state(restart, date)
+spim_restart_initial_state(restart, date, round = FALSE)
 }
 \arguments{
 \item{restart}{The loaded restart date (processed with
@@ -17,6 +17,11 @@ by particle by \code{time}).}
 passed through \link[sircovid:sircovid_date]{sircovid::as_sircovid_date} so can be either an
 integer sircovid date, an R Date or a string representing an ISO
 date.}
+
+\item{round}{Logical parameter, indicates whether or not to round
+the main model states. Can be used to ensure that a restart initial
+state from a deterministic parent fit can be used in a stochastic
+restart fit. Default is FALSE}
 }
 \value{
 A list with the same names as \code{restart}, but with
