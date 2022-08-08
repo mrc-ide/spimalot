@@ -317,10 +317,12 @@ reduce_trajectories <- function(samples, severity) {
   ## Remove unused trajectories for predict function in combined
   remove_strings <- c("prob_strain", "S_", "R_", "I_weighted_", "D_hosp_",
                       "D_all_", "diagnoses_admitted_", "cum_infections_disag_",
-                      "cum_n_vaccinated", "cum_admit_", "ifr", "ihr", "hfr")
+                      "cum_n_vaccinated", "vacc_uptake_", "cum_admit_", "ifr",
+                      "ihr", "hfr")
 
   if (severity) {
-    remove_strings <- remove_strings[!remove_strings %in% "diagnoses_admitted_"]
+    remove_strings <- remove_strings[!remove_strings %in%
+                                       c("diagnoses_admitted_", "vacc_uptake_")]
   }
 
   re <- sprintf("^(%s)", paste(remove_strings, collapse = "|"))
@@ -873,6 +875,12 @@ summarise_states_region <- function(state, pars_model) {
   }
 
   vaccine_status <- state[grep("^cum_n_vaccinated_", rownames(state)), , ]
+
+  vacc_uptake <- which(endsWith(rownames(vaccine_status), "_1"))[c(1:17)]
+  vacc_uptake <- vaccine_status[vacc_uptake, , ]
+  rownames(vacc_uptake) <- paste0("vacc_uptake_", seq_len(nrow(vacc_uptake)))
+  extra_states <- abind1(extra_states, vacc_uptake)
+
   vaccine_status[is.na(vaccine_status)] <- 0
   vaccine_status <- array(vaccine_status, c(n_groups, n_vacc_classes,
                                             dim(vaccine_status)[2:3]))
