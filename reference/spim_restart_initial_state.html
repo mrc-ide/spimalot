@@ -20,7 +20,7 @@ date."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathj
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.5</span>
       </span>
     </div>
 
@@ -56,7 +56,7 @@ date.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">spim_restart_initial_state</span><span class="op">(</span><span class="va">restart</span>, <span class="va">date</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">spim_restart_initial_state</span><span class="op">(</span><span class="va">restart</span>, <span class="va">date</span>, round <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -74,6 +74,13 @@ by particle by <code>time</code>).</p></dd>
 passed through <a href="https://rdrr.io/pkg/sircovid/man/sircovid_date.html" class="external-link">sircovid::as_sircovid_date</a> so can be either an
 integer sircovid date, an R Date or a string representing an ISO
 date.</p></dd>
+
+
+<dt>round</dt>
+<dd><p>Logical parameter, indicates whether or not to round
+the main model states. Can be used to ensure that a restart initial
+state from a deterministic parent fit can be used in a stochastic
+restart fit. Default is FALSE</p></dd>
 
 </dl></div>
     <div id="value">
