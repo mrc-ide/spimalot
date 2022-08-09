@@ -322,7 +322,8 @@ reduce_trajectories <- function(samples, severity) {
 
   if (severity) {
     remove_strings <- remove_strings[!remove_strings %in%
-                                       c("diagnoses_admitted_", "vacc_uptake_")]
+                                       c("diagnoses_admitted_", "vacc_uptake_",
+                                         "D_hosp_", "D_all_")]
   }
 
   re <- sprintf("^(%s)", paste(remove_strings, collapse = "|"))
