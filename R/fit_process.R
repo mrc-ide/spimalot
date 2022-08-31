@@ -317,10 +317,13 @@ reduce_trajectories <- function(samples, severity) {
   ## Remove unused trajectories for predict function in combined
   remove_strings <- c("prob_strain", "S_", "R_", "I_weighted_", "D_hosp_",
                       "D_all_", "diagnoses_admitted_", "cum_infections_disag_",
-                      "cum_n_vaccinated", "cum_admit_", "ifr", "ihr", "hfr")
+                      "cum_n_vaccinated", "vacc_uptake_", "cum_admit_", "ifr",
+                      "ihr", "hfr")
 
   if (severity) {
-    remove_strings <- remove_strings[!remove_strings %in% "diagnoses_admitted_"]
+    remove_strings <- remove_strings[!remove_strings %in%
+                                       c("diagnoses_admitted_", "vacc_uptake_",
+                                         "D_hosp_", "D_all_")]
   }
 
   re <- sprintf("^(%s)", paste(remove_strings, collapse = "|"))
@@ -873,6 +876,12 @@ summarise_states_region <- function(state, pars_model) {
   }
 
   vaccine_status <- state[grep("^cum_n_vaccinated_", rownames(state)), , ]
+
+  vacc_uptake <- which(endsWith(rownames(vaccine_status), "_1"))[c(1:17)]
+  vacc_uptake <- vaccine_status[vacc_uptake, , ]
+  rownames(vacc_uptake) <- paste0("vacc_uptake_", seq_len(nrow(vacc_uptake)))
+  extra_states <- abind1(extra_states, vacc_uptake)
+
   vaccine_status[is.na(vaccine_status)] <- 0
   vaccine_status <- array(vaccine_status, c(n_groups, n_vacc_classes,
                                             dim(vaccine_status)[2:3]))
@@ -909,6 +918,7 @@ get_names <- function(state_name, suffix_list, suffix0 = NULL) {
 }
 
 extract_demography <- function(samples) {
+
   multiregion <- samples$info$multiregion
 
   if (multiregion) {
@@ -939,19 +949,11 @@ extract_demography_region <- function(samples) {
 
   admissions <- trajectories[grep("^cum_admit", rownames(trajectories)), , ]
   deaths_hosp <- trajectories[grep("^D_hosp_", rownames(trajectories)), , ]
+  D_all <- trajectories[grep("^D_all_", rownames(trajectories)), , ]
 
   ## We obtain community deaths by subtracting deaths_hosp from D_all
-  ## But D_all is by vaccine class as well as age, so first we must sum
-  ## over vaccine classes
-  D_all <- trajectories[grep("^D_all_", rownames(trajectories)), , ]
-  p <- samples$predict$transform(samples$pars[1, ])
-  n_groups <- p[[length(p)]]$pars$n_groups
-  n_vacc_classes <- p[[length(p)]]$pars$n_vacc_classes
-  D_all <- array(D_all, c(n_groups, n_vacc_classes, dim(D_all)[c(2, 3)]))
-  D_all[is.na(D_all)] <- 0
-  D_all <- apply(D_all, c(1, 3, 4), sum)
   deaths_comm <- D_all - deaths_hosp
-  rownames(deaths_comm) <- gsub("hosp", "comm", rownames(deaths_comm))
+  rownames(deaths_comm) <- gsub("all", "comm", rownames(deaths_comm))
 
   process <- function(x) {
     total <- x[, , dim(x)[3]]
