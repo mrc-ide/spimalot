@@ -1002,6 +1002,7 @@ extract_severity_region <- function(state, step, date) {
 
   # ignore CHR and CHW
   sev_traj <- grep("CHR|CHW", sev_traj, invert = TRUE, value = TRUE)
+  sev_traj <- grep("disag", sev_traj, invert = TRUE, value = TRUE)
 
   severity <- list()
 
