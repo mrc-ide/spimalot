@@ -88,7 +88,7 @@ Suggests:
     testthat,
     withr
 Remotes:
-    alan-turing-institute/distr6
+    alan-turing-institute/distr6,
     mrc-ide/dust,
     mrc-ide/mcstate,
     mrc-ide/rrq,
