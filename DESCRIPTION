@@ -1,6 +1,6 @@
 Package: spimalot
 Title: Support for 'sircovid'
-Version: 0.8.6
+Version: 0.8.7
 Authors@R:
     c(person(given = "Marc",
            family = "Baguelin",
@@ -74,7 +74,7 @@ Imports:
     patchwork,
     readxl,
     reshape2,
-    sircovid (>= 0.14.1),
+    sircovid (>= 0.14.2),
     stringr,
     tdigest,
     tibble,
@@ -88,6 +88,7 @@ Suggests:
     testthat,
     withr
 Remotes:
+    alan-turing-institute/distr6,
     mrc-ide/dust,
     mrc-ide/mcstate,
     mrc-ide/rrq,

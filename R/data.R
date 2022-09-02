@@ -349,7 +349,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
 
   ## Fit to Omicron BA.2/Omicron BA.4 & BA.5
   omicron_ba2_ba4ba5_dates <-
-    data$date > "2022-04-15" & data$date <= date
+    data$date > "2022-04-15" & data$date < "2022-08-01"
   data$strain_non_variant[omicron_ba2_ba4ba5_dates] <-
     data$n_all_omicron_ba2_variant[omicron_ba2_ba4ba5_dates]
     data$strain_tot[omicron_ba2_ba4ba5_dates] <-
