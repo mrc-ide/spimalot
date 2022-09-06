@@ -1012,6 +1012,7 @@ extract_severity_region <- function(state, step, date) {
 
   severity$step <- step
   severity$date <- date
+  class(severity) <- "IFR_t_trajectories"
 
   severity
 }
