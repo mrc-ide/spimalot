@@ -80,6 +80,7 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
   ## Check if severity calculations were outputed and, if so, aggregate
   if (get_severity) {
     message("Aggregating severity outputs")
+    ret$severity <- Map(reorder_rt_ifr, ret$severity, rank_cum_inc)
     ret$severity <- combined_aggregate_severity(ret$severity, agg_samples)
   }
 
@@ -309,53 +310,89 @@ combined_aggregate_data <- function(data) {
 
 combined_aggregate_severity <- function(severity, samples) {
 
-  # We first need to sum admitted_inc and diagnoses_inc trajectories to get
-  # all_admissions_inc, which we'll use as weight to aggregate hospital severity
+  # We first need to sum hospitalisations/infections incidence by strain across
+  # metastrains
   for (i in names(samples)) {
-    admitted_inc <- samples[[i]]$trajectories$state["admitted_inc", , ,
-                                                    drop = FALSE]
-    diagnoses_inc <- samples[[i]]$trajectories$state["diagnoses_inc", , ,
-                                                     drop = FALSE]
-    all_admissions <- admitted_inc + diagnoses_inc
-    rownames(all_admissions) <- "all_admissions_inc"
-    samples[[i]]$trajectories$state <-
-      abind_quiet(samples[[i]]$trajectories$state, all_admissions, along = 1)
+    hospitalisations <- paste0("hospitalisations_inc_by_strain", seq_len(4))
+    samples[[i]]$trajectories$state[hospitalisations[1], , ] <-
+      apply(samples[[i]]$trajectories$state[hospitalisations[c(1, 4)], , ],
+            c(2, 3), sum, na.rm = TRUE)
+    samples[[i]]$trajectories$state[hospitalisations[2], , ] <-
+      apply(samples[[i]]$trajectories$state[hospitalisations[c(2, 3)], , ],
+            c(2, 3), sum, na.rm = TRUE)
+
+    infections <- paste0("infections_inc_strain_", seq_len(4))
+    samples[[i]]$trajectories$state[infections[1], , ] <-
+      apply(samples[[i]]$trajectories$state[infections[c(1, 4)], , ],
+            c(2, 3), sum, na.rm = TRUE)
+    samples[[i]]$trajectories$state[infections[2], , ] <-
+      apply(samples[[i]]$trajectories$state[infections[c(2, 3)], , ],
+            c(2, 3), sum, na.rm = TRUE)
   }
 
-  # Some unfortunate double running of the same function outputting a similar
-  # object but with different weighting
-  admissions <- combined_aggregate_severity_1(severity, samples,
-                                              weight = "all_admissions_inc")
+  england <- sircovid::regions("england")
+  nations <- sircovid::regions("nations")
 
-  infections <- combined_aggregate_severity_1(severity, samples,
-                                              weight = "infections_inc")
+  if (all(england %in% names(severity))) {
+    severity$england <- combined_severity(severity[england], samples[england])
+  }
 
-  # Severity trajectories weighted by admissions
-  admission_weighted <- grep("^hfr", names(admissions[[1]]), value = TRUE)
-
-  severity$england <- infections$england
-  for (i in admission_weighted) {
-    severity$england[[i]] <- admissions$england[[i]]
+  if (all(nations %in% names(severity))) {
+    severity$uk <- combined_severity(severity[nations], samples[nations])
   }
 
   severity
 }
 
 
-combined_aggregate_severity_1 <- function(x, samples, weight) {
-  england <- sircovid::regions("england")
-  nations <- sircovid::regions("nations")
+combined_severity <- function(severity, samples) {
 
-  if (all(england %in% names(x))) {
-    x$england <- sircovid::combine_rt(x[england], samples[england],
-                                       rank = FALSE, weight = weight)
+  out <- combined_severity_1(severity, samples, c("ifr", "ihr"),
+                             "infections_inc", step_date = TRUE)
+
+  out <- c(out, combined_severity_1(severity, samples, c("hfr"),
+                                    "hospitalisations_inc"))
+
+  age <- seq(0, 80, by = 5)
+  for (i in age) {
+    out <- c(out, combined_severity_1(severity, samples,
+                                      paste0(c("ifr", "ihr"), "_age_", i),
+                                      paste0("infections_inc_by_age_", i)))
+
+    out <-
+      c(out, combined_severity_1(severity, samples, paste0("hfr_age_", i),
+                                 paste0("hospitalisations_inc_by_age_", i)))
   }
 
-  if (all(nations %in% names(x))) {
-    x$uk <- sircovid::combine_rt(x[nations], samples[nations],
-                                 rank = FALSE, weight = weight)
+  strain <- c(1, 2)
+  for (i in strain) {
+    out <- c(out, combined_severity_1(severity, samples,
+                                      paste0(c("ifr", "ihr"), "_strain_", i),
+                                      paste0("infections_inc_strain_", i)))
+
+    out <-
+      c(out, combined_severity_1(severity, samples, paste0("hfr_strain_", i),
+                                 paste0("hospitalisations_inc_by_strain", i)))
   }
-  x
+
+
+  out
+}
+
+combined_severity_1 <- function(severity, samples, what, weight,
+                                step_date = FALSE) {
+  for (i in names(severity)) {
+    severity[[i]] <- severity[[i]][c(what, "step", "date")]
+  }
+
+  ret <- sircovid::combine_rt(severity, samples,
+                              rank = FALSE, weight = weight)
+
+  if (!step_date) {
+    ret$step <- NULL
+    ret$date <- NULL
+  }
+  ret
 }
 
 
