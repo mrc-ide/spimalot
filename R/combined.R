@@ -313,7 +313,7 @@ combined_aggregate_severity <- function(severity, samples) {
   # We first need to sum hospitalisations/infections incidence by strain across
   # metastrains
   for (i in names(samples)) {
-    hospitalisations <- paste0("hospitalisations_inc_by_strain", seq_len(4))
+    hospitalisations <- paste0("hospitalisations_inc_strain_", seq_len(4))
     samples[[i]]$trajectories$state[hospitalisations[1], , ] <-
       apply(samples[[i]]$trajectories$state[hospitalisations[c(1, 4)], , ],
             c(2, 3), sum, na.rm = TRUE)
@@ -347,6 +347,10 @@ combined_aggregate_severity <- function(severity, samples) {
 
 combined_severity <- function(severity, samples) {
 
+  ## Produce England/UK level severity estimates. We weight IFRs and IHRs by
+  ## the relevant infection incidence, HFRs by the relevant hospitalisations
+  ## incidence
+
   out <- combined_severity_1(severity, samples, c("ifr", "ihr"),
                              "infections_inc", step_date = TRUE)
 
@@ -357,11 +361,11 @@ combined_severity <- function(severity, samples) {
   for (i in age) {
     out <- c(out, combined_severity_1(severity, samples,
                                       paste0(c("ifr", "ihr"), "_age_", i),
-                                      paste0("infections_inc_by_age_", i)))
+                                      paste0("infections_inc_age_", i)))
 
     out <-
       c(out, combined_severity_1(severity, samples, paste0("hfr_age_", i),
-                                 paste0("hospitalisations_inc_by_age_", i)))
+                                 paste0("hospitalisations_inc_age_", i)))
   }
 
   strain <- c(1, 2)
@@ -372,7 +376,7 @@ combined_severity <- function(severity, samples) {
 
     out <-
       c(out, combined_severity_1(severity, samples, paste0("hfr_strain_", i),
-                                 paste0("hospitalisations_inc_by_strain", i)))
+                                 paste0("hospitalisations_inc_strain_", i)))
   }
 
 
@@ -383,6 +387,11 @@ combined_severity_1 <- function(severity, samples, what, weight,
                                 step_date = FALSE) {
   for (i in names(severity)) {
     severity[[i]] <- severity[[i]][c(what, "step", "date")]
+
+    ## Where incidence is zero (and thus where the weight is zero), the severity
+    ## metric will be NA. To avoid the weighted severity being NA, we set the
+    ## corresponding severity values to 0. The weighted severity value should
+    ## therefore only be NA where the incidence across all regions is 0
     zero_weight <-
       which(t(samples[[i]]$trajectories$state[weight, , ]) == 0)
     for (w in what) {
