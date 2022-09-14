@@ -383,6 +383,11 @@ combined_severity_1 <- function(severity, samples, what, weight,
                                 step_date = FALSE) {
   for (i in names(severity)) {
     severity[[i]] <- severity[[i]][c(what, "step", "date")]
+    zero_weight <-
+      which(t(samples[[i]]$trajectories$state[weight, , ]) == 0)
+    for (w in what) {
+      severity[[i]][[w]][zero_weight] <- 0
+    }
   }
 
   ret <- sircovid::combine_rt(severity, samples,
