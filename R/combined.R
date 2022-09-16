@@ -260,14 +260,128 @@ combined_aggregate_samples <- function(samples) {
   if (all(england %in% names(samples))) {
     samples$england$trajectories <-
       sircovid::combine_trajectories(samples[england], rank = FALSE)
+    agg_positivity <-
+      any(grepl("pillar2_positivity",
+                rownames(samples$england$trajectories$state)))
+    if (agg_positivity) {
+      samples$england$trajectories <-
+        combined_aggregate_positivity(samples$england$trajectories,
+                                      samples[england])
+    }
   }
 
   if (all(nations %in% names(samples))) {
     samples$uk$trajectories <-
       sircovid::combine_trajectories(samples[nations], rank = FALSE)
+    agg_positivity <-
+      any(grepl("pillar2_positivity",
+                rownames(samples$uk$trajectories$state)))
+    if (agg_positivity) {
+      samples$uk$trajectories <-
+        combined_aggregate_positivity(samples$uk$trajectories,
+                                      samples[sircovid::regions("all")])
+    }
   }
 
   samples
+}
+
+combined_aggregate_positivity <- function(agg_trajectories, samples) {
+
+  p_NC_names <- c("p_NC_under15", "p_NC_15_24", "p_NC_25_49",
+                  "p_NC_50_64", "p_NC_65_79", "p_NC_80_plus",
+                  "p_NC_weekend_under15", "p_NC_weekend_15_24",
+                  "p_NC_weekend_25_49", "p_NC_weekend_50_64",
+                  "p_NC_weekend_65_79", "p_NC_weekend_80_plus")
+
+  dim <- dim(samples[[1]]$trajectories$state)[c(2, 3)]
+
+  pos_under15 <- array(0, dim = dim)
+  pos_15_24 <- array(0, dim = dim)
+  pos_25_49 <- array(0, dim = dim)
+  pos_50_64 <- array(0, dim = dim)
+  pos_65_79 <- array(0, dim = dim)
+  pos_80_plus <- array(0, dim = dim)
+
+  neg_under15 <- array(0, dim = dim)
+  neg_15_24 <- array(0, dim = dim)
+  neg_25_49 <- array(0, dim = dim)
+  neg_50_64 <- array(0, dim = dim)
+  neg_65_79 <- array(0, dim = dim)
+  neg_80_plus <- array(0, dim = dim)
+
+  for (r in names(samples)) {
+    state <- samples[[r]]$trajectories$state
+    date <- sircovid::sircovid_date_as_date(samples[[r]]$trajectories$date)
+
+    pos_under15 <- pos_under15 + state[paste0("sympt_cases_under15_inc"), , ]
+    pos_15_24 <- pos_15_24 + state[paste0("sympt_cases_15_24_inc"), , ]
+    pos_25_49 <- pos_25_49 + state[paste0("sympt_cases_25_49_inc"), , ]
+    pos_50_64 <- pos_50_64 + state[paste0("sympt_cases_50_64_inc"), , ]
+    pos_65_79 <- pos_65_79 + state[paste0("sympt_cases_65_79_inc"), , ]
+    pos_80_plus <- pos_80_plus + state[paste0("sympt_cases_80_plus_inc"), , ]
+
+    pars_model <- lapply(seq_len(nrow(samples[[r]]$pars)), function(i)
+      last(samples[[r]]$predict$transform(samples[[r]]$pars[i, ]))$pars)
+
+    pars_base <- pars_model[[1]]
+
+    pars <- t(vapply(pars_model, function(p) unlist(p[p_NC_names]),
+                     numeric(length(p_NC_names))))
+
+    calc_negs <- function(group) {
+      neg <- pars_base[[paste0("N_tot_", group)]] -
+        state[paste0("sympt_cases_", group, "_inc"), , ]
+
+      neg[, grepl("^S", weekdays(date))] <-
+        neg[, grepl("^S", weekdays(date))] *
+        pars[, paste0("p_NC_weekend_", group)]
+      neg[, !grepl("^S", weekdays(date))] <-
+        neg[, !grepl("^S", weekdays(date))] *
+        pars[, paste0("p_NC_", group)]
+
+      neg
+    }
+
+    neg_under15 <- neg_under15 + calc_negs("under15")
+    neg_15_24 <- neg_15_24 + calc_negs("15_24")
+    neg_25_49 <- neg_25_49 + calc_negs("25_49")
+    neg_50_64 <- neg_50_64 + calc_negs("50_64")
+    neg_65_79 <- neg_65_79 + calc_negs("65_79")
+    neg_80_plus <- neg_80_plus + calc_negs("80_plus")
+  }
+
+  pos_over25 <- pos_25_49 + pos_50_64 + pos_65_79 + pos_80_plus
+  pos_all <- pos_under15 + pos_15_24 + pos_over25
+
+  neg_over25 <- neg_25_49 + neg_50_64 + neg_65_79 + neg_80_plus
+  neg_all <- neg_under15 + neg_15_24 + neg_over25
+
+  pars_base <-
+    last(samples[[1]]$predict$transform(samples[[1]]$pars[1, ]))$pars
+
+  calc_pos <- function(pos, neg) {
+    positivity1 <-
+      (pos * pars_base$pillar2_sensitivity +
+         neg * (1 - pars_base$pillar2_specificity)) / (pos + neg) * 100
+    array(positivity1, c(1, dim(positivity1)))
+  }
+
+  positivity <- calc_pos(pos_all, neg_all)
+  positivity <- abind1(positivity, calc_pos(pos_over25, neg_over25))
+  positivity <- abind1(positivity, calc_pos(pos_under15, neg_under15))
+  positivity <- abind1(positivity, calc_pos(pos_15_24, neg_15_24))
+  positivity <- abind1(positivity, calc_pos(pos_25_49, neg_25_49))
+  positivity <- abind1(positivity, calc_pos(pos_50_64, neg_50_64))
+  positivity <- abind1(positivity, calc_pos(pos_65_79, neg_65_79))
+  positivity <- abind1(positivity, calc_pos(pos_80_plus, neg_80_plus))
+
+  row.names(positivity) <- paste0("pillar2_positivity",
+                                  c("", "_over25", "_under15", "_15_24",
+                                    "_25_49", "_50_64", "_65_79", "_80_plus"))
+
+  agg_trajectories$state[rownames(positivity), , ] <- positivity
+  agg_trajectories
 }
 
 
