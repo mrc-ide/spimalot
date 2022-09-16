@@ -288,38 +288,29 @@ combined_aggregate_samples <- function(samples) {
 
 combined_aggregate_positivity <- function(agg_trajectories, samples) {
 
-  p_NC_names <- c("p_NC_under15", "p_NC_15_24", "p_NC_25_49",
-                  "p_NC_50_64", "p_NC_65_79", "p_NC_80_plus",
-                  "p_NC_weekend_under15", "p_NC_weekend_15_24",
-                  "p_NC_weekend_25_49", "p_NC_weekend_50_64",
-                  "p_NC_weekend_65_79", "p_NC_weekend_80_plus")
+  regions <- names(samples)
 
-  dim <- dim(samples[[1]]$trajectories$state)[c(2, 3)]
+  pillar2_age_bands <- c("_under15", "_15_24", "_25_49",
+                         "_50_64", "_65_79", "_80_plus")
+  over25_age_bands <- c("_25_49", "_50_64", "_65_79", "_80_plus")
 
-  pos_under15 <- array(0, dim = dim)
-  pos_15_24 <- array(0, dim = dim)
-  pos_25_49 <- array(0, dim = dim)
-  pos_50_64 <- array(0, dim = dim)
-  pos_65_79 <- array(0, dim = dim)
-  pos_80_plus <- array(0, dim = dim)
+  p_NC_names <- c(paste0("p_NC", pillar2_age_bands),
+                  paste0("p_NC_weekend", pillar2_age_bands))
 
-  neg_under15 <- array(0, dim = dim)
-  neg_15_24 <- array(0, dim = dim)
-  neg_25_49 <- array(0, dim = dim)
-  neg_50_64 <- array(0, dim = dim)
-  neg_65_79 <- array(0, dim = dim)
-  neg_80_plus <- array(0, dim = dim)
+  get_pos <- function(r) {
+    state <- samples[[r]]$trajectories$state
+    pos1 <- state[paste0("sympt_cases", pillar2_age_bands, "_inc"), , ]
+    rownames(pos1) <- pillar2_age_bands
+    pos1
+  }
 
-  for (r in names(samples)) {
+  dim <- c(length(pillar2_age_bands), dim(agg_trajectories$state)[c(2, 3)])
+  pos <- vapply(regions, get_pos, array(0, dim))
+  pos <- apply(pos, c(1, 2, 3), sum)
+
+  get_neg <- function(r) {
     state <- samples[[r]]$trajectories$state
     date <- sircovid::sircovid_date_as_date(samples[[r]]$trajectories$date)
-
-    pos_under15 <- pos_under15 + state[paste0("sympt_cases_under15_inc"), , ]
-    pos_15_24 <- pos_15_24 + state[paste0("sympt_cases_15_24_inc"), , ]
-    pos_25_49 <- pos_25_49 + state[paste0("sympt_cases_25_49_inc"), , ]
-    pos_50_64 <- pos_50_64 + state[paste0("sympt_cases_50_64_inc"), , ]
-    pos_65_79 <- pos_65_79 + state[paste0("sympt_cases_65_79_inc"), , ]
-    pos_80_plus <- pos_80_plus + state[paste0("sympt_cases_80_plus_inc"), , ]
 
     pars_model <- lapply(seq_len(nrow(samples[[r]]$pars)), function(i)
       last(samples[[r]]$predict$transform(samples[[r]]$pars[i, ]))$pars)
@@ -330,55 +321,51 @@ combined_aggregate_positivity <- function(agg_trajectories, samples) {
                      numeric(length(p_NC_names))))
 
     calc_negs <- function(group) {
-      neg <- pars_base[[paste0("N_tot_", group)]] -
-        state[paste0("sympt_cases_", group, "_inc"), , ]
+      neg1 <- pars_base[[paste0("N_tot", group)]] -
+        state[paste0("sympt_cases", group, "_inc"), , ]
 
-      neg[, grepl("^S", weekdays(date))] <-
-        neg[, grepl("^S", weekdays(date))] *
-        pars[, paste0("p_NC_weekend_", group)]
-      neg[, !grepl("^S", weekdays(date))] <-
-        neg[, !grepl("^S", weekdays(date))] *
-        pars[, paste0("p_NC_", group)]
+      neg1[, grepl("^S", weekdays(date))] <-
+        neg1[, grepl("^S", weekdays(date))] *
+        pars[, paste0("p_NC_weekend", group)]
+      neg1[, !grepl("^S", weekdays(date))] <-
+        neg1[, !grepl("^S", weekdays(date))] *
+        pars[, paste0("p_NC", group)]
 
-      neg
+      neg1
     }
 
-    neg_under15 <- neg_under15 + calc_negs("under15")
-    neg_15_24 <- neg_15_24 + calc_negs("15_24")
-    neg_25_49 <- neg_25_49 + calc_negs("25_49")
-    neg_50_64 <- neg_50_64 + calc_negs("50_64")
-    neg_65_79 <- neg_65_79 + calc_negs("65_79")
-    neg_80_plus <- neg_80_plus + calc_negs("80_plus")
+    out <-
+      vapply(pillar2_age_bands, calc_negs, array(0, dim = dim(state)[c(2,3)]))
+    out <- aperm(out, c(3, 1, 2))
+    rownames(out) <- pillar2_age_bands
+
+    out
   }
 
-  pos_over25 <- pos_25_49 + pos_50_64 + pos_65_79 + pos_80_plus
-  pos_all <- pos_under15 + pos_15_24 + pos_over25
+  neg <- vapply(regions, get_neg, array(0, dim))
+  neg <- apply(neg, c(1, 2, 3), sum)
 
-  neg_over25 <- neg_25_49 + neg_50_64 + neg_65_79 + neg_80_plus
-  neg_all <- neg_under15 + neg_15_24 + neg_over25
+  aggregate_age_bands <- function(x, name) {
+    agg <- apply(x, c(2, 3), sum)
+    agg <- array(agg, c(1, dim(agg)))
+    rownames(agg) <- name
+    agg
+  }
+
+  pos <- abind1(pos, aggregate_age_bands(pos[pillar2_age_bands, , ], ""))
+  pos <- abind1(pos, aggregate_age_bands(pos[over25_age_bands, , ], "_over25"))
+
+  neg <- abind1(neg, aggregate_age_bands(neg[pillar2_age_bands, , ], ""))
+  neg <- abind1(neg, aggregate_age_bands(neg[over25_age_bands, , ], "_over25"))
 
   pars_base <-
     last(samples[[1]]$predict$transform(samples[[1]]$pars[1, ]))$pars
 
-  calc_pos <- function(pos, neg) {
-    positivity1 <-
-      (pos * pars_base$pillar2_sensitivity +
-         neg * (1 - pars_base$pillar2_specificity)) / (pos + neg) * 100
-    array(positivity1, c(1, dim(positivity1)))
-  }
+  positivity <-
+    (pos * pars_base$pillar2_sensitivity +
+       neg * (1 - pars_base$pillar2_specificity)) / (pos + neg) * 100
 
-  positivity <- calc_pos(pos_all, neg_all)
-  positivity <- abind1(positivity, calc_pos(pos_over25, neg_over25))
-  positivity <- abind1(positivity, calc_pos(pos_under15, neg_under15))
-  positivity <- abind1(positivity, calc_pos(pos_15_24, neg_15_24))
-  positivity <- abind1(positivity, calc_pos(pos_25_49, neg_25_49))
-  positivity <- abind1(positivity, calc_pos(pos_50_64, neg_50_64))
-  positivity <- abind1(positivity, calc_pos(pos_65_79, neg_65_79))
-  positivity <- abind1(positivity, calc_pos(pos_80_plus, neg_80_plus))
-
-  row.names(positivity) <- paste0("pillar2_positivity",
-                                  c("", "_over25", "_under15", "_15_24",
-                                    "_25_49", "_50_64", "_65_79", "_80_plus"))
+  rownames(positivity) <- paste0("pillar2_positivity", rownames(positivity))
 
   agg_trajectories$state[rownames(positivity), , ] <- positivity
   agg_trajectories
