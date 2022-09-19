@@ -59,6 +59,9 @@ spim_fit_process <- function(samples, parameters, data, control,
   if (control$severity) {
     message("Extracting severity outputs")
     severity <- extract_severity(samples)
+
+    message("Get R_vaccinated")
+    samples <- get_r_vaccinated(samples)
   } else {
     severity <- NULL
   }
@@ -992,6 +995,42 @@ extract_severity <- function(samples) {
     ret <- extract_severity_region(state, step, date)
   }
   ret
+}
+
+
+get_r_vaccinated <- function(samples) {
+
+  state <- samples$trajectories$state
+  dim <- dim(state)
+  info <- samples$info$info
+  v_classes <- info[[length(info)]]$dim$S[2] - 1
+
+  R <- grep("^R", rownames(state), value = TRUE)
+
+  out <- array(0, dim = c(v_classes, dim[c(2, 3)]))
+
+  for (i in seq_len(v_classes)) {
+
+    a <- R[endsWith(R, paste0("V", i))]
+    a <- grep("S", a, value = TRUE, invert = TRUE)
+    a <- apply(state[a, , ], c(2, 3), sum)
+    a[is.na(a)] <- 0
+
+    out[i, , ] <- a
+
+  }
+
+  rownames(out) <- paste0("recovered_V", seq_len(v_classes))
+
+  recovered_V_all <- array(0, dim = c(1, dim[c(2, 3)]))
+  recovered_V_all[1, , ] <- apply(out, c(2, 3), sum)
+  rownames(recovered_V_all) <- "recovered_V_all"
+
+  state <- abind_quiet(state, recovered_V_all, along = 1)
+  state <- abind_quiet(state, out, along = 1)
+  samples$trajectories$state <- state
+
+  samples
 }
 
 
