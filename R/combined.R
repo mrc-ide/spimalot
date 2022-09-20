@@ -338,7 +338,7 @@ combined_aggregate_positivity <- function(agg_trajectories, samples) {
     }
 
     out <-
-      vapply(pillar2_age_bands, calc_negs, array(0, dim = dim(state)[c(2,3)]))
+      vapply(pillar2_age_bands, calc_negs, array(0, dim = dim(state)[c(2, 3)]))
     out <- aperm(out, c(3, 1, 2))
     rownames(out) <- pillar2_age_bands
 
