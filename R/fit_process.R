@@ -59,9 +59,6 @@ spim_fit_process <- function(samples, parameters, data, control,
   if (control$severity) {
     message("Extracting severity outputs")
     severity <- extract_severity(samples)
-
-    message("Get R_vaccinated")
-    samples <- get_r_vaccinated(samples)
   } else {
     severity <- NULL
   }
@@ -327,6 +324,8 @@ reduce_trajectories <- function(samples, severity) {
     remove_strings <- remove_strings[!remove_strings %in%
                                        c("diagnoses_admitted_", "vacc_uptake_",
                                          "D_hosp_", "D_all_")]
+
+    samples <- get_r_vaccinated(samples)
   }
 
   re <- sprintf("^(%s)", paste(remove_strings, collapse = "|"))
@@ -996,34 +995,41 @@ extract_severity <- function(samples) {
 
 get_r_vaccinated <- function(samples) {
 
+  multiregion <- samples$info$multiregion
   state <- samples$trajectories$state
   dim <- dim(state)
   info <- samples$info$info
-  v_classes <- info[[length(info)]]$dim$S[2] - 1
+  dim_R <- info[[length(info)]]$dim$R
 
-  R <- grep("^R", rownames(state), value = TRUE)
+  R_names <- grep("^R", rownames(state), value = TRUE)
+  R <- array(state[R_names, , ], dim = c(dim_R, dim[-1]))
+  R[is.na(R)] <- 0
 
-  out <- array(0, dim = c(v_classes, dim[c(2, 3)]))
 
-  for (i in seq_len(v_classes)) {
-
-    a <- R[endsWith(R, paste0("V", i))]
-    a <- grep("S", a, value = TRUE, invert = TRUE)
-    a <- apply(state[a, , ], c(2, 3), sum)
-    a[is.na(a)] <- 0
-
-    out[i, , ] <- a
-
+  ## Sum over ages and strains (first two dimensions)
+  ## Then drop unvaccinated
+  if (multiregion) {
+    recovered_V <- apply(R, c(3, 4, 5, 6), sum)
+    recovered_V <- recovered_V[-1, , , ]
+  } else {
+    recovered_V <- apply(R, c(3, 4, 5), sum)
+    recovered_V <- recovered_V[-1, , ]
   }
 
-  rownames(out) <- paste0("recovered_V", seq_len(v_classes))
+  rownames(recovered_V) <- paste0("recovered_V", seq_len(nrow(recovered_V)))
 
-  recovered_V_all <- array(0, dim = c(1, dim[c(2, 3)]))
-  recovered_V_all[1, , ] <- apply(out, c(2, 3), sum)
+
+  ## Get total recovered vaccinated
+  if (multiregion) {
+    recovered_V_all <- apply(recovered_V, c(2, 3, 4), sum)
+  } else {
+    recovered_V_all <- apply(recovered_V, c(2, 3), sum)
+  }
+  recovered_V_all <- array(recovered_V_all, c(1, dim(recovered_V_all)))
   rownames(recovered_V_all) <- "recovered_V_all"
 
-  state <- abind_quiet(state, recovered_V_all, along = 1)
-  state <- abind_quiet(state, out, along = 1)
+  state <- abind1(state, recovered_V_all)
+  state <- abind1(state, recovered_V)
   samples$trajectories$state <- state
 
   samples
