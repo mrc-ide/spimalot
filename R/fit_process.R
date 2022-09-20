@@ -672,6 +672,7 @@ calculate_positivity_region <- function(state, pars_model, date) {
   pillar2_age_bands <- c("_under15", "_15_24", "_25_49",
                          "_50_64", "_65_79", "_80_plus")
   over25_age_bands <- c("_25_49", "_50_64", "_65_79", "_80_plus")
+  over15_age_bands <- c("_15_24", over25_age_bands)
 
   p_NC_names <- c(paste0("p_NC", pillar2_age_bands),
                   paste0("p_NC_weekend", pillar2_age_bands))
@@ -713,9 +714,11 @@ calculate_positivity_region <- function(state, pars_model, date) {
 
   ## Calculate the positives and negatives for aggregated age bands
   pos <- abind1(pos, aggregate_age_bands(pos[pillar2_age_bands, , ], ""))
+  pos <- abind1(pos, aggregate_age_bands(pos[over15_age_bands, , ], "_over15"))
   pos <- abind1(pos, aggregate_age_bands(pos[over25_age_bands, , ], "_over25"))
 
   neg <- abind1(neg, aggregate_age_bands(neg[pillar2_age_bands, , ], ""))
+  neg <- abind1(neg, aggregate_age_bands(neg[over15_age_bands, , ], "_over15"))
   neg <- abind1(neg, aggregate_age_bands(neg[over25_age_bands, , ], "_over25"))
 
   ## Calculate the positivity
