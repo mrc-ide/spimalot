@@ -673,6 +673,7 @@ calculate_positivity_region <- function(state, pars_model, date) {
   p_NC_names <- c(paste0("p_NC", pillar2_age_bands),
                   paste0("p_NC_weekend", pillar2_age_bands))
 
+  ## Get the positives for each age band
   pos <- state[paste0("sympt_cases", pillar2_age_bands, "_inc"), , ]
   rownames(pos) <- pillar2_age_bands
 
@@ -694,8 +695,9 @@ calculate_positivity_region <- function(state, pars_model, date) {
     neg1
   }
 
+  ## Calculate the negatives for each age band
   neg <-
-    vapply(pillar2_age_bands, calc_negs, array(0, dim = dim(state)[c(2,3)]))
+    vapply(pillar2_age_bands, calc_negs, array(0, dim = dim(state)[c(2, 3)]))
   neg <- aperm(neg, c(3, 1, 2))
   rownames(neg) <- pillar2_age_bands
 
@@ -706,16 +708,17 @@ calculate_positivity_region <- function(state, pars_model, date) {
     agg
   }
 
+  ## Calculate the positives and negatives for aggregated age bands
   pos <- abind1(pos, aggregate_age_bands(pos[pillar2_age_bands, , ], ""))
   pos <- abind1(pos, aggregate_age_bands(pos[over25_age_bands, , ], "_over25"))
 
   neg <- abind1(neg, aggregate_age_bands(neg[pillar2_age_bands, , ], ""))
   neg <- abind1(neg, aggregate_age_bands(neg[over25_age_bands, , ], "_over25"))
 
+  ## Calculate the positivity
   positivity <-
     (pos * pars_base$pillar2_sensitivity +
        neg * (1 - pars_base$pillar2_specificity)) / (pos + neg) * 100
-
   rownames(positivity) <- paste0("pillar2_positivity", rownames(positivity))
 
   positivity

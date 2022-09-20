@@ -305,8 +305,10 @@ combined_aggregate_positivity <- function(agg_trajectories, samples) {
     pos1
   }
 
+  ## Get the positives for each region and age band
   dim <- c(length(pillar2_age_bands), dim(agg_trajectories$state)[c(2, 3)])
   pos <- vapply(regions, get_pos, array(0, dim))
+  ## Sum across regions
   pos <- apply(pos, c(1, 2, 3), sum)
 
   get_neg <- function(r) {
@@ -343,7 +345,9 @@ combined_aggregate_positivity <- function(agg_trajectories, samples) {
     out
   }
 
+  ## Calculate the negatives for each region and age band
   neg <- vapply(regions, get_neg, array(0, dim))
+  ## Sum across regions
   neg <- apply(neg, c(1, 2, 3), sum)
 
   aggregate_age_bands <- function(x, name) {
@@ -353,6 +357,7 @@ combined_aggregate_positivity <- function(agg_trajectories, samples) {
     agg
   }
 
+  ## Calculate the positives and negatives for aggregated age bands
   pos <- abind1(pos, aggregate_age_bands(pos[pillar2_age_bands, , ], ""))
   pos <- abind1(pos, aggregate_age_bands(pos[over25_age_bands, , ], "_over25"))
 
@@ -362,10 +367,10 @@ combined_aggregate_positivity <- function(agg_trajectories, samples) {
   pars_base <-
     last(samples[[1]]$predict$transform(samples[[1]]$pars[1, ]))$pars
 
+  ## Calculate positivity
   positivity <-
     (pos * pars_base$pillar2_sensitivity +
        neg * (1 - pars_base$pillar2_specificity)) / (pos + neg) * 100
-
   rownames(positivity) <- paste0("pillar2_positivity", rownames(positivity))
 
   agg_trajectories$state[rownames(positivity), , ] <- positivity
