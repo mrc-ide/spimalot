@@ -325,6 +325,7 @@ reduce_trajectories <- function(samples, severity) {
                                        c("diagnoses_admitted_", "vacc_uptake_",
                                          "D_hosp_", "D_all_")]
 
+    samples <- reduce_deaths_admissions(samples)
     samples <- get_r_vaccinated(samples)
   }
 
@@ -1032,6 +1033,48 @@ get_r_vaccinated <- function(samples) {
   state <- abind1(state, recovered_V)
   samples$trajectories$state <- state
 
+  samples
+}
+
+reduce_deaths_admissions <- function(samples) {
+
+  multiregion <- samples$info$multiregion
+  state <- samples$trajectories$state
+  dim <- dim(state)
+  info <- samples$info$info
+
+  disag_names <- c("diagnoses_admitted", "D_all", "D_hosp")
+  for (i in disag_names) {
+
+    if (i == "D_all") {
+      dim_i <- info[[length(info)]]$dim$D
+    } else {
+      dim_i <- info[[length(info)]]$dim[[i]]
+    }
+
+    names_i <- grep(paste0("^", i), rownames(state), value = TRUE)
+    disag_i <- mcstate::array_reshape(state[names_i, , ], 1, dim_i)
+    disag_i[is.na(disag_i)] <- 0
+
+    if (multiregion) {
+      age_i <- apply(disag_i, c(1, 3, 4, 5), sum)
+      age_i <- age_i[-c(18, 19), , , ]
+      vacc_i <- apply(disag_i, c(2, 3, 4, 5), sum)
+      state <- state[!rownames(state) %in% names_i, , , ]
+    } else {
+      age_i <- apply(disag_i, c(1, 3, 4), sum)
+      age_i <- age_i[-c(18, 19), , ]
+      vacc_i <- apply(disag_i, c(2, 3, 4), sum)
+      state <- state[!rownames(state) %in% names_i, , ]
+    }
+
+    rownames(age_i) <- paste(i, "age", seq(0, 80, by = 5), sep = "_")
+    rownames(vacc_i) <- paste(i, "vacc", seq(0, nrow(vacc_i) - 1), sep = "_")
+    state <- abind1(state, age_i)
+    state <- abind1(state, vacc_i)
+  }
+
+  samples$trajectories$state <- state
   samples
 }
 
