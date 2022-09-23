@@ -327,7 +327,6 @@ reduce_trajectories <- function(samples, severity) {
 
     samples <- get_deaths_admissions_by_vacc_class(samples)
     samples <- calc_weighted_protected(samples)
-    #samples <- get_r_vaccinated(samples)
   }
 
   re <- sprintf("^(%s)", paste(remove_strings, collapse = "|"))
