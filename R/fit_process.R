@@ -326,7 +326,8 @@ reduce_trajectories <- function(samples, severity) {
                                          "D_hosp_")]
 
     samples <- get_deaths_admissions_by_vacc_class(samples)
-    samples <- get_r_vaccinated(samples)
+    samples <- calc_weighted_protected(samples)
+    #samples <- get_r_vaccinated(samples)
   }
 
   re <- sprintf("^(%s)", paste(remove_strings, collapse = "|"))
@@ -1066,6 +1067,53 @@ get_deaths_admissions_by_vacc_class <- function(samples) {
 
   samples$trajectories$state <- state
   samples
+}
+
+
+calc_weighted_protected <- function(samples) {
+
+  state <- samples$trajectories$state
+  multiregion <- samples$info$multiregion
+
+  protected_names <- c("protected_S_vaccinated",
+                       "protected_R_unvaccinated",
+                       "protected_R_vaccinated")
+
+  if (multiregion) {
+    weight <- state[c("prob_strain", "prob_strain_1"), , , ]
+    weight[is.na(weight)] <- 0
+
+    wt_protected <- function(nm) {
+      protected <- state[paste(nm, c(1, 2), sep = "_"), , , ]
+      protected[is.na(protected)] <- 0
+
+      apply(protected * weight, c(2, 3, 4), sum)
+    }
+
+    weighted_state <- vapply(protected_names, wt_protected,
+                             array(0, dim(state)[c(2, 3, 4)]))
+    weighted_state <- aperm(weighted_state, c(4, 1, 2, 3))
+    rownames(weighted_state) <- paste0(protected_names, "_weighted")
+  } else {
+    weight <- state[c("prob_strain", "prob_strain_1"), , ]
+    weight[is.na(weight)] <- 0
+
+    wt_protected <- function(nm) {
+      protected <- state[paste(nm, c(1, 2), sep = "_"), , ]
+      protected[is.na(protected)] <- 0
+
+      apply(protected * weight, c(2, 3), sum)
+    }
+
+    weighted_state <- vapply(protected_names, wt_protected,
+                             array(0, dim(state)[c(2, 3)]))
+    weighted_state <- aperm(weighted_state, c(3, 1, 2))
+    rownames(weighted_state) <- paste0(protected_names, "_weighted")
+  }
+
+  samples$trajectories$state <- abind1(state, weighted_state)
+  samples
+
 }
 
 
