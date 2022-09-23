@@ -75,7 +75,8 @@ spim_particle_filter <- function(data, pars, control,
     mcstate::particle_deterministic$new(
       data = data, model = sircovid::lancelot, compare = compare,
       index = function(info)
-        sircovid::lancelot_index(info, severity = control$severity),
+        sircovid::lancelot_index(info, severity = control$severity,
+                                 protected = control$severity),
       initial = initial,
       n_threads = control$n_threads)
   } else {
@@ -83,7 +84,8 @@ spim_particle_filter <- function(data, pars, control,
       data = data, model = sircovid::lancelot,
       n_particles = control$n_particles,
       compare = compare, index = function(info)
-        sircovid::lancelot_index(info, severity = control$severity),
+        sircovid::lancelot_index(info, severity = control$severity,
+                                 protected = control$severity),
       initial = initial,
       n_threads = control$n_threads, seed = control$seed)
   }

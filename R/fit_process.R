@@ -323,7 +323,10 @@ reduce_trajectories <- function(samples, severity) {
   if (severity) {
     remove_strings <- remove_strings[!remove_strings %in%
                                        c("diagnoses_admitted_", "vacc_uptake_",
-                                         "D_hosp_", "D_all_")]
+                                         "D_hosp_")]
+
+    samples <- get_deaths_admissions_by_vacc_class(samples)
+    samples <- calc_weighted_protected(samples)
   }
 
   re <- sprintf("^(%s)", paste(remove_strings, collapse = "|"))
@@ -665,69 +668,65 @@ calculate_positivity <- function(samples) {
 
 
 calculate_positivity_region <- function(state, pars_model, date) {
-  p_NC_names <- c("p_NC_under15", "p_NC_15_24", "p_NC_25_49",
-                  "p_NC_50_64", "p_NC_65_79", "p_NC_80_plus",
-                  "p_NC_weekend_under15", "p_NC_weekend_15_24",
-                  "p_NC_weekend_25_49", "p_NC_weekend_50_64",
-                  "p_NC_weekend_65_79", "p_NC_weekend_80_plus")
 
-  pos_under15 <- state[paste0("sympt_cases_under15_inc"), , ]
-  pos_15_24 <- state[paste0("sympt_cases_15_24_inc"), , ]
-  pos_25_49 <- state[paste0("sympt_cases_25_49_inc"), , ]
-  pos_50_64 <- state[paste0("sympt_cases_50_64_inc"), , ]
-  pos_65_79 <- state[paste0("sympt_cases_65_79_inc"), , ]
-  pos_80_plus <- state[paste0("sympt_cases_80_plus_inc"), , ]
+  pillar2_age_bands <- c("_under15", "_15_24", "_25_49",
+                         "_50_64", "_65_79", "_80_plus")
+  over25_age_bands <- c("_25_49", "_50_64", "_65_79", "_80_plus")
+  over15_age_bands <- c("_15_24", over25_age_bands)
 
-  pos_over25 <- pos_25_49 + pos_50_64 + pos_65_79 + pos_80_plus
-  pos_all <- pos_under15 + pos_15_24 + pos_over25
+  p_NC_names <- c(paste0("p_NC", pillar2_age_bands),
+                  paste0("p_NC_weekend", pillar2_age_bands))
+
+  ## Get the positives for each age band
+  pos <- state[paste0("sympt_cases", pillar2_age_bands, "_inc"), , ]
+  rownames(pos) <- pillar2_age_bands
 
   pars_base <- pars_model[[1]]
   pars <- t(vapply(pars_model, function(p) unlist(p[p_NC_names]),
                    numeric(length(p_NC_names))))
 
   calc_negs <- function(group) {
-    neg <- pars_base[[paste0("N_tot_", group)]] -
-      state[paste0("sympt_cases_", group, "_inc"), , ]
+    neg1 <- pars_base[[paste0("N_tot", group)]] -
+      state[paste0("sympt_cases", group, "_inc"), , ]
 
-    neg[, grepl("^S", weekdays(date))] <-
-      neg[, grepl("^S", weekdays(date))] *
-      pars[, paste0("p_NC_weekend_", group)]
-    neg[, !grepl("^S", weekdays(date))] <-
-      neg[, !grepl("^S", weekdays(date))] *
-      pars[, paste0("p_NC_", group)]
+    neg1[, grepl("^S", weekdays(date))] <-
+      neg1[, grepl("^S", weekdays(date))] *
+      pars[, paste0("p_NC_weekend", group)]
+    neg1[, !grepl("^S", weekdays(date))] <-
+      neg1[, !grepl("^S", weekdays(date))] *
+      pars[, paste0("p_NC", group)]
 
-    neg
+    neg1
   }
 
-  neg_under15 <- calc_negs("under15")
-  neg_15_24 <- calc_negs("15_24")
-  neg_25_49 <- calc_negs("25_49")
-  neg_50_64 <- calc_negs("50_64")
-  neg_65_79 <- calc_negs("65_79")
-  neg_80_plus <- calc_negs("80_plus")
+  ## Calculate the negatives for each age band
+  neg <-
+    vapply(pillar2_age_bands, calc_negs, array(0, dim = dim(state)[c(2, 3)]))
+  neg <- aperm(neg, c(3, 1, 2))
+  rownames(neg) <- pillar2_age_bands
 
-  neg_over25 <- neg_25_49 + neg_50_64 + neg_65_79 + neg_80_plus
-  neg_all <- neg_under15 + neg_15_24 + neg_over25
-
-  calc_pos <- function(pos, neg) {
-    positivity1 <-
-      (pos * pars_base$pillar2_sensitivity +
-         neg * (1 - pars_base$pillar2_specificity)) / (pos + neg) * 100
-    array(positivity1, c(1, dim(positivity1)))
+  aggregate_age_bands <- function(x, name) {
+    agg <- apply(x, c(2, 3), sum)
+    agg <- array(agg, c(1, dim(agg)))
+    rownames(agg) <- name
+    agg
   }
 
-  positivity <- calc_pos(pos_all, neg_all)
-  positivity <- abind1(positivity, calc_pos(pos_over25, neg_over25))
-  positivity <- abind1(positivity, calc_pos(pos_under15, neg_under15))
-  positivity <- abind1(positivity, calc_pos(pos_15_24, neg_15_24))
-  positivity <- abind1(positivity, calc_pos(pos_25_49, neg_25_49))
-  positivity <- abind1(positivity, calc_pos(pos_50_64, neg_50_64))
-  positivity <- abind1(positivity, calc_pos(pos_65_79, neg_65_79))
-  positivity <- abind1(positivity, calc_pos(pos_80_plus, neg_80_plus))
+  ## Calculate the positives and negatives for aggregated age bands
+  pos <- abind1(pos, aggregate_age_bands(pos[pillar2_age_bands, , ], ""))
+  pos <- abind1(pos, aggregate_age_bands(pos[over15_age_bands, , ], "_over15"))
+  pos <- abind1(pos, aggregate_age_bands(pos[over25_age_bands, , ], "_over25"))
 
-  row.names(positivity) <- paste0("pillar2_positivity",
-                                  c("", "_over25", "_under15", "_15_24",
-                                    "_25_49", "_50_64", "_65_79", "_80_plus"))
+  neg <- abind1(neg, aggregate_age_bands(neg[pillar2_age_bands, , ], ""))
+  neg <- abind1(neg, aggregate_age_bands(neg[over15_age_bands, , ], "_over15"))
+  neg <- abind1(neg, aggregate_age_bands(neg[over25_age_bands, , ], "_over25"))
+
+  ## Calculate the positivity
+  positivity <-
+    (pos * pars_base$pillar2_sensitivity +
+       neg * (1 - pars_base$pillar2_specificity)) / (pos + neg) * 100
+  rownames(positivity) <- paste0("pillar2_positivity", rownames(positivity))
+
   positivity
 }
 
@@ -992,6 +991,128 @@ extract_severity <- function(samples) {
     ret <- extract_severity_region(state, step, date)
   }
   ret
+}
+
+
+get_r_vaccinated <- function(samples) {
+
+  multiregion <- samples$info$multiregion
+  state <- samples$trajectories$state
+  dim <- dim(state)
+  info <- samples$info$info
+  dim_R <- info[[length(info)]]$dim$R
+
+  R_names <- grep("^R", rownames(state), value = TRUE)
+  R <- array(state[R_names, , ], dim = c(dim_R, dim[-1]))
+  R[is.na(R)] <- 0
+
+
+  ## Sum over ages and strains (first two dimensions)
+  ## Then drop unvaccinated
+  if (multiregion) {
+    recovered_V <- apply(R, c(3, 4, 5, 6), sum)
+    recovered_V <- recovered_V[-1, , , ]
+  } else {
+    recovered_V <- apply(R, c(3, 4, 5), sum)
+    recovered_V <- recovered_V[-1, , ]
+  }
+
+  rownames(recovered_V) <- paste0("recovered_V", seq_len(nrow(recovered_V)))
+
+
+  ## Get total recovered vaccinated
+  if (multiregion) {
+    recovered_V_all <- apply(recovered_V, c(2, 3, 4), sum)
+  } else {
+    recovered_V_all <- apply(recovered_V, c(2, 3), sum)
+  }
+  recovered_V_all <- array(recovered_V_all, c(1, dim(recovered_V_all)))
+  rownames(recovered_V_all) <- "recovered_V_all"
+
+  state <- abind1(state, recovered_V_all)
+  state <- abind1(state, recovered_V)
+  samples$trajectories$state <- state
+
+  samples
+}
+
+get_deaths_admissions_by_vacc_class <- function(samples) {
+
+  multiregion <- samples$info$multiregion
+  state <- samples$trajectories$state
+  dim <- dim(state)
+  info <- samples$info$info
+
+  disag_names <- c("diagnoses_admitted", "D_hosp")
+  for (i in disag_names) {
+
+    dim_i <- info[[length(info)]]$dim[[i]]
+
+    names_i <- grep(paste0("^", i), rownames(state), value = TRUE)
+    disag_i <- mcstate::array_reshape(state[names_i, , ], 1, dim_i)
+    disag_i[is.na(disag_i)] <- 0
+
+    if (multiregion) {
+      vacc_i <- apply(disag_i, c(2, 3, 4, 5), sum)
+      state <- state[!rownames(state) %in% names_i, , , ]
+    } else {
+      vacc_i <- apply(disag_i, c(2, 3, 4), sum)
+      state <- state[!rownames(state) %in% names_i, , ]
+    }
+
+    rownames(vacc_i) <- paste(i, "vacc", seq(0, nrow(vacc_i) - 1), sep = "_")
+    state <- abind1(state, vacc_i)
+  }
+
+  samples$trajectories$state <- state
+  samples
+}
+
+
+calc_weighted_protected <- function(samples) {
+
+  state <- samples$trajectories$state
+  multiregion <- samples$info$multiregion
+
+  protected_names <- c("protected_S_vaccinated",
+                       "protected_R_unvaccinated",
+                       "protected_R_vaccinated")
+
+  if (multiregion) {
+    weight <- state[c("prob_strain", "prob_strain_1"), , , ]
+    weight[is.na(weight)] <- 0
+
+    wt_protected <- function(nm) {
+      protected <- state[paste(nm, c(1, 2), sep = "_"), , , ]
+      protected[is.na(protected)] <- 0
+
+      apply(protected * weight, c(2, 3, 4), sum)
+    }
+
+    weighted_state <- vapply(protected_names, wt_protected,
+                             array(0, dim(state)[c(2, 3, 4)]))
+    weighted_state <- aperm(weighted_state, c(4, 1, 2, 3))
+    rownames(weighted_state) <- paste0(protected_names, "_weighted")
+  } else {
+    weight <- state[c("prob_strain", "prob_strain_1"), , ]
+    weight[is.na(weight)] <- 0
+
+    wt_protected <- function(nm) {
+      protected <- state[paste(nm, c(1, 2), sep = "_"), , ]
+      protected[is.na(protected)] <- 0
+
+      apply(protected * weight, c(2, 3), sum)
+    }
+
+    weighted_state <- vapply(protected_names, wt_protected,
+                             array(0, dim(state)[c(2, 3)]))
+    weighted_state <- aperm(weighted_state, c(3, 1, 2))
+    rownames(weighted_state) <- paste0(protected_names, "_weighted")
+  }
+
+  samples$trajectories$state <- abind1(state, weighted_state)
+  samples
+
 }
 
 
