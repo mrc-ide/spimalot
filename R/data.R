@@ -156,7 +156,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
   react_age_bands <- c("5_24", "25_34", "35_44", "45_54", "55_64", "65_plus")
 
   vars <- c("phe_patients", "phe_occupied_mv_beds",  "icu", "general",
-            "admitted", "new", "phe_admissions", "all_admission",
+            "admitted", "new", "phe_admissions", "all_admission", "death1",
             "death2", "death3", "death_chr", "death_comm", "ons_death_hospital",
             "ons_death_carehome", "ons_death_noncarehome",
             # Deaths by age
@@ -270,7 +270,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     if (region == "northern_ireland") {
       data$deaths[!ons_death_dates] <- data$death2[!ons_death_dates]
     } else {
-      data$deaths[!ons_death_dates] <- NA_integer_
+      data$deaths[!ons_death_dates] <- data$death1[!ons_death_dates]
     }
   } else {
     data$deaths_hosp[!ons_death_dates] <- data$death3[!ons_death_dates]
@@ -458,7 +458,11 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     data$final_hosp <- data$icu + data$general
 
   } else {
-    data$final_admissions <- data$phe_admissions
+    if (region == "scotland") {
+      data$final_admissions <- data$all_admission
+    } else {
+      data$final_admissions <- data$phe_admissions
+    }
     data$final_icu <- data$phe_occupied_mv_beds
     data$final_general <- data$phe_patients - data$phe_occupied_mv_beds
     data$final_hosp <- data$phe_patients
@@ -488,9 +492,9 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
   # ignore pillar 2 testing before 2020-06-18
   data[which(data$date < "2020-06-18"), cols_pillar2] <- NA_integer_
 
-  last_week <- seq(to = nrow(data), length.out = 7)
-  ## Remove last week admissions for Wales (due to backfill)
-  if (region == "wales") {
+  last_week <- seq(to = nrow(data), length.out = 10)
+  ## Remove last week admissions for Wales/Scotland (due to backfill)
+  if (region %in% c("wales", "scotland")) {
     data[last_week, "final_admissions"] <- NA_integer_
   }
 
