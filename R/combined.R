@@ -463,13 +463,14 @@ combined_aggregate_prop_protected <- function(samples) {
     traj <- samples[[r]]$trajectories$state
 
     recovered_names <- c("recovered_1", "recovered_2", "recovered_historic")
-    SR <- apply(traj[c("susceptible", recovered_names) , , ], c(2, 3), sum)
+    SR <- apply(traj[c("susceptible", recovered_names), , ], c(2, 3), sum)
 
     protected_names <- c("protected_S_vaccinated_weighted",
                          "protected_R_unvaccinated_weighted",
                          "protected_R_vaccinated_weighted")
     prop_protected <- vapply(protected_names,
-                             function(i) {traj[i, , ] / SR},
+                             function(i) {
+                               traj[i, , ] / SR},
                              array(0, dim(SR)))
     prop_protected <- aperm(prop_protected, c(3, 1, 2))
     rownames(prop_protected) <-
@@ -479,7 +480,8 @@ combined_aggregate_prop_protected <- function(samples) {
 
     eff_S_names <- c("effective_susceptible_1", "effective_susceptible_2")
     prop_protected_strain <- vapply(eff_S_names,
-                                    function (i) {(SR - traj[i, , ]) / SR},
+                                    function(i) {
+                                      (SR - traj[i, , ]) / SR},
                                     array(0, dim(SR)))
     prop_protected_strain <- aperm(prop_protected_strain, c(3, 1, 2))
     rownames(prop_protected_strain) <- c("prop_protected_1", "prop_protected_2")
