@@ -82,6 +82,9 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
     message("Aggregating severity outputs")
     ret$severity <- Map(reorder_rt_ifr, ret$severity, rank_cum_inc)
     ret$severity <- combined_aggregate_severity(ret$severity, agg_samples)
+
+    message("Aggregating prop_protected")
+    agg_samples <- combined_aggregate_prop_protected(agg_samples)
   }
 
   ## We don't need projections for the severity paper, these will be NULL to
@@ -451,6 +454,43 @@ combined_aggregate_severity <- function(severity, samples) {
   }
 
   severity
+}
+
+
+combined_aggregate_prop_protected <- function(samples) {
+
+  for (r in names(samples)) {
+    traj <- samples[[r]]$trajectories$state
+
+    recovered_names <- c("recovered_1", "recovered_2", "recovered_historic")
+    SR <- apply(traj[c("susceptible", recovered_names) , , ], c(2, 3), sum)
+
+    protected_names <- c("protected_S_vaccinated_weighted",
+                         "protected_R_unvaccinated_weighted",
+                         "protected_R_vaccinated_weighted")
+    prop_protected <- vapply(protected_names,
+                             function(i) {traj[i, , ] / SR},
+                             array(0, dim(SR)))
+    prop_protected <- aperm(prop_protected, c(3, 1, 2))
+    rownames(prop_protected) <-
+      c("prop_protected_S_vaccinated",
+        "prop_protected_R_unvaccinated",
+        "prop_protected_R_vaccinated")
+
+    eff_S_names <- c("effective_susceptible_1", "effective_susceptible_2")
+    prop_protected_strain <- vapply(eff_S_names,
+                                    function (i) {(SR - traj[i, , ]) / SR},
+                                    array(0, dim(SR)))
+    prop_protected_strain <- aperm(prop_protected_strain, c(3, 1, 2))
+    rownames(prop_protected_strain) <- c("prop_protected_1", "prop_protected_2")
+
+    prop_protected <-
+      abind::abind(prop_protected, prop_protected_strain, along = 1)
+    samples[[r]]$trajectories$state <-
+      abind::abind(traj, prop_protected, along = 1)
+
+  }
+  samples
 }
 
 
