@@ -17,6 +17,9 @@
 ##' @param dose_start_dates A vector of the start dates for each dose. Any doses
 ##'   before the corresponding start date will be ignored
 ##'
+##' @param carehomes Logical parameter, whether or not we have carehomes in
+##'   the model. Default is TRUE
+##'
 ##' @return A list suitable for passing to `spim_pars` as
 ##'   `vaccination`, containing the new vaccination schedule
 ##'   (important bits are `efficacy` and `schedule`, but other

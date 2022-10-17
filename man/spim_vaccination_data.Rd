@@ -35,6 +35,9 @@ assumed to take to reach effect}
 
 \item{dose_start_dates}{A vector of the start dates for each dose. Any doses
 before the corresponding start date will be ignored}
+
+\item{carehomes}{Logical parameter, whether or not we have carehomes in
+the model. Default is TRUE}
 }
 \value{
 A list suitable for passing to \code{spim_pars} as
