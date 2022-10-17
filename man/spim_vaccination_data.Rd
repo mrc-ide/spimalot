@@ -10,6 +10,8 @@ spim_vaccination_data(
   uptake,
   days_to_effect,
   data,
+  n_doses,
+  dose_start_dates,
   carehomes = TRUE
 )
 }
@@ -29,8 +31,10 @@ assumed to take to reach effect}
 
 \item{data}{Vaccination data (TODO: DESCRIBE CONTENTS)}
 
-\item{carehomes}{Logical parameter, whether or not we have carehomes in
-the model. Default is TRUE}
+\item{n_doses}{Number of doses to include}
+
+\item{dose_start_dates}{A vector of the start dates for each dose. Any doses
+before the corresponding start date will be ignored}
 }
 \value{
 A list suitable for passing to \code{spim_pars} as
