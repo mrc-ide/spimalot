@@ -44,11 +44,12 @@ spim_vaccination_data <- function(date, region, uptake, days_to_effect, data,
   ## Remove any data after date parameter
   data <- data[data$date <= date, ]
 
-  data$region <- tolower(data$region)
-  data$region <- gsub(" ", "_", data$region)
-
   ## We have a 16-19 age band for Scotland
   data$age_band_min[data$age_band_min == 16] <- 15
+
+  data$region <- tolower(data$region)
+  data$region <- gsub(" ", "_", data$region)
+  data <- data[data$region == region, ]
 
   ## Summing over vaccine types
   data <- data %>%
@@ -56,7 +57,6 @@ spim_vaccination_data <- function(date, region, uptake, days_to_effect, data,
     dplyr::group_by(.data$date, .data$region,
                     .data$age_band_min, .data$age_band_max, .data$dose) %>%
     dplyr::summarise(count = sum(.data$count, na.rm = TRUE))
-  data <- data[data$region == region, ]
 
   ## Fill in any missing dates
   missing_dates <-
