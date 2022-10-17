@@ -29,6 +29,16 @@ spim_vaccination_data <- function(date, region, uptake, days_to_effect, data,
 
   ## Remove dose columns above n_doses
   dose_cols <- paste0("dose", seq_len(n_doses))
+  if (!all(dose_cols %in% names(data))) {
+    stop(sprintf("n_doses = %s so length of dose_start_dates to be %s",
+                 n_doses, n_doses))
+  }
+
+  if (!all(dose_cols %in% names(data))) {
+    stop(sprintf("n_doses = %s so expected dose column names: %s",
+                 n_doses, paste(squote(dose_cols), collapse = ", ")))
+  }
+
   keep <- c("date", "region", "vaccine", "age_band_min", "age_band_max",
             dose_cols)
   data <- data[, keep]
