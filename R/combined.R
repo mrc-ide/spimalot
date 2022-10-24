@@ -489,7 +489,7 @@ combined_aggregate_prop_protected <- function(samples) {
     prop_protected <-
       abind1(prop_protected, prop_protected_strain)
     samples[[r]]$trajectories$state <-
-      abind::abind(traj, prop_protected, along = 1)
+      abind1(traj, prop_protected)
 
   }
   samples
