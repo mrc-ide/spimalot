@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.11</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.12</span>
       </span>
     </div>
 
@@ -56,6 +56,8 @@
 <span>  <span class="va">uptake</span>,</span>
 <span>  <span class="va">days_to_effect</span>,</span>
 <span>  <span class="va">data</span>,</span>
+<span>  <span class="va">n_doses</span>,</span>
+<span>  <span class="va">dose_start_dates</span>,</span>
 <span>  carehomes <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -85,6 +87,15 @@ assumed to take to reach effect</p></dd>
 
 <dt>data</dt>
 <dd><p>Vaccination data (TODO: DESCRIBE CONTENTS)</p></dd>
+
+
+<dt>n_doses</dt>
+<dd><p>Number of doses to include</p></dd>
+
+
+<dt>dose_start_dates</dt>
+<dd><p>A vector of the start dates for each dose. Any doses
+before the corresponding start date will be ignored</p></dd>
 
 
 <dt>carehomes</dt>
