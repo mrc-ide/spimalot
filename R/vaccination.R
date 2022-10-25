@@ -12,6 +12,11 @@
 ##'
 ##' @param data Vaccination data (TODO: DESCRIBE CONTENTS)
 ##'
+##' @param n_doses Number of doses to include
+##'
+##' @param dose_start_dates A vector of the start dates for each dose. Any doses
+##'   before the corresponding start date will be ignored
+##'
 ##' @param carehomes Logical parameter, whether or not we have carehomes in
 ##'   the model. Default is TRUE
 ##'
@@ -22,38 +27,48 @@
 ##'
 ##' @export
 spim_vaccination_data <- function(date, region, uptake, days_to_effect, data,
+                                  n_doses, dose_start_dates,
                                   carehomes = TRUE) {
 
-  ## Vaccination started 2020-12-08. There should be no doses before this
-  ## so we remove dates before this
-  data <- data[data$date >= "2020-12-08", ]
+  dose_cols <- paste0("dose", seq_len(n_doses))
+  if (!all(dose_cols %in% names(data))) {
+    stop(sprintf("n_doses = %s so expected dose column names: %s",
+                 n_doses, paste(squote(dose_cols), collapse = ", ")))
+  }
+  if (length(dose_start_dates) != n_doses) {
+    stop(sprintf("n_doses = %s so expected length of dose_start_dates to be %s",
+                 n_doses, n_doses))
+  }
 
-  ## Boosters started 2021-09-15, so ignore any third doses before this date
-  data$third_dose[data$date < "2021-09-15"] <- 0
+  ## Remove dose columns above n_doses
+  keep <- c("date", "region", "vaccine", "age_band_min", "age_band_max",
+            dose_cols)
+  data <- data[, keep]
 
-  ## 2nd boosters started 2022-03-21, ignore any fourth doses before this date
-  data$fourth_dose[data$date < "2022-03-21"] <- 0
+  ## Remove all data before earliest dose start date
+  data <- data[data$date >= min(dose_start_dates), ]
+
+  ## Ignore dose data before each corresponding start date
+  for (i in seq_len(n_doses)) {
+    data[[paste0("dose", i)]][data$date < dose_start_dates[i]] <- 0
+  }
 
   ## Remove any data after date parameter
   data <- data[data$date <= date, ]
 
-  data$region <- tolower(data$region)
-  data$region <- gsub(" ", "_", data$region)
-
   ## We have a 16-19 age band for Scotland
   data$age_band_min[data$age_band_min == 16] <- 15
 
+  data$region <- tolower(data$region)
+  data$region <- gsub(" ", "_", data$region)
+  data <- data[data$region == region, ]
+
   ## Summing over vaccine types
   data <- data %>%
+    tidyr::pivot_longer(dose_cols, names_to = "dose", values_to = "count") %>%
     dplyr::group_by(.data$date, .data$region,
-                    .data$age_band_min, .data$age_band_max) %>%
-    dplyr::summarise(
-      dose1 = sum(.data$first_dose, na.rm = TRUE),
-      dose2 = sum(.data$second_dose, na.rm = TRUE),
-      dose3 = sum(.data$third_dose, na.rm = TRUE),
-      dose4 = sum(.data$fourth_dose, na.rm = TRUE))
-
-  data <- data[data$region == region, ]
+                    .data$age_band_min, .data$age_band_max, .data$dose) %>%
+    dplyr::summarise(count = sum(.data$count, na.rm = TRUE))
 
   ## Fill in any missing dates
   missing_dates <-
@@ -61,12 +76,11 @@ spim_vaccination_data <- function(date, region, uptake, days_to_effect, data,
                          unique(data$date))
   if (length(missing_dates) > 0) {
     data_missing <- data.frame(date = missing_dates,
+                               region = region,
                                age_band_min = NA,
                                age_band_max = NA,
-                               dose1 = 0,
-                               dose2 = 0,
-                               dose3 = 0,
-                               dose4 = 0)
+                               dose = "dose1",
+                               count = 0)
     data <- rbind(data, data_missing)
   }
   data <- data %>%
@@ -76,14 +90,15 @@ spim_vaccination_data <- function(date, region, uptake, days_to_effect, data,
   ## min(days_to_effect) of the date parameter
   agg_data <- data %>%
     dplyr::group_by(date) %>%
-    dplyr::summarise(
-      doses = sum(.data$dose1) + sum(.data$dose2) + sum(.data$dose3) +
-        sum(.data$dose4))
+    dplyr::summarise(count = sum(count))
   dates_remove <-
-    agg_data$date[agg_data$date > max(agg_data$date[agg_data$doses > 0])]
+    agg_data$date[agg_data$date > max(agg_data$date[agg_data$count > 0])]
   dates_remove <-
     dates_remove[dates_remove > date - min(days_to_effect)]
   data <- data[!(data$date %in% dates_remove), ]
+
+  data <- data %>%
+    tidyr::pivot_wider(names_from = dose, values_from = count)
 
   schedule <- sircovid::vaccine_schedule_from_data(data, region, uptake,
                                                    carehomes)

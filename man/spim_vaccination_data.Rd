@@ -10,6 +10,8 @@ spim_vaccination_data(
   uptake,
   days_to_effect,
   data,
+  n_doses,
+  dose_start_dates,
   carehomes = TRUE
 )
 }
@@ -28,6 +30,11 @@ value being the uptake of dose j for group i. Must have 19 rows.}
 assumed to take to reach effect}
 
 \item{data}{Vaccination data (TODO: DESCRIBE CONTENTS)}
+
+\item{n_doses}{Number of doses to include}
+
+\item{dose_start_dates}{A vector of the start dates for each dose. Any doses
+before the corresponding start date will be ignored}
 
 \item{carehomes}{Logical parameter, whether or not we have carehomes in
 the model. Default is TRUE}
