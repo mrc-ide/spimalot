@@ -4,7 +4,7 @@
 \alias{spim_fit_process}
 \title{Process a fit for \code{lancelot} model}
 \usage{
-spim_fit_process(samples, parameters, data, control, simulate_object = TRUE)
+spim_fit_process(samples, parameters, data, control)
 }
 \arguments{
 \item{samples}{The pmcmc_samples object from \link[mcstate:pmcmc]{mcstate::pmcmc}}
@@ -19,9 +19,6 @@ spim_fit_process(samples, parameters, data, control, simulate_object = TRUE)
 \code{particle_filter} element of the result of
 \code{\link[=spim_control]{spim_control()}}. It will be used here to check for switches of
 particular trajectories to be outputed (e.g. \code{severity}).}
-
-\item{simulate_object}{set to TRUE for almost all cases, if you don't want
-your fits for a simulation then switch to FALSE}
 }
 \description{
 Process fit data for \code{lancelot} model

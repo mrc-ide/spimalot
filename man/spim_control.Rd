@@ -10,6 +10,8 @@ spim_control(
   deterministic = FALSE,
   multiregion = FALSE,
   severity = FALSE,
+  simulate = FALSE,
+  demography = FALSE,
   date_restart = NULL,
   n_particles = 192,
   n_mcmc = 1500,
@@ -38,6 +40,12 @@ benefit from multithreading).}
 
 \item{severity}{Logical, indicating if we are outputting severity
 trajectories (e.g. IFR, IHR, HFR). Default to FALSE.}
+
+\item{simulate}{Logical, indicating if we are outputting a simulate object
+for onward simulation}
+
+\item{demography}{Logical, indicating if we are outputting model
+demography - admissions and deaths by age}
 
 \item{date_restart}{Optionally, dates save restart data in the
 pmcmc (see \link[mcstate:pmcmc]{mcstate::pmcmc}}
