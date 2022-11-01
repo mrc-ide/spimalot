@@ -62,8 +62,7 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
   ## reorder by increasing cumulative incidence:
   rank_cum_inc <- lapply(ret$samples, sircovid::get_sample_rank)
   ret$samples <- Map(sircovid::reorder_sample, ret$samples, rank_cum_inc)
-  ret$rt <- Map(sircovid::reorder_rt_ifr, ret$rt, rank_cum_inc)
-  ret$variant_rt <- Map(reorder_variant_rt, ret$variant_rt, rank_cum_inc)
+  ret$rt <- Map(reorder_variant_rt, ret$rt, rank_cum_inc, weighted = TRUE)
 
   message("Aggregating England/UK")
   ## Aggregate some of these to get england/uk entries
@@ -72,8 +71,7 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
   ## as aggregated Rt values are used in onwards simulations
   agg_samples <- combined_aggregate_samples(ret$samples)
   agg_data <- combined_aggregate_data(ret$data)
-  ret$rt <- combined_aggregate_rt(ret$rt, agg_samples)
-  ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, agg_samples)
+  ret$rt <- combined_aggregate_variant_rt(ret$rt, agg_samples, TRUE)
   ret$model_demography <- combined_aggregate_demography(ret$model_demography)
 
 
@@ -166,8 +164,7 @@ spim_combined_load_multiregion <- function(path) {
   ## as aggregated Rt values are used in onwards simulations
   agg_samples <- combined_aggregate_samples(ret$samples)
   agg_data <- combined_aggregate_data(ret$data)
-  ret$rt <- combined_aggregate_rt(ret$rt, agg_samples)
-  ret$variant_rt <- combined_aggregate_variant_rt(ret$variant_rt, agg_samples)
+  ret$rt <- combined_aggregate_variant_rt(ret$rt, agg_samples, TRUE)
 
   ## Now the onward object has been created, we can safely store the
   ## other aggregated outputs in ret
@@ -577,24 +574,26 @@ combined_aggregate_rt <- function(rt, samples) {
 }
 
 
-combined_aggregate_variant_rt <- function(variant_rt, samples) {
+combined_aggregate_variant_rt <- function(variant_rt, samples,
+                                          weighted = FALSE) {
   england <- sircovid::regions("england")
   nations <- sircovid::regions("nations")
 
   if (all(england %in% names(variant_rt))) {
     variant_rt$england <- combine_variant_rt(variant_rt[england],
                                              samples[england],
-                                             rank = FALSE)
+                                             rank = FALSE,
+                                             weighted = weighted)
   }
   if (all(nations %in% names(variant_rt))) {
     variant_rt$uk <- combine_variant_rt(variant_rt[nations], samples[nations],
-                                        rank = FALSE)
+                                        rank = FALSE, weighted = weighted)
   }
   variant_rt
 }
 
 
-combine_variant_rt <- function(variant_rt, samples, rank) {
+combine_variant_rt <- function(variant_rt, samples, rank, weighted = FALSE) {
 
   ## the samples trajectories and the variant_rt do not necessarily have the
   ## same span of dates so we need to filter the trajectories
@@ -626,12 +625,24 @@ combine_variant_rt <- function(variant_rt, samples, rank) {
 
   variant1 <- combine_variant_rt_j(1)
   variant2 <- combine_variant_rt_j(2)
+  if (weighted) {
+    variant_weighted <- combine_variant_rt_j(3)
+  }
+
 
   ## finally we join the variants together
   ret <- variant1
   for (w in what) {
-    ret[[w]] <- aperm(abind_quiet(variant1[[w]], variant2[[w]], along = 3),
-                         c(1, 3, 2))
+    if (weighted) {
+      ret[[w]] <- aperm(abind_quiet(variant1[[w]], variant2[[w]],
+                                    variant_weighted[[w]],
+                                    along = 3), c(1, 3, 2))
+      colnames(ret[[w]]) <- c("strain_1", "strain_2", "weighted")
+    } else {
+      ret[[w]] <- aperm(abind_quiet(variant1[[w]], variant2[[w]],
+                                    along = 3), c(1, 3, 2))
+    }
+
   }
 
   ret
@@ -734,13 +745,18 @@ spim_prop_infected <- function(combined, population,
   t(prop_infected)
 }
 
-reorder_variant_rt <- function(x, rank) {
+reorder_variant_rt <- function(x, rank, weighted = FALSE) {
 
   what <- setdiff(names(x), c("step", "date"))
 
   ## reorder_rt_ifr will only work for one variant so we will have to reorder
   ## each variant separately
-  for (j in seq_len(2)) {
+  if (weighted) {
+    dim_strains <- 3
+  } else {
+    dim_strains <- 2
+  }
+  for (j in seq_len(dim_strains)) {
     v <- x
 
     for (i in what[what != "beta"]) {

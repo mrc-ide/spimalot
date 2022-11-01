@@ -1665,7 +1665,11 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
 
   beta_date <- dat$info$beta_date
   if (variant == "weighted") {
-    sample_Rt <- dat$rt[[region]][[rt_type]][-1L, ]
+    if (rt_type == "beta") {
+      sample_Rt <- dat$rt[[region]][[rt_type]][-1L, ]
+    } else {
+      sample_Rt <- dat$rt[[region]][[rt_type]][-1L, "weighted", ]
+    }
     x <- sircovid::sircovid_date_as_date(dat$rt[[region]]$date[-1L, 1])
   } else {
     if (variant == "delta") {
