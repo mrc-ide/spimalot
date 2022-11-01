@@ -402,7 +402,7 @@ rt_filter_time <- function(rt, i, multiregion) {
     lapply(rt, rt_filter_time, i, FALSE)
   } else {
     rt_filter_time1 <- function(x) {
-      if (length(dim(rt)) == 2) {
+      if (length(dim(x)) == 2) {
         ret <- x[i, , drop = FALSE]
       } else {
         ret <- x[i, , , drop = FALSE]
