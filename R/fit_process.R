@@ -208,8 +208,6 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
              eff_Rt_general = numeric(0),
              Rt_general = numeric(0))
 
-
-
   for (i in seq_len(length(epoch_dates) + 1L)) {
     if (i == 1) {
       dates1 <- which(dates <= epoch_dates[1])
@@ -417,8 +415,6 @@ rt_filter_time <- function(rt, i, multiregion) {
     ret
   }
 }
-
-
 
 
 deaths_filter_time <- function(x, restart_date) {
