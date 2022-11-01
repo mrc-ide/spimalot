@@ -157,6 +157,7 @@ spim_restart_join_parent <- function(fit, parent) {
         out <- rbind(a[i, , drop = FALSE], b[-1L, ])
       } else if (length(dim(a)) == 3){
         out <- abind1(a[i, , , drop = FALSE], b[-1L, , ])
+        colnames(out) <- c("strain_1", "strain_2", "weighted")
       }
       out
     }

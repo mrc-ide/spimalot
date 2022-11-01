@@ -147,7 +147,7 @@ spim_summary_region_rt <-  function(region, dat, time_series_date) {
   model_type <- dat$info$model_type
   qs <- spim_summary_quantiles()
 
-  rt <- dat$rt[[region]]$eff_Rt_general
+  rt <- dat$rt[[region]]$eff_Rt_general[, "weighted", ]
   rt_date <- dat$rt[[region]]$date[, 1]
 
   ## This can be considerably simplified
