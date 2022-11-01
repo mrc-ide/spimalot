@@ -152,8 +152,16 @@ spim_restart_join_parent <- function(fit, parent) {
     fit$samples$trajectories$state)
 
   join_rt <- function(parent, new, i) {
-    ret <- Map(function(a, b) rbind(a[i, , drop = FALSE], b[-1L, ]),
-               parent, new)
+    join_rt1 <- function(a, b) {
+      if (length(dim(a)) == 2) {
+        out <- rbind(a[i, , drop = FALSE], b[-1L, ])
+      } else if (length(dim(a)) == 3){
+        out <- abind1(a[i, , , drop = FALSE], b[-1L, , ])
+      }
+      out
+    }
+
+    ret <- Map(join_rt1, parent, new)
     class(ret) <- class(new)
     ret
   }

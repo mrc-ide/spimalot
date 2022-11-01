@@ -410,7 +410,7 @@ rt_filter_time <- function(rt, i, multiregion) {
       ret
     }
 
-    ret <- lapply(rt, function(x) rt_filter_time1)
+    ret <- lapply(rt, rt_filter_time1)
     class(ret) <- class(rt)
     ret
   }
