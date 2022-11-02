@@ -629,7 +629,6 @@ combine_variant_rt <- function(variant_rt, samples, rank, weighted = FALSE) {
     variant_weighted <- combine_variant_rt_j(3)
   }
 
-
   ## finally we join the variants together
   ret <- variant1
   for (w in what) {
