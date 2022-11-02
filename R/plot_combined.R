@@ -743,9 +743,9 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, yield, what,
 
     if (what == "under15") {
       ylab <- spim_region_name(region)
-    } else (
+    } else {
       ylab <- ""
-    )
+    }
 
     oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
     on.exit(oo)
