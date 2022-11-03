@@ -15,12 +15,8 @@
 ##'   [spimalot::spim_control()]. It will be used here to check for switches of
 ##'   particular trajectories to be outputed (e.g. `severity`).
 ##'
-##' @param simulate_object set to TRUE for almost all cases, if you don't want
-##'    your fits for a simulation then switch to FALSE
-##'
 ##' @export
-spim_fit_process <- function(samples, parameters, data, control,
-                            simulate_object = TRUE) {
+spim_fit_process <- function(samples, parameters, data, control) {
   region <- samples$info$region
 
   ## This is just the info/prior/proposal + base of the parameter used
@@ -37,23 +33,29 @@ spim_fit_process <- function(samples, parameters, data, control,
   ## The Rt calculation is slow and runs in serial; it's a surprising
   ## fraction of the total time.
   message("Computing Rt")
-  rt <- calculate_lancelot_Rt(samples, TRUE)
-  variant_rt <- calculate_lancelot_Rt(samples, FALSE)
+  rt <- calculate_lancelot_Rt(samples, TRUE, TRUE)
 
   ## TODO: someone needs to document what this date is for (appears to
   ## filter trajectories to start at this date) and when we might
   ## change it.
 
-  if (simulate_object == TRUE) {
+  if (control$simulate) {
     message("Preparing onward simulation object")
     start_date_sim <- "2021-06-01"
     simulate <- create_simulate_object(samples, start_date_sim,
                                         samples$info$date)
+  } else {
+    simulate <- NULL
   }
 
   ## Extract demography
-  message("Extracting demography")
-  model_demography <- extract_demography(samples)
+  if (control$severity) {
+    message("Extracting demography")
+    model_demography <- extract_demography(samples)
+  } else {
+    model_demography <- NULL
+  }
+
 
   ## Check severity is TRUE extract
   if (control$severity) {
@@ -91,7 +93,6 @@ spim_fit_process <- function(samples, parameters, data, control,
   ## 1. 'fit' list of;
   ## samples - reduced mcstate trajectory samples
   ## rt - calculated spimalot lancelot Rt value (calculate_lancelot_Rt output)
-  ## variant_rt - variant specific Rt
   ## simulate - object containing spimalot objects (used for onward simulation)
   ##            such as; thinned samples, start date of sim, samples date.
   ## parameters - parameter MLE and covariance matrix
@@ -105,7 +106,6 @@ spim_fit_process <- function(samples, parameters, data, control,
     fit = list(samples = samples,
                rt = rt,
                severity = severity,
-               variant_rt = variant_rt,
                simulate = simulate,
                parameters = parameters_new,
                model_demography = model_demography,
@@ -150,7 +150,7 @@ create_simulate_object <- function(samples, start_date_sim, date) {
 }
 
 
-calculate_lancelot_Rt <- function(samples, weight_Rt) {
+calculate_lancelot_Rt <- function(samples, weight_Rt, keep_strains_Rt = FALSE) {
   step <- samples$trajectories$step
   info <- samples$info$info
   epoch_dates <- samples$info$epoch_dates
@@ -165,18 +165,21 @@ calculate_lancelot_Rt <- function(samples, weight_Rt) {
     ## pars, state, step, info, epoch_dates
     ret <- lapply(samples$info$region, function(r)
       calculate_lancelot_Rt_region(pars[, , r], state[, r, , ], transform[[r]],
-                                   step, info, epoch_dates, weight_Rt))
+                                   step, info, epoch_dates, weight_Rt,
+                                   keep_strains_Rt))
     names(ret) <- samples$info$region
   } else {
     ret <- calculate_lancelot_Rt_region(pars, state, transform,
-                                        step, info, epoch_dates, weight_Rt)
+                                        step, info, epoch_dates, weight_Rt,
+                                        keep_strains_Rt)
   }
   ret
 }
 
 
 calculate_lancelot_Rt_region <- function(pars, state, transform,
-                                         step, info, epoch_dates, weight_Rt) {
+                                         step, info, epoch_dates, weight_Rt,
+                                         keep_strains_Rt) {
   index_S <- grep("^S_", rownames(state))
   index_R <- grep("^R_", rownames(state))
   index_ps <- grep("^prob_strain", rownames(state))
@@ -192,15 +195,17 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
   pars_model[[1]]$steps_per_day
   dates <- step / 4
 
+  n_pars <- nrow(pars)
+
+  type <- c("eff_Rt_general", "Rt_general")
+
   ## TODO: currently we'll just deal with multistage here, but it would
   ## be good to adapt the sircovid function to deal with multistage
   ## parameters
   rt <- list(step = numeric(0),
              date = numeric(0),
              beta = numeric(0),
-             eff_Rt_all = numeric(0),
              eff_Rt_general = numeric(0),
-             Rt_all = numeric(0),
              Rt_general = numeric(0))
 
   for (i in seq_len(length(epoch_dates) + 1L)) {
@@ -240,21 +245,42 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
       prob_strain1 <- prob_strain[, , dates1, drop = FALSE]
     }
 
-    if (!(n_strains == 1 && !weight_Rt)) {
-      rt1 <- sircovid::lancelot_Rt_trajectories(
-        step1, S1, pars_model[[i]],
-        initial_step_from_parameters = initial_step_from_parameters,
-        shared_parameters = FALSE, R = R1, prob_strain = prob_strain1,
-        weight_Rt = weight_Rt)
-      for (nm in names(rt)) {
-        if (length(rt[[nm]]) == 0) {
-          rt[[nm]] <- rt1[[nm]]
-        } else if (length(dim(rt1[[nm]])) == 2) {
-          rt[[nm]] <- rbind(rt[[nm]], rt1[[nm]])
-        } else {
-          rt[[nm]] <- abind1(rt[[nm]], rt1[[nm]])
+    rt1 <- sircovid::lancelot_Rt_trajectories(
+      step1, S1, pars_model[[i]], type = type,
+      initial_step_from_parameters = initial_step_from_parameters,
+      shared_parameters = FALSE, R = R1, prob_strain = prob_strain1,
+      weight_Rt = weight_Rt, keep_strains_Rt = keep_strains_Rt)
+
+    reshape_rt <- function(r) {
+      if (weight_Rt) {
+        tmp <- array(NA, c(length(step1), 3, n_pars))
+        tmp[, 3, ] <- r
+      } else {
+        tmp <- array(NA, c(length(step1), 2, n_pars))
+      }
+      tmp[, 1, ] <- r
+      tmp
+    }
+
+    for (nm in names(rt)) {
+      if (n_strains == 1 && !(weight_Rt && !keep_strains_Rt)) {
+        if (nm %in% type) {
+          rt1[[nm]] <- reshape_rt(rt1[[nm]])
         }
       }
+      if (length(rt[[nm]]) == 0) {
+        rt[[nm]] <- rt1[[nm]]
+      } else if (length(dim(rt1[[nm]])) == 2) {
+        rt[[nm]] <- rbind(rt[[nm]], rt1[[nm]])
+      } else {
+        rt[[nm]] <- abind1(rt[[nm]], rt1[[nm]])
+      }
+    }
+  }
+
+  if (weight_Rt && keep_strains_Rt) {
+    for (nm in type) {
+      colnames(rt[[nm]]) <- c("strain_1", "strain_2", "weighted")
     }
   }
 
@@ -371,10 +397,20 @@ trajectories_filter_time <- function(trajectories, i) {
 
 
 rt_filter_time <- function(rt, i, multiregion) {
+
   if (multiregion) {
     lapply(rt, rt_filter_time, i, FALSE)
   } else {
-    ret <- lapply(rt, function(x) x[i, , drop = FALSE])
+    rt_filter_time1 <- function(x) {
+      if (length(dim(x)) == 2) {
+        ret <- x[i, , drop = FALSE]
+      } else {
+        ret <- x[i, , , drop = FALSE]
+      }
+      ret
+    }
+
+    ret <- lapply(rt, rt_filter_time1)
     class(ret) <- class(rt)
     ret
   }

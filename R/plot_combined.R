@@ -743,9 +743,9 @@ spim_plot_log_traj_by_age_region1 <- function(region, dat, yield, what,
 
     if (what == "under15") {
       ylab <- spim_region_name(region)
-    } else (
+    } else {
       ylab <- ""
-    )
+    }
 
     oo <- par(mgp = c(1.7, 0.5, 0), bty = "n")
     on.exit(oo)
@@ -1665,7 +1665,11 @@ spim_plot_Rt_region <- function(region, dat, rt_type, forecast_until,
 
   beta_date <- dat$info$beta_date
   if (variant == "weighted") {
-    sample_Rt <- dat$rt[[region]][[rt_type]][-1L, ]
+    if (rt_type == "beta") {
+      sample_Rt <- dat$rt[[region]][[rt_type]][-1L, ]
+    } else {
+      sample_Rt <- dat$rt[[region]][[rt_type]][-1L, "weighted", ]
+    }
     x <- sircovid::sircovid_date_as_date(dat$rt[[region]]$date[-1L, 1])
   } else {
     if (variant == "delta") {

@@ -19,6 +19,12 @@
 ##' @param severity Logical, indicating if we are outputting severity
 ##'   trajectories (e.g. IFR, IHR, HFR). Default to FALSE.
 ##'
+##' @param simulate Logical, indicating if we are outputting a simulate object
+##'   for onward simulation
+##'
+##' @param demography Logical, indicating if we are outputting model
+##'   demography - admissions and deaths by age
+##'
 ##' @param date_restart Optionally, dates save restart data in the
 ##'   pmcmc (see [mcstate::pmcmc]
 ##'
@@ -59,6 +65,7 @@
 ##' @export
 spim_control <- function(short_run, n_chains, deterministic = FALSE,
                          multiregion = FALSE, severity = FALSE,
+                         simulate = FALSE, demography = FALSE,
                          date_restart = NULL, n_particles = 192, n_mcmc = 1500,
                          burnin = 500, workers = TRUE, n_sample = 1000,
                          n_threads = NULL, compiled_compare = FALSE,
@@ -114,7 +121,9 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                           n_threads = n_threads,
                           seed = NULL,
                           compiled_compare = compiled_compare,
-                          severity = severity)
+                          severity = severity,
+                          simulate = simulate,
+                          demography = demography)
 
   list(pmcmc = pmcmc,
        particle_filter = particle_filter)

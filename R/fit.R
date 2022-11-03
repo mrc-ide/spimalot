@@ -71,12 +71,23 @@ spim_particle_filter <- function(data, pars, control,
     assert_is(initial, "function")
   }
 
+  ## Logical flags for the index function
+  severity <- control$severity
+  protected <- control$severity
+  cum_infections_disag <- control$simulate
+  D_all <- control$demography || control$simulate
+  D_hosp <- control$demography || control$severity || control$simulate
+  diagnoses_admitted <- control$severity || control$simulate
+
   if (deterministic) {
     mcstate::particle_deterministic$new(
       data = data, model = sircovid::lancelot, compare = compare,
       index = function(info)
-        sircovid::lancelot_index(info, severity = control$severity,
-                                 protected = control$severity),
+        sircovid::lancelot_index(info, severity = severity,
+                                 protected = protected,
+                                 D_all = D_all, D_hosp = D_hosp,
+                                 diagnoses_admitted = diagnoses_admitted,
+                                 cum_infections_disag = cum_infections_disag),
       initial = initial,
       n_threads = control$n_threads)
   } else {
@@ -84,8 +95,11 @@ spim_particle_filter <- function(data, pars, control,
       data = data, model = sircovid::lancelot,
       n_particles = control$n_particles,
       compare = compare, index = function(info)
-        sircovid::lancelot_index(info, severity = control$severity,
-                                 protected = control$severity),
+        sircovid::lancelot_index(info, severity = severity,
+                                 protected = protected,
+                                 D_all = D_all, D_hosp = D_hosp,
+                                 diagnoses_admitted = diagnoses_admitted,
+                                 cum_infections_disag = cum_infections_disag),
       initial = initial,
       n_threads = control$n_threads, seed = control$seed)
   }
