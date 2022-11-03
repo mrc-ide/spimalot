@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.12</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.13</span>
       </span>
     </div>
 
@@ -56,6 +56,8 @@
 <span>  deterministic <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  multiregion <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  severity <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  simulate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  demography <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  date_restart <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_particles <span class="op">=</span> <span class="fl">192</span>,</span>
 <span>  n_mcmc <span class="op">=</span> <span class="fl">1500</span>,</span>
@@ -95,6 +97,16 @@ benefit from multithreading).</p></dd>
 <dt>severity</dt>
 <dd><p>Logical, indicating if we are outputting severity
 trajectories (e.g. IFR, IHR, HFR). Default to FALSE.</p></dd>
+
+
+<dt>simulate</dt>
+<dd><p>Logical, indicating if we are outputting a simulate object
+for onward simulation</p></dd>
+
+
+<dt>demography</dt>
+<dd><p>Logical, indicating if we are outputting model
+demography - admissions and deaths by age</p></dd>
 
 
 <dt>date_restart</dt>
