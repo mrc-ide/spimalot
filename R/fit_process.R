@@ -188,11 +188,6 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
   R <- state[index_R, , , drop = FALSE]
   prob_strain <- state[index_ps, , , drop = FALSE]
 
-  pars_model <- lapply(seq_len(length(info)), function(j)
-    lapply(seq_rows(pars), function(i)
-      transform(pars[i, ])[[j]]$pars))
-
-  pars_model[[1]]$steps_per_day
   dates <- step / 4
 
   n_pars <- nrow(pars)
@@ -224,9 +219,12 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
       next
     }
 
-    n_strains <- pars_model[[i]][[1]]$n_strains
-    n_strains_R <- pars_model[[i]][[1]]$n_strains_R
-    n_vacc_classes <- pars_model[[i]][[1]]$n_vacc_classes
+    pars_model <- lapply(seq_rows(pars), function(j)
+      transform(pars[j, ])[[i]]$pars)
+
+    n_strains <- pars_model[[1]]$n_strains
+    n_strains_R <- pars_model[[1]]$n_strains_R
+    n_vacc_classes <- pars_model[[1]]$n_vacc_classes
 
     suffix <- paste0("_", c(sircovid:::sircovid_age_bins()$start, "CHW", "CHR"))
     S_nms <- get_names("S", list(n_vacc_classes), suffix)
@@ -246,7 +244,7 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
     }
 
     rt1 <- sircovid::lancelot_Rt_trajectories(
-      step1, S1, pars_model[[i]], type = type,
+      step1, S1, pars_model, type = type,
       initial_step_from_parameters = initial_step_from_parameters,
       shared_parameters = FALSE, R = R1, prob_strain = prob_strain1,
       weight_Rt = weight_Rt, keep_strains_Rt = keep_strains_Rt)
