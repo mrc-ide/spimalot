@@ -28,7 +28,7 @@ spim_fit_process <- function(samples, parameters, data, control) {
   samples$restart <- NULL
 
   samples$trajectories$date <-
-    samples$trajectories$step / samples$trajectories$rate
+    samples$trajectories$time / samples$trajectories$rate
 
   ## The Rt calculation is slow and runs in serial; it's a surprising
   ## fraction of the total time.
@@ -151,7 +151,7 @@ create_simulate_object <- function(samples, start_date_sim, date) {
 
 
 calculate_lancelot_Rt <- function(samples, weight_Rt, keep_strains_Rt = FALSE) {
-  step <- samples$trajectories$step
+  step <- samples$trajectories$time
   info <- samples$info$info
   epoch_dates <- samples$info$epoch_dates
 
@@ -162,7 +162,7 @@ calculate_lancelot_Rt <- function(samples, weight_Rt, keep_strains_Rt = FALSE) {
   multiregion <- samples$info$multiregion
 
   if (multiregion) {
-    ## pars, state, step, info, epoch_dates
+    ## pars, state, time, info, epoch_dates
     ret <- lapply(samples$info$region, function(r)
       calculate_lancelot_Rt_region(pars[, , r], state[, r, , ], transform[[r]],
                                    step, info, epoch_dates, weight_Rt,
@@ -384,7 +384,7 @@ reduce_trajectories <- function(samples, severity) {
 
 
 trajectories_filter_time <- function(trajectories, i) {
-  trajectories$step <- trajectories$step[i]
+  trajectories$time <- trajectories$time[i]
   trajectories$date <- trajectories$date[i]
   trajectories$predicted <- trajectories$predicted[i]
   if (length(dim(trajectories$state)) == 3) {
@@ -1012,7 +1012,7 @@ extract_demography_region <- function(samples) {
 
 
 extract_severity <- function(samples) {
-  step <- samples$trajectories$step
+  step <- samples$trajectories$time
   date <- samples$trajectories$date
   state <- samples$trajectories$state
 
