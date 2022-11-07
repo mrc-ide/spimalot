@@ -162,7 +162,7 @@ calculate_lancelot_Rt <- function(samples, weight_Rt, keep_strains_Rt = FALSE) {
   multiregion <- samples$info$multiregion
 
   if (multiregion) {
-    ## pars, state, time, info, epoch_dates
+    ## pars, state, step, info, epoch_dates
     ret <- lapply(samples$info$region, function(r)
       calculate_lancelot_Rt_region(pars[, , r], state[, r, , ], transform[[r]],
                                    step, info, epoch_dates, weight_Rt,
