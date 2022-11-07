@@ -261,123 +261,14 @@ combined_aggregate_samples <- function(samples) {
   if (all(england %in% names(samples))) {
     samples$england$trajectories <-
       sircovid::combine_trajectories(samples[england], rank = FALSE)
-    agg_positivity <-
-      any(grepl("pillar2_positivity",
-                rownames(samples$england$trajectories$state)))
-    if (agg_positivity) {
-      samples$england$trajectories <-
-        combined_aggregate_positivity(samples$england$trajectories,
-                                      samples[england])
-    }
   }
 
   if (all(nations %in% names(samples))) {
     samples$uk$trajectories <-
       sircovid::combine_trajectories(samples[nations], rank = FALSE)
-    agg_positivity <-
-      any(grepl("pillar2_positivity",
-                rownames(samples$uk$trajectories$state)))
-    if (agg_positivity) {
-      samples$uk$trajectories <-
-        combined_aggregate_positivity(samples$uk$trajectories,
-                                      samples[sircovid::regions("all")])
-    }
   }
 
   samples
-}
-
-combined_aggregate_positivity <- function(agg_trajectories, samples) {
-
-  regions <- names(samples)
-
-  pillar2_age_bands <- c("_under15", "_15_24", "_25_49",
-                         "_50_64", "_65_79", "_80_plus")
-  over25_age_bands <- c("_25_49", "_50_64", "_65_79", "_80_plus")
-  over15_age_bands <- c("_15_24", over25_age_bands)
-
-  p_NC_names <- c(paste0("p_NC", pillar2_age_bands),
-                  paste0("p_NC_weekend", pillar2_age_bands))
-
-  get_pos <- function(r) {
-    state <- samples[[r]]$trajectories$state
-    pos1 <- state[paste0("sympt_cases", pillar2_age_bands, "_inc"), , ]
-    rownames(pos1) <- pillar2_age_bands
-    pos1
-  }
-
-  ## Get the positives for each region and age band
-  dim <- c(length(pillar2_age_bands), dim(agg_trajectories$state)[c(2, 3)])
-  pos <- vapply(regions, get_pos, array(0, dim))
-  ## Sum across regions
-  pos <- apply(pos, c(1, 2, 3), sum)
-
-  get_neg <- function(r) {
-    state <- samples[[r]]$trajectories$state
-    date <- sircovid::sircovid_date_as_date(samples[[r]]$trajectories$date)
-
-    pars_model <- lapply(seq_len(nrow(samples[[r]]$pars)), function(i)
-      last(samples[[r]]$predict$transform(samples[[r]]$pars[i, ]))$pars)
-
-    pars_base <- pars_model[[1]]
-
-    pars <- t(vapply(pars_model, function(p) unlist(p[p_NC_names]),
-                     numeric(length(p_NC_names))))
-
-    calc_negs <- function(group) {
-      neg1 <- pars_base[[paste0("N_tot", group)]] -
-        state[paste0("sympt_cases", group, "_inc"), , ]
-
-      neg1[, grepl("^S", weekdays(date))] <-
-        neg1[, grepl("^S", weekdays(date))] *
-        pars[, paste0("p_NC_weekend", group)]
-      neg1[, !grepl("^S", weekdays(date))] <-
-        neg1[, !grepl("^S", weekdays(date))] *
-        pars[, paste0("p_NC", group)]
-
-      neg1
-    }
-
-    out <-
-      vapply(pillar2_age_bands, calc_negs, array(0, dim = dim(state)[c(2, 3)]))
-    out <- aperm(out, c(3, 1, 2))
-    rownames(out) <- pillar2_age_bands
-
-    out
-  }
-
-  ## Calculate the negatives for each region and age band
-  neg <- vapply(regions, get_neg, array(0, dim))
-  ## Sum across regions
-  neg <- apply(neg, c(1, 2, 3), sum)
-
-  aggregate_age_bands <- function(x, name) {
-    agg <- apply(x, c(2, 3), sum)
-    agg <- array(agg, c(1, dim(agg)))
-    rownames(agg) <- name
-    agg
-  }
-
-  ## Calculate the positives and negatives for aggregated age bands
-  pos <- abind1(pos, aggregate_age_bands(pos[pillar2_age_bands, , ], ""))
-  pos <- abind1(pos, aggregate_age_bands(pos[over15_age_bands, , ], "_over15"))
-  pos <- abind1(pos, aggregate_age_bands(pos[over25_age_bands, , ], "_over25"))
-
-  neg <- abind1(neg, aggregate_age_bands(neg[pillar2_age_bands, , ], ""))
-  neg <- abind1(neg, aggregate_age_bands(neg[over15_age_bands, , ], "_over15"))
-  neg <- abind1(neg, aggregate_age_bands(neg[over25_age_bands, , ], "_over25"))
-
-  pars_base <-
-    last(samples[[1]]$predict$transform(samples[[1]]$pars[1, ]))$pars
-
-  ## Calculate positivity
-  positivity <-
-    (pos * pars_base$pillar2_sensitivity +
-       neg * (1 - pars_base$pillar2_specificity)) / (pos + neg) * 100
-  rownames(positivity) <- paste0("pillar2_positivity", rownames(positivity))
-
-  agg_trajectories$state[rownames(positivity), , ] <- positivity
-  agg_trajectories
 }
 
 
