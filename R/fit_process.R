@@ -372,7 +372,7 @@ reduce_trajectories <- function(samples, severity) {
 
   ## Calculate Pillar 2 positivity and cases
   if (samples$info$model_type == "BB") {
-    samples <- calculate_positivity(samples)
+    samples <- calculate_negatives(samples)
   } else {
     samples <- calculate_cases(samples)
   }
@@ -670,7 +670,7 @@ spim_fit_parameters <- function(samples, parameters) {
 }
 
 
-calculate_positivity <- function(samples) {
+calculate_negatives <- function(samples) {
   date <- sircovid::sircovid_date_as_date(samples$trajectories$date)
   state <- samples$trajectories$state
   transform <- samples$predict$transform
@@ -681,39 +681,33 @@ calculate_positivity <- function(samples) {
     pars_model <- lapply(region, function(r)
       lapply(seq_len(nrow(samples$pars)), function(i)
         last(transform[[r]](samples$pars[i, , r]))$pars))
-    positivity <- lapply(seq_along(region), function(i)
-      calculate_positivity_region(state[, i, , ], pars_model[[i]], date))
+    negatives <- lapply(seq_along(region), function(i)
+      calculate_negatives_region(state[, i, , ], pars_model[[i]], date))
 
     ## Add an extra dimension, then bind together:
-    positivity <- lapply(positivity, mcstate::array_reshape,
-                         2, c(1, dim(state)[[3]]))
-    positivity <- abind_quiet(positivity, along = 2)
+    negatives <- lapply(negatives, mcstate::array_reshape,
+                        2, c(1, dim(state)[[3]]))
+    negatives <- abind_quiet(negatives, along = 2)
   } else {
     pars_model <- lapply(seq_len(nrow(samples$pars)), function(i)
       last(transform(samples$pars[i, ]))$pars)
-    positivity <- calculate_positivity_region(state, pars_model, date)
+    negatives <- calculate_negatives_region(state, pars_model, date)
   }
 
   ## Then bind into the main object:
-  samples$trajectories$state <- abind_quiet(state, positivity, along = 1)
+  samples$trajectories$state <- abind_quiet(state, negatives, along = 1)
 
   samples
 }
 
 
-calculate_positivity_region <- function(state, pars_model, date) {
+calculate_negatives_region <- function(state, pars_model, date) {
 
   pillar2_age_bands <- c("_under15", "_15_24", "_25_49",
                          "_50_64", "_65_79", "_80_plus")
   over25_age_bands <- c("_25_49", "_50_64", "_65_79", "_80_plus")
-  over15_age_bands <- c("_15_24", over25_age_bands)
-
   p_NC_names <- c(paste0("p_NC", pillar2_age_bands),
                   paste0("p_NC_weekend", pillar2_age_bands))
-
-  ## Get the positives for each age band
-  pos <- state[paste0("sympt_cases", pillar2_age_bands, "_inc"), , ]
-  rownames(pos) <- pillar2_age_bands
 
   pars_base <- pars_model[[1]]
   pars <- t(vapply(pars_model, function(p) unlist(p[p_NC_names]),
@@ -737,31 +731,21 @@ calculate_positivity_region <- function(state, pars_model, date) {
   neg <-
     vapply(pillar2_age_bands, calc_negs, array(0, dim = dim(state)[c(2, 3)]))
   neg <- aperm(neg, c(3, 1, 2))
-  rownames(neg) <- pillar2_age_bands
+  rownames(neg) <- paste0("pillar2_negs", pillar2_age_bands)
 
-  aggregate_age_bands <- function(x, name) {
+  agg_age_bands <- function(x, name) {
     agg <- apply(x, c(2, 3), sum)
     agg <- array(agg, c(1, dim(agg)))
     rownames(agg) <- name
     agg
   }
 
-  ## Calculate the positives and negatives for aggregated age bands
-  pos <- abind1(pos, aggregate_age_bands(pos[pillar2_age_bands, , ], ""))
-  pos <- abind1(pos, aggregate_age_bands(pos[over15_age_bands, , ], "_over15"))
-  pos <- abind1(pos, aggregate_age_bands(pos[over25_age_bands, , ], "_over25"))
+  ## Calculate the negatives for aggregated age bands
+  neg <- abind1(neg, agg_age_bands(neg[pillar2_age_bands, , ], "pillar2_negs"))
+  neg <-
+    abind1(neg, agg_age_bands(neg[over25_age_bands, , ], "pillar2_negs_over25"))
 
-  neg <- abind1(neg, aggregate_age_bands(neg[pillar2_age_bands, , ], ""))
-  neg <- abind1(neg, aggregate_age_bands(neg[over15_age_bands, , ], "_over15"))
-  neg <- abind1(neg, aggregate_age_bands(neg[over25_age_bands, , ], "_over25"))
-
-  ## Calculate the positivity
-  positivity <-
-    (pos * pars_base$pillar2_sensitivity +
-       neg * (1 - pars_base$pillar2_specificity)) / (pos + neg) * 100
-  rownames(positivity) <- paste0("pillar2_positivity", rownames(positivity))
-
-  positivity
+  neg
 }
 
 
