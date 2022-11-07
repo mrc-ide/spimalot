@@ -801,13 +801,13 @@ spim_add_forecast <- function(dat, forecast_days) {
 spim_add_forecast_region <- function(samples, forecast_days) {
 
   ## Run forecast
-  steps_predict <- seq(samples$predict$step,
+  steps_predict <- seq(samples$predict$time,
                        length.out = forecast_days + 1L,
                        by = samples$predict$rate)
   forecast <- spim_pmcmc_predict(
     samples, steps_predict,
     prepend_trajectories = FALSE)
-  forecast$date <- forecast$step / forecast$rate
+  forecast$date <- forecast$time / forecast$rate
 
   ## Get forecast trajectories in a shape compatible with samples trajectories
   forecast_samples <- samples
@@ -821,8 +821,8 @@ spim_add_forecast_region <- function(samples, forecast_days) {
     abind_quiet(samples$trajectories$state,
                 forecast_samples$trajectories$state[, , -1L],
                 along = 3)
-  samples$trajectories$step <- c(samples$trajectories$step,
-                                 forecast_samples$trajectories$step[-1L])
+  samples$trajectories$time <- c(samples$trajectories$time,
+                                 forecast_samples$trajectories$time[-1L])
   samples$trajectories$date <- c(samples$trajectories$date,
                                  forecast_samples$trajectories$date[-1L])
   samples$trajectories$predicted <-
@@ -843,8 +843,8 @@ spim_pmcmc_predict <- function(object, steps, prepend_trajectories = FALSE,
   if (length(steps) < 2) {
     stop("At least two steps required for predict")
   }
-  if (steps[[1]] != object$predict$step) {
-    stop(sprintf("Expected steps[1] to be %d", object$predict$step))
+  if (steps[[1]] != object$predict$time) {
+    stop(sprintf("Expected steps[1] to be %d", object$predict$time))
   }
   if (prepend_trajectories && is.null(object$trajectories)) {
     stop(paste("mcmc was run with return_trajectories = FALSE,",
@@ -869,10 +869,12 @@ spim_pmcmc_predict <- function(object, steps, prepend_trajectories = FALSE,
   }
   y <- mod$simulate(steps)
 
-  res <- mcstate:::mcstate_trajectories(steps, object$predict$rate, y, TRUE)
+  res <-
+    mcstate:::mcstate_trajectories_discrete(steps, object$predict$rate, y, TRUE)
 
   if (prepend_trajectories) {
-    res <- mcstate:::bind_mcstate_trajectories(object$trajectories, res)
+    res <-
+      mcstate:::bind_mcstate_trajectories_discrete(object$trajectories, res)
   }
 
   res
