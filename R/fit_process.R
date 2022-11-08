@@ -364,6 +364,9 @@ calculate_intrinsic_severity_region <- function(pars, transform, what, dates) {
   names(ret) <- what
 
   ret <- dplyr::bind_rows(ret, .id = "source")
+
+  ret$period <- factor(ret$period, levels = unique(names(dates)))
+
   ret
 }
 

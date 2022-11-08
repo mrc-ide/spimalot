@@ -83,6 +83,9 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
 
     message("Aggregating prop_protected")
     agg_samples <- combined_aggregate_prop_protected(agg_samples)
+
+    ret$intrinsic_severity <-
+      dplyr::bind_rows(ret$intrinsic_severity, .id = "region")
   }
 
   ## We don't need projections for the severity paper, these will be NULL to
