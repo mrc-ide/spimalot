@@ -304,19 +304,23 @@ calculate_intrinsic_severity <- function(samples, base_pars) {
     ## pars, state, step, info, epoch_dates
     ret <- lapply(samples$info$region, function(r)
       calculate_intrinsic_severity_region(
-        pars[, , r], transform[[r]], what,
-        base_pars[[r]]$intrinsic_severity_dates))
+        pars[, , r], transform[[r]], what, base_pars[[r]]))
     names(ret) <- samples$info$region
   } else {
     ret <-
-      calculate_intrinsic_severity_region(pars, transform, what,
-                                          base_pars$intrinsic_severity_dates)
+      calculate_intrinsic_severity_region(pars, transform, what, base_pars)
   }
   ret
 }
 
 
-calculate_intrinsic_severity_region <- function(pars, transform, what, dates) {
+calculate_intrinsic_severity_region <- function(pars, transform, what,
+                                                base_pars) {
+
+  dates <- base_pars$intrinsic_severity_dates
+  strain_epochs <- base_pars$strain_epochs
+
+  strains <- split(strain_epochs, ceiling(seq_along(strain_epochs) / 2))
 
   step_vect <- dates * 4
 
@@ -330,32 +334,42 @@ calculate_intrinsic_severity_region <- function(pars, transform, what, dates) {
     out
   }
 
-  get_variants <- function(j) {
+  calc_instrinsic_severity_strains <- function(x) {
+    # j will be the first stage in which the strains appear together
+    j <- max(x) + 1
     pars_model <- lapply(spimalot:::seq_rows(pars),
                          function(i) transform(pars[i, ])[[j]]$pars)
 
-    x <- sircovid::lancelot_ifr_excl_immunity(step_vect, pars_model)
-    x$step <- NULL
-    x
+    sev <- sircovid::lancelot_ifr_excl_immunity(step_vect, pars_model)
+    sev$step <- NULL
+    sev
   }
 
-  # Get variants' intrinsic severity
-  Wildtype_Alpha <- get_variants(3)
-  Delta_Omicron <- get_variants(6)
-
+  intrinsic_severity_strains <- lapply(strains,
+                                  calc_instrinsic_severity_strains)
 
   get_what <- function(w) {
-
     sev_variant <- function(x){
       y <- t(apply(x, 1, sev_vector))
       data.frame(period = names(dates), y) %>%
         pivot_longer(!period, names_to = "estimate")
     }
 
-    variants <- list(Wildtype = sev_variant(Wildtype_Alpha[[w]][, 1, ]),
-                     Alpha = sev_variant(Wildtype_Alpha[[w]][, 2, ]),
-                     Delta = sev_variant(Delta_Omicron[[w]][, 1, ]),
-                     Omicron = sev_variant(Delta_Omicron[[w]][, 2, ]))
+    variants <- list()
+
+    for (i in seq_along(strains)) {
+      if (length(strains[[i]]) == 1) {
+        n_cols <- ncol(intrinsic_severity_strains[[i]][[w]])
+        variants[[names(strains[[i]])[1]]] <-
+          sev_variant(intrinsic_severity_strains[[i]][[w]][, n_cols, ])
+      } else {
+        variants[[names(strains[[i]])[1]]] <-
+          sev_variant(intrinsic_severity_strains[[i]][[w]][, 1, ])
+        variants[[names(strains[[i]])[2]]] <-
+          sev_variant(intrinsic_severity_strains[[i]][[w]][, 2, ])
+      }
+    }
+
 
     dplyr::bind_rows(variants, .id = "name")
   }
