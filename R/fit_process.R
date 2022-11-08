@@ -733,7 +733,7 @@ calculate_negatives_region <- function(state, pars_model, date) {
   neg <- aperm(neg, c(3, 1, 2))
   rownames(neg) <- pillar2_age_bands
 
-  agg_age_bands <- function(x, name) {
+  aggregate_age_bands <- function(x, name) {
     agg <- apply(x, c(2, 3), sum)
     agg <- array(agg, c(1, dim(agg)))
     rownames(agg) <- name
@@ -741,9 +741,8 @@ calculate_negatives_region <- function(state, pars_model, date) {
   }
 
   ## Calculate the negatives for aggregated age bands
-  neg <- abind1(neg, agg_age_bands(neg[pillar2_age_bands, , ], ""))
-  neg <-
-    abind1(neg, agg_age_bands(neg[over25_age_bands, , ], "_over25"))
+  neg <- abind1(neg, aggregate_age_bands(neg[pillar2_age_bands, , ], ""))
+  neg <- abind1(neg, aggregate_age_bands(neg[over25_age_bands, , ], "_over25"))
   rownames(neg) <- paste0("pillar2_negs", rownames(neg))
 
   neg
