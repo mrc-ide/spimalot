@@ -61,8 +61,11 @@ spim_fit_process <- function(samples, parameters, data, control) {
   if (control$severity) {
     message("Extracting severity outputs")
     severity <- extract_severity(samples)
+    message("Calculating intrinsic severity")
+    intrinsic_severity <- calculate_intrinsic_severity(samples, parameters$base)
   } else {
     severity <- NULL
+    intrinsic_severity <- NULL
   }
 
   ## Reduce trajectories in samples before saving
@@ -106,6 +109,7 @@ spim_fit_process <- function(samples, parameters, data, control) {
     fit = list(samples = samples,
                rt = rt,
                severity = severity,
+               intrinsic_severity = intrinsic_severity,
                simulate = simulate,
                parameters = parameters_new,
                model_demography = model_demography,
@@ -285,6 +289,84 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
   class(rt) <- c("Rt_trajectories", "Rt")
   rt
 }
+
+
+calculate_intrinsic_severity <- function(samples, base_pars) {
+
+  pars <- samples$pars
+  transform <- samples$predict$transform
+
+  multiregion <- samples$info$multiregion
+
+  what <- c("IFR", "IHR", "HFR")
+
+  if (multiregion) {
+    ## pars, state, step, info, epoch_dates
+    ret <- lapply(samples$info$region, function(r)
+      calculate_intrinsic_severity_region(
+        pars[, , r], transform[[r]], what,
+        base_pars[[r]]$intrinsic_severity_dates))
+    names(ret) <- samples$info$region
+  } else {
+    ret <-
+      calculate_intrinsic_severity_region(pars, transform, what,
+                                          base_pars$intrinsic_severity_dates)
+  }
+  ret
+}
+
+
+calculate_intrinsic_severity_region <- function(pars, transform, what, dates) {
+
+  step_vect <- dates * 4
+
+  sev_vector <- function(x) {
+    mean <- mean(x)
+    lb <- quantile(x, 0.025)
+    ub <- quantile(x, 0.975)
+
+    out <- c(mean, lb, ub)
+    names(out) <- c("mean", "lb", "ub")
+    out
+  }
+
+  get_variants <- function(j) {
+    pars_model <- lapply(spimalot:::seq_rows(pars),
+                         function(i) transform(pars[i, ])[[j]]$pars)
+
+    x <- sircovid::lancelot_ifr_excl_immunity(step_vect, pars_model)
+    x$step <- NULL
+    x
+  }
+
+  # Get variants' intrinsic severity
+  Wildtype_Alpha <- get_variants(3)
+  Delta_Omicron <- get_variants(6)
+
+
+  get_what <- function(w) {
+
+    sev_variant <- function(x){
+      y <- t(apply(x, 1, sev_vector))
+      data.frame(period = names(dates), y) %>%
+        pivot_longer(!period, names_to = "estimate")
+    }
+
+    variants <- list(Wildtype = sev_variant(Wildtype_Alpha[[w]][, 1, ]),
+                     Alpha = sev_variant(Wildtype_Alpha[[w]][, 2, ]),
+                     Delta = sev_variant(Delta_Omicron[[w]][, 1, ]),
+                     Omicron = sev_variant(Delta_Omicron[[w]][, 2, ]))
+
+    dplyr::bind_rows(variants, .id = "name")
+  }
+
+  ret <- lapply(what, get_what)
+  names(ret) <- what
+
+  ret <- dplyr::bind_rows(ret, .id = "source")
+  ret
+}
+
 
 extract_age_class_state <- function(state) {
   n_groups <- sircovid:::lancelot_n_groups()
