@@ -996,11 +996,21 @@ spim_plot_pillar2_positivity_region <- function(region, dat, age_band,
     x <- x[!predicted]
   }
 
+  model_params <- sample$predict$transform(sample$pars[1, ])
+  model_params <- model_params[[length(model_params)]]$pars
+
   if (age_band == "all") {
-    res <- trajectories["pillar2_positivity", , ]
+    res_pos <- trajectories["sympt_cases_inc", , ]
+    res_neg <- trajectories["pillar2_negs", , ]
   } else {
-    res <- trajectories[paste0("pillar2_positivity_", age_band), , ]
+    res_pos <- trajectories[paste0("sympt_cases_", age_band, "_inc"), , ]
+    res_neg <- trajectories[paste0("pillar2_negs_", age_band), , ]
   }
+
+  res <-
+    (res_pos * model_params$pillar2_sensitivity +
+       res_neg * (1 - model_params$pillar2_specificity)) /
+    (res_pos + res_neg) * 100
 
   ps <- seq(0.025, 0.975, 0.005)
   qs <- apply(res,  MARGIN = 2, FUN = quantile, ps, na.rm = TRUE)
