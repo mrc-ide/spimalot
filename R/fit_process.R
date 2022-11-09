@@ -320,6 +320,8 @@ calculate_intrinsic_severity_region <- function(pars, transform, what,
   dates <- base_pars$intrinsic_severity_dates
   strain_epochs <- base_pars$strain_epochs
 
+  ## We calculate the intrinsic severity in pairs, so we split the strains
+  ## into a list of pairs here
   strains <- split(strain_epochs, ceiling(seq_along(strain_epochs) / 2))
 
   step_vect <- dates * 4
@@ -345,11 +347,12 @@ calculate_intrinsic_severity_region <- function(pars, transform, what,
     sev
   }
 
+  ## Calculate the intrinsic severity for each of the pairs of strains
   intrinsic_severity_strains <- lapply(strains,
-                                  calc_instrinsic_severity_strains)
+                                       calc_instrinsic_severity_strains)
 
   get_what <- function(w) {
-    sev_variant <- function(x){
+    sev_variant <- function(x) {
       y <- t(apply(x, 1, sev_vector))
       data.frame(period = names(dates), y) %>%
         pivot_longer(!period, names_to = "estimate")
@@ -359,6 +362,8 @@ calculate_intrinsic_severity_region <- function(pars, transform, what,
 
     for (i in seq_along(strains)) {
       if (length(strains[[i]]) == 1) {
+        ## If we have an odd number of strains, there will be one strain on
+        ## its own, this deals with that case
         n_cols <- ncol(intrinsic_severity_strains[[i]][[w]])
         variants[[names(strains[[i]])[1]]] <-
           sev_variant(intrinsic_severity_strains[[i]][[w]][, n_cols, ])
@@ -369,7 +374,6 @@ calculate_intrinsic_severity_region <- function(pars, transform, what,
           sev_variant(intrinsic_severity_strains[[i]][[w]][, 2, ])
       }
     }
-
 
     dplyr::bind_rows(variants, .id = "name")
   }
