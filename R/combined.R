@@ -21,7 +21,6 @@
 ##' @export
 spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
                                get_onward = TRUE) {
-  browser()
   regions <- sircovid::regions(regions)
 
   files <- file.path(path, regions, "fit.rds")
