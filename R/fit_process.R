@@ -61,8 +61,11 @@ spim_fit_process <- function(samples, parameters, data, control) {
   if (control$severity) {
     message("Extracting severity outputs")
     severity <- extract_severity(samples)
+    message("Calculating intrinsic severity")
+    intrinsic_severity <- calculate_intrinsic_severity(samples, parameters$base)
   } else {
     severity <- NULL
+    intrinsic_severity <- NULL
   }
 
   ## Reduce trajectories in samples before saving
@@ -106,6 +109,7 @@ spim_fit_process <- function(samples, parameters, data, control) {
     fit = list(samples = samples,
                rt = rt,
                severity = severity,
+               intrinsic_severity = intrinsic_severity,
                simulate = simulate,
                parameters = parameters_new,
                model_demography = model_demography,
@@ -188,11 +192,6 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
   R <- state[index_R, , , drop = FALSE]
   prob_strain <- state[index_ps, , , drop = FALSE]
 
-  pars_model <- lapply(seq_len(length(info)), function(j)
-    lapply(seq_rows(pars), function(i)
-      transform(pars[i, ])[[j]]$pars))
-
-  pars_model[[1]]$steps_per_day
   dates <- step / 4
 
   n_pars <- nrow(pars)
@@ -224,9 +223,12 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
       next
     }
 
-    n_strains <- pars_model[[i]][[1]]$n_strains
-    n_strains_R <- pars_model[[i]][[1]]$n_strains_R
-    n_vacc_classes <- pars_model[[i]][[1]]$n_vacc_classes
+    pars_model <- lapply(seq_rows(pars), function(j)
+      transform(pars[j, ])[[i]]$pars)
+
+    n_strains <- pars_model[[1]]$n_strains
+    n_strains_R <- pars_model[[1]]$n_strains_R
+    n_vacc_classes <- pars_model[[1]]$n_vacc_classes
 
     suffix <- paste0("_", c(sircovid:::sircovid_age_bins()$start, "CHW", "CHR"))
     S_nms <- get_names("S", list(n_vacc_classes), suffix)
@@ -246,7 +248,7 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
     }
 
     rt1 <- sircovid::lancelot_Rt_trajectories(
-      step1, S1, pars_model[[i]], type = type,
+      step1, S1, pars_model, type = type,
       initial_step_from_parameters = initial_step_from_parameters,
       shared_parameters = FALSE, R = R1, prob_strain = prob_strain1,
       weight_Rt = weight_Rt, keep_strains_Rt = keep_strains_Rt)
@@ -287,6 +289,105 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
   class(rt) <- c("Rt_trajectories", "Rt")
   rt
 }
+
+
+calculate_intrinsic_severity <- function(samples, base_pars) {
+
+  pars <- samples$pars
+  transform <- samples$predict$transform
+
+  multiregion <- samples$info$multiregion
+
+  what <- c("IFR", "IHR", "HFR")
+
+  if (multiregion) {
+    ## pars, state, step, info, epoch_dates
+    ret <- lapply(samples$info$region, function(r)
+      calculate_intrinsic_severity_region(
+        pars[, , r], transform[[r]], what, base_pars[[r]]))
+    names(ret) <- samples$info$region
+  } else {
+    ret <-
+      calculate_intrinsic_severity_region(pars, transform, what, base_pars)
+  }
+  ret
+}
+
+
+calculate_intrinsic_severity_region <- function(pars, transform, what,
+                                                base_pars) {
+
+  dates <- base_pars$intrinsic_severity_dates
+  strain_epochs <- base_pars$strain_epochs
+
+  ## We calculate the intrinsic severity in pairs, so we split the strains
+  ## into a list of pairs here
+  strains <- split(strain_epochs, ceiling(seq_along(strain_epochs) / 2))
+
+  step_vect <- dates * 4
+
+  sev_vector <- function(x) {
+    mean <- mean(x)
+    lb <- quantile(x, 0.025)
+    ub <- quantile(x, 0.975)
+
+    out <- c(mean, lb, ub)
+    names(out) <- c("mean", "lb", "ub")
+    out
+  }
+
+  calc_instrinsic_severity_strains <- function(x) {
+    # j will be the first stage in which the strains appear together
+    j <- max(x) + 1
+    pars_model <- lapply(spimalot:::seq_rows(pars),
+                         function(i) transform(pars[i, ])[[j]]$pars)
+
+    sev <- sircovid::lancelot_ifr_excl_immunity(step_vect, pars_model)
+    sev$step <- NULL
+    sev
+  }
+
+  ## Calculate the intrinsic severity for each of the pairs of strains
+  intrinsic_severity_strains <- lapply(strains,
+                                       calc_instrinsic_severity_strains)
+
+  get_what <- function(w) {
+    sev_variant <- function(x) {
+      y <- t(apply(x, 1, sev_vector))
+      data.frame(period = names(dates), y) %>%
+        pivot_longer(!period, names_to = "estimate")
+    }
+
+    variants <- list()
+
+    for (i in seq_along(strains)) {
+      if (length(strains[[i]]) == 1) {
+        ## If we have an odd number of strains, there will be one strain on
+        ## its own, this deals with that case
+        n_cols <- ncol(intrinsic_severity_strains[[i]][[w]])
+        variants[[names(strains[[i]])[1]]] <-
+          sev_variant(intrinsic_severity_strains[[i]][[w]][, n_cols, ])
+      } else {
+        variants[[names(strains[[i]])[1]]] <-
+          sev_variant(intrinsic_severity_strains[[i]][[w]][, 1, ])
+        variants[[names(strains[[i]])[2]]] <-
+          sev_variant(intrinsic_severity_strains[[i]][[w]][, 2, ])
+      }
+    }
+
+    dplyr::bind_rows(variants, .id = "name")
+  }
+
+  ret <- lapply(what, get_what)
+  names(ret) <- what
+
+  ret <- dplyr::bind_rows(ret, .id = "source")
+
+  ret$period <- factor(ret$period, levels = unique(names(dates)))
+
+  ret
+}
+
 
 extract_age_class_state <- function(state) {
   n_groups <- sircovid:::lancelot_n_groups()
@@ -374,7 +475,7 @@ reduce_trajectories <- function(samples, severity) {
 
   ## Calculate Pillar 2 positivity and cases
   if (samples$info$model_type == "BB") {
-    samples <- calculate_positivity(samples)
+    samples <- calculate_negatives(samples)
   } else {
     samples <- calculate_cases(samples)
   }
@@ -672,7 +773,7 @@ spim_fit_parameters <- function(samples, parameters) {
 }
 
 
-calculate_positivity <- function(samples) {
+calculate_negatives <- function(samples) {
   date <- sircovid::sircovid_date_as_date(samples$trajectories$date)
   state <- samples$trajectories$state
   transform <- samples$predict$transform
@@ -683,39 +784,33 @@ calculate_positivity <- function(samples) {
     pars_model <- lapply(region, function(r)
       lapply(seq_len(nrow(samples$pars)), function(i)
         last(transform[[r]](samples$pars[i, , r]))$pars))
-    positivity <- lapply(seq_along(region), function(i)
-      calculate_positivity_region(state[, i, , ], pars_model[[i]], date))
+    negatives <- lapply(seq_along(region), function(i)
+      calculate_negatives_region(state[, i, , ], pars_model[[i]], date))
 
     ## Add an extra dimension, then bind together:
-    positivity <- lapply(positivity, mcstate::array_reshape,
-                         2, c(1, dim(state)[[3]]))
-    positivity <- abind_quiet(positivity, along = 2)
+    negatives <- lapply(negatives, mcstate::array_reshape,
+                        2, c(1, dim(state)[[3]]))
+    negatives <- abind_quiet(negatives, along = 2)
   } else {
     pars_model <- lapply(seq_len(nrow(samples$pars)), function(i)
       last(transform(samples$pars[i, ]))$pars)
-    positivity <- calculate_positivity_region(state, pars_model, date)
+    negatives <- calculate_negatives_region(state, pars_model, date)
   }
 
   ## Then bind into the main object:
-  samples$trajectories$state <- abind_quiet(state, positivity, along = 1)
+  samples$trajectories$state <- abind_quiet(state, negatives, along = 1)
 
   samples
 }
 
 
-calculate_positivity_region <- function(state, pars_model, date) {
+calculate_negatives_region <- function(state, pars_model, date) {
 
   pillar2_age_bands <- c("_under15", "_15_24", "_25_49",
                          "_50_64", "_65_79", "_80_plus")
   over25_age_bands <- c("_25_49", "_50_64", "_65_79", "_80_plus")
-  over15_age_bands <- c("_15_24", over25_age_bands)
-
   p_NC_names <- c(paste0("p_NC", pillar2_age_bands),
                   paste0("p_NC_weekend", pillar2_age_bands))
-
-  ## Get the positives for each age band
-  pos <- state[paste0("sympt_cases", pillar2_age_bands, "_inc"), , ]
-  rownames(pos) <- pillar2_age_bands
 
   pars_base <- pars_model[[1]]
   pars <- t(vapply(pars_model, function(p) unlist(p[p_NC_names]),
@@ -748,22 +843,12 @@ calculate_positivity_region <- function(state, pars_model, date) {
     agg
   }
 
-  ## Calculate the positives and negatives for aggregated age bands
-  pos <- abind1(pos, aggregate_age_bands(pos[pillar2_age_bands, , ], ""))
-  pos <- abind1(pos, aggregate_age_bands(pos[over15_age_bands, , ], "_over15"))
-  pos <- abind1(pos, aggregate_age_bands(pos[over25_age_bands, , ], "_over25"))
-
+  ## Calculate the negatives for aggregated age bands
   neg <- abind1(neg, aggregate_age_bands(neg[pillar2_age_bands, , ], ""))
-  neg <- abind1(neg, aggregate_age_bands(neg[over15_age_bands, , ], "_over15"))
   neg <- abind1(neg, aggregate_age_bands(neg[over25_age_bands, , ], "_over25"))
+  rownames(neg) <- paste0("pillar2_negs", rownames(neg))
 
-  ## Calculate the positivity
-  positivity <-
-    (pos * pars_base$pillar2_sensitivity +
-       neg * (1 - pars_base$pillar2_specificity)) / (pos + neg) * 100
-  rownames(positivity) <- paste0("pillar2_positivity", rownames(positivity))
-
-  positivity
+  neg
 }
 
 
