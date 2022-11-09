@@ -394,7 +394,7 @@ combined_severity <- function(severity, samples) {
   ## incidence
 
   out <- combined_severity_1(severity, samples, c("ifr", "ihr"),
-                             "infections_inc", step_date = TRUE)
+                             "infections_inc", time_date = TRUE)
 
   out <- c(out, combined_severity_1(severity, samples, c("hfr"),
                                     "hospitalisations_inc"))
@@ -426,9 +426,9 @@ combined_severity <- function(severity, samples) {
 }
 
 combined_severity_1 <- function(severity, samples, what, weight,
-                                step_date = FALSE) {
+                                time_date = FALSE) {
   for (i in names(severity)) {
-    severity[[i]] <- severity[[i]][c(what, "step", "date")]
+    severity[[i]] <- severity[[i]][c(what, "time", "date")]
 
     ## Where incidence is zero (and thus where the weight is zero), the severity
     ## metric will be NA. To avoid the weighted severity being NA, we set the
@@ -444,8 +444,8 @@ combined_severity_1 <- function(severity, samples, what, weight,
   ret <- sircovid::combine_rt(severity, samples,
                               rank = FALSE, weight = weight)
 
-  if (!step_date) {
-    ret$step <- NULL
+  if (!time_date) {
+    ret$time <- NULL
     ret$date <- NULL
   }
   ret
@@ -500,7 +500,7 @@ combine_variant_rt <- function(variant_rt, samples, rank, weighted = FALSE) {
       samples[[r]]$trajectories$date[idx_dates]
   }
 
-  what <- setdiff(names(variant_rt[[1]]), c("step", "date", "beta"))
+  what <- setdiff(names(variant_rt[[1]]), c("time", "date", "beta"))
 
   ## combine_rt in sircovid only works for one variant so we need to combine
   ## each variant separately
@@ -640,7 +640,7 @@ spim_prop_infected <- function(combined, population,
 
 reorder_variant_rt <- function(x, rank, weighted = FALSE) {
 
-  what <- setdiff(names(x), c("step", "date"))
+  what <- setdiff(names(x), c("time", "date"))
 
   ## reorder_rt_ifr will only work for one variant so we will have to reorder
   ## each variant separately
@@ -695,11 +695,11 @@ spim_add_forecast <- function(dat, forecast_days) {
 spim_add_forecast_region <- function(samples, forecast_days) {
 
   ## Run forecast
-  steps_predict <- seq(samples$predict$time,
-                       length.out = forecast_days + 1L,
-                       by = samples$predict$rate)
+  time_predict <- seq(samples$predict$time,
+                      length.out = forecast_days + 1L,
+                      by = samples$predict$rate)
   forecast <- spim_pmcmc_predict(
-    samples, steps_predict,
+    samples, time_predict,
     prepend_trajectories = FALSE)
   forecast$date <- forecast$time / forecast$rate
 
@@ -728,17 +728,17 @@ spim_add_forecast_region <- function(samples, forecast_days) {
 }
 
 ## This is adapted from mcstate::pmcmc_predict
-spim_pmcmc_predict <- function(object, steps, prepend_trajectories = FALSE,
+spim_pmcmc_predict <- function(object, time, prepend_trajectories = FALSE,
                                n_threads = NULL, seed = NULL) {
 
   if (is.null(object$predict)) {
     stop("mcmc was run with return_state = FALSE, can't predict")
   }
-  if (length(steps) < 2) {
-    stop("At least two steps required for predict")
+  if (length(time) < 2) {
+    stop("At least two time steps required for predict")
   }
-  if (steps[[1]] != object$predict$time) {
-    stop(sprintf("Expected steps[1] to be %d", object$predict$time))
+  if (times[[1]] != object$predict$time) {
+    stop(sprintf("Expected time[1] to be %d", object$predict$time))
   }
   if (prepend_trajectories && is.null(object$trajectories)) {
     stop(paste("mcmc was run with return_trajectories = FALSE,",
@@ -754,17 +754,17 @@ spim_pmcmc_predict <- function(object, steps, prepend_trajectories = FALSE,
   pars <- lapply(seq_len(nrow(object$pars)), function(i)
     last(object$predict$transform(object$pars[i, ]))$pars)
 
-  mod <- model$new(pars, steps[[1]], NULL, n_threads = n_threads,
+  mod <- model$new(pars, time[[1]], NULL, n_threads = n_threads,
                    seed = seed, pars_multi = TRUE)
 
   mod$update_state(state = state)
   if (!is.null(index)) {
     mod$set_index(index)
   }
-  y <- mod$simulate(steps)
+  y <- mod$simulate(time)
 
   res <-
-    mcstate:::mcstate_trajectories_discrete(steps, object$predict$rate, y, TRUE)
+    mcstate:::mcstate_trajectories_discrete(time, object$predict$rate, y, TRUE)
 
   if (prepend_trajectories) {
     res <-
