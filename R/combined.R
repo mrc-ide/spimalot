@@ -21,6 +21,7 @@
 ##' @export
 spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
                                get_onward = TRUE) {
+  browser()
   regions <- sircovid::regions(regions)
 
   files <- file.path(path, regions, "fit.rds")
@@ -737,7 +738,7 @@ spim_pmcmc_predict <- function(object, time, prepend_trajectories = FALSE,
   if (length(time) < 2) {
     stop("At least two time steps required for predict")
   }
-  if (times[[1]] != object$predict$time) {
+  if (time[[1]] != object$predict$time) {
     stop(sprintf("Expected time[1] to be %d", object$predict$time))
   }
   if (prepend_trajectories && is.null(object$trajectories)) {
