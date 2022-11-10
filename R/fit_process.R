@@ -28,7 +28,7 @@ spim_fit_process <- function(samples, parameters, data, control) {
   samples$restart <- NULL
 
   samples$trajectories$date <-
-    samples$trajectories$step / samples$trajectories$rate
+    samples$trajectories$time / samples$trajectories$rate
 
   ## The Rt calculation is slow and runs in serial; it's a surprising
   ## fraction of the total time.
@@ -155,7 +155,7 @@ create_simulate_object <- function(samples, start_date_sim, date) {
 
 
 calculate_lancelot_Rt <- function(samples, weight_Rt, keep_strains_Rt = FALSE) {
-  step <- samples$trajectories$step
+  time <- samples$trajectories$time
   info <- samples$info$info
   epoch_dates <- samples$info$epoch_dates
 
@@ -166,15 +166,15 @@ calculate_lancelot_Rt <- function(samples, weight_Rt, keep_strains_Rt = FALSE) {
   multiregion <- samples$info$multiregion
 
   if (multiregion) {
-    ## pars, state, step, info, epoch_dates
+    ## pars, state, time, info, epoch_dates
     ret <- lapply(samples$info$region, function(r)
       calculate_lancelot_Rt_region(pars[, , r], state[, r, , ], transform[[r]],
-                                   step, info, epoch_dates, weight_Rt,
+                                   time, info, epoch_dates, weight_Rt,
                                    keep_strains_Rt))
     names(ret) <- samples$info$region
   } else {
     ret <- calculate_lancelot_Rt_region(pars, state, transform,
-                                        step, info, epoch_dates, weight_Rt,
+                                        time, info, epoch_dates, weight_Rt,
                                         keep_strains_Rt)
   }
   ret
@@ -182,7 +182,7 @@ calculate_lancelot_Rt <- function(samples, weight_Rt, keep_strains_Rt = FALSE) {
 
 
 calculate_lancelot_Rt_region <- function(pars, state, transform,
-                                         step, info, epoch_dates, weight_Rt,
+                                         time, info, epoch_dates, weight_Rt,
                                          keep_strains_Rt) {
   index_S <- grep("^S_", rownames(state))
   index_R <- grep("^R_", rownames(state))
@@ -192,7 +192,7 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
   R <- state[index_R, , , drop = FALSE]
   prob_strain <- state[index_ps, , , drop = FALSE]
 
-  dates <- step / 4
+  dates <- time / 4
 
   n_pars <- nrow(pars)
 
@@ -201,7 +201,7 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
   ## TODO: currently we'll just deal with multistage here, but it would
   ## be good to adapt the sircovid function to deal with multistage
   ## parameters
-  rt <- list(step = numeric(0),
+  rt <- list(time = numeric(0),
              date = numeric(0),
              beta = numeric(0),
              eff_Rt_general = numeric(0),
@@ -210,13 +210,13 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
   for (i in seq_len(length(epoch_dates) + 1L)) {
     if (i == 1) {
       dates1 <- which(dates <= epoch_dates[1])
-      initial_step_from_parameters <- TRUE
+      initial_time_from_parameters <- TRUE
     } else  if (i <= length(epoch_dates)) {
       dates1 <- which(dates > epoch_dates[i - 1] & dates <= epoch_dates[i])
-      initial_step_from_parameters <- FALSE
+      initial_time_from_parameters <- FALSE
     } else {
       dates1 <- which(dates > epoch_dates[i - 1])
-      initial_step_from_parameters <- FALSE
+      initial_time_from_parameters <- FALSE
     }
 
     if (length(dates1) == 0) {
@@ -233,7 +233,7 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
     suffix <- paste0("_", c(sircovid:::sircovid_age_bins()$start, "CHW", "CHR"))
     S_nms <- get_names("S", list(n_vacc_classes), suffix)
 
-    step1 <- step[dates1]
+    time1 <- time[dates1]
     S1 <- S[S_nms, , dates1, drop = FALSE]
 
     if (n_strains == 1) {
@@ -248,17 +248,17 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
     }
 
     rt1 <- sircovid::lancelot_Rt_trajectories(
-      step1, S1, pars_model, type = type,
-      initial_step_from_parameters = initial_step_from_parameters,
+      time1, S1, pars_model, type = type,
+      initial_time_from_parameters = initial_time_from_parameters,
       shared_parameters = FALSE, R = R1, prob_strain = prob_strain1,
       weight_Rt = weight_Rt, keep_strains_Rt = keep_strains_Rt)
 
     reshape_rt <- function(r) {
       if (weight_Rt) {
-        tmp <- array(NA, c(length(step1), 3, n_pars))
+        tmp <- array(NA, c(length(time1), 3, n_pars))
         tmp[, 3, ] <- r
       } else {
-        tmp <- array(NA, c(length(step1), 2, n_pars))
+        tmp <- array(NA, c(length(time1), 2, n_pars))
       }
       tmp[, 1, ] <- r
       tmp
@@ -301,7 +301,7 @@ calculate_intrinsic_severity <- function(samples, base_pars) {
   what <- c("IFR", "IHR", "HFR")
 
   if (multiregion) {
-    ## pars, state, step, info, epoch_dates
+    ## pars, state, time, info, epoch_dates
     ret <- lapply(samples$info$region, function(r)
       calculate_intrinsic_severity_region(
         pars[, , r], transform[[r]], what, base_pars[[r]]))
@@ -324,7 +324,7 @@ calculate_intrinsic_severity_region <- function(pars, transform, what,
   ## into a list of pairs here
   strains <- split(strain_epochs, ceiling(seq_along(strain_epochs) / 2))
 
-  step_vect <- dates * 4
+  time_vect <- dates * 4
 
   sev_vector <- function(x) {
     mean <- mean(x)
@@ -342,8 +342,8 @@ calculate_intrinsic_severity_region <- function(pars, transform, what,
     pars_model <- lapply(spimalot:::seq_rows(pars),
                          function(i) transform(pars[i, ])[[j]]$pars)
 
-    sev <- sircovid::lancelot_ifr_excl_immunity(step_vect, pars_model)
-    sev$step <- NULL
+    sev <- sircovid::lancelot_ifr_excl_immunity(time_vect, pars_model)
+    sev$time <- NULL
     sev
   }
 
@@ -485,7 +485,7 @@ reduce_trajectories <- function(samples, severity) {
 
 
 trajectories_filter_time <- function(trajectories, i) {
-  trajectories$step <- trajectories$step[i]
+  trajectories$time <- trajectories$time[i]
   trajectories$date <- trajectories$date[i]
   trajectories$predicted <- trajectories$predicted[i]
   if (length(dim(trajectories$state)) == 3) {
@@ -1097,19 +1097,19 @@ extract_demography_region <- function(samples) {
 
 
 extract_severity <- function(samples) {
-  step <- samples$trajectories$step
+  time <- samples$trajectories$time
   date <- samples$trajectories$date
   state <- samples$trajectories$state
 
   multiregion <- samples$info$multiregion
 
   if (multiregion) {
-    ## state, step, date
+    ## state, time, date
     ret <- lapply(samples$info$region, function(r)
-      extract_severity_region(state[, r, , ], step, date))
+      extract_severity_region(state[, r, , ], time, date))
     names(ret) <- samples$info$region
   } else {
-    ret <- extract_severity_region(state, step, date)
+    ret <- extract_severity_region(state, time, date)
   }
   ret
 }
@@ -1237,7 +1237,7 @@ calc_weighted_protected <- function(samples) {
 }
 
 
-extract_severity_region <- function(state, step, date) {
+extract_severity_region <- function(state, time, date) {
 
   # String vectors to formulate severity trajectory names needed
   sev_traj <- grep("^ifr|^ihr|^hfr", rownames(state), value = TRUE)
@@ -1252,7 +1252,7 @@ extract_severity_region <- function(state, step, date) {
     severity[[s]] <- tmp
   }
 
-  severity$step <- step
+  severity$time <- time
   severity$date <- date
   class(severity) <- "IFR_t_trajectories"
 

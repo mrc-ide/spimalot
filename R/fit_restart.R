@@ -128,7 +128,7 @@ spim_restart_pars <- function(pars, pars_parent, restart_date) {
 spim_restart_join_parent <- function(fit, parent) {
   ## First, fix first step; see
   ## https://github.com/mrc-ide/mcstate/issues/55
-  fit$samples$trajectories$step <- fit$samples$trajectories$step[-1L]
+  fit$samples$trajectories$time <- fit$samples$trajectories$time[-1L]
   fit$samples$trajectories$date <- fit$samples$trajectories$date[-1L]
   fit$samples$trajectories$predicted <- fit$samples$trajectories$predicted[-1L]
   fit$samples$trajectories$state <- fit$samples$trajectories$state[, , -1L]
@@ -143,7 +143,7 @@ spim_restart_join_parent <- function(fit, parent) {
   i <- which(parent$trajectories$date <= restart_date)
 
   ## Filter trajectories:
-  for (v in c("step", "date", "predicted")) {
+  for (v in c("time", "date", "predicted")) {
     fit$samples$trajectories[[v]] <- c(
       parent$trajectories[[v]][i], fit$samples$trajectories[[v]])
   }
@@ -187,7 +187,7 @@ spim_restart_join_parent <- function(fit, parent) {
 
   fit$samples$info$time_index <- list(
     parent = i,
-    restart = seq(max(i) + 1, length(fit$samples$trajectories$step)),
+    restart = seq(max(i) + 1, length(fit$samples$trajectories$time)),
     predicted = integer(0))
 
   fit
