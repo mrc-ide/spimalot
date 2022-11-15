@@ -167,7 +167,9 @@ spim_combined_load_multiregion <- function(path) {
   ## as aggregated Rt values are used in onwards simulations
   agg_samples <- combined_aggregate_samples(ret$samples)
   agg_data <- combined_aggregate_data(ret$data)
-  ret$rt <- combined_aggregate_variant_rt(ret$rt, agg_samples, TRUE)
+  if(!is.null(ret$rt)) {
+    ret$rt <- combined_aggregate_variant_rt(ret$rt, agg_samples, TRUE)
+  }
 
   ## Now the onward object has been created, we can safely store the
   ## other aggregated outputs in ret

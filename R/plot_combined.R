@@ -109,6 +109,7 @@ spim_plot_Rt <- function(dat, regions, rt_type, forecast_until = NULL,
     variant <- "weighted"
   }
   for (r in regions) {
+    if (!is.null(dat$rt[[r]]))
     spim_plot_Rt_region(r, dat, rt_type, forecast_until, variant, add_betas,
                         multistrain)
   }
