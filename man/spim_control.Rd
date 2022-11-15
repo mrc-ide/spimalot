@@ -9,6 +9,7 @@ spim_control(
   n_chains,
   deterministic = FALSE,
   multiregion = FALSE,
+  rt = TRUE,
   severity = FALSE,
   simulate = FALSE,
   demography = FALSE,
@@ -37,6 +38,9 @@ data is run deterministically or stochastically}
 \item{multiregion}{Logical, indicating if we are fitting multiple
 regions at once (in which case even the deterministic model may
 benefit from multithreading).}
+
+\item{rt}{Logical, indicating if we are calculating Rt trajectories or
+not. Default is TRUE}
 
 \item{severity}{Logical, indicating if we are outputting severity
 trajectories (e.g. IFR, IHR, HFR). Default to FALSE.}

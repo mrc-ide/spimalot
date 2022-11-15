@@ -72,6 +72,7 @@ spim_particle_filter <- function(data, pars, control,
   }
 
   ## Logical flags for the index function
+  rt <- control$rt
   severity <- control$severity
   protected <- control$severity
   cum_infections_disag <- control$simulate
@@ -83,7 +84,7 @@ spim_particle_filter <- function(data, pars, control,
     mcstate::particle_deterministic$new(
       data = data, model = sircovid::lancelot, compare = compare,
       index = function(info)
-        sircovid::lancelot_index(info, severity = severity,
+        sircovid::lancelot_index(info, rt = rt, severity = severity,
                                  protected = protected,
                                  D_all = D_all, D_hosp = D_hosp,
                                  diagnoses_admitted = diagnoses_admitted,
@@ -95,7 +96,7 @@ spim_particle_filter <- function(data, pars, control,
       data = data, model = sircovid::lancelot,
       n_particles = control$n_particles,
       compare = compare, index = function(info)
-        sircovid::lancelot_index(info, severity = severity,
+        sircovid::lancelot_index(info, rt = rt, severity = severity,
                                  protected = protected,
                                  D_all = D_all, D_hosp = D_hosp,
                                  diagnoses_admitted = diagnoses_admitted,
