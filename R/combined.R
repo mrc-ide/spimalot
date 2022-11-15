@@ -62,7 +62,9 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
   ## reorder by increasing cumulative incidence:
   rank_cum_inc <- lapply(ret$samples, sircovid::get_sample_rank)
   ret$samples <- Map(sircovid::reorder_sample, ret$samples, rank_cum_inc)
-  ret$rt <- Map(reorder_variant_rt, ret$rt, rank_cum_inc, weighted = TRUE)
+  if (!is.null(ret$rt[[1]])) {
+    ret$rt <- Map(reorder_variant_rt, ret$rt, rank_cum_inc, weighted = TRUE)
+  }
 
   message("Aggregating England/UK")
   ## Aggregate some of these to get england/uk entries
@@ -71,7 +73,9 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
   ## as aggregated Rt values are used in onwards simulations
   agg_samples <- combined_aggregate_samples(ret$samples)
   agg_data <- combined_aggregate_data(ret$data)
-  ret$rt <- combined_aggregate_variant_rt(ret$rt, agg_samples, TRUE)
+  if (!is.null(ret$rt[[1]])) {
+    ret$rt <- combined_aggregate_variant_rt(ret$rt, agg_samples, TRUE)
+  }
   ret$model_demography <- combined_aggregate_demography(ret$model_demography)
 
 
