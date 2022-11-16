@@ -129,6 +129,13 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all",
       jitter <- 0.5
       regions <- names(par)
       hp <- subset(hps, hps$name == par_name)
+      if (is.na(hp$region[1])) {
+        hp <- hp[rep(1, length(regions)), ]
+        hp$region <- regions
+        col <- "red"
+      } else {
+        col <- "grey20"
+      }
       rownames(hp) <- hp$region
       hp <- hp[regions, ] # sort in correct order
       if (hp$type[1] == "beta") {
@@ -168,7 +175,8 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all",
                  col = col_line, lty = 2, lwd = 1, lend = 2)
       }
 
-      mapply(FUN = plot_ci_bar, res = par, at = at, width = 0.1)
+      mapply(FUN = plot_ci_bar, res = par, at = at, width = 0.1,
+             col = col)
     }
   }
 

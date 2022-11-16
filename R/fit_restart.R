@@ -167,7 +167,9 @@ spim_restart_join_parent <- function(fit, parent) {
     ret
   }
 
-  fit$rt <- join_rt(parent$rt, fit$rt, i)
+  if (!is.null(fit$rt) && !is.null(parent$rt)) {
+    fit$rt <- join_rt(parent$rt, fit$rt, i)
+  }
   ## NOTE: Previously we've saved ifr here too, but that needs
   ## reworking for the multistage fits still
 

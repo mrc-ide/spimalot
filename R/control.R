@@ -16,6 +16,9 @@
 ##'   regions at once (in which case even the deterministic model may
 ##'   benefit from multithreading).
 ##'
+##' @param rt Logical, indicating if we are calculating Rt trajectories or
+##'   not. Default is TRUE
+##'
 ##' @param severity Logical, indicating if we are outputting severity
 ##'   trajectories (e.g. IFR, IHR, HFR). Default to FALSE.
 ##'
@@ -64,7 +67,7 @@
 ##' @return A list of options
 ##' @export
 spim_control <- function(short_run, n_chains, deterministic = FALSE,
-                         multiregion = FALSE, severity = FALSE,
+                         multiregion = FALSE, rt = TRUE, severity = FALSE,
                          simulate = FALSE, demography = FALSE,
                          date_restart = NULL, n_particles = 192, n_mcmc = 1500,
                          burnin = 500, workers = TRUE, n_sample = 1000,
@@ -121,6 +124,7 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                           n_threads = n_threads,
                           seed = NULL,
                           compiled_compare = compiled_compare,
+                          rt = rt,
                           severity = severity,
                           simulate = simulate,
                           demography = demography)

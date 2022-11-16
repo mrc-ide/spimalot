@@ -32,8 +32,12 @@ spim_fit_process <- function(samples, parameters, data, control) {
 
   ## The Rt calculation is slow and runs in serial; it's a surprising
   ## fraction of the total time.
-  message("Computing Rt")
-  rt <- calculate_lancelot_Rt(samples, TRUE, TRUE)
+  if (control$rt) {
+    message("Computing Rt")
+    rt <- calculate_lancelot_Rt(samples, TRUE, TRUE)
+  } else {
+    rt <- NULL
+  }
 
   ## TODO: someone needs to document what this date is for (appears to
   ## filter trajectories to start at this date) and when we might
@@ -84,9 +88,15 @@ spim_fit_process <- function(samples, parameters, data, control) {
     restart_date <- max(restart$state$time)
     i <- samples$trajectories$date <= restart_date
 
+    if (control$rt) {
+      parent_rt <- rt_filter_time(rt, i, samples$info$multiregion)
+    } else {
+      parent_rt <- NULL
+    }
+
     restart$parent <- list(
       trajectories = trajectories_filter_time(samples$trajectories, i),
-      rt = rt_filter_time(rt, i, samples$info$multiregion),
+      rt = parent_rt,
       data = data,
       prior = parameters$raw$prior)
   }
@@ -972,22 +982,14 @@ summarise_states_region <- function(state, pars_model) {
   n_strains_R <- pars$n_strains_R
   n_vacc_classes <- pars$n_vacc_classes
 
-  susceptible <- state[grep("^S_", rownames(state)), , ]
-  susceptible[is.na(susceptible)] <- 0
-  susceptible <- apply(susceptible, c(2, 3), sum)
-  susceptible <- array(susceptible, c(1, dim(susceptible)))
-  row.names(susceptible) <- "susceptible"
-
-  recovered <- state[grep("^R_", rownames(state)), , ]
+  i_recovered <- match(paste0("recovered", seq_len(n_strains_R)),
+                       rownames(state))
+  recovered <- state[i_recovered, , ]
+  state <- state[-i_recovered, , ]
   recovered[is.na(recovered)] <- 0
-  recovered <- array(recovered, c(n_groups, n_strains_R,
-                                  n_vacc_classes, dim(recovered)[2:3]))
-  recovered <- apply(recovered, c(2, 4, 5), sum)
   recovered[c(1, 2), , ] <- recovered[c(1, 2), , ] + recovered[c(4, 3), , ]
   recovered <- recovered[c(1, 2, 5), , ]
   row.names(recovered) <- c("recovered_1", "recovered_2", "recovered_historic")
-
-  extra_states <- abind1(susceptible, recovered)
 
   get_vaccine_status <- function(cum_n_vaccinated) {
     v <- c(pars$N_tot_all - cum_n_vaccinated[1],
@@ -1000,7 +1002,7 @@ summarise_states_region <- function(state, pars_model) {
   vacc_uptake <- which(endsWith(rownames(vaccine_status), "_1"))[c(1:17)]
   vacc_uptake <- vaccine_status[vacc_uptake, , ]
   rownames(vacc_uptake) <- paste0("vacc_uptake_", seq_len(nrow(vacc_uptake)))
-  extra_states <- abind1(extra_states, vacc_uptake)
+  extra_states <- abind1(recovered, vacc_uptake)
 
   vaccine_status[is.na(vaccine_status)] <- 0
   vaccine_status <- array(vaccine_status, c(n_groups, n_vacc_classes,
