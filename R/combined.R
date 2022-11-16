@@ -171,7 +171,7 @@ spim_combined_load_multiregion <- function(path) {
   ## as aggregated Rt values are used in onwards simulations
   agg_samples <- combined_aggregate_samples(ret$samples)
   agg_data <- combined_aggregate_data(ret$data)
-  if(!is.null(ret$rt)) {
+  if (!is.null(ret$rt)) {
     ret$rt <- combined_aggregate_variant_rt(ret$rt, agg_samples, TRUE)
   }
 
