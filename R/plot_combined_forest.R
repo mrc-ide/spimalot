@@ -15,10 +15,13 @@
 ##' @param subset A vector of parameter names to plot if `subset` is selected
 ##'   for `plot_type`. Otherwise can just be set to NULL (the default)
 ##'
+##' @param par_labels A list of labels to use for parameters,
+##'   any parameter not listed will just have a label matching its name
+##'
 ##' @return Nothing, called for side effects
 ##' @export
 spim_plot_forest <- function(dat, regions = NULL, plot_type = "all",
-                             subset = NULL) {
+                             subset = NULL, par_labels = list()) {
   if (is.null(regions)) {
     regions <- intersect(sircovid::regions("all"), names(dat$samples))
   } else {
@@ -111,11 +114,15 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all",
 
       xmin <- min(par_info$min)
 
-      if (grepl("^beta", par_name)) {
-        k <- as.numeric(gsub("beta", "", par_name))
-        xlab <- paste0(par_name, " (", beta_date[k], ")")
+      if (par_name %in% names(par_labels)) {
+        xlab <- par_labels[[par_name]]
       } else {
-        xlab <- par_name
+        if (grepl("^beta", par_name)) {
+          k <- as.numeric(gsub("beta", "", par_name))
+          xlab <- paste0(par_name, " (", beta_date[k], ")")
+        } else {
+          xlab <- par_name
+        }
       }
 
       plot(0, 0, type = "n",
@@ -182,11 +189,16 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all",
 
   plot_start_date <- function() {
     numeric_start_date <- extract_sample(par_name = "start_date")
+    if ("start_date" %in% names(par_labels)) {
+      xlab = par_labels$start_date
+    } else {
+      xlab = "start_date"
+    }
     plot(x = sircovid::sircovid_date("2020-01-01"),
          y = 1,
          type = "n",
          ylab = "",
-         xlab = "start_date",
+         xlab = xlab,
          xlim = sircovid::sircovid_date(c("2020-01-15", "2020-03-01")),
          ylim = ylim,
          yaxt = "n")
