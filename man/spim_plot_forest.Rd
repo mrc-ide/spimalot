@@ -4,7 +4,13 @@
 \alias{spim_plot_forest}
 \title{Forest plot}
 \usage{
-spim_plot_forest(dat, regions = NULL, plot_type = "all", subset = NULL)
+spim_plot_forest(
+  dat,
+  regions = NULL,
+  plot_type = "all",
+  subset = NULL,
+  nrow = 4
+)
 }
 \arguments{
 \item{dat}{Combined data from \link{spim_combined_load}}
@@ -20,6 +26,8 @@ of the parameters}
 
 \item{subset}{A vector of parameter names to plot if \code{subset} is selected
 for \code{plot_type}. Otherwise can just be set to NULL (the default)}
+
+\item{nrow}{An integer number for rows in plot.}
 }
 \value{
 Nothing, called for side effects
