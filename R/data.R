@@ -458,11 +458,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     data$final_hosp <- data$icu + data$general
 
   } else {
-    if (region == "scotland") {
-      data$final_admissions <- data$all_admission
-    } else {
-      data$final_admissions <- data$phe_admissions
-    }
+    data$final_admissions <- data$phe_admissions
     data$final_icu <- data$phe_occupied_mv_beds
     data$final_general <- data$phe_patients - data$phe_occupied_mv_beds
     data$final_hosp <- data$phe_patients
