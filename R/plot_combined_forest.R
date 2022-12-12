@@ -15,10 +15,12 @@
 ##' @param subset A vector of parameter names to plot if `subset` is selected
 ##'   for `plot_type`. Otherwise can just be set to NULL (the default)
 ##'
+##' @param nrow An integer number for rows in plot.
+##'
 ##' @return Nothing, called for side effects
 ##' @export
 spim_plot_forest <- function(dat, regions = NULL, plot_type = "all",
-                             subset = NULL) {
+                             subset = NULL, nrow = 4) {
   if (is.null(regions)) {
     regions <- intersect(sircovid::regions("all"), names(dat$samples))
   } else {
@@ -223,7 +225,7 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all",
   }
 
   npar <- length(pars_to_plot)
-  nrow <- 4
+  nrow <- nrow
   plot_per_row <- ceiling(npar / nrow)
   colwidth <- 64 / plot_per_row
 
