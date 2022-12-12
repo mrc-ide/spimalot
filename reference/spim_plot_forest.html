@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.16</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.17</span>
       </span>
     </div>
 
@@ -50,7 +50,13 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">spim_plot_forest</span><span class="op">(</span><span class="va">dat</span>, regions <span class="op">=</span> <span class="cn">NULL</span>, plot_type <span class="op">=</span> <span class="st">"all"</span>, subset <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">spim_plot_forest</span><span class="op">(</span></span>
+<span>  <span class="va">dat</span>,</span>
+<span>  regions <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  plot_type <span class="op">=</span> <span class="st">"all"</span>,</span>
+<span>  subset <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  nrow <span class="op">=</span> <span class="fl">4</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -75,6 +81,10 @@ of the parameters</p></dd>
 <dt>subset</dt>
 <dd><p>A vector of parameter names to plot if <code>subset</code> is selected
 for <code>plot_type</code>. Otherwise can just be set to NULL (the default)</p></dd>
+
+
+<dt>nrow</dt>
+<dd><p>An integer number for rows in plot.</p></dd>
 
 </dl></div>
     <div id="value">
