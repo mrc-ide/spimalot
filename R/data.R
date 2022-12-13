@@ -364,9 +364,9 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
   data$strain_non_variant[omicron_ba4ba5_bq1_dates] <-
     data$n_all_omicron_ba4ba5_variant[omicron_ba4ba5_bq1_dates]
   data$strain_tot[omicron_ba4ba5_bq1_dates] <-
-    data$n_all_omicron_ba4ba5_variant[omicron_ba4ba5_bq1_dates] +
     data$n_all_omicron_ba4_variant[omicron_ba4ba5_bq1_dates] +
-    data$n_all_omicron_ba5_variant[omicron_ba4ba5_bq1_dates]
+    data$n_all_omicron_ba5_variant[omicron_ba4ba5_bq1_dates] +
+    data$n_all_omicron_bq1_variant[omicron_ba4ba5_bq1_dates]
 
   # Use positives/negatives as Pillar 2 for Scotland
   # Set data$phe_patients to NA between 2020-06-01 and 2020-09-09 (inclusive)
