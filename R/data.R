@@ -362,7 +362,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
   omicron_ba4ba5_bq1_dates <-
     data$date > "2022-08-15"
   data$strain_non_variant[omicron_ba4ba5_bq1_dates] <-
-    data$n_all_omicron_ba4ba5_variant[omicron_ba4ba5_bq1_dates]
+    data$n_all_omicron_ba4_variant[omicron_ba4ba5_bq1_dates] +
+    data$n_all_omicron_ba5_variant[omicron_ba4ba5_bq1_dates]
   data$strain_tot[omicron_ba4ba5_bq1_dates] <-
     data$n_all_omicron_ba4_variant[omicron_ba4ba5_bq1_dates] +
     data$n_all_omicron_ba5_variant[omicron_ba4ba5_bq1_dates] +
