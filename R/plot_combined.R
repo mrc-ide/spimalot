@@ -623,12 +623,6 @@ spim_plot_variant_region <- function(region, dat, voc_name, date_min,
   trajectories <- sample$trajectories$state
   x <- sircovid::sircovid_date_as_date(sample$trajectories$date)
 
-  if ("time_index" %in% names(sample$info)) {
-    parent <- sample$info$time_index$parent
-    trajectories <- trajectories[, , -parent, drop = FALSE]
-    x <- x[-parent]
-  }
-
   tot <- trajectories["sympt_cases_inc", , ]
   pos <- tot - trajectories["sympt_cases_non_variant_inc", , ]
 
