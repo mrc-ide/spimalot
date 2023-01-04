@@ -155,8 +155,12 @@ spim_fit_run <- function(pars, filter, control) {
 
   ## this is a loop over epochs now that we always have a multiregion
   ## parameters
-  info <- lapply(data, function(d)
-    ret$predict$filter$model$new(d$pars, 0, 1)$info())
+  if (length(base$epoch_dates) > 0) {
+    info <- lapply(data, function(d)
+      ret$predict$filter$model$new(d$pars, 0, 1)$info())
+  } else {
+    info <- ret$predict$filter$model$new(data, 0, 1)$info()
+  }
 
   ret$info <- list(version = packageVersion("sircovid"),
                    info = info,
