@@ -10,7 +10,8 @@ spim_plot_pillar2_positivity(
   age_band,
   date_min,
   ymax,
-  add_betas = FALSE
+  add_betas = FALSE,
+  title
 )
 }
 \arguments{
@@ -18,13 +19,16 @@ spim_plot_pillar2_positivity(
 
 \item{regions}{Vector of regions to plot}
 
-\item{age_band}{Age band to plot}
+\item{age_band}{Age band to plot. Can be a vector of age bands to plot if
+\code{regions} is of length 1}
 
 \item{date_min}{Starting date for plot}
 
 \item{ymax}{Maximum percentage on y-axis}
 
 \item{add_betas}{Logical, indicating if we should add betas}
+
+\item{title}{Title for the figure, only used if age_band is a vector}
 }
 \description{
 Plot Pillar 2 positivity
