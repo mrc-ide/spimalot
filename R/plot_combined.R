@@ -456,8 +456,6 @@ spim_plot_pillar2_cases <- function(dat, regions, age_band, date_min,
 ##'
 ##' @param dat Combined data set
 ##'
-##'
-##'
 ##' @param regions Vector of regions to plot
 ##'
 ##' @param date_min Starting date for plot
