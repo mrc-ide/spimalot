@@ -1335,7 +1335,7 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
 
   if (region == "england") {
     N_tot_react <-
-      sum(vapply(sircovid::regions("england"), get_N_tot_react, numeric(1)))
+      sum(vnapply(sircovid::regions("england"), get_N_tot_react))
   } else {
     N_tot_react <- get_N_tot_react(region)
   }
