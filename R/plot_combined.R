@@ -1321,7 +1321,7 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   }
   model_params <- model_params[[length(model_params)]]$pars
 
-  get_N_tot_react <- function (r) {
+  get_N_tot_react <- function(r) {
     samp_r <- dat$samples[[r]]
     model_params_r <- samp_r$predict$transform(samp_r$pars[1, ])
     model_params_r <- model_params_r[[length(model_params_r)]]$pars
@@ -1348,7 +1348,7 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
 
     pos <- trajectories[paste0("react_", age_band, "_pos"), , ]
     neg <- (N_tot_react - pos)
-    age <- gsub("_", " to ", gsub("_plus", "+" , age_band))
+    age <- gsub("_", " to ", gsub("_plus", "+", age_band))
     ylab <- paste0("REACT proportion positive ", age, " (%)")
   }
 
@@ -1945,7 +1945,7 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
     }
     res <- trajectories$state[paste0(what, "_", age_band, "_inc"), , -1L]
     labs[what] <-
-      paste(labs[what], gsub("_", " to ", gsub("_plus", "+" , age_band)))
+      paste(labs[what], gsub("_", " to ", gsub("_plus", "+", age_band)))
   }
 
   x <- sircovid::sircovid_date_as_date(trajectories$date[-1L])
