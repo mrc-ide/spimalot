@@ -52,27 +52,51 @@ spim_plot_trajectories <- function(dat, regions, what, date_min = NULL,
 ##'
 ##' @param date_min Starting date for plot
 ##'
-##' @param age_band Age band to plot
+##' @param age_band Age band to plot. Can be a vector of age bands to plot if
+##'   `regions` is of length 1
 ##'
 ##' @param with_forecast Logical, indicating if we should add the forecast
 ##'
 ##' @param add_betas Logical, indicating if we should add betas
 ##'
+##' @param title Title for the figure, only used if age_band is a vector
+##'
 ##' @export
 spim_plot_trajectories_by_age <- function(dat, regions, what, date_min = NULL,
                                           age_band = NULL, with_forecast = TRUE,
-                                          add_betas = FALSE) {
+                                          add_betas = FALSE,
+                                          title = NULL) {
 
-  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+  n_regions <- length(regions)
+  n_age_band <- length(age_band)
+
+  if (n_regions > 1 && n_age_band > 1) {
+    stop("Only one of 'regions' and 'age_band' can be a vector")
+  }
+
+  n_panels <- max(n_regions, n_age_band)
+
+  oo <- par(mfrow = c(2, ceiling(n_panels / 2)), oma = c(2, 1, 2, 1),
             mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
-  for (r in regions) {
-    spim_plot_trajectories_region1(
-      what, r, dat, date_min, age_band,
-      with_forecast = with_forecast, add_betas = add_betas,
-      main = toupper(spim_region_name(r)))
+  if (n_regions > 1) {
+    for (r in regions) {
+      spim_plot_trajectories_region1(
+        what, r, dat, date_min, age_band,
+        with_forecast = with_forecast, add_betas = add_betas,
+        main = toupper(spim_region_name(r)))
+    }
+  } else {
+    for (i in age_band) {
+      spim_plot_trajectories_region1(
+        what, regions, dat, date_min, i,
+        with_forecast = with_forecast, add_betas = add_betas)
+    }
+    mtext(text = title,
+          side = 3, line = -1, outer = TRUE, cex = 1.1)
   }
+
 }
 
 
@@ -352,7 +376,8 @@ spim_plot_cumulative_attack_rate <- function(dat, regions) {
 ##'
 ##' @param regions Vector of regions to plot
 ##'
-##' @param age_band Age band to plot
+##' @param age_band Age band to plot. Can be a vector of age bands to plot if
+##'   `regions` is of length 1
 ##'
 ##' @param date_min Starting date for plot
 ##'
@@ -360,18 +385,40 @@ spim_plot_cumulative_attack_rate <- function(dat, regions) {
 ##'
 ##' @param add_betas Logical, indicating if we should add betas
 ##'
+##' @param title Title for the figure, only used if age_band is a vector
+##'
 ##' @export
 spim_plot_pillar2_positivity <- function(dat, regions, age_band, date_min,
-                                         ymax, add_betas = FALSE) {
+                                         ymax, add_betas = FALSE, title) {
 
-  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+  n_regions <- length(regions)
+  n_age_band <- length(age_band)
+
+  if (n_regions > 1 && n_age_band > 1) {
+    stop("Only one of 'regions' and 'age_band' can be a vector")
+  }
+
+  n_panels <- max(n_regions, n_age_band)
+
+  oo <- par(mfrow = c(2, ceiling(n_panels / 2)), oma = c(2, 1, 2, 1),
             mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
-  for (r in regions) {
-    spim_plot_pillar2_positivity_region(r, dat, age_band,
-                                        date_min, ymax, add_betas)
+  if (n_regions > 1) {
+    for (r in regions) {
+      spim_plot_pillar2_positivity_region(r, dat, age_band,
+                                          date_min, ymax, add_betas,
+                                          main = toupper(spim_region_name(r)))
+    }
+  } else {
+    for (i in age_band) {
+      spim_plot_pillar2_positivity_region(regions, dat, i,
+                                          date_min, ymax, add_betas)
+    }
+    mtext(text = title,
+          side = 3, line = -1, outer = TRUE, cex = 1.1)
   }
+
 }
 
 
@@ -415,20 +462,41 @@ spim_plot_pillar2_cases <- function(dat, regions, age_band, date_min,
 ##'
 ##' @param ymax Maximum percentage on y-axis
 ##'
-##' @param age_band String, indicating which age band to plot
+##' @param age_band Age band to plot. Can be a vector of age bands to plot if
+##'   `regions` is of length 1
 ##'
 ##' @param add_betas Logical, indicating if we should add betas
 ##'
+##' @param title Title for the figure, only used if age_band is a vector
+##'
 ##' @export
 spim_plot_react <- function(dat, regions, date_min, ymax, age_band = NULL,
-                            add_betas = FALSE) {
+                            add_betas = FALSE, title = NULL) {
 
-  oo <- par(mfrow = c(2, ceiling(length(regions) / 2)), oma = c(2, 1, 2, 1),
+  n_regions <- length(regions)
+  n_age_band <- length(age_band)
+
+  if (n_regions > 1 && n_age_band > 1) {
+    stop("Only one of 'regions' and 'age_band' can be a vector")
+  }
+
+  n_panels <- max(n_regions, n_age_band)
+
+  oo <- par(mfrow = c(2, ceiling(n_panels / 2)), oma = c(2, 1, 2, 1),
             mar = c(3, 3, 3, 1))
   on.exit(par(oo))
 
-  for (r in regions) {
-    spim_plot_react_region(r, dat, date_min, ymax, age_band, add_betas)
+  if (n_regions > 1) {
+    for (r in regions) {
+      spim_plot_react_region(r, dat, date_min, ymax, age_band, add_betas,
+                             main = toupper(spim_region_name(r)))
+    }
+  } else {
+    for (i in age_band) {
+      spim_plot_react_region(regions, dat, date_min, ymax, i, add_betas)
+    }
+    mtext(text = title,
+          side = 3, line = -1, outer = TRUE, cex = 1.1)
   }
 }
 
@@ -950,7 +1018,8 @@ spim_plot_pillar2_positivity_region <- function(region, dat, age_band,
                                                 date_min, ymax,
                                                 add_betas = FALSE,
                                                 hard_xlim = FALSE,
-                                                data_by = NULL) {
+                                                data_by = NULL,
+                                                main = NULL) {
 
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
@@ -993,7 +1062,12 @@ spim_plot_pillar2_positivity_region <- function(region, dat, age_band,
     x <- x[!predicted]
   }
 
-  model_params <- sample$predict$transform(sample$pars[1, ])
+  if (region == "england") {
+    model_params <-
+      dat$samples[[1]]$predict$transform(dat$samples[[1]]$pars[1, ])
+  } else {
+    model_params <- sample$predict$transform(sample$pars[1, ])
+  }
   model_params <- model_params[[length(model_params)]]$pars
 
   if (age_band == "all") {
@@ -1043,7 +1117,7 @@ spim_plot_pillar2_positivity_region <- function(region, dat, age_band,
   } else if (age_band == "over25") {
     age_lab <- "over 25"
   } else if (age_band == "under15") {
-    age_lab <- "under15"
+    age_lab <- "under 15"
   } else if (age_band == "80_plus") {
     age_lab <- "80+"
   } else {
@@ -1066,7 +1140,7 @@ spim_plot_pillar2_positivity_region <- function(region, dat, age_band,
        xlim = xlim,
        ylim = ylim,
        las = 1,
-       main = toupper(spim_region_name(region)),
+       main = main,
        font.main = 1,
        xlab = "", ylab = ylab,
        axes = FALSE,
@@ -1194,7 +1268,7 @@ spim_plot_pillar2_cases_region <- function(region, dat, age_band, date_min,
 
 
 spim_plot_react_region <- function(region, dat, date_min, ymax,
-                                   age_band, add_betas = FALSE) {
+                                   age_band, add_betas = FALSE, main = NULL) {
 
   sample <- dat$samples[[region]]
   data <- dat$data[[region]]
@@ -1239,17 +1313,42 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
 
   trajectories <- sample$trajectories$state
 
-  model_params <- sample$predict$transform(sample$pars[1, ])
+  if (region == "england") {
+    model_params <-
+      dat$samples[[1]]$predict$transform(dat$samples[[1]]$pars[1, ])
+  } else {
+    model_params <- sample$predict$transform(sample$pars[1, ])
+  }
   model_params <- model_params[[length(model_params)]]$pars
+
+  get_N_tot_react <- function(r) {
+    samp_r <- dat$samples[[r]]
+    model_params_r <- samp_r$predict$transform(samp_r$pars[1, ])
+    model_params_r <- model_params_r[[length(model_params_r)]]$pars
+    if (is.null(age_band)) {
+      out <- sum(model_params_r$N_tot_react)
+    } else {
+      out <- sum(model_params_r[[paste0("N_", age_band, "_react")]])
+    }
+    out
+  }
+
+  if (region == "england") {
+    N_tot_react <-
+      sum(vnapply(sircovid::regions("england"), get_N_tot_react))
+  } else {
+    N_tot_react <- get_N_tot_react(region)
+  }
 
   if (is.null(age_band)) {
     pos <- trajectories["react_pos", , ]
-    neg <- (sum(model_params$N_tot_react) - pos)
+    neg <- (N_tot_react - pos)
     ylab <- "REACT proportion positive (%)"
   } else {
+
     pos <- trajectories[paste0("react_", age_band, "_pos"), , ]
-    neg <- (sum(model_params[[paste0("N_", age_band, "_react")]]) - pos)
-    age <- gsub("_", " to ", age_band)
+    neg <- (N_tot_react - pos)
+    age <- gsub("_", " to ", gsub("_plus", "+", age_band))
     ylab <- paste0("REACT proportion positive ", age, " (%)")
   }
 
@@ -1275,7 +1374,7 @@ spim_plot_react_region <- function(region, dat, date_min, ymax,
   plot(date_min, 0, type = "n",
        xlim = xlim,
        ylim = ylim,
-       main = toupper(spim_region_name(region)),
+       main = main,
        font.main = 1,
        xlab = "Date", ylab = ylab,
        axes = FALSE,
@@ -1845,7 +1944,8 @@ spim_plot_trajectories_region1 <- function(what, region, dat, date_min,
       stop(message(paste0("Cannot plot ", what, " by age")))
     }
     res <- trajectories$state[paste0(what, "_", age_band, "_inc"), , -1L]
-    labs[what] <- paste(labs[what], gsub("_", " to ", age_band))
+    labs[what] <-
+      paste(labs[what], gsub("_", " to ", gsub("_plus", "+", age_band)))
   }
 
   x <- sircovid::sircovid_date_as_date(trajectories$date[-1L])
