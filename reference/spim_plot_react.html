@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.17</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.19</span>
       </span>
     </div>
 
@@ -56,7 +56,8 @@
 <span>  <span class="va">date_min</span>,</span>
 <span>  <span class="va">ymax</span>,</span>
 <span>  age_band <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  add_betas <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  add_betas <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  title <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -79,11 +80,16 @@
 
 
 <dt>age_band</dt>
-<dd><p>String, indicating which age band to plot</p></dd>
+<dd><p>Age band to plot. Can be a vector of age bands to plot if
+<code>regions</code> is of length 1</p></dd>
 
 
 <dt>add_betas</dt>
 <dd><p>Logical, indicating if we should add betas</p></dd>
+
+
+<dt>title</dt>
+<dd><p>Title for the figure, only used if age_band is a vector</p></dd>
 
 </dl></div>
 
@@ -99,7 +105,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>
