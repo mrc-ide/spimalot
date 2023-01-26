@@ -11,7 +11,8 @@ spim_plot_trajectories_by_age(
   date_min = NULL,
   age_band = NULL,
   with_forecast = TRUE,
-  add_betas = FALSE
+  add_betas = FALSE,
+  title = NULL
 )
 }
 \arguments{
@@ -23,11 +24,14 @@ spim_plot_trajectories_by_age(
 
 \item{date_min}{Starting date for plot}
 
-\item{age_band}{Age band to plot}
+\item{age_band}{Age band to plot. Can be a vector of age bands to plot if
+\code{regions} is of length 1}
 
 \item{with_forecast}{Logical, indicating if we should add the forecast}
 
 \item{add_betas}{Logical, indicating if we should add betas}
+
+\item{title}{Title for the figure, only used if age_band is a vector}
 }
 \description{
 Plot trajectories by age

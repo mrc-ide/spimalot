@@ -10,7 +10,8 @@ spim_plot_react(
   date_min,
   ymax,
   age_band = NULL,
-  add_betas = FALSE
+  add_betas = FALSE,
+  title = NULL
 )
 }
 \arguments{
@@ -22,9 +23,12 @@ spim_plot_react(
 
 \item{ymax}{Maximum percentage on y-axis}
 
-\item{age_band}{String, indicating which age band to plot}
+\item{age_band}{Age band to plot. Can be a vector of age bands to plot if
+\code{regions} is of length 1}
 
 \item{add_betas}{Logical, indicating if we should add betas}
+
+\item{title}{Title for the figure, only used if age_band is a vector}
 }
 \description{
 Plot REACT
