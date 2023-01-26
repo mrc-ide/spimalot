@@ -192,9 +192,9 @@ spim_plot_forest <- function(dat, regions = NULL, plot_type = "all",
   plot_start_date <- function() {
     numeric_start_date <- extract_sample(par_name = "start_date")
     if ("start_date" %in% names(par_labels)) {
-      xlab = par_labels$start_date
+      xlab <- par_labels$start_date
     } else {
-      xlab = "start_date"
+      xlab <- "start_date"
     }
     plot(x = sircovid::sircovid_date("2020-01-01"),
          y = 1,
