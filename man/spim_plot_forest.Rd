@@ -9,7 +9,8 @@ spim_plot_forest(
   regions = NULL,
   plot_type = "all",
   subset = NULL,
-  nrow = 4
+  nrow = 4,
+  par_labels = list()
 )
 }
 \arguments{
@@ -28,6 +29,9 @@ of the parameters}
 for \code{plot_type}. Otherwise can just be set to NULL (the default)}
 
 \item{nrow}{An integer number for rows in plot.}
+
+\item{par_labels}{A list of labels to use for parameters,
+any parameter not listed will just have a label matching its name}
 }
 \value{
 Nothing, called for side effects
