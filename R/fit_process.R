@@ -17,7 +17,6 @@
 ##'
 ##' @export
 spim_fit_process <- function(samples, parameters, data, control) {
-
   region <- samples$info$region
 
   ## This is just the info/prior/proposal + base of the parameter used
@@ -452,7 +451,6 @@ extract_age_class_state <- function(state) {
 }
 
 reduce_trajectories <- function(samples, severity) {
-
   ## Remove unused trajectories for predict function in combined
   remove_strings <- c("prob_strain", "S_", "R_", "I_weighted_", "D_hosp_",
                       "D_all_", "diagnoses_admitted_", "cum_infections_disag_",
