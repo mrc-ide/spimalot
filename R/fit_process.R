@@ -17,6 +17,7 @@
 ##'
 ##' @export
 spim_fit_process <- function(samples, parameters, data, control) {
+
   region <- samples$info$region
 
   ## This is just the info/prior/proposal + base of the parameter used
@@ -451,6 +452,7 @@ extract_age_class_state <- function(state) {
 }
 
 reduce_trajectories <- function(samples, severity) {
+
   ## Remove unused trajectories for predict function in combined
   remove_strings <- c("prob_strain", "S_", "R_", "I_weighted_", "D_hosp_",
                       "D_all_", "diagnoses_admitted_", "cum_infections_disag_",
@@ -791,9 +793,16 @@ calculate_negatives <- function(samples) {
 
   if (multiregion) {
     region <- samples$info$region
-    pars_model <- lapply(region, function(r)
-      lapply(seq_len(nrow(samples$pars)), function(i)
-        last(transform[[r]](samples$pars[i, , r]))$pars))
+    if (length(samples$info$epoch_dates) > 0) {
+      pars_model <- lapply(region, function(r)
+        lapply(seq_len(nrow(samples$pars)), function(i)
+          last(transform[[r]](samples$pars[i, , r]))$pars))
+    } else {
+      pars_model <- lapply(region, function(r)
+        lapply(seq_len(nrow(samples$pars)), function(i)
+          transform[[r]](samples$pars[i, , r])))
+    }
+
     negatives <- lapply(seq_along(region), function(i)
       calculate_negatives_region(state[, i, , ], pars_model[[i]], date))
 
@@ -802,8 +811,13 @@ calculate_negatives <- function(samples) {
                         2, c(1, dim(state)[[3]]))
     negatives <- abind_quiet(negatives, along = 2)
   } else {
-    pars_model <- lapply(seq_len(nrow(samples$pars)), function(i)
-      last(transform(samples$pars[i, ]))$pars)
+    if (length(samples$info$epoch_dates) > 0) {
+      pars_model <- lapply(seq_len(nrow(samples$pars)), function(i)
+        last(transform(samples$pars[i, ]))$pars)
+    } else {
+      pars_model <- lapply(seq_len(nrow(samples$pars)), function(i)
+        transform(samples$pars[i, ]))
+    }
     negatives <- calculate_negatives_region(state, pars_model, date)
   }
 
@@ -951,9 +965,15 @@ summarise_states <- function(samples) {
 
   if (multiregion) {
     region <- samples$info$region
-    pars_model <- lapply(region, function(r)
-      lapply(seq_len(nrow(samples$pars)), function(i)
-        last(transform[[r]](samples$pars[i, , r]))$pars))
+    if (length(samples$info$epoch_dates) > 0) {
+      pars_model <- lapply(region, function(r)
+        lapply(seq_len(nrow(samples$pars)), function(i)
+          last(transform[[r]](samples$pars[i, , r]))$pars))
+    } else {
+      pars_model <- lapply(region, function(r)
+        lapply(seq_len(nrow(samples$pars)), function(i)
+          transform[[r]](samples$pars[i, , r])))
+    }
     extra_state <- lapply(seq_along(region), function(i)
       summarise_states_region(state[, i, , ], pars_model[[i]]))
 
@@ -962,8 +982,14 @@ summarise_states <- function(samples) {
                           2, c(1, dim(state)[[3]]))
     extra_state <- abind_quiet(extra_state, along = 2)
   } else {
-    pars_model <- lapply(seq_len(nrow(samples$pars)), function(i)
-      last(transform(samples$pars[i, ]))$pars)
+    if (length(samples$info$epoch_dates) > 0) {
+      pars_model <- lapply(seq_len(nrow(samples$pars)), function(i)
+        last(transform(samples$pars[i, ]))$pars)
+    } else {
+      pars_model <- lapply(seq_len(nrow(samples$pars)), function(i)
+        transform(samples$pars[i, ]))
+    }
+
     extra_state <- summarise_states_region(state, pars_model)
   }
 
@@ -987,9 +1013,14 @@ summarise_states_region <- function(state, pars_model) {
   recovered <- state[i_recovered, , ]
   state <- state[-i_recovered, , ]
   recovered[is.na(recovered)] <- 0
-  recovered[c(1, 2), , ] <- recovered[c(1, 2), , ] + recovered[c(4, 3), , ]
-  recovered <- recovered[c(1, 2, 5), , ]
-  row.names(recovered) <- c("recovered_1", "recovered_2", "recovered_historic")
+  if (n_strains_R > 1) {
+    recovered[c(1, 2), , ] <- recovered[c(1, 2), , ] + recovered[c(4, 3), , ]
+    recovered <- recovered[c(1, 2, 5), , ]
+    row.names(recovered) <- c("recovered_1", "recovered_2", "recovered_historic")
+  } else {
+    recovered <- array(recovered, c(1, dim(recovered)))
+    row.names(recovered) <- "recovered_1"
+  }
 
   get_vaccine_status <- function(cum_n_vaccinated) {
     v <- c(pars$N_tot_all - cum_n_vaccinated[1],
@@ -1009,6 +1040,9 @@ summarise_states_region <- function(state, pars_model) {
                                             dim(vaccine_status)[2:3]))
   vaccine_status <- apply(vaccine_status, c(2, 3, 4), sum)
   vaccine_status <- apply(vaccine_status, c(2, 3), get_vaccine_status)
+  if (n_vacc_classes == 1) {
+    vaccine_status <- array(vaccine_status, c(1, dim(vaccine_status)))
+  }
   row.names(vaccine_status) <-
     paste0("vaccine_status_", seq_len(n_vacc_classes))
   extra_states <- abind1(extra_states, vaccine_status)
