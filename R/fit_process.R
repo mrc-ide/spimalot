@@ -1014,7 +1014,8 @@ summarise_states_region <- function(state, pars_model) {
   if (n_strains_R > 1) {
     recovered[c(1, 2), , ] <- recovered[c(1, 2), , ] + recovered[c(4, 3), , ]
     recovered <- recovered[c(1, 2, 5), , ]
-    row.names(recovered) <- c("recovered_1", "recovered_2", "recovered_historic")
+    row.names(recovered) <-
+      c("recovered_1", "recovered_2", "recovered_historic")
   } else {
     recovered <- array(recovered, c(1, dim(recovered)))
     row.names(recovered) <- "recovered_1"
