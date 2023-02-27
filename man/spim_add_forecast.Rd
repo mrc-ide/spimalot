@@ -4,12 +4,14 @@
 \alias{spim_add_forecast}
 \title{Add forecasts to combined fit object}
 \usage{
-spim_add_forecast(dat, forecast_days)
+spim_add_forecast(dat, forecast_days, n_threads = NULL)
 }
 \arguments{
 \item{dat}{A combined fit object}
 
 \item{forecast_days}{Number of days of forecasts to add}
+
+\item{n_threads}{Number of threads to use}
 }
 \value{
 A combined fit object with forecasts added in

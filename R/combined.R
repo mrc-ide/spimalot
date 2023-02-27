@@ -685,20 +685,23 @@ reorder_variant_rt <- function(x, rank, weighted = FALSE) {
 ##'
 ##' @param forecast_days Number of days of forecasts to add
 ##'
+##' @param n_threads Number of threads to use
+##'
 ##' @return A combined fit object with forecasts added in
 ##' @export
-spim_add_forecast <- function(dat, forecast_days) {
+spim_add_forecast <- function(dat, forecast_days, n_threads = NULL) {
 
   message("Adding forecasts")
-  dat$samples <- lapply(dat$samples[sircovid::regions("all")],
-                        function(x) spim_add_forecast_region(x, forecast_days))
+  dat$samples <-
+    lapply(dat$samples[sircovid::regions("all")],
+           function(x) spim_add_forecast_region(x, forecast_days, n_threads))
   dat$samples <- combined_aggregate_samples(dat$samples)
 
   dat
 }
 
 
-spim_add_forecast_region <- function(samples, forecast_days) {
+spim_add_forecast_region <- function(samples, forecast_days, n_threads = NULL) {
 
   ## Run forecast
   time_predict <- seq(samples$predict$time,
@@ -706,7 +709,7 @@ spim_add_forecast_region <- function(samples, forecast_days) {
                       by = samples$predict$rate)
   forecast <- spim_pmcmc_predict(
     samples, time_predict,
-    prepend_trajectories = FALSE)
+    prepend_trajectories = FALSE, n_threads = n_threads)
   forecast$date <- forecast$time / forecast$rate
 
   ## Get forecast trajectories in a shape compatible with samples trajectories
