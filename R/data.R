@@ -173,7 +173,8 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
             "n_symp_delta_variant", "n_symp_omicron_variant",
             "n_symp_omicron_ba2_variant", "n_all_omicron_ba2_variant",
             "n_all_omicron_ba4_variant", "n_all_omicron_ba5_variant",
-            "n_all_omicron_bq1_variant",
+            "n_all_omicron_bq1_variant", "n_all_omicron_ch11_variant",
+            "n_all_omicron_xbb15_variant",
             # Other VOC data
             "n_wildtype_variant", "n_alpha_variant", "n_delta_variant",
             "n_omicron_variant", "n_omicron_ba2_variant",
@@ -360,7 +361,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
 
     ## Fit to Omicron BA.4 & BA.5/Omicron BQ.1
   omicron_ba4ba5_bq1_dates <-
-    data$date > "2022-09-01"
+    data$date > "2022-09-01" & data$date < "2022-11-01"
   data$strain_non_variant[omicron_ba4ba5_bq1_dates] <-
     data$n_all_omicron_ba4_variant[omicron_ba4ba5_bq1_dates] +
     data$n_all_omicron_ba5_variant[omicron_ba4ba5_bq1_dates]
@@ -368,6 +369,16 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     data$n_all_omicron_ba4_variant[omicron_ba4ba5_bq1_dates] +
     data$n_all_omicron_ba5_variant[omicron_ba4ba5_bq1_dates] +
     data$n_all_omicron_bq1_variant[omicron_ba4ba5_bq1_dates]
+
+  ## Fit to Omicron BQ.1/Omicron CH.1.1 & XBB.1.5
+  omicron_bq1_ch11xbb15_dates <-
+    data$date > "2022-11-01"
+  data$strain_non_variant[omicron_bq1_ch11xbb15_dates] <-
+    data$n_all_omicron_bq1_variant[omicron_bq1_ch11xbb15_dates]
+  data$strain_tot[omicron_bq1_ch11xbb15_dates] <-
+    data$n_all_omicron_bq1_variant[omicron_bq1_ch11xbb15_dates] +
+    data$n_all_omicron_xbb15_variant[omicron_bq1_ch11xbb15_dates] +
+    data$n_all_omicron_ch11_variant[omicron_bq1_ch11xbb15_dates]
 
   # Use positives/negatives as Pillar 2 for Scotland
   # Set data$phe_patients to NA between 2020-06-01 and 2020-09-09 (inclusive)
