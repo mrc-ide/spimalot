@@ -478,7 +478,7 @@ spim_lancelot_data_rtm <- function(date, region, model_type, data,
     data$final_admissions <- data$all_admission
     data$final_icu <- data$icu
     data$final_general <- data$general
-    na_dates <- date$date >= "2023-02-10" & data$date <= "2023-02-13"
+    na_dates <- data$date >= "2023-02-10" & data$date <= "2023-02-13"
     data$final_icu[na_dates] <- NA
     data$final_general[na_dates] <- NA
     data$final_hosp <- data$icu + data$general
