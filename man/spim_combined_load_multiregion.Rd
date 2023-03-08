@@ -4,15 +4,11 @@
 \alias{spim_combined_load_multiregion}
 \title{Load multiregion fits as a combined fit object}
 \usage{
-spim_combined_load_multiregion(path, get_severity = FALSE)
+spim_combined_load_multiregion(path)
 }
 \arguments{
 \item{path}{Directory name. Within here we expect to see
 \code{fits.rds}}
-
-\item{get_severity}{Logical, indicating whether to extract severity (e.g.
-IFH, IHR, HFR, etc.) trajectories. Must default to \code{FALSE}, as these
-are routine (e.g. MTPs) \code{sircovid} outputs.}
 }
 \value{
 A combined fit object
