@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">spimalot</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.21</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.8.22</span>
       </span>
     </div>
 
@@ -50,7 +50,7 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">spim_combined_load_multiregion</span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">spim_combined_load_multiregion</span><span class="op">(</span><span class="va">path</span>, get_severity <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -58,6 +58,12 @@
     <dl><dt>path</dt>
 <dd><p>Directory name. Within here we expect to see
 <code>fits.rds</code></p></dd>
+
+
+<dt>get_severity</dt>
+<dd><p>Logical, indicating whether to extract severity (e.g.
+IFH, IHR, HFR, etc.) trajectories. Must default to <code>FALSE</code>, as these
+are routine (e.g. MTPs) <code>sircovid</code> outputs.</p></dd>
 
 </dl></div>
     <div id="value">
