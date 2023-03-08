@@ -53,7 +53,7 @@ spim_fit_process <- function(samples, parameters, data, control) {
   }
 
   ## Extract demography
-  if (control$severity) {
+  if (control$demography) {
     message("Extracting demography")
     model_demography <- extract_demography(samples)
   } else {
@@ -1160,7 +1160,6 @@ get_r_vaccinated <- function(samples) {
 }
 
 get_deaths_admissions_by_vacc_class <- function(samples) {
-
   multiregion <- samples$info$multiregion
   state <- samples$trajectories$state
   dim <- dim(state)
@@ -1172,19 +1171,23 @@ get_deaths_admissions_by_vacc_class <- function(samples) {
     dim_i <- info[[length(info)]]$dim[[i]]
 
     names_i <- grep(paste0("^", i), rownames(state), value = TRUE)
-    disag_i <- mcstate::array_reshape(state[names_i, , ], 1, dim_i)
-    disag_i[is.na(disag_i)] <- 0
 
     if (multiregion) {
+      disag_i <- mcstate::array_reshape(state[names_i, , , ], 1, dim_i)
+      disag_i[is.na(disag_i)] <- 0
       vacc_i <- apply(disag_i, c(2, 3, 4, 5), sum)
       state <- state[!rownames(state) %in% names_i, , , ]
+      rownames(vacc_i) <- paste(i, "vacc", seq(0, nrow(vacc_i) - 1), sep = "_")
+      state <- abind::abind(state, vacc_i, along = 1)
     } else {
+      disag_i <- mcstate::array_reshape(state[names_i, , ], 1, dim_i)
+      disag_i[is.na(disag_i)] <- 0
       vacc_i <- apply(disag_i, c(2, 3, 4), sum)
       state <- state[!rownames(state) %in% names_i, , ]
+      rownames(vacc_i) <- paste(i, "vacc", seq(0, nrow(vacc_i) - 1), sep = "_")
+      state <- abind1(state, vacc_i)
     }
 
-    rownames(vacc_i) <- paste(i, "vacc", seq(0, nrow(vacc_i) - 1), sep = "_")
-    state <- abind1(state, vacc_i)
   }
 
   samples$trajectories$state <- state
@@ -1193,7 +1196,6 @@ get_deaths_admissions_by_vacc_class <- function(samples) {
 
 
 calc_weighted_protected <- function(samples) {
-
   state <- samples$trajectories$state
   multiregion <- samples$info$multiregion
 
@@ -1216,6 +1218,7 @@ calc_weighted_protected <- function(samples) {
                              array(0, dim(state)[c(2, 3, 4)]))
     weighted_state <- aperm(weighted_state, c(4, 1, 2, 3))
     rownames(weighted_state) <- paste0(protected_names, "_weighted")
+    samples$trajectories$state <- abind::abind(state, weighted_state, along = 1)
   } else {
     weight <- state[c("prob_strain", "prob_strain_1"), , ]
     weight[is.na(weight)] <- 0
@@ -1231,9 +1234,9 @@ calc_weighted_protected <- function(samples) {
                              array(0, dim(state)[c(2, 3)]))
     weighted_state <- aperm(weighted_state, c(3, 1, 2))
     rownames(weighted_state) <- paste0(protected_names, "_weighted")
+    samples$trajectories$state <- abind1(state, weighted_state)
   }
 
-  samples$trajectories$state <- abind1(state, weighted_state)
   samples
 
 }
