@@ -127,9 +127,14 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
 ##' @param path Directory name. Within here we expect to see
 ##'   `fits.rds`
 ##'
+##' @param get_severity Logical, indicating whether to extract severity (e.g.
+##'   IFH, IHR, HFR, etc.) trajectories. Must default to `FALSE`, as these
+##'   are routine (e.g. MTPs) `sircovid` outputs.
+##'
+##'
 ##' @return A combined fit object
 ##' @export
-spim_combined_load_multiregion <- function(path) {
+spim_combined_load_multiregion <- function(path, get_severity = FALSE) {
 
   message("Reading multiregion fit")
   filename <- file.path(path, "fit.rds")
@@ -173,6 +178,18 @@ spim_combined_load_multiregion <- function(path) {
   agg_data <- combined_aggregate_data(ret$data)
   if (!is.null(ret$rt)) {
     ret$rt <- combined_aggregate_variant_rt(ret$rt, agg_samples, TRUE)
+  }
+
+  ## Check if severity calculations were outputed and, if so, aggregate
+  if (get_severity) {
+    message("Aggregating severity outputs")
+    ret$severity <- combined_aggregate_severity(ret$severity, agg_samples)
+
+    message("Aggregating prop_protected")
+    agg_samples <- combined_aggregate_prop_protected(agg_samples)
+
+    ret$intrinsic_severity <-
+      dplyr::bind_rows(ret$intrinsic_severity, .id = "region")
   }
 
   ## Now the onward object has been created, we can safely store the
