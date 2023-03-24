@@ -746,39 +746,6 @@ reorder_variant_rt <- function(x, rank, weighted = FALSE) {
   x
 }
 
-reorder_variant_rt <- function(x, rank, weighted = FALSE) {
-
-  what <- setdiff(names(x), c("time", "date"))
-
-  ## reorder_rt_ifr will only work for one variant so we will have to reorder
-  ## each variant separately
-  if (weighted) {
-    dim_strains <- 3
-  } else {
-    dim_strains <- 2
-  }
-  for (j in seq_len(dim_strains)) {
-    v <- x
-
-    for (i in what[what != "beta"]) {
-      v[[i]] <- v[[i]][, j, ]
-    }
-
-    v <- sircovid::reorder_rt_ifr(v, rank)
-
-    for (i in what) {
-      if (i == "beta") {
-        x[[i]] <- v[[i]]
-      } else {
-        x[[i]][, j, ] <- v[[i]]
-      }
-
-    }
-  }
-
-  x
-}
-
 reorder_intrinsic_severity <- function(x, rank) {
 
   what <- setdiff(names(x), c("period", "variant"))
