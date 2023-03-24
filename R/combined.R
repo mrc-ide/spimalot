@@ -88,8 +88,14 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
     message("Aggregating prop_protected")
     agg_samples <- combined_aggregate_prop_protected(agg_samples)
 
+    message("Aggregating and summarising intrinsic severity")
+    ret$intrinsic_severity_raw <-
+      Map(reorder_intrinsic_severity, ret$intrinsic_severity, rank_cum_inc)
+    ret$intrinsic_severity_raw <-
+      combined_aggregate_intrinsic_severity(ret$intrinsic_severity_raw,
+                                            agg_samples)
     ret$intrinsic_severity <-
-      dplyr::bind_rows(ret$intrinsic_severity, .id = "region")
+      summarise_intrinsic_severity(ret$intrinsic_severity_raw)
   }
 
   ## We don't need projections for the severity paper, these will be NULL to
@@ -371,6 +377,25 @@ combined_aggregate_severity <- function(severity, samples) {
 }
 
 
+combined_aggregate_intrinsic_severity <- function(intrinsic_severity, samples) {
+
+  england <- sircovid::regions("england")
+  nations <- sircovid::regions("nations")
+
+  if (all(england %in% names(intrinsic_severity))) {
+    intrinsic_severity$england <-
+      combined_intrinsic_severity(intrinsic_severity[england], samples[england])
+  }
+
+  if (all(nations %in% names(intrinsic_severity))) {
+    intrinsic_severity$uk <-
+      combined_intrinsic_severity(intrinsic_severity[nations], samples[nations])
+  }
+
+  intrinsic_severity
+}
+
+
 combined_aggregate_prop_protected <- function(samples) {
 
   for (r in names(samples)) {
@@ -472,6 +497,43 @@ combined_severity_1 <- function(severity, samples, what, weight,
     ret$date <- NULL
   }
   ret
+}
+
+combined_intrinsic_severity <- function(intrinsic_severity, samples) {
+
+  n_steps <- dim(samples[[1]]$trajectories$state)[3]
+  cum_inf <-
+    lapply(samples, function (x) x$trajectories$state["infections", , n_steps])
+  cum_adm <-
+    lapply(samples, function (x) {
+      x$trajectories$state["admitted", , n_steps] +
+        x$trajectories$state["diagnoses", , n_steps]})
+
+  out <- list(period = intrinsic_severity[[1]]$period,
+              variant = intrinsic_severity[[1]]$variant)
+
+  intrinsic_severity <- list_transpose(intrinsic_severity)
+
+  out$IFR <- weight_intrinsic_severity_1(intrinsic_severity[["IFR"]], cum_inf)
+  out$IHR <- weight_intrinsic_severity_1(intrinsic_severity[["IHR"]], cum_inf)
+  out$HFR <- weight_intrinsic_severity_1(intrinsic_severity[["HFR"]], cum_adm)
+
+  out
+}
+
+weight_intrinsic_severity_1 <- function(intrinsic_severity, weightings) {
+  intrinsic_severity <- abind_quiet(intrinsic_severity, along = 4)
+  weightings <- abind_quiet(weightings, along = 2)
+
+  n_periods <- dim(intrinsic_severity)[1]
+  n_variants <- dim(intrinsic_severity)[2]
+  n_samples <- dim(intrinsic_severity)[3]
+
+  out <- vapply(seq_len(n_samples),
+                function (i) apply(intrinsic_severity[, , i, ], c(1, 2),
+                                   weighted.mean, w = weightings[i, ]),
+                array(0, dim = c(n_periods, n_variants)))
+  out
 }
 
 
@@ -692,6 +754,111 @@ reorder_variant_rt <- function(x, rank, weighted = FALSE) {
   }
 
   x
+}
+
+reorder_variant_rt <- function(x, rank, weighted = FALSE) {
+
+  what <- setdiff(names(x), c("time", "date"))
+
+  ## reorder_rt_ifr will only work for one variant so we will have to reorder
+  ## each variant separately
+  if (weighted) {
+    dim_strains <- 3
+  } else {
+    dim_strains <- 2
+  }
+  for (j in seq_len(dim_strains)) {
+    v <- x
+
+    for (i in what[what != "beta"]) {
+      v[[i]] <- v[[i]][, j, ]
+    }
+
+    v <- sircovid::reorder_rt_ifr(v, rank)
+
+    for (i in what) {
+      if (i == "beta") {
+        x[[i]] <- v[[i]]
+      } else {
+        x[[i]][, j, ] <- v[[i]]
+      }
+
+    }
+  }
+
+  x
+}
+
+reorder_intrinsic_severity <- function(x, rank) {
+
+  what <- setdiff(names(x), c("period", "variant"))
+
+  dim_strains <- 2
+
+  for (j in seq_len(dim_strains)) {
+    v <- x[what]
+
+    for (i in what) {
+      v[[i]] <- v[[i]][, j, ]
+    }
+
+    class(v) <- "IFR_t_trajectories"
+    v <- sircovid::reorder_rt_ifr(v, rank)
+
+    for (i in what) {
+      x[[i]][, j, ] <- v[[i]]
+    }
+  }
+
+  x
+}
+
+
+summarise_intrinsic_severity <- function(intrinsic_severity) {
+
+  regions <- names(intrinsic_severity)
+
+  periods <- intrinsic_severity[[1]]$period
+  variants <- intrinsic_severity[[1]]$variant
+
+  what <- setdiff(names(intrinsic_severity[[1]]), c("period", "variant"))
+
+  sev_vector <- function(x) {
+    mean <- mean(x)
+    lb <- quantile(x, 0.025)
+    ub <- quantile(x, 0.975)
+
+    out <- c(mean, lb, ub)
+    names(out) <- c("mean", "lb", "ub")
+    out
+  }
+
+  get_region <- function(r) {
+
+    get_what <- function(w) {
+      get_variant <- function(j) {
+        y <- t(apply(intrinsic_severity[[r]][[w]][, j, ], 1, sev_vector))
+        data.frame(period = periods, y) %>%
+          pivot_longer(!period, names_to = "estimate")
+      }
+
+      v <- lapply(seq_len(length(variants)), get_variant)
+      names(v) <- variants
+      dplyr::bind_rows(v, .id = "name")
+    }
+
+    ret_what <- lapply(what, get_what)
+    names(ret_what) <- what
+    dplyr::bind_rows(ret_what, .id = "source")
+
+  }
+
+  ret <- lapply(regions, get_region)
+  names(ret) <- regions
+  ret <- dplyr::bind_rows(ret, .id = "region")
+  ret$period <- factor(ret$period, levels = periods)
+
+  ret
 }
 
 ##' Add forecasts to combined fit object
