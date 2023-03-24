@@ -501,38 +501,28 @@ combined_severity_1 <- function(severity, samples, what, weight,
 
 combined_intrinsic_severity <- function(intrinsic_severity, samples) {
 
-  n_steps <- dim(samples[[1]]$trajectories$state)[3]
-  cum_inf <-
-    lapply(samples, function (x) x$trajectories$state["infections", , n_steps])
-  cum_adm <-
-    lapply(samples, function (x) {
-      x$trajectories$state["admitted", , n_steps] +
-        x$trajectories$state["diagnoses", , n_steps]})
+  get_reg_pop <- function(r) {
+    p <- samples[[r]]$predict$transform(samples[[r]]$pars[1, ])
+    sum(p[[1]]$pars$population)
+  }
+
+  wts <- vapply(names(samples), get_reg_pop, numeric(1))
 
   out <- list(period = intrinsic_severity[[1]]$period,
               variant = intrinsic_severity[[1]]$variant)
 
   intrinsic_severity <- list_transpose(intrinsic_severity)
 
-  out$IFR <- weight_intrinsic_severity_1(intrinsic_severity[["IFR"]], cum_inf)
-  out$IHR <- weight_intrinsic_severity_1(intrinsic_severity[["IHR"]], cum_inf)
-  out$HFR <- weight_intrinsic_severity_1(intrinsic_severity[["HFR"]], cum_adm)
+  weight1 <- function(what) {
+    sev <- abind_quiet(intrinsic_severity[[what]], along = 4)
 
-  out
-}
+    apply(sev, c(1, 2, 3), weighted.mean, w = wts)
+  }
 
-weight_intrinsic_severity_1 <- function(intrinsic_severity, weightings) {
-  intrinsic_severity <- abind_quiet(intrinsic_severity, along = 4)
-  weightings <- abind_quiet(weightings, along = 2)
+  out$IFR <- weight1("IFR")
+  out$IHR <- weight1("IHR")
+  out$HFR <- weight1("HFR")
 
-  n_periods <- dim(intrinsic_severity)[1]
-  n_variants <- dim(intrinsic_severity)[2]
-  n_samples <- dim(intrinsic_severity)[3]
-
-  out <- vapply(seq_len(n_samples),
-                function (i) apply(intrinsic_severity[, , i, ], c(1, 2),
-                                   weighted.mean, w = weightings[i, ]),
-                array(0, dim = c(n_periods, n_variants)))
   out
 }
 
