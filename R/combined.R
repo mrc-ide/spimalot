@@ -194,8 +194,12 @@ spim_combined_load_multiregion <- function(path, get_severity = FALSE) {
     message("Aggregating prop_protected")
     agg_samples <- combined_aggregate_prop_protected(agg_samples)
 
+    message("Aggregating and summarising intrinsic severity")
+    ret$intrinsic_severity_raw <-
+      combined_aggregate_intrinsic_severity(ret$intrinsic_severity,
+                                            agg_samples)
     ret$intrinsic_severity <-
-      dplyr::bind_rows(ret$intrinsic_severity, .id = "region")
+      summarise_intrinsic_severity(ret$intrinsic_severity_raw)
   }
 
   ## Now the onward object has been created, we can safely store the
