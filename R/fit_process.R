@@ -358,44 +358,22 @@ calculate_intrinsic_severity_region <- function(pars, transform, what,
   }
 
   ## Calculate the intrinsic severity for each of the pairs of strains
-  intrinsic_severity_strains <- lapply(strains,
-                                       calc_instrinsic_severity_strains)
+  intrinsic_severity_strains <-
+    list_transpose(lapply(strains, calc_instrinsic_severity_strains))
 
   get_what <- function(w) {
-    sev_variant <- function(x) {
-      y <- t(apply(x, 1, sev_vector))
-      data.frame(period = names(dates), y) %>%
-        pivot_longer(!period, names_to = "estimate")
-    }
-
-    variants <- list()
-
-    for (i in seq_along(strains)) {
-      if (length(strains[[i]]) == 1) {
-        ## If we have an odd number of strains, there will be one strain on
-        ## its own, this deals with that case
-        n_cols <- ncol(intrinsic_severity_strains[[i]][[w]])
-        variants[[names(strains[[i]])[1]]] <-
-          sev_variant(intrinsic_severity_strains[[i]][[w]][, n_cols, ])
-      } else {
-        variants[[names(strains[[i]])[1]]] <-
-          sev_variant(intrinsic_severity_strains[[i]][[w]][, 1, ])
-        variants[[names(strains[[i]])[2]]] <-
-          sev_variant(intrinsic_severity_strains[[i]][[w]][, 2, ])
-      }
-    }
-
-    dplyr::bind_rows(variants, .id = "name")
+    x <- abind_quiet(intrinsic_severity_strains[[w]], along = 2)
+    colnames(x) <- NULL
+    x
   }
 
   ret <- lapply(what, get_what)
   names(ret) <- what
 
-  ret <- dplyr::bind_rows(ret, .id = "source")
-
-  ret$period <- factor(ret$period, levels = unique(names(dates)))
-
+  ret$period <- names(dates)
+  ret$variant <- names(strain_epochs)
   ret
+
 }
 
 
