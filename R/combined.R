@@ -61,7 +61,7 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
   message("Reordering trajectories")
   ## reorder by increasing cumulative incidence:
   rank_cum_inc <- lapply(ret$samples, sircovid::get_sample_rank)
-  ret$samples <- Map(sircovid::reorder_sample, ret$samples, rank_cum_inc)
+  ret$samples <- Map(reorder_sample_full, ret$samples, rank_cum_inc)
   if (!is.null(ret$rt[[1]])) {
     ret$rt <- Map(reorder_variant_rt, ret$rt, rank_cum_inc, weighted = TRUE)
   }
@@ -716,6 +716,15 @@ spim_prop_infected <- function(combined, population,
   })
   t(prop_infected)
 }
+
+
+reorder_sample_full <- function(sample, rank) {
+  ret <- sircovid::reorder_sample(sample, rank)
+  ret$full_pars <- sample$pars_full
+  ret$full_probabilities <- sample$probabilities_full
+  ret
+}
+
 
 reorder_variant_rt <- function(x, rank, weighted = FALSE) {
 
