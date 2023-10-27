@@ -96,7 +96,9 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
   ## Once happy here, you could change the default behaviour, so that
   ## if determinsitic and not `FALSE` we set this up.
   adaptive_proposal <- adaptive_proposal %||% FALSE
-  if (isTRUE(adaptive_proposal) && !deterministic) {
+  adaptive_proposal_on <- isTRUE(adaptive_proposal) ||
+    class(adaptive_proposal) == "adaptive_proposal_control"
+  if (isTRUE(adaptive_proposal_on) && !deterministic) {
     stop("Can't use adaptive_proposal with non-deterministic models")
   }
 

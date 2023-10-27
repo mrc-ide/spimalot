@@ -23,7 +23,7 @@ high/low R scenarios}
 \item{palette}{Colour palette, passed to \link[khroma:colour]{khroma::colour}}
 
 \item{preview}{If \code{TRUE} then plots the final colour scheme with
-\link[khroma:plot]{khroma::plot_scheme}}
+\link[khroma:plot_scheme]{khroma::plot_scheme}}
 }
 \description{
 Select colours for plotting simulation scenarios
