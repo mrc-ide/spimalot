@@ -332,7 +332,12 @@ calculate_intrinsic_severity_region <- function(pars, transform, what,
 
   ## We calculate the intrinsic severity in pairs, so we split the strains
   ## into a list of pairs here
-  strains <- split(strain_epochs, ceiling(seq_along(strain_epochs) / 2))
+  if (length(strain_epochs) %% 2 == 0) {
+    strain_split <- ceiling(seq_along(strain_epochs) / 2)
+  } else {
+    strain_split <- floor(seq_along(strain_epochs) / 2) + 1
+  }
+  strains <- split(strain_epochs, strain_split)
 
   time_vect <- dates * 4
 
