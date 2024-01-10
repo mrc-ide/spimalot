@@ -326,6 +326,7 @@ calculate_intrinsic_severity <- function(samples, base_pars) {
 
 calculate_intrinsic_severity_region <- function(pars, transform, what,
                                                 base_pars) {
+
   dates <- base_pars$intrinsic_severity_dates
   strain_epochs <- base_pars$strain_epochs
 
