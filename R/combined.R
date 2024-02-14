@@ -64,6 +64,9 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
   ret$samples <- Map(reorder_sample_full, ret$samples, rank_cum_inc)
   if (!is.null(ret$rt[[1]])) {
     ret$rt <- Map(reorder_variant_rt, ret$rt, rank_cum_inc, weighted = TRUE)
+
+    message("Calculating R0 for variants")
+    ret$r0 <- combined_calculate_variant_r0(ret$rt, ret$samples, ret$parameters)
   }
 
   message("Aggregating England/UK")
@@ -174,6 +177,12 @@ spim_combined_load_multiregion <- function(path, get_severity = FALSE) {
 
   ret$data <- lapply(regions, region_data)
   names(ret$data) <- regions
+
+  if (!is.null(ret$rt[[1]])) {
+    message("Calculating R0 for variants")
+    ret$r0 <- combined_calculate_variant_r0(ret$rt, ret$samples, ret$parameters,
+                                            multiregion = TRUE)
+  }
 
   message("Aggregating England/UK")
   ## Aggregate some of these to get england/uk entries
@@ -618,6 +627,64 @@ combine_variant_rt <- function(variant_rt, samples, rank, weighted = FALSE) {
   }
 
   ret
+}
+
+
+combined_calculate_variant_r0 <- function(rt, samples, parameters,
+                                          multiregion = FALSE) {
+  browser()
+
+  regions <- names(rt)
+
+  if (multiregion) {
+    variant_names <- names(parameters$base[[1]]$strain_epochs)
+  } else {
+    variant_names <- names(parameters[[1]]$base$strain_epochs)
+  }
+
+  calc_R0_region <- function(r) {
+    pars <- samples[[r]]$pars
+
+    R0_variants <- list()
+
+    for (nm in variant_names) {
+      if (nm == "Wildtype") {
+        R0 <- rt[[r]]$Rt_general[1, "weighted", ]
+      } else {
+        R0 <- R0 * pars[, paste0("ta_", tolower(nm))]
+      }
+      R0_variants[[nm]] <- R0
+    }
+    R0_variants
+  }
+
+  r0 <- lapply(regions, calc_R0_region)
+  names(r0) <- regions
+
+  aggregate_r0 <- function(reg) {
+    get_region_pop <- function(r) {
+      p <- samples[[r]]$predict$transform(samples[[r]]$pars[1, ])
+      sum(p[[1]]$pars$population)
+    }
+
+    wts <- vapply(reg, get_region_pop, numeric(1))
+
+    out <- lapply(list_transpose(r0[reg]), function(x) {
+      apply(abind_quiet(x, along = 2), 1, weighted.mean, w = wts)})
+
+    out
+  }
+
+  england <- sircovid::regions("england")
+  uk <- sircovid::regions("all")
+
+  if (all(england %in% regions)) {
+    r0$england <- aggregate_r0(england)
+  }
+  if (all(uk %in% regions)) {
+    r0$uk <- aggregate_r0(uk)
+  }
+  r0
 }
 
 
