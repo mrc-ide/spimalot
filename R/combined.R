@@ -632,8 +632,6 @@ combine_variant_rt <- function(variant_rt, samples, rank, weighted = FALSE) {
 
 combined_calculate_variant_r0 <- function(rt, samples, parameters,
                                           multiregion = FALSE) {
-  browser()
-
   regions <- names(rt)
 
   if (multiregion) {
