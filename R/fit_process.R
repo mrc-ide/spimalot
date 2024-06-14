@@ -240,7 +240,13 @@ calculate_lancelot_Rt_region <- function(pars, state, transform,
     n_strains_R <- pars_model[[1]]$n_strains_R
     n_vacc_classes <- pars_model[[1]]$n_vacc_classes
 
-    suffix <- paste0("_", c(sircovid:::sircovid_age_bins()$start, "CHW", "CHR"))
+    if (pars_model[[1]]$has_carehomes == 1) {
+      suffix <-
+        paste0("_", c(sircovid:::sircovid_age_bins()$start, "CHW", "CHR"))
+    } else {
+      suffix <- paste0("_", sircovid:::sircovid_age_bins()$start)
+    }
+
     S_nms <- get_names("S", list(n_vacc_classes), suffix)
 
     time1 <- time[dates1]
