@@ -11,6 +11,7 @@ spim_control(
   multiregion = FALSE,
   rt = TRUE,
   severity = FALSE,
+  intrinsic_severity = FALSE,
   simulate = FALSE,
   demography = FALSE,
   date_restart = NULL,
@@ -44,6 +45,9 @@ not. Default is TRUE}
 
 \item{severity}{Logical, indicating if we are outputting severity
 trajectories (e.g. IFR, IHR, HFR). Default to FALSE.}
+
+\item{intrinsic_severity}{Logical, indicating if we are calculating
+intrinsic severity (e.g. IFR, IHR, HFR). Default to FALSE.}
 
 \item{simulate}{Logical, indicating if we are outputting a simulate object
 for onward simulation}

@@ -20,7 +20,7 @@ spim_combined_load(
 is \code{all}, otherwise try \code{england})}
 
 \item{get_severity}{Logical, indicating whether to extract severity (e.g.
-IFH, IHR, HFR, etc.) trajectories. Must default to \code{FALSE}, as these
+IFR, IHR, HFR, etc.) trajectories. Must default to \code{FALSE}, as these
 are routine (e.g. MTPs) \code{sircovid} outputs.}
 
 \item{get_onward}{Logical, indicating whether to extract projection
