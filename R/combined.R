@@ -10,7 +10,7 @@
 ##'   is `all`, otherwise try `england`)
 ##'
 ##' @param get_severity Logical, indicating whether to extract severity (e.g.
-##'   IFH, IHR, HFR, etc.) trajectories. Must default to `FALSE`, as these
+##'   IFR, IHR, HFR, etc.) trajectories. Must default to `FALSE`, as these
 ##'   are routine (e.g. MTPs) `sircovid` outputs.
 ##'
 ##' @param get_onward Logical, indicating whether to extract projection
@@ -91,6 +91,9 @@ spim_combined_load <- function(path, regions = "all", get_severity = FALSE,
     message("Aggregating prop_protected")
     agg_samples <- combined_aggregate_prop_protected(agg_samples)
 
+  }
+
+  if (!is.null(ret$intrinsic_severity[[1]])) {
     message("Aggregating and summarising intrinsic severity")
     ret$intrinsic_severity_raw <-
       Map(reorder_intrinsic_severity, ret$intrinsic_severity, rank_cum_inc)
@@ -202,7 +205,9 @@ spim_combined_load_multiregion <- function(path, get_severity = FALSE) {
 
     message("Aggregating prop_protected")
     agg_samples <- combined_aggregate_prop_protected(agg_samples)
+  }
 
+  if (!is.null(ret$intrinsic_severity[[1]])) {
     message("Aggregating and summarising intrinsic severity")
     ret$intrinsic_severity_raw <-
       combined_aggregate_intrinsic_severity(ret$intrinsic_severity,

@@ -65,10 +65,14 @@ spim_fit_process <- function(samples, parameters, data, control) {
   if (control$severity) {
     message("Extracting severity outputs")
     severity <- extract_severity(samples)
+  } else {
+    severity <- NULL
+  }
+
+  if (control$intrinsic_severity) {
     message("Calculating intrinsic severity")
     intrinsic_severity <- calculate_intrinsic_severity(samples, parameters$base)
   } else {
-    severity <- NULL
     intrinsic_severity <- NULL
   }
 

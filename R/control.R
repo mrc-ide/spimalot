@@ -22,6 +22,9 @@
 ##' @param severity Logical, indicating if we are outputting severity
 ##'   trajectories (e.g. IFR, IHR, HFR). Default to FALSE.
 ##'
+##' @param intrinsic_severity Logical, indicating if we are calculating
+##'   intrinsic severity (e.g. IFR, IHR, HFR). Default to FALSE.
+##'
 ##' @param simulate Logical, indicating if we are outputting a simulate object
 ##'   for onward simulation
 ##'
@@ -68,6 +71,7 @@
 ##' @export
 spim_control <- function(short_run, n_chains, deterministic = FALSE,
                          multiregion = FALSE, rt = TRUE, severity = FALSE,
+                         intrinsic_severity = FALSE,
                          simulate = FALSE, demography = FALSE,
                          date_restart = NULL, n_particles = 192, n_mcmc = 1500,
                          burnin = 500, workers = TRUE, n_sample = 1000,
@@ -128,6 +132,7 @@ spim_control <- function(short_run, n_chains, deterministic = FALSE,
                           compiled_compare = compiled_compare,
                           rt = rt,
                           severity = severity,
+                          intrinsic_severity = intrinsic_severity,
                           simulate = simulate,
                           demography = demography)
 
