@@ -830,16 +830,14 @@ reorder_variant_rt <- function(x, rank, weighted = FALSE) {
 }
 
 reorder_intrinsic_severity <- function(x, rank) {
-
   what <- setdiff(names(x), c("period", "variant"))
 
-  dim_strains <- 2
-
-  for (j in seq_len(dim_strains)) {
+  for (j in seq_along(x$variant)) {
     v <- x[what]
 
     for (i in what) {
-      v[[i]] <- v[[i]][, j, ]
+      d <- dim(v[[i]])
+      v[[i]] <- array(v[[i]][, j, ], d[c(1, 3)])
     }
 
     class(v) <- "IFR_t_trajectories"
@@ -855,7 +853,6 @@ reorder_intrinsic_severity <- function(x, rank) {
 
 
 summarise_intrinsic_severity <- function(intrinsic_severity) {
-
   regions <- names(intrinsic_severity)
 
   periods <- intrinsic_severity[[1]]$period
@@ -876,8 +873,10 @@ summarise_intrinsic_severity <- function(intrinsic_severity) {
   get_region <- function(r) {
 
     get_what <- function(w) {
+      intr_sev <- intrinsic_severity[[r]][[w]]
+      d <- dim(intr_sev)
       get_variant <- function(j) {
-        y <- t(apply(intrinsic_severity[[r]][[w]][, j, ], 1, sev_vector))
+        y <- t(apply(array(intr_sev[, j, ], d[c(1, 3)]), 1, sev_vector))
         data.frame(period = periods, y) %>%
           pivot_longer(!period, names_to = "estimate")
       }
